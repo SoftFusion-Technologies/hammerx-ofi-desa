@@ -1,0 +1,181 @@
+/* src/index.css */
+/* @font-face {
+  font-family: "BigNoodle";
+  src: url('./fonts/big_noodle_titling.ttf') format('truetype'); 
+} */
+
+/* html, body, #root {
+  margin: 0;
+  background: rgb(252,167,8);
+  background: linear-gradient(90deg, rgba(252,167,8,1) 0%, rgba(252,75,8,1) 55%);
+  overflow-x: hidden; /* Evita la barra de desplazamiento horizontal */
+
+
+
+.back_v2 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgb(252,167,8);
+  background: linear-gradient(90deg, rgba(252,167,8,1) 0%, rgba(252,75,8,1) 55%);
+}
+html, body, #root {
+  margin: 0;
+  overflow-x: hidden; /* Evita la barra de desplazamiento horizontal */
+}
+
+/* .font-bignoodle {
+  font-family: BigNoodle;
+}
+ */
+
+.content_v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -18rem; /* Ajuste según sea necesario */
+  text-align: center; /* Alineación central del contenido */
+  position: relative; /* Necesario para z-index */
+  z-index: 1; /* Necesario para z-index */
+  color: white; /* Color de texto blanco para contrastar con el fondo */
+  box-sizing: border-box; /* Asegura que el padding no afecte el tamaño total */
+}
+
+.logo_v2 {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 50rem;
+  margin-top: 10rem; /* Ajuste según sea necesario */
+}
+
+.message_v2 {
+  color: white;
+  font-size: 5rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  margin-top: -15rem; /* Ajuste según sea necesario */
+}
+
+.plan-info_v2 {
+  margin-top: 1rem;
+  background-color: white;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.plan-text_v2 {
+  color: rgba(252,75,8,1);
+  font-family: BigNoodle;
+  font-size: 2rem;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.payment-info_v2 {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 1.5rem;
+  padding: 10px;
+  width: 40%; /* Asegura que cada elemento tenga el mismo ancho */
+  align-items: center;
+  transition: transform 0.3s ease-out; /* Transición suave para transformaciones */
+  cursor: pointer;
+  margin-left : -5rem;
+}
+
+.payment-info_v2:hover {
+  transform: scale(1.05); /* Agrandar el elemento al pasar el mouse */
+}
+
+.payment-text_v2 {
+  color: rgba(252,75,8,1);
+  font-family: BigNoodle;
+  font-size: 2rem;
+  text-transform: uppercase;
+  margin: 0;
+  height: 60px;
+  width: 150px; /* Ancho por defecto */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
+
+.card-icon_v2 {
+  border-radius: 20px;
+  padding: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  width: 50px; /* Ajusta el tamaño del icono según sea necesario */
+  height: auto;
+  margin-right: 10px; /* Espacio entre el icono y el texto */
+}
+
+/* Media queries para ajustar el diseño en pantallas más pequeñas */
+@media (max-width: 1200px) {
+  .content_v2 {
+    margin-top: -10rem; /* Ajuste según sea necesario */
+    margin-left: 1rem;
+  }
+  
+  .message_v2 {
+    font-size: 4rem;
+    margin-top: -5rem; /* Ajuste según sea necesario */
+  }
+
+  .plan-text_v2, .payment-text_v2 {
+    font-size: 1.5rem;
+  }
+  
+}
+
+@media (max-width: 768px) {
+  .content_v2 {
+    margin-top: -5rem; /* Ajuste según sea necesario */
+    margin-left: 0;
+  }
+  
+  .message_v2 {
+    font-size: 3rem;
+    margin-top: -3rem; /* Ajuste según sea necesario */
+  }
+
+  .payment-info_v2 {
+    flex-direction: column;
+    margin-left: 1rem;
+
+  }
+
+  .plan-text_v2, .payment-text_v2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Media query para pantallas anchas */
+@media (min-width: 1201px) {
+  .payment-text_v2 {
+    width: 300px; /* Ancho de 300px para pantallas mayores a 1200px */
+  }
+}
+
+.m2_v2 {
+  margin-top: 2rem;
+}
+
+.square-div_v2 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.square-div_v2 img {
+  max-width: 100%;
+  max-height: 100%;
+}

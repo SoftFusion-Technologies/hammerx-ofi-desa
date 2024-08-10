@@ -1,0 +1,99 @@
+.main6 {
+  height: auto;
+  padding: 60px;
+  background: linear-gradient(rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.88)), url('../images/a.jpg') center/cover no-repeat;
+  background-size: cover;
+  background-color: #000;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.img-footer {
+  display: flex;
+  justify-content: center;
+
+}
+
+.logo-footer {
+  filter: invert(100%);
+  margin: 0 auto;
+}
+
+.main6 p {
+  margin-top: -10px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+}
+
+.main6 footer .footer-links {
+  margin-top: 50px;
+  display: flex;
+  list-style: none;
+  justify-content: center;
+  gap: 4%;
+  font-family: 'Tilt Neon', sans-serif;
+}
+
+.main6 footer .footer-links .foot-link a {
+  text-decoration: none;
+  color: #fff;
+  transition: .3s;
+}
+
+.main6 footer .footer-links .foot-link a:hover {
+  cursor: pointer;
+  color: #FA8403;
+}
+
+.main6 footer .re {
+  margin: 30px;
+  display: flex;
+  list-style: none;
+  justify-content: center;
+  gap: 4%;
+  background-color: #a19494ce;
+}
+
+.main6 footer .re .redes {
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: .5s;
+}
+
+.email {
+  font-family: 'Roboto', sans-serif;
+}
+.email label{
+  margin-right: 20px;
+}
+.email input{
+  height: 25px;
+  border: none;
+  border-radius: 2px;
+  background-color: rgba(148, 135, 135, 0.959);
+  padding-left: 10px;
+  color: #c0c0c0;
+}
+.email button{
+  height: 27px;
+  cursor: pointer;
+  width: 25px;
+  border: none;
+  border-radius: 2px;
+  background-color: rgba(255, 102, 0, 0.685);
+}
+.email button:hover{
+  background-color: rgba(255, 102, 0);
+}
+.email input:focus{
+  border: none;
+  outline: none;
+
+}
+.msj-final p {
+  margin-top: 50px;
+  font-size: 13px;
+}

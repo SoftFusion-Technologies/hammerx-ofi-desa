@@ -1,0 +1,23 @@
+.link {
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 2px;
+  }
+  .link:after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    background: rgb(255, 102, 0);
+    transform-origin: right;
+    transform: scaleX(0);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .link:hover:after {
+    transform-origin: left;
+    transform: scaleX(1);
+  }

@@ -1,0 +1,177 @@
+.tr_v2 h1 {
+    /* width: 100%; */
+    color: white;
+    font-weight: 100;
+    text-align: start;
+    display: flex;
+    justify-content: space-between;
+  }
+  .tr_v2 a {
+    position: absolute;
+    right: 0;
+    /* top: -20px; */
+    display: block;
+    text-decoration: none;
+    z-index: 10000;
+  }
+  .fondo_v2 {
+    height: 100px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: white;
+    font-size: 65px;
+    margin: 0;
+    opacity: 0.1;
+    font-weight: 500;
+  }
+  .backarrow_v2{
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    z-index: 100;
+  }
+  .cbubox_v2 {
+    position: relative;
+    /* background-image: url('../Images/chicas.heic'); */
+    background-image: url('../../../images/Pagos/Images/chicas.heic');
+    background-size: cover;
+    clip-path: polygon(0 8%, 100% 0, 100% 92%, 0% 100%);
+    height: 350px;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 60px;
+    gap: 10px;
+  }
+  .cbubox_v2 h2{
+    padding-bottom: 20px;
+    color: rgba(252,75,8,1);
+    font-weight: 500 ;
+    font-size: 30px;
+    margin: 0;
+    z-index: 100;
+  }
+  .cbubox_v2 .overlay_v2 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    opacity: 0.9;
+    clip-path: inherit;
+  }
+  
+  .cbubox_v2 p {
+    position: relative;
+    margin: 0;
+    z-index: 1;
+  }
+  .centered-text_v2{
+    margin-left: 20px;
+  }
+  .texttr_v2 {
+    color: rgba(252,75,8,1);
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+  
+  .cbu-container_v2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(252,75,8,1);
+    padding: 5px 12px;
+    border-radius: 5px;
+    gap: 10px;
+    z-index: 1;
+  }
+  
+  .cbutext_v2 {
+    margin: 0;
+    padding: 0 5px;
+    font-size: 25px;
+    letter-spacing: 1px;
+    color: white;
+  }
+  
+  .copy-icon_v2 {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    filter: invert(100%);
+  }
+  .textnum_v2 {
+    font-size: 22px;
+    border: 2px;
+    border-color: rgba(252,75,8,1);
+    border: 2px solid rgba(252,75,8,1);
+    color: rgba(252,75,8,1);
+    border-radius: 5px;
+    padding: 1px 0;
+  }
+  .click_v2{
+    padding: 0 45px;
+    color: rgba(252,75,8,1);
+    text-decoration: underline;
+  }
+  .num_v2{
+    background-color: rgba(252,75,8,1);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 5px;
+  }
+  @media (min-width: 640px) {
+    .fondo_v2{
+      top: -25px;
+      font-size: 130px;
+    }
+    .tr_v2 h1 {
+      font-size: 50px;
+      margin-left: 50px;
+    }
+    .texttr_v2 {
+      font-size: 35px;
+    }
+    .cbutext_v2 {
+      font-size: 35px;
+    }
+    .textnum_v2 {
+      font-size: 35px;
+    }
+    .cbubox_v2 {
+      height: 430px;
+      gap: 20px;
+    }
+    .cbubox_v2 h2{
+      font-size: 40px;
+    }
+  }
+  @media (min-width: 1024px){
+    .fondo_v2{
+      font-size: 170px;
+      letter-spacing: 5px;
+    }
+    .cbutext_v2 {
+      padding: 0 30px;
+      font-size: 35px;
+    }
+    .cbubox_v2 {
+      height: 450px;
+      gap: 20px;
+      padding-top: 100px;
+    }
+    .cbubox_v2 h2{
+      font-size: 55px;
+    }
+    .backarrow_v2{
+      right: 50px;
+      top: 10px;
+    }
+    .abonar_v2{
+      font-size: 25px;
+    }
+  }

@@ -1,0 +1,83 @@
+.sk-chase {
+  height: 40px;
+  position: relative;
+  animation: sk-chase 10s infinite linear both; /* Duración de la animación ajustada a 10 segundos */
+  margin: 150px auto;
+  width: 300px;
+}
+
+.sk-chase-dot {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0; 
+  animation: sk-chase-dot 10s infinite ease-in-out both; /* Duración de la animación ajustada a 10 segundos */
+}
+
+.sk-chase-dot:before {
+  content: '';
+  display: block;
+  width: 25%;
+  height: 25%;
+  background-color: #fc4b08;
+  border-radius: 100%;
+  animation: sk-chase-dot-before 10s infinite ease-in-out both; /* Duración de la animación ajustada a 10 segundos */
+}
+
+.sk-chase-dot:nth-child(1) { animation-delay: -1.75s; }
+.sk-chase-dot:nth-child(2) { animation-delay: -1.5s; }
+.sk-chase-dot:nth-child(3) { animation-delay: -1.25s; }
+.sk-chase-dot:nth-child(4) { animation-delay: -1s; }
+.sk-chase-dot:nth-child(5) { animation-delay: -0.75s; }
+.sk-chase-dot:nth-child(6) { animation-delay: -0.5s; }
+.sk-chase-dot:nth-child(1):before { animation-delay: -1.75s; }
+.sk-chase-dot:nth-child(2):before { animation-delay: -1.5s; }
+.sk-chase-dot:nth-child(3):before { animation-delay: -1.25s; }
+.sk-chase-dot:nth-child(4):before { animation-delay: -1s; }
+.sk-chase-dot:nth-child(5):before { animation-delay: -0.75s; }
+.sk-chase-dot:nth-child(6):before { animation-delay: -0.5s; }
+
+@keyframes sk-chase {
+  100% { transform: rotate(720deg); } 
+}
+
+@keyframes sk-chase-dot {
+  80%, 100% { transform: rotate(720deg); } 
+}
+
+@keyframes sk-chase-dot-before {
+  25%, 75% { 
+    transform: scale(0.4); 
+  } 
+  100%, 0% {
+    transform: scale(1.0); 
+  } 
+}
+
+.container-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+}
+
+.logo-centered {
+  max-width: 50%;
+  max-height: auto; /* La altura se ajustará automáticamente para mantener la proporción de la imagen */
+}
+
+/* Media query para dispositivos con un ancho máximo de 768px (por ejemplo, tablets y dispositivos móviles en posición vertical) */
+@media screen and (max-width: 768px) {
+  .logo-centered {
+    max-width: 90%; /* Aumenta el ancho máximo para adaptarse a tamaños de pantalla más pequeños */
+  }
+}
+
+/* Media query para dispositivos con un ancho máximo de 480px (por ejemplo, dispositivos móviles en posición horizontal) */
+@media screen and (max-width: 480px) {
+  .logo-centered {
+    max-width: 80%; /* Aumenta aún más el ancho máximo para adaptarse a tamaños de pantalla muy pequeños */
+  }
+}
+  

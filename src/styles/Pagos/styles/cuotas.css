@@ -1,0 +1,65 @@
+.cuotas-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+  
+.cuotas-title {
+    text-align: center;
+    font-size: 25px;
+    font-weight: 500;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.cuotas-grid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%; /* Asegúrate de que ocupe todo el ancho disponible */
+
+}
+  
+.cuotas-card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    cursor: pointer;
+    transition: transform 0.3s, background-color 0.3s, color 0.3s;
+}
+  
+.cuotas-card:hover {
+    transform: scale(1.05);
+}
+  
+.cuotas-card.selected {
+    background-color: #3b82f6;
+    color: #fff;
+    transform: scale(1.05);
+}
+  
+.cuotas-option {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+@media (min-width: 640px) {
+    .cuotas-title {
+        font-size: 50px;
+    }
+    .cuotas-grid{
+        flex-direction: row;
+    }
+}
+@media (min-width: 1024px) {
+    .cuotas-grid {
+      grid-template-columns: repeat(4, 1fr); /* 4 columnas en pantallas grandes */
+      padding-top: 50px;
+    }
+}

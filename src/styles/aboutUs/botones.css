@@ -1,0 +1,37 @@
+.btns {
+  padding: 2em 2em;
+  color: #fc4b08;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 0;
+  background-color: white;
+  box-shadow: rgb(0 0 0 / 5%) 0 0 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-size: 15px;
+  transition: all 0.5s ease;
+}
+
+.btns:hover {
+  letter-spacing: 3px;
+  background-color: #F97316; /* Cambio del color de hsl a hexadecimal */
+  color: white;
+  box-shadow: #fc4b08;
+}
+
+.btns:active {
+  letter-spacing: 3px;
+  background-color: #fc4b08; /* Cambio del color de hsl a hexadecimal */
+  color: white;
+  box-shadow: #fc4b08;
+  transform: translateY(10px);
+  transition: 100ms;
+}
+
+.btns a.btn-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0; /* Quita cualquier relleno para que el enlace ocupe todo el espacio */
+  text-decoration: none; /* Opcional: quita la subrayado del enlace */
+}

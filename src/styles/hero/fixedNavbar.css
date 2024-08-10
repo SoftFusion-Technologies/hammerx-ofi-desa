@@ -1,0 +1,31 @@
+.box {
+  color: #fc4b08;
+  text-transform: uppercase;
+  text-decoration: none;
+  font-weight: 600;
+  background: transparent;
+  transition: all .5s;
+  overflow: hidden;
+}
+
+.box:hover {
+  color: white;
+}
+
+.box::before {
+  content: '';
+  position: absolute;
+  height: 100%;
+  width: 0%;
+  top: 0;
+  left: -40px;
+  transform: skewX(45deg);
+  background-color: #fc4b08;
+  z-index: -1;
+  transition: all .5s;
+}
+
+.box:hover::before {
+  width: 160%;
+}
+
