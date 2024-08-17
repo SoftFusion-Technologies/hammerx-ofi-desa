@@ -7,12 +7,14 @@ const Efectivo = () => {
 const numMonteros = '3863564651'
   return (
     <div className="content-efectivo_v2 font-bignoodle">
-      <div className="backarrow">
-        <BackButton />
-      </div>
-      <div className="title">
-        <p className="fondo-efectivo_v2">EFECTIVO</p>
-        <h1 className="title-text_v2">EFECTIVO</h1>
+      <div className='header_2'>
+        <div>
+          <p className='fondo_v2'>EFECTIVO</p>
+          <p className='title_v2'>EFECTIVO</p>
+        </div>
+        <div className='backarrow'>
+          <BackButton />
+        </div>
       </div>
       <div className="box-efectivo_v2">
         <h1 className="box-title_v2">

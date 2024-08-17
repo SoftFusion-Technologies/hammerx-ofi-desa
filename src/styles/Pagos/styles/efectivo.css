@@ -4,10 +4,30 @@
     /* width: 100%; */
     background: linear-gradient(90deg, rgba(252,167,8,1) 0%, rgba(252,75,8,1) 55%);
 }
-
+.header_2{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+.fondo_v2{
+    position: absolute;
+    top: 0px;
+    left: 0;
+    font-size: 60px;
+}
+.title_v2{
+    position: absolute;
+    top: 50px;
+    left: 50px;
+    font-size: 40px;
+    color: white;
+}
+.backarrow{
+    padding: 30px;
+}
 .fondo-efectivo_v2 {
     position: absolute;
-    top: -85px;
+    top: 0px;
     left: 0;
     font-size: 80px;
     color: white;

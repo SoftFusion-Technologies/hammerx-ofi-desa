@@ -16,7 +16,7 @@ const TarjetaDebito = () => {
         <div className="tr_v2">
           <div>
             <p className="fondo_v2 font-bignoodle">Tarjeta de Débito</p>
-            <h1 className="font-bignoodle">Tarjeta de Débito</h1>
+            <h1 className="font-bignoodle title">Tarjeta de Débito</h1>
           </div>
         </div>
         <div className="cbubox_v2 font-bignoodle">
