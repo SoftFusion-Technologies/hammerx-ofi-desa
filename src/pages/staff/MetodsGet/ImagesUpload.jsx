@@ -1,0 +1,163 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import '../../../styles/imagesUpload.css'
+const ImagesUpload = ({ convenioId }) => {
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [images, setImages] = useState([]); // Estado para almacenar imágenes
+
+  const [imagesGet, setImagesGet] = useState([]);
+
+  const URL = "http://localhost:8080/imagesget/";
+
+  useEffect(() => {
+    // utilizamos get para obtenerPersonas los datos contenidos en la url
+    axios.get(URL).then((res) => {
+      setImagesGet(res.data);
+      obtenerImages();
+    });
+  }, []);
+
+  // Función para obtener todos los personClass desde la API
+  const obtenerImages = async () => {
+    try {
+      const response = await axios.get(URL);
+      setImagesGet(response.data);
+    } catch (error) {
+      console.log("Error al obtener las imagenes :", error);
+    }
+  };
+  useEffect(() => {
+    // Fetch images for the given convenioId when the component mounts
+    const fetchImages = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8080/images/${convenioId}`);
+        setImages(response.data.images || []);
+      } catch (err) {
+        console.error(err);
+        setError('Error al cargar las imágenes.');
+      }
+    };
+
+    fetchImages();
+  }, [convenioId]);
+
+  // Handle file change
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  // Handle image upload
+  const handleUpload = async () => {
+    if (!file) {
+      setError('Por favor selecciona un archivo.');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await axios.post(`http://localhost:8080/upload/${convenioId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.status === 200) {
+        // Add the newly uploaded image to the list
+        setImages([...images, response.data.imageUrl]);
+        alert('Imagen subida con éxito.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Error al subir la imagen.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para eliminar una imagen
+  const eliminarImagen = async (id) => {
+    try {
+      await axios.delete(`${URL}${id}`);  // Solicitud DELETE al servidor
+      obtenerImages(); // Recarga la lista de imágenes después de la eliminación
+    } catch (error) {
+      console.log("Error al eliminar la imagen:", error);
+    }
+  };
+
+  return (
+<div className="upload-container bg-gray-100 p-6 rounded-lg shadow-lg max-w-xl mx-auto">
+  <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+    ADJUNTAR COMPROBANTE <br />
+    <span className="text-base font-normal">
+      1. Presionar Seleccionar Archivo,<br />
+      2. Subir Imagen solo(jpg, png, jpeg) hasta 30MB
+    </span>
+  </h2>
+
+  <div className="input-group flex items-center space-x-4 mb-4">
+    <input
+      type="file"
+      id="file-upload"
+      onChange={handleFileChange}
+      className="block w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg cursor-pointer focus:outline-none"
+    />
+    <button
+      className="btnnn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200 disabled:bg-gray-400"
+      onClick={handleUpload}
+      disabled={loading}
+    >
+      {loading ? 'Subiendo...' : 'Subir Imagen'}
+    </button>
+  </div>
+
+  {error && <p className="error-message text-red-500 font-semibold">{error}</p>}
+
+  <h3 className="text-lg font-medium text-gray-700 mt-6 mb-2">Imágenes Disponibles</h3>
+  <ul className="image-list space-y-4">
+    {images.map((image, index) => (
+      <li key={index} className="image-item flex items-center justify-between bg-white p-4 rounded shadow-md">
+        <img
+          src={`http://localhost:8080/public/${image}`}
+          alt={`Imagen ${index + 1}`}
+          className="thumbnail w-24 h-24 object-cover rounded"
+        />
+      </li>
+    ))}
+    
+    {imagesGet.map((image, index) => (
+      <li key={image.id} className="image-item flex items-center justify-between bg-white p-4 rounded shadow-md">
+        <div className="flex items-center space-x-4">
+          <a
+            href={`http://localhost:8080/download/${image.id}`}
+            download={image.image_path}
+            className="download-link text-blue-500 hover:underline"
+          >
+            Descargar {index + 1}
+          </a>
+          <button
+            onClick={() => eliminarImagen(image.id)}
+            className="mt-3 delete-button bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200"
+          >
+            ELIMINAR {index + 1}
+          </button>
+        </div>
+      </li>
+    ))}
+  </ul>
+  
+  <h1 className="mt-5 text-sm font-light text-gray-600">
+    RECUERDE QUE AL (ELIMINAR, CARGAR) IMAGEN, DEBE RECARGAR LA PÁGINA
+  </h1>
+</div>
+
+  );
+};
+
+export default ImagesUpload;

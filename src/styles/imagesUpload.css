@@ -1,0 +1,93 @@
+.upload-container {
+  background-color: #f4f7f9;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 600px;
+  margin: 0 auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.h22, .h33 {
+  color: #333;
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+}
+
+.input-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+input[type="file"] {
+  padding: 10px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-family: inherit;
+}
+
+.btnnn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btnnn:disabled {
+  background-color: #999;
+}
+
+.btnnn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.error-message {
+  color: #e74c3c;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.image-list {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+
+.image-item {
+  background-color: #fff;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.thumbnail {
+  max-width: 100px;
+  max-height: 100px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.download-link {
+  display: inline-block;
+  margin-top: 10px;
+  background-color: #28a745;
+  color: white;
+  padding: 8px 12px;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.download-link:hover {
+  background-color: #218838;
+}

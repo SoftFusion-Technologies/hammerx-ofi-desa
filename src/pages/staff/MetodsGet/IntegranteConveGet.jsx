@@ -23,8 +23,12 @@ import '../../../styles/staff/background.css';
 import Footer from '../../../components/footer/Footer';
 import FormAltaIntegranteConve from '../../../components/Forms/FormAltaIntegranteConve';
 import IntegranteDetails from './IntegranteConveGetId';
+import Copy from '../../../images/copy.png'
+import subirArch from '../../../images/subirArch.png'
 
 import { useAuth } from '../../../AuthContext';
+import ImagesUpload from './ImagesUpload.jsx';
+import InvoicesUpload from './InvoicesUpload.jsx';
 
 const IntegranteConveGet = ({ integrantes }) => {
   // Estado para almacenar la lista de personas
@@ -36,6 +40,8 @@ const IntegranteConveGet = ({ integrantes }) => {
 
   // Estado para tomar los nombres de los convenios
   const [convenioNombre, setConvenioNombre] = useState('');
+  const [convenioDescripcion, setConvenioDescripcion] = useState('');
+  const [convenioDescripcionUsu, setConvenioDescripcionUsu] = useState('');
 
   // Estado para tomar los valores de permiteFam de los convenios
   const [permiteFam, setpermiteFam] = useState(0);
@@ -105,6 +111,8 @@ const IntegranteConveGet = ({ integrantes }) => {
           `http://localhost:8080/admconvenios/${id_conv}`
         );
         setConvenioNombre(response.data.nameConve);
+        setConvenioDescripcion(response.data.descConve);
+        setConvenioDescripcionUsu(response.data.desc_usu);
         setpermiteFam(response.data.permiteFam);
         setcantFam(response.data.cantFamiliares);
       } catch (error) {
@@ -244,6 +252,22 @@ const IntegranteConveGet = ({ integrantes }) => {
     setSelectedUser(integrante);
     setModalNewIntegrant(true);
   };
+
+  const handleCopyClick = () => {
+    const cbu = "0110372230037217312133";
+    navigator.clipboard.writeText(cbu).then(() => {
+      alert("CBU copiado al portapapeles");
+    }).catch(err => {
+      console.error("Error al copiar el CBU: ", err);
+    });
+  };
+
+    const [fileName, setFileName] = useState(null);
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    setFileName(file ? file.name : null);
+  };
   return (
     <>
       <NavbarStaff />
@@ -261,6 +285,28 @@ const IntegranteConveGet = ({ integrantes }) => {
               {convenioNombre}
             </h2>
           </div>
+          {/* Descripcion convenio */}
+
+          {(userLevel === 'admin' ||
+            userLevel === '' ||
+            userLevel === 'administrador') && (
+            <div className="flex justify-center">
+              <h1 className="pb-5">Descripción: {convenioDescripcion}</h1>
+            </div>
+          )}
+
+          {/* Descripcion Usuario */}
+
+          {(userLevel === 'admin' ||
+            userLevel === 'gerente' ||
+            userLevel === 'administrador') && (
+            <div className="flex justify-center">
+              <h1 className="pb-5">
+                Descripción Usuario: {convenioDescripcionUsu}
+              </h1>
+            </div>
+          )}
+
           <div className="flex justify-center">
             <h1 className="pb-5">
               Listado de Integrantes: &nbsp;
@@ -269,7 +315,6 @@ const IntegranteConveGet = ({ integrantes }) => {
               </span>
             </h1>
           </div>
-
           {/* formulario de busqueda */}
           <form className="flex justify-center pb-5">
             <input
@@ -281,8 +326,7 @@ const IntegranteConveGet = ({ integrantes }) => {
             />
           </form>
           {/* formulario de busqueda */}
-
-          {(userLevel === 'convenio' ||
+          {(userLevel === 'gerente' ||
             userLevel === 'admin' ||
             userLevel === '' ||
             userLevel === 'administrador') && (
@@ -297,7 +341,6 @@ const IntegranteConveGet = ({ integrantes }) => {
               </Link>
             </div>
           )}
-
           {Object.keys(results).length === 0 ? (
             <p className="text-center pb-10">
               El Integrante NO Existe ||{' '}
@@ -313,7 +356,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                     <th>DNI</th>
                     <th>Telefono</th>
                     <th>Email</th>
-                    <th>Sede</th>
+                    {/* <th>Sede</th> */}
                     <th>Precio</th>
                     <th>Descuento</th>
                     <th>Precio Final</th>
@@ -327,7 +370,14 @@ const IntegranteConveGet = ({ integrantes }) => {
                         {i.id}
                       </td> */}
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
-                        {integrante.nombre}
+                        {integrante.notas ? (
+                          <>
+                            <span className="text-xl">📝</span>{' '}
+                            {integrante.nombre}
+                          </>
+                        ) : (
+                          integrante.nombre
+                        )}
                       </td>
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {integrante.dni}
@@ -339,9 +389,9 @@ const IntegranteConveGet = ({ integrantes }) => {
                         {integrante.email}
                       </td>
 
-                      <td onClick={() => obtenerIntegrante(integrante.id)}>
+                      {/* <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {integrante.sede}
-                      </td>
+                      </td> */}
 
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {integrante.precio !== '0'
@@ -350,7 +400,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                       </td>
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {integrante.descuento !== '0'
-                          ? `%${integrante.descuento}`
+                          ? `${integrante.descuento}%`
                           : 'Sin descuento'}
                       </td>
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
@@ -371,10 +421,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                       userLevel === 'convenio' ||
                       */
                         (userLevel === 'admin' ||
-                          userLevel === 'convenio' ||
-                          userLevel === '' ||
                           userLevel === 'gerente' ||
-                          userLevel === 'vendedor' ||
                           userLevel === 'administrador') && (
                           <td className="">
                             <button
@@ -399,13 +446,43 @@ const IntegranteConveGet = ({ integrantes }) => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-              <div className="style-prec">
-                <div colSpan="7" className="font-bold text-[#fc4b08]">
+                </table>
+               <div className='text-center mt-10'>
+                <div className="cbu-container font-bignoodle">
+                  <span className="cbutext text-gray-600"> REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU: 0110372230037217312133</span>
+                  <img
+                    className="copy-icon"
+                    src={Copy}
+                    alt="Copy Icon"
+                    onClick={handleCopyClick}
+                  />
+                  </div>
+                <p className='font-bignoodle text-gray-600 text-2xl'>
+                 Titular: Marcelo Javier Garcia
+                </p>
+                <p className='font-bignoodle text-gray-600 text-2xl'>
+                 CUIT: 20- 34.764.843 -5
+                  </p>
+                    <div colSpan="7" className="font-bold text-[#fc4b08] text-2xl">
                   TOTAL
                 </div>
-                <div className="">{formatearMoneda(totalPrecioFinal)}</div>
-              </div>
+                <div className="text-2xl">{formatearMoneda(totalPrecioFinal)}</div>
+                <div className="flex gap-4 flex-wrap">
+                    <div className="flex-1 min-w-[300px]">
+                    {(userLevel === '' ||
+                      userLevel === 'admin') && (
+                        <ImagesUpload convenioId={id_conv} />
+                    )}
+                    </div>
+                    <div className="flex-1 min-w-[300px]">
+                      {(userLevel === '' ||
+                      userLevel === 'admin') && (
+                        <InvoicesUpload  convenioId={id_conv} /> 
+                    )}
+                    </div>
+                  </div>
+
+                </div>
               <nav className="flex justify-center items-center my-10">
                 <ul className="pagination space-x-2">
                   <li className="page-item">

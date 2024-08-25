@@ -175,3 +175,20 @@ tr:hover {
   margin-top:1rem;
   margin-left:88rem;
 }
+
+.cbu-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.cbutext {
+  font-size: 1.5rem; /* Ajusta este valor al tamaño que desees */
+}
+
+.copy-icon {
+  width: 2.5rem; /* Ajusta este valor al tamaño del texto */
+  margin-left: 10px; /* Espacio entre el CBU y el icono */
+  cursor: pointer;
+}

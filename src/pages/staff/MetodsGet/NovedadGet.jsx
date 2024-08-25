@@ -266,7 +266,7 @@ const NovedadGet = () => {
                             className="text-gray-600"
                             onClick={() => handleOpenModal(novedad.mensaje)}
                           >
-                            {formatearFecha(novedad.vencimiento)}
+                           {novedad.vencimiento}
                           </p>
                         </b>
 
@@ -362,7 +362,7 @@ const NovedadGet = () => {
                           className="text-gray-600"
                           onClick={() => handleOpenModal(novedad.mensaje)}
                         >
-                          {formatearFecha(novedad.vencimiento)}
+                         {novedad.vencimiento}
                         </p>
                       </b>
 
