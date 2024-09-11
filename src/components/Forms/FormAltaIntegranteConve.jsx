@@ -22,6 +22,7 @@ import * as Yup from 'yup';
 import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
 import Alerta from '../Error';
+import { useAuth } from "../../AuthContext";
 
 const FormAltaIntegranteConve = ({
   isOpen,
@@ -35,7 +36,7 @@ const FormAltaIntegranteConve = ({
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
   const { id_conv } = useParams(); // Obtener el id_conv de la URL
-  
+  const { userName } = useAuth();
   // const textoModal = 'Integrante creado correctamente.'; se elimina el texto
   // nuevo estado para gestionar dinámicamente según el método (PUT o POST)
   const [textoModal, setTextoModal] = useState('');
@@ -120,6 +121,18 @@ const FormAltaIntegranteConve = ({
       }
       onClose();
     };
+const obtenerFechaActual = () => {
+    const hoy = new Date();
+    const año = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0'); // Los meses son indexados desde 0
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const horas = String(hoy.getHours()).padStart(2, '0');
+    const minutos = String(hoy.getMinutes()).padStart(2, '0');
+    const segundos = String(hoy.getSeconds()).padStart(2, '0');
+    
+    return `${año}-${mes}-${dia} ${horas}:${minutos}:${segundos}`;
+};
+
   return (
     <div
       className={`h-screen w-screen mt-16 fixed inset-0 flex pt-10 justify-center ${
@@ -146,7 +159,9 @@ const FormAltaIntegranteConve = ({
             notas: integrante ? integrante.notas : '',
             precio: integrante ? integrante.precio : newPrecio,
             descuento: integrante ? integrante.descuento : newDescuento,
-            preciofinal: integrante ? integrante.preciofinal : newPrecioFinal
+            preciofinal: integrante ? integrante.preciofinal : newPrecioFinal,
+            userName: userName || '',
+            fechaCreacion:obtenerFechaActual() // Envía la fecha en formato ISO 8601
           }}
           enableReinitialize
           // cuando hacemos el submit esperamos a que cargen los valores y esos valores tomados se lo pasamos a la funcion handlesubmit que es la que los espera

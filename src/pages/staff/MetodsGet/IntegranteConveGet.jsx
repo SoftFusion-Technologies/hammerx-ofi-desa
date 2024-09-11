@@ -29,6 +29,7 @@ import subirArch from '../../../images/subirArch.png'
 import { useAuth } from '../../../AuthContext';
 import ImagesUpload from './ImagesUpload.jsx';
 import InvoicesUpload from './InvoicesUpload.jsx';
+import FileUpload from './FileUpload.jsx';
 
 const IntegranteConveGet = ({ integrantes }) => {
   // Estado para almacenar la lista de personas
@@ -36,7 +37,7 @@ const IntegranteConveGet = ({ integrantes }) => {
   const [integrante, setIntegrantes] = useState([]);
   const [modalNewIntegrante, setModalNewIntegrant] = useState(false);
   const [totalPrecioFinal, setTotalPrecioFinal] = useState(0);
-  const { userLevel } = useAuth();
+  const { userLevel, userName} = useAuth();
 
   // Estado para tomar los nombres de los convenios
   const [convenioNombre, setConvenioNombre] = useState('');
@@ -189,24 +190,19 @@ const IntegranteConveGet = ({ integrantes }) => {
 
   let results = [];
 
-  if (!search) {
-    results = integrante;
-  } else if (search) {
-    results = integrante.filter((dato) => {
-      const nameMatch = dato.nameConve
-        .toLowerCase()
-        .includes(search.toLowerCase());
+  if (Array.isArray(integrante)) {
+    const safeSearch = search ? search.toLowerCase() : "";
 
-      return nameMatch;
+    results = integrante.filter((dato) => {
+      const nombre = dato.nombre ? dato.nombre.toLowerCase() : "";
+      return nombre.includes(safeSearch);
     });
   }
 
-  // Función para ordenar los integrantes de forma alfabética basado en el nombre
   const ordenarIntegranteAlfabeticamente = (integrante) => {
-    return [...integrante].sort((a, b) => a.sede.localeCompare(b.sede));
+    return [...integrante].sort((a, b) => a.nombre.localeCompare(b.nombre));
   };
 
-  // Llamada a la función para obtener los integrantes ordenados de forma decreciente
   const sortedintegrante = ordenarIntegranteAlfabeticamente(results);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -268,6 +264,23 @@ const IntegranteConveGet = ({ integrantes }) => {
     const file = event.target.files[0];
     setFileName(file ? file.name : null);
   };
+
+  const formatearFecha = (fecha) => {
+    const fechaObj = new Date(fecha);
+    const año = fechaObj.getFullYear();
+    const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+    const dia = String(fechaObj.getDate()).padStart(2, '0');
+    const horas = String(fechaObj.getHours()).padStart(2, '0');
+    const minutos = String(fechaObj.getMinutes()).padStart(2, '0');
+    const segundos = String(fechaObj.getSeconds()).padStart(2, '0');
+    
+    return `${dia}/${mes}/${año} ${horas}:${minutos}:${segundos}`;
+  };
+  
+  const obtenerNombreUsuario = (email) => {
+    return email.split('@')[0];
+};
+
   return (
     <>
       <NavbarStaff />
@@ -307,24 +320,25 @@ const IntegranteConveGet = ({ integrantes }) => {
             </div>
           )}
 
-          <div className="flex justify-center">
-            <h1 className="pb-5">
-              Listado de Integrantes: &nbsp;
-              <span className="text-center">
-                Cantidad de registros: {results.length}
-              </span>
-            </h1>
-          </div>
-          {/* formulario de busqueda */}
+            <div className="flex justify-center">
+              <h1 className="pb-5">
+                Listado de Integrantes: &nbsp;
+                <span className="text-center">
+                  Cantidad de registros: {results.length}
+                </span>
+              </h1>
+            </div>
+            {/* formulario de busqueda */}
           <form className="flex justify-center pb-5">
-            <input
-              value={search}
-              onChange={searcher}
-              type="text"
-              placeholder="Buscar Integrante"
-              className="border rounded-sm"
-            />
-          </form>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            type="text"
+            placeholder="Buscar Integrante"
+            className="border rounded-sm"
+          />
+        </form>
+
           {/* formulario de busqueda */}
           {(userLevel === 'gerente' ||
             userLevel === 'admin' ||
@@ -340,7 +354,15 @@ const IntegranteConveGet = ({ integrantes }) => {
                 </button>
               </Link>
             </div>
-          )}
+            )}
+          
+                {/* formulario de busqueda */}
+          {(userLevel === 'admin' ||
+            userLevel === '' ||
+            userLevel === 'administrador') && (
+              <FileUpload convenioId={id_conv} />
+            )}
+
           {Object.keys(results).length === 0 ? (
             <p className="text-center pb-10">
               El Integrante NO Existe ||{' '}
@@ -360,6 +382,8 @@ const IntegranteConveGet = ({ integrantes }) => {
                     <th>Precio</th>
                     <th>Descuento</th>
                     <th>Precio Final</th>
+                    <th>Usuario</th>
+                    <th>Fecha</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -409,6 +433,13 @@ const IntegranteConveGet = ({ integrantes }) => {
                           : 'Sin Precio Final'}
                       </td>
 
+                      <td onClick={() => obtenerIntegrante(integrante.id)}>
+                          {obtenerNombreUsuario(integrante.userName)}
+                      </td>
+
+                      <td onClick={() => obtenerIntegrante(integrante.id)}>
+                         {formatearFecha(integrante.fechaCreacion)}
+                      </td>
                       {/* <td onClick={() => obtenerIntegrante(i.id)}>
                         {formatearFecha(i.vencimiento)}
                       </td> */}
@@ -480,17 +511,33 @@ const IntegranteConveGet = ({ integrantes }) => {
                         <InvoicesUpload  convenioId={id_conv} /> 
                     )}
                     </div>
+
                   </div>
 
                 </div>
               <nav className="flex justify-center items-center my-10">
-                <ul className="pagination space-x-2">
+                <ul className="pagination">
                   <li className="page-item">
                     <a href="#" className="page-link" onClick={prevPage}>
                       Prev
                     </a>
                   </li>
-
+                  {numbers.map((number, index) => (
+                    <li
+                      className={`page-item ${
+                        currentPage === number ? "active" : ""
+                      }`}
+                      key={index}
+                    >
+                      <a
+                        href="#"
+                        className="page-link"
+                        onClick={() => changeCPage(number)}
+                      >
+                        {number}
+                      </a>
+                    </li>
+                  ))}
                   <li className="page-item">
                     <a href="#" className="page-link" onClick={nextPage}>
                       Next

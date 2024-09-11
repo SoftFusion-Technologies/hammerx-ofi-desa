@@ -65,6 +65,12 @@ const IntegranteDetails = ({
           <span className="font-semibold ">Sede:</span> {user.sede}
         </p>
         <p>
+          <span className="font-semibold ">Creado por:</span> {user.userName}
+        </p>
+        <p>
+          <span className="font-semibold ">El dia :</span> {user.fechaCreacion}
+        </p>
+        <p>
           <span className="font-semibold ">Notas:</span> {user.notas}
         </p>
 
