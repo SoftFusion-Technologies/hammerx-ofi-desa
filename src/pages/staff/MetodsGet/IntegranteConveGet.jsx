@@ -278,7 +278,7 @@ const IntegranteConveGet = ({ integrantes }) => {
   };
   
   const obtenerNombreUsuario = (email) => {
-    return email.split('@')[0];
+    // return email.split('@')[0];
 };
 
   return (
@@ -320,24 +320,24 @@ const IntegranteConveGet = ({ integrantes }) => {
             </div>
           )}
 
-            <div className="flex justify-center">
-              <h1 className="pb-5">
-                Listado de Integrantes: &nbsp;
-                <span className="text-center">
-                  Cantidad de registros: {results.length}
-                </span>
-              </h1>
-            </div>
-            {/* formulario de busqueda */}
+          <div className="flex justify-center">
+            <h1 className="pb-5">
+              Listado de Integrantes: &nbsp;
+              <span className="text-center">
+                Cantidad de registros: {results.length}
+              </span>
+            </h1>
+          </div>
+          {/* formulario de busqueda */}
           <form className="flex justify-center pb-5">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            type="text"
-            placeholder="Buscar Integrante"
-            className="border rounded-sm"
-          />
-        </form>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              type="text"
+              placeholder="Buscar Integrante"
+              className="border rounded-sm"
+            />
+          </form>
 
           {/* formulario de busqueda */}
           {(userLevel === 'gerente' ||
@@ -354,14 +354,14 @@ const IntegranteConveGet = ({ integrantes }) => {
                 </button>
               </Link>
             </div>
-            )}
-          
-                {/* formulario de busqueda */}
+          )}
+
+          {/* formulario de busqueda */}
           {(userLevel === 'admin' ||
             userLevel === '' ||
             userLevel === 'administrador') && (
-              <FileUpload convenioId={id_conv} />
-            )}
+            <FileUpload convenioId={id_conv} />
+          )}
 
           {Object.keys(results).length === 0 ? (
             <p className="text-center pb-10">
@@ -384,6 +384,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                     <th>Precio Final</th>
                     <th>Usuario</th>
                     <th>Fecha</th>
+                    <th>Estado de Autorización</th> {/* Nueva columna R6-BO*/}
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -434,12 +435,30 @@ const IntegranteConveGet = ({ integrantes }) => {
                       </td>
 
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
-                          {obtenerNombreUsuario(integrante.userName)}
+                        {obtenerNombreUsuario(integrante.userName)}
                       </td>
 
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
-                         {formatearFecha(integrante.fechaCreacion)}
+                        {formatearFecha(integrante.fechaCreacion)}
                       </td>
+
+                      <td
+                        onClick={() => obtenerIntegrante(integrante.id)}
+                        className={`${
+                          integrante.estado_autorizacion === 'sin_autorizacion'
+                            ? 'text-red-500'
+                            : integrante.estado_autorizacion === 'pendiente'
+                            ? 'text-yellow-500'
+                            : 'text-green-500'
+                        } font-bold`}
+                      >
+                        {integrante.estado_autorizacion === 'sin_autorizacion'
+                          ? 'Sin Autorización'
+                          : integrante.estado_autorizacion === 'pendiente'
+                          ? 'Pendiente'
+                          : 'Autorizado'}
+                      </td>
+
                       {/* <td onClick={() => obtenerIntegrante(i.id)}>
                         {formatearFecha(i.vencimiento)}
                       </td> */}
@@ -477,44 +496,46 @@ const IntegranteConveGet = ({ integrantes }) => {
                     </tr>
                   ))}
                 </tbody>
-                </table>
-               <div className='text-center mt-10'>
+              </table>
+              <div className="text-center mt-10">
                 <div className="cbu-container font-bignoodle">
-                  <span className="cbutext text-gray-600"> REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU: 0110372230037217312133</span>
+                  <span className="cbutext text-gray-600">
+                    {' '}
+                    REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU:
+                    0110372230037217312133
+                  </span>
                   <img
                     className="copy-icon"
                     src={Copy}
                     alt="Copy Icon"
                     onClick={handleCopyClick}
                   />
-                  </div>
-                <p className='font-bignoodle text-gray-600 text-2xl'>
-                 Titular: Marcelo Javier Garcia
+                </div>
+                <p className="font-bignoodle text-gray-600 text-2xl">
+                  Titular: Marcelo Javier Garcia
                 </p>
-                <p className='font-bignoodle text-gray-600 text-2xl'>
-                 CUIT: 20- 34.764.843 -5
-                  </p>
-                    <div colSpan="7" className="font-bold text-[#fc4b08] text-2xl">
+                <p className="font-bignoodle text-gray-600 text-2xl">
+                  CUIT: 20- 34.764.843 -5
+                </p>
+                <div colSpan="7" className="font-bold text-[#fc4b08] text-2xl">
                   TOTAL
                 </div>
-                <div className="text-2xl">{formatearMoneda(totalPrecioFinal)}</div>
-                <div className="flex gap-4 flex-wrap">
-                    <div className="flex-1 min-w-[300px]">
-                    {(userLevel === '' ||
-                      userLevel === 'admin') && (
-                        <ImagesUpload convenioId={id_conv} />
-                    )}
-                    </div>
-                    <div className="flex-1 min-w-[300px]">
-                      {(userLevel === '' ||
-                      userLevel === 'admin') && (
-                        <InvoicesUpload  convenioId={id_conv} /> 
-                    )}
-                    </div>
-
-                  </div>
-
+                <div className="text-2xl">
+                  {formatearMoneda(totalPrecioFinal)}
                 </div>
+                <div className="flex gap-4 flex-wrap">
+                  <div className="flex-1 min-w-[300px]">
+                    {(userLevel === '' || userLevel === 'admin') && (
+                      <ImagesUpload convenioId={id_conv} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-[300px]">
+                    {(userLevel === '' || userLevel === 'admin') && (
+                      <InvoicesUpload convenioId={id_conv} />
+                    )}
+                  </div>
+                </div>
+              </div>
               <nav className="flex justify-center items-center my-10">
                 <ul className="pagination">
                   <li className="page-item">
@@ -525,7 +546,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                   {numbers.map((number, index) => (
                     <li
                       className={`page-item ${
-                        currentPage === number ? "active" : ""
+                        currentPage === number ? 'active' : ''
                       }`}
                       key={index}
                     >

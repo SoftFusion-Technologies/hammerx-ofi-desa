@@ -16,8 +16,11 @@ const NovedadGet = () => {
   const { userLevel, userName } = useAuth(); // Se obtiene el userName del contexto
   const [search, setSearch] = useState('');
   const [novedad, setNovedad] = useState([]);
+  const [archivos, setArchivos] = useState([]);
+
   const [userId, setUserId] = useState(null); // Añadimos estado para userId
   const URL = 'http://localhost:8080/novedades/';
+  const URL_ARCH = 'http://localhost:8080/novedadesarch/';
   const USERS_URL = 'http://localhost:8080/users/';
 
   const [selectednovedad, setSelectedNovedad] = useState(null); // Estado para el usuario seleccionado
@@ -44,6 +47,32 @@ const NovedadGet = () => {
       obtenerNovedades();
     }
   }, [userId]);
+
+  // R5-SUBIR ARCHIVOS A NOVEDADES - 16-09-2024 - Benjamin Orellana - INICIO
+  useEffect(() => {
+    if (novedad.length > 0) {
+      fetchArchivos();
+    }
+  }, [novedad]);
+
+  const fetchArchivos = async () => {
+    try {
+      const response = await axios.get(URL_ARCH);
+      setArchivos(response.data);
+    } catch (err) {
+      console.error('Error al obtener archivos:', err);
+    }
+  };
+
+  const obtenerArchivosPorNovedad = async (novedadId) => {
+    try {
+      const response = await axios.get(`${URL_ARCH}${novedadId}`);
+      setArchivosNovedad(response.data);
+    } catch (error) {
+      console.error('Error al obtener archivos de la novedad:', error);
+    }
+  };
+  // R5-SUBIR ARCHIVOS A NOVEDADES - 16-09-2024 - Benjamin Orellana - FINAL
 
   const abrirModal = () => {
     setModalNewNovedad(true);
@@ -139,10 +168,50 @@ const NovedadGet = () => {
     (novedad) => new Date(novedad.vencimiento) <= new Date()
   );
 
-  const handleEditarNovedad = (novedad) => {
-    // (NUEVO)
+  const handleEditarNovedad = async (novedad) => {
     setSelectedNovedad(novedad);
     setModalNewNovedad(true);
+    await obtenerArchivosPorNovedad(novedad.id); // Obtener archivos de la novedad seleccionada
+  };
+
+  const handleFileUpload = async (event, novedadId) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      await axios.post(
+        `http://localhost:8080/upload/novedad/${novedadId}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+      alert('Archivo subido y guardado correctamente.');
+    } catch (error) {
+      console.error('Error al subir el archivo:', error);
+      alert('Error al subir el archivo.');
+    }
+  };
+
+  const handleDeleteArchivo = async (archivoId) => {
+    const confirmacion = window.confirm(
+      '¿Seguro que desea eliminar este archivo?'
+    );
+    if (confirmacion) {
+      try {
+        await axios.delete(`${URL_ARCH}${archivoId}`);
+        // Actualiza el estado local para eliminar el archivo de la lista
+        setArchivos(archivos.filter((archivo) => archivo.id !== archivoId));
+      } catch (error) {
+        console.error('Error al eliminar el archivo:', error);
+        alert('Error al eliminar el archivo.');
+      }
+    }
   };
   return (
     <>
@@ -260,13 +329,57 @@ const NovedadGet = () => {
                             )}
                           </div>
                         </b>
+                        {archivos.filter(
+                          (archivo) => archivo.novedad_id === novedad.id
+                        ).length > 0 && (
+                          <>
+                            <p>
+                              Archivos subidos:{' '}
+                              {
+                                archivos.filter(
+                                  (archivo) => archivo.novedad_id === novedad.id
+                                ).length
+                              }
+                            </p>
+                            <ul>
+                              {archivos
+                                .filter(
+                                  (archivo) => archivo.novedad_id === novedad.id
+                                )
+                                .map((archivo) => (
+                                  <li key={archivo.id}>
+                                    {archivo.nombre_archivo} -{' '}
+                                    <a
+                                      href={`http://localhost:8080/download/novedad/${archivo.id}`}
+                                      className="text-blue-500 underline"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      Descargar
+                                    </a>
+                                    {(userLevel === 'admin' ||
+                                      userLevel === 'administrador') && (
+                                      <button
+                                        onClick={() =>
+                                          handleDeleteArchivo(archivo.id)
+                                        }
+                                        className="ml-2 text-red-500 underline"
+                                      >
+                                        Eliminar
+                                      </button>
+                                    )}
+                                  </li>
+                                ))}
+                            </ul>
+                          </>
+                        )}
                         <p>Fecha de publicacion:</p>
                         <b>
                           <p
                             className="text-gray-600"
                             onClick={() => handleOpenModal(novedad.mensaje)}
                           >
-                           {novedad.vencimiento}
+                            {novedad.vencimiento}
                           </p>
                         </b>
 
@@ -288,6 +401,21 @@ const NovedadGet = () => {
                               >
                                 Editar
                               </button>
+                              {/* Nuevo botón para subir archivos R5-Subir archivos a novedades */}
+                              <label
+                                htmlFor={`file-upload-${novedad.id}`}
+                                className="py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600"
+                              >
+                                Subir Archivo
+                              </label>
+                              <input
+                                id={`file-upload-${novedad.id}`}
+                                type="file"
+                                className="hidden"
+                                onChange={(e) =>
+                                  handleFileUpload(e, novedad.id)
+                                }
+                              />
                             </div>
                           )}
                         </div>
@@ -362,9 +490,54 @@ const NovedadGet = () => {
                           className="text-gray-600"
                           onClick={() => handleOpenModal(novedad.mensaje)}
                         >
-                         {novedad.vencimiento}
+                          {novedad.vencimiento}
                         </p>
                       </b>
+
+                      {archivos.filter(
+                        (archivo) => archivo.novedad_id === novedad.id
+                      ).length > 0 && (
+                        <>
+                          <p>
+                            Archivos subidos:{' '}
+                            {
+                              archivos.filter(
+                                (archivo) => archivo.novedad_id === novedad.id
+                              ).length
+                            }
+                          </p>
+                          <ul>
+                            {archivos
+                              .filter(
+                                (archivo) => archivo.novedad_id === novedad.id
+                              )
+                              .map((archivo) => (
+                                <li key={archivo.id}>
+                                  {archivo.nombre_archivo} -{' '}
+                                  <a
+                                    href={`http://localhost:8080/download/novedad/${archivo.id}`}
+                                    className="text-blue-500 underline"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    Descargar
+                                  </a>
+                                  {(userLevel === 'admin' ||
+                                    userLevel === 'administrador') && (
+                                    <button
+                                      onClick={() =>
+                                        handleDeleteArchivo(archivo.id)
+                                      }
+                                      className="ml-2 text-red-500 underline"
+                                    >
+                                      Eliminar
+                                    </button>
+                                  )}
+                                </li>
+                              ))}
+                          </ul>
+                        </>
+                      )}
 
                       <div className="flex justify-end space-x-4">
                         {(userLevel === 'admin' ||
@@ -382,6 +555,19 @@ const NovedadGet = () => {
                             >
                               Editar
                             </button>
+                            {/* Nuevo botón para subir archivos R5-Subir archivos a novedades */}
+                            <label
+                              htmlFor={`file-upload-${novedad.id}`}
+                              className="py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600"
+                            >
+                              Subir Archivo
+                            </label>
+                            <input
+                              id={`file-upload-${novedad.id}`}
+                              type="file"
+                              className="hidden"
+                              onChange={(e) => handleFileUpload(e, novedad.id)}
+                            />
                           </div>
                         )}
                       </div>

@@ -1,10 +1,11 @@
-import React,{useState} from 'react';
-import "../../../styles/MetodsGet/GetUserId.css";
+import React, { useState } from 'react';
+import '../../../styles/MetodsGet/GetUserId.css';
 import FormAltaNota from '../../../components/Forms/FormAltaNota';
 import { Link } from 'react-router-dom';
 import FormAltaIntegranteConve from '../../../components/Forms/FormAltaIntegranteConve';
 import FormAltaFamiliarI from '../../../components/Forms/FormAltaFamiliarI';
 import { useAuth } from '../../../AuthContext';
+import axios from 'axios'; // Importa Axios para hacer las solicitudes HTTP
 
 const IntegranteDetails = ({
   id_conv,
@@ -38,6 +39,57 @@ const IntegranteDetails = ({
     setmodalNewConve2(false);
     obtenerIntegrantes2();
   };
+
+  // Función para solicitar autorización - R6-Autorizar Integrantes - BO -15-09-2024
+  const solicitarAutorizacion = async () => {
+    try {
+      await axios.put(
+        `http://localhost:8080/integrantes/${user.id}/autorizar`,
+        {
+          estado_autorizacion: 'pendiente'
+        }
+      );
+      alert('Solicitud de autorización enviada con éxito');
+      obtenerIntegrantes2(); // Refresca la lista de integrantes
+    } catch (error) {
+      console.error('Error al solicitar autorización', error);
+    }
+  };
+
+  // Función para autorizar al integrante
+  const autorizarIntegrante = async () => {
+    try {
+      await axios.put(
+        `http://localhost:8080/integrantes/${user.id}/autorizar`,
+        {
+          estado_autorizacion: 'autorizado'
+        }
+      );
+      alert('Integrante autorizado con éxito');
+      obtenerIntegrantes2(); // Refresca la lista de integrantes
+      onClose(); // Cierra el modal
+    } catch (error) {
+      console.error('Error al autorizar', error);
+    }
+  };
+
+  // Función para no autorizar al integrante
+  const noAutorizarIntegrante = async () => {
+    try {
+      await axios.put(
+        `http://localhost:8080/integrantes/${user.id}/autorizar`,
+        {
+          estado_autorizacion: 'sin_autorizacion'
+        }
+      );
+      alert('Integrante no autorizado con éxito');
+      obtenerIntegrantes2(); // Refresca la lista de integrantes
+      onClose(); // Cierra el modal
+    } catch (error) {
+      console.error('Error al no autorizar', error);
+    }
+  };
+  //R6 - Autorizar Integrantes - BO- 15-09-24 - final
   return (
     <div className="modal-overlay">
       <div className="modal-content">
@@ -75,53 +127,63 @@ const IntegranteDetails = ({
         </p>
 
         <hr className="my-4" />
-        <div className="flex justify-center ">
-          {
-            /*
-                      userLevel === 'gerente' ||
-                      userLevel === 'vendedor' ||
-                      userLevel === 'convenio' ||
-                      */
-            (userLevel === 'admin' ||
-              userLevel === 'administrador' ||
-              userLevel === 'gerente' ||
-              userLevel === 'vendedor') && (
-              <Link to="#">
-                <button
-                  onClick={abrirModal}
-                  className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
-                >
-                  Agregar Nota
-                </button>
-              </Link>
-            )
-          }
-
+        <div className="flex flex-wrap gap-4 justify-center">
+          {(userLevel === 'admin' ||
+            userLevel === 'administrador' ||
+            userLevel === 'gerente' ||
+            userLevel === 'vendedor') && (
+            <Link to="#">
+              <button
+                onClick={abrirModal}
+                className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100"
+              >
+                Agregar Nota
+              </button>
+            </Link>
+          )}
           {/* Modal para abrir formulario de clase gratis */}
           <FormAltaNota
             isOpen={modalNewConve}
             onClose={cerarModal}
             user={user}
           />
-
           {Number(permiteFam) === 1 && (
             <Link
               to={`/dashboard/admconvenios/${id_conv}/integrantes/${user.id}/integrantesfam/`}
             >
-              <button
-                // onClick={() => console.log('Ver familiar')}
-                className="ml-5 bg-[#298dc0] hover:bg-[#1a4469] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
-              >
+              <button className="bg-[#298dc0] hover:bg-[#1a4469] text-white py-2 px-4 rounded transition-colors duration-100">
                 Ver Familiar
               </button>
             </Link>
           )}
-          {/*         
-          <FormAltaFamiliarI
-            isOpen={modalNewConve2}
-            onClose={cerarModal2}
-            user={user}
-          /> */}
+
+          {/* R6 - Autorizar Integrantes */}
+          {(userLevel === 'gerente' || userLevel === 'vendedor') && (
+            <button
+              onClick={solicitarAutorizacion}
+              className="bg-[#fc4b08] hover:bg-[#bf360c] text-white py-2 px-4 rounded transition-colors duration-100"
+            >
+              Solicitar Autorización
+            </button>
+          )}
+
+          {/* Botones para autorización */}
+          {(userLevel === 'admin' || userLevel === 'administrador') && (
+            <div className="flex gap-4">
+              <button
+                onClick={autorizarIntegrante}
+                className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100"
+              >
+                Autorizar
+              </button>
+              <button
+                onClick={noAutorizarIntegrante}
+                className="bg-[#e74c3c] hover:bg-[#c0392b] text-white py-2 px-4 rounded transition-colors duration-100"
+              >
+                No Autorizar
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
