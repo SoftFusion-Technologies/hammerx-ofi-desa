@@ -9,7 +9,7 @@ import Footer from '../../../components/footer/Footer';
 import FormAltaNovedad from '../../../components/Forms/FormAltaNovedad';
 import { useAuth } from '../../../AuthContext';
 import ModalNovedad from '../MetodsGet/ModalNovedad';
-
+import FechasNovedad from './Novedad/FechasNovedad'; //R7- nuevo componente para agregar mas fechas 22/09/2024 - Benjamin Orellana
 const NovedadGet = () => {
   const [modalNewNovedad, setModalNewNovedad] = useState(false);
   const [modalData, setModalData] = useState({ isOpen: false, mensaje: '' });
@@ -18,12 +18,17 @@ const NovedadGet = () => {
   const [novedad, setNovedad] = useState([]);
   const [archivos, setArchivos] = useState([]);
 
+  const [novedadId, setNovedadId] = useState(null); // R7 -Estado para almacenar el ID de la novedad
+  const [modalFechas, setModalFechas] = useState(false); // R7  Estado para el modal de fechas
+  const [vencimientos, setVencimientos] = useState([]); // R7  Estado para el modal de fechas
+
+  const [selectednovedad, setSelectedNovedad] = useState(null); // Estado para el usuario seleccionado
   const [userId, setUserId] = useState(null); // Añadimos estado para userId
+
   const URL = 'http://localhost:8080/novedades/';
   const URL_ARCH = 'http://localhost:8080/novedadesarch/';
   const USERS_URL = 'http://localhost:8080/users/';
-
-  const [selectednovedad, setSelectedNovedad] = useState(null); // Estado para el usuario seleccionado
+  const URLVEC = 'http://localhost:8080/novedades-vencimientos/';
 
   useEffect(() => {
     // Se obtiene el userId usando el userName (email)
@@ -45,6 +50,7 @@ const NovedadGet = () => {
   useEffect(() => {
     if (userId !== null) {
       obtenerNovedades();
+      obtenerFechasVec();
     }
   }, [userId]);
 
@@ -78,6 +84,15 @@ const NovedadGet = () => {
     setModalNewNovedad(true);
   };
 
+  // R7 - Agregar varias fechas a las novedades
+  const abrirModalFechas = (id) => {
+    setSelectedNovedad(id); // Almacena el ID de la novedad seleccionada
+    setModalNewNovedad(false); // Cierra el modal de alta novedad si está abierto
+    setModalData({ isOpen: false, mensaje: '' }); // Cierra el modal de detalle si está abierto
+    setModalFechas(true); // Abre el modal de fechas
+    loadVencimientos(id); // Carga vencimientos al abrir el modal
+    setNovedadId(id);
+  };
   const cerrarModal = () => {
     setModalNewNovedad(false);
     obtenerNovedades();
@@ -94,6 +109,16 @@ const NovedadGet = () => {
       setNovedad(novedadesOrdenadas);
     } catch (error) {
       console.log('Error al obtener las novedades:', error);
+    }
+  };
+
+  const obtenerFechasVec = async () => {
+    try {
+      const response = await axios.get(URLVEC);
+      const vencimientosOrdenados = response.data.sort((a, b) => b.id - a.id);
+      setVencimientos(vencimientosOrdenados);
+    } catch (error) {
+      console.log('Error al obtener las fechas de vencimiento:', error);
     }
   };
 
@@ -161,12 +186,42 @@ const NovedadGet = () => {
     }
   }
 
+  // Normalizar las fechas de hoy y mañana para comparar correctamente
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normaliza la fecha a las 00:00:00
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1); // Ajustar para el día siguiente
+
+  // 1. Crear un array combinado de novedades con sus fechas adicionales de republicación
+  const novedadesConFechas = records.map((novedad) => {
+    // Buscar las fechas de vencimiento adicionales de `novedades-vencimientos` que coincidan con esta novedad
+   
+    const fechasAdicionales = vencimientos
+      .filter((v) => v.novedad_id === novedad.id)
+      .map((v) => new Date(v.vencimiento));
+
+    return {
+      ...novedad,
+      fechasVencimiento: [new Date(novedad.vencimiento), ...fechasAdicionales] // Incluye la fecha principal y las adicionales
+    };
+  });
+
+  // 2. Filtrar `novedades programadas` y `últimas novedades` con las fechas de vencimiento correspondientes
   const novedadesProgramadas = records.filter(
     (novedad) => new Date(novedad.vencimiento) > new Date()
   );
-  const ultimasNovedades = records.filter(
-    (novedad) => new Date(novedad.vencimiento) <= new Date()
+
+  const ultimasNovedades = novedadesConFechas.filter((novedad) =>
+    novedad.fechasVencimiento.some((fecha) => fecha <= today)
   );
+
+  // 3. Combinar y ordenar las novedades según las fechas de vencimiento más recientes
+  const novedadesOrdenadas = [...ultimasNovedades].sort((a, b) => {
+    const fechaA = Math.max(...a.fechasVencimiento.map((f) => f.getTime()));
+    const fechaB = Math.max(...b.fechasVencimiento.map((f) => f.getTime()));
+    return fechaB - fechaA;
+  });
 
   const handleEditarNovedad = async (novedad) => {
     setSelectedNovedad(novedad);
@@ -213,6 +268,26 @@ const NovedadGet = () => {
       }
     }
   };
+
+  // R7 - Agregar varias fechas a las novedades
+  const loadVencimientos = async (id) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/novedades-vencimientos/${id}`
+      );
+
+      if (response.data && response.data.length > 0) {
+        setVencimientos(response.data); // Si hay datos, actualiza el estado
+      } else {
+        console.log('No hay vencimientos registrados para esta novedad.');
+        alert('No hay vencimientos registrados para esta novedad.');
+      }
+    } catch (error) {
+      // console.error('Error al cargar vencimientos:', error);
+      // alert('Error al cargar vencimientos.');
+    }
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -429,7 +504,7 @@ const NovedadGet = () => {
                   ÚLTIMAS NOVEDADES
                 </h2>
                 <div className="block space-y-4">
-                  {ultimasNovedades.map((novedad) => (
+                  {novedadesOrdenadas.map((novedad) => (
                     <div
                       key={novedad.id}
                       className="border m-5 border-gray-300 p-4 rounded-lg cursor-pointer mb-4"
@@ -484,6 +559,7 @@ const NovedadGet = () => {
                           )}
                         </div>
                       </b>
+
                       <p>Fecha de publicacion:</p>
                       <b>
                         <p
@@ -522,17 +598,6 @@ const NovedadGet = () => {
                                   >
                                     Descargar
                                   </a>
-                                  {(userLevel === 'admin' ||
-                                    userLevel === 'administrador') && (
-                                    <button
-                                      onClick={() =>
-                                        handleDeleteArchivo(archivo.id)
-                                      }
-                                      className="ml-2 text-red-500 underline"
-                                    >
-                                      Eliminar
-                                    </button>
-                                  )}
                                 </li>
                               ))}
                           </ul>
@@ -568,6 +633,12 @@ const NovedadGet = () => {
                               className="hidden"
                               onChange={(e) => handleFileUpload(e, novedad.id)}
                             />
+                            <button
+                              onClick={() => abrirModalFechas(novedad.id)}
+                              className="py-2 px-4 bg-green-500 text-white rounded-md hover:bg-yellow-600"
+                            >
+                              Ver Fechas
+                            </button>
                           </div>
                         )}
                       </div>
@@ -616,7 +687,7 @@ const NovedadGet = () => {
 
       <FormAltaNovedad
         isOpen={modalNewNovedad}
-        onClose={cerrarModal}
+        onClose={() => setModalNewNovedad(false)}
         novedad={selectednovedad}
         setSelectedNovedad={setSelectedNovedad}
       />
@@ -625,6 +696,16 @@ const NovedadGet = () => {
         mensaje={modalData.mensaje}
         onClose={handleCloseModal}
         obtenerNovedades={obtenerNovedades}
+      />
+      <FechasNovedad
+        novedad={novedad.find((nov) => nov.id === novedadId)} // Seleccionas la novedad basada en novedadId
+        isOpen={modalFechas}
+        onClose={() => {
+          setModalFechas(false);
+          setVencimientos([]); // Limpia los vencimientos al cerrar
+        }}
+        novedadId={novedadId}
+        vencimientos={vencimientos} // Pasa los vencimientos al modal
       />
     </>
   );
