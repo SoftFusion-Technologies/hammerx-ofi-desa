@@ -23,13 +23,14 @@ import '../../../styles/staff/background.css';
 import Footer from '../../../components/footer/Footer';
 import FormAltaIntegranteConve from '../../../components/Forms/FormAltaIntegranteConve';
 import IntegranteDetails from './IntegranteConveGetId';
-import Copy from '../../../images/copy.png'
-import subirArch from '../../../images/subirArch.png'
+import Copy from '../../../images/copy.png';
+import subirArch from '../../../images/subirArch.png';
 
 import { useAuth } from '../../../AuthContext';
 import ImagesUpload from './ImagesUpload.jsx';
 import InvoicesUpload from './InvoicesUpload.jsx';
 import FileUpload from './FileUpload.jsx';
+import FechasConvenios from './Novedad/FechasConvenios.jsx';
 
 const IntegranteConveGet = ({ integrantes }) => {
   // Estado para almacenar la lista de personas
@@ -37,23 +38,31 @@ const IntegranteConveGet = ({ integrantes }) => {
   const [integrante, setIntegrantes] = useState([]);
   const [modalNewIntegrante, setModalNewIntegrant] = useState(false);
   const [totalPrecioFinal, setTotalPrecioFinal] = useState(0);
-  const { userLevel, userName} = useAuth();
+  const { userLevel, userName } = useAuth();
 
   // Estado para tomar los nombres de los convenios
   const [convenioNombre, setConvenioNombre] = useState('');
   const [convenioDescripcion, setConvenioDescripcion] = useState('');
   const [convenioDescripcionUsu, setConvenioDescripcionUsu] = useState('');
 
+  // Estado para almacenar el mes seleccionado en `FechasConvenios`
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [registroExistente, setRegistroExistente] = useState(false);
+
   // Estado para tomar los valores de permiteFam de los convenios
   const [permiteFam, setpermiteFam] = useState(0);
+  const [permiteFec, setpermiteFec] = useState(0);
   const [cantFam, setcantFam] = useState(0);
 
   const [selectedUser, setSelectedUser] = useState(null); // Estado para el usuario seleccionado
   const [modalUserDetails, setModalUserDetails] = useState(false); // Estado para controlar el modal de detalles del usuario
 
+  // nueva variable para almacenar el valor de permiteFec cuando inicia el componente
+  const newPermite = permiteFec;
+
   const abrirModal = () => {
     setModalNewIntegrant(true);
-    setSelectedUser(null)
+    setSelectedUser(null);
   };
   const cerarModal = () => {
     setModalNewIntegrant(false);
@@ -66,7 +75,6 @@ const IntegranteConveGet = ({ integrantes }) => {
   const URL = 'http://localhost:8080/integrantes/';
   const URL2 = `http://localhost:8080/admconvenios/${id_conv}/integrantes/`;
   // para recuperar los valores de precio INI
-  const URL3 = 'http://localhost:8080/admconvenios/';
   const URL4 = 'http://localhost:8080/admconvenios/';
 
   const [precio, setPrecio] = useState('');
@@ -99,6 +107,32 @@ const IntegranteConveGet = ({ integrantes }) => {
     }
   };
 
+  useEffect(() => {
+    const checkRegistroExistente = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/facget/?convenio_id=${id_conv}`
+        );
+        const data = await response.json();
+
+        // Verificar si hay registros y si el mes de "created_at" coincide con el mes seleccionado
+        const existeRegistroEnMes = data.some((item) => {
+          // Obtener el mes del campo "created_at" (0 = Enero, 1 = Febrero, etc.) y sumarle 1 para representar de 1 a 12
+          const mesRegistro = new Date(item.created_at).getMonth();
+          console.log('mes', mesRegistro);
+          return mesRegistro === selectedMonth;
+        });
+
+        setRegistroExistente(existeRegistroEnMes);
+      } catch (error) {
+        console.error('Error al verificar el registro:', error);
+      }
+    };
+
+    // Ejecutar la función de verificación cuando cambie `id_conv` o `selectedMonth`
+    checkRegistroExistente();
+  }, [id_conv, selectedMonth]);
+
   // para recuperar los valores de precio FIN
   useEffect(() => {
     axios.get(URL2).then((res) => {
@@ -115,6 +149,7 @@ const IntegranteConveGet = ({ integrantes }) => {
         setConvenioDescripcion(response.data.descConve);
         setConvenioDescripcionUsu(response.data.desc_usu);
         setpermiteFam(response.data.permiteFam);
+        setpermiteFec(response.data.permiteFec);
         setcantFam(response.data.cantFamiliares);
       } catch (error) {
         console.error('Error al obtener el convenio:', error);
@@ -191,10 +226,10 @@ const IntegranteConveGet = ({ integrantes }) => {
   let results = [];
 
   if (Array.isArray(integrante)) {
-    const safeSearch = search ? search.toLowerCase() : "";
+    const safeSearch = search ? search.toLowerCase() : '';
 
     results = integrante.filter((dato) => {
-      const nombre = dato.nombre ? dato.nombre.toLowerCase() : "";
+      const nombre = dato.nombre ? dato.nombre.toLowerCase() : '';
       return nombre.includes(safeSearch);
     });
   }
@@ -230,13 +265,24 @@ const IntegranteConveGet = ({ integrantes }) => {
   }
 
   useEffect(() => {
-    // Calcular el total de preciofinal, convirtiendo cada valor a número
-    const total = records.reduce(
+    // Filtrar los registros para mostrar solo los del mes seleccionado
+    const registrosFiltrados = records.filter((integrante) => {
+      const mesRegistro = obtenerMes(integrante.fechaCreacion);
+      // Si permiteFam es 1, filtra por el mes seleccionado
+      if (newPermite === 1) {
+        return mesRegistro === selectedMonth; // Muestra solo los del mes seleccionado
+      } else return true; // Muestra todos sin importar el mes
+    });
+
+    // Calcular el total de preciofinal solo con los registros filtrados
+    const total = registrosFiltrados.reduce(
       (acc, integrante) => acc + Number(integrante.preciofinal),
       0
     );
+
     setTotalPrecioFinal(total);
-  }, [records]);
+  }, [records, selectedMonth]); // Asegúrate de que selectedMonth esté en las dependencias
+
   const formatearMoneda = (valor) => {
     return `$${Number(valor).toLocaleString('es-ES', {
       minimumFractionDigits: 0
@@ -250,15 +296,18 @@ const IntegranteConveGet = ({ integrantes }) => {
   };
 
   const handleCopyClick = () => {
-    const cbu = "0110372230037217312133";
-    navigator.clipboard.writeText(cbu).then(() => {
-      alert("CBU copiado al portapapeles");
-    }).catch(err => {
-      console.error("Error al copiar el CBU: ", err);
-    });
+    const cbu = '0110372230037217312133';
+    navigator.clipboard
+      .writeText(cbu)
+      .then(() => {
+        alert('CBU copiado al portapapeles');
+      })
+      .catch((err) => {
+        console.error('Error al copiar el CBU: ', err);
+      });
   };
 
-    const [fileName, setFileName] = useState(null);
+  const [fileName, setFileName] = useState(null);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -273,13 +322,35 @@ const IntegranteConveGet = ({ integrantes }) => {
     const horas = String(fechaObj.getHours()).padStart(2, '0');
     const minutos = String(fechaObj.getMinutes()).padStart(2, '0');
     const segundos = String(fechaObj.getSeconds()).padStart(2, '0');
-    
+
     return `${dia}/${mes}/${año} ${horas}:${minutos}:${segundos}`;
   };
-  
+
   const obtenerNombreUsuario = (email) => {
     // return email.split('@')[0];
-};
+  };
+
+  // Función para formatear la fecha y extraer el mes
+  const obtenerMes = (fecha) => {
+    const date = new Date(fecha);
+    return date.getMonth(); // Retorna el número de mes (0-11)
+  };
+
+  // Filtrar los registros para mostrar solo los del mes seleccionado
+  const registrosFiltrados = records.filter((integrante) => {
+    const mesRegistro = obtenerMes(integrante.fechaCreacion);
+    // Si permiteFam es 1, filtra por el mes seleccionado
+    if (newPermite === 1) {
+      return mesRegistro === selectedMonth; // Muestra solo los del mes seleccionado
+    } else return true; // Muestra todos sin importar el mes
+  });
+
+  const [showFileUpload, setShowFileUpload] = useState(false); // Estado para controlar la visibilidad
+
+  // Manejar el cambio del radio button
+  const handleRadioChange = (e) => {
+    setShowFileUpload(e.target.value === 'yes'); // Muestra el componente si se selecciona "Sí"
+  };
 
   return (
     <>
@@ -299,7 +370,6 @@ const IntegranteConveGet = ({ integrantes }) => {
             </h2>
           </div>
           {/* Descripcion convenio */}
-
           {(userLevel === 'admin' ||
             userLevel === '' ||
             userLevel === 'administrador') && (
@@ -307,9 +377,7 @@ const IntegranteConveGet = ({ integrantes }) => {
               <h1 className="pb-5">Descripción: {convenioDescripcion}</h1>
             </div>
           )}
-
           {/* Descripcion Usuario */}
-
           {(userLevel === 'admin' ||
             userLevel === 'gerente' ||
             userLevel === 'administrador') && (
@@ -319,7 +387,6 @@ const IntegranteConveGet = ({ integrantes }) => {
               </h1>
             </div>
           )}
-
           <div className="flex justify-center">
             <h1 className="pb-5">
               Listado de Integrantes: &nbsp;
@@ -338,31 +405,60 @@ const IntegranteConveGet = ({ integrantes }) => {
               className="border rounded-sm"
             />
           </form>
-
           {/* formulario de busqueda */}
           {(userLevel === 'gerente' ||
             userLevel === 'admin' ||
             userLevel === '' ||
-            userLevel === 'administrador') && (
-            <div className="flex justify-center pb-10">
-              <Link to="#">
-                <button
-                  onClick={abrirModal}
-                  className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
-                >
-                  Nuevo Integrante
-                </button>
-              </Link>
+            userLevel === 'administrador') &&
+            !registroExistente && (
+              <div className="flex justify-center pb-10">
+                <Link to="#">
+                  <button
+                    onClick={abrirModal}
+                    className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
+                  >
+                    Nuevo Integrante
+                  </button>
+                </Link>
+              </div>
+            )}
+          {/* Importar Clientes Excel - INICIO */}
+          <div className="text-center mb-4 font-bold uppercase">
+            <h3>Importar Clientes Excel</h3>
+            <div>
+              <label className="mr-2">
+                <input
+                  type="radio"
+                  value="yes"
+                  checked={showFileUpload}
+                  onChange={handleRadioChange}
+                />
+                Sí
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  value="no"
+                  checked={!showFileUpload}
+                  onChange={handleRadioChange}
+                />
+                No
+              </label>
             </div>
-          )}
 
-          {/* formulario de busqueda */}
-          {(userLevel === 'admin' ||
-            userLevel === '' ||
-            userLevel === 'administrador') && (
-            <FileUpload convenioId={id_conv} />
-          )}
+            {(userLevel === 'admin' ||
+              userLevel === '' ||
+              userLevel === 'administrador') &&
+              showFileUpload && <FileUpload convenioId={id_conv} />}
+          </div>
+          {/* Importar Clientes Excel - FINAL */}
 
+          {/* R8 - SE AGREGAN FECHAS PARA TRABAJAR EN CONVENIOS INICIO - BENJAMIN ORELLANA */}
+          {permiteFec == 1 && (
+            <FechasConvenios onMonthChange={setSelectedMonth} />
+          )}
+          {/* /* R8 - SE AGREGAN FECHAS PARA TRABAJAR EN CONVENIOS INICIO - BENJAMIN */}
+          {/* ORELLANA */}
           {Object.keys(results).length === 0 ? (
             <p className="text-center pb-10">
               El Integrante NO Existe ||{' '}
@@ -389,7 +485,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map((integrante) => (
+                  {registrosFiltrados.map((integrante) => (
                     <tr key={integrante.id}>
                       {/* <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {i.id}
@@ -464,15 +560,10 @@ const IntegranteConveGet = ({ integrantes }) => {
                       </td> */}
 
                       {/* ACCIONES */}
-                      {
-                        /*
-                      userLevel === 'gerente' ||
-                      userLevel === 'vendedor' ||
-                      userLevel === 'convenio' ||
-                      */
-                        (userLevel === 'admin' ||
-                          userLevel === 'gerente' ||
-                          userLevel === 'administrador') && (
+                      {(userLevel === 'admin' ||
+                        userLevel === 'gerente' ||
+                        userLevel === 'administrador') &&
+                        !registroExistente && (
                           <td className="">
                             <button
                               onClick={() =>
@@ -491,51 +582,11 @@ const IntegranteConveGet = ({ integrantes }) => {
                               Editar
                             </button>
                           </td>
-                        )
-                      }
+                        )}
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <div className="text-center mt-10">
-                <div className="cbu-container font-bignoodle">
-                  <span className="cbutext text-gray-600">
-                    {' '}
-                    REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU:
-                    0110372230037217312133
-                  </span>
-                  <img
-                    className="copy-icon"
-                    src={Copy}
-                    alt="Copy Icon"
-                    onClick={handleCopyClick}
-                  />
-                </div>
-                <p className="font-bignoodle text-gray-600 text-2xl">
-                  Titular: Marcelo Javier Garcia
-                </p>
-                <p className="font-bignoodle text-gray-600 text-2xl">
-                  CUIT: 20- 34.764.843 -5
-                </p>
-                <div colSpan="7" className="font-bold text-[#fc4b08] text-2xl">
-                  TOTAL
-                </div>
-                <div className="text-2xl">
-                  {formatearMoneda(totalPrecioFinal)}
-                </div>
-                <div className="flex gap-4 flex-wrap">
-                  <div className="flex-1 min-w-[300px]">
-                    {(userLevel === '' || userLevel === 'admin') && (
-                      <ImagesUpload convenioId={id_conv} />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-[300px]">
-                    {(userLevel === '' || userLevel === 'admin') && (
-                      <InvoicesUpload convenioId={id_conv} />
-                    )}
-                  </div>
-                </div>
-              </div>
               <nav className="flex justify-center items-center my-10">
                 <ul className="pagination">
                   <li className="page-item">
@@ -566,6 +617,53 @@ const IntegranteConveGet = ({ integrantes }) => {
                   </li>
                 </ul>
               </nav>
+              <div className="text-center mt-10">
+                <div className="cbu-container font-bignoodle">
+                  <span className="cbutext text-gray-600">
+                    {' '}
+                    REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU:
+                    0110372230037217312133
+                  </span>
+                  <img
+                    className="copy-icon"
+                    src={Copy}
+                    alt="Copy Icon"
+                    onClick={handleCopyClick}
+                  />
+                </div>
+                <p className="font-bignoodle text-gray-600 text-2xl">
+                  Titular: Marcelo Javier Garcia
+                </p>
+                <p className="font-bignoodle text-gray-600 text-2xl">
+                  CUIT: 20- 34.764.843 -5
+                </p>
+                <div colSpan="7" className="font-bold text-[#fc4b08] text-2xl">
+                  TOTAL
+                </div>
+                <div className="text-2xl">
+                  {formatearMoneda(totalPrecioFinal)}
+                </div>
+                <div className="flex gap-4 flex-wrap">
+                  <div className="flex-1 min-w-[300px]">
+                    {(userLevel === '' || userLevel === 'admin') && (
+                      <ImagesUpload
+                        convenioId={id_conv}
+                        selectedMonth={selectedMonth}
+                        setSelectedMonth={setSelectedMonth}
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-[300px]">
+                    {(userLevel === '' || userLevel === 'admin') && (
+                      <InvoicesUpload
+                        convenioId={id_conv}
+                        selectedMonth={selectedMonth}
+                        setSelectedMonth={setSelectedMonth}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
             </>
           )}
           <FormAltaIntegranteConve

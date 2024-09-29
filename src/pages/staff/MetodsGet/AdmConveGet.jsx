@@ -32,7 +32,7 @@ const AdmConveGet = () => {
 
   const [selectedConve, setSelectedConve] = useState(null);
   const [selectedConve2, setSelectedConve2] = useState(null);
-  
+
   const navigate = useNavigate(); // Hook para navegación
 
   const { userLevel } = useAuth();
@@ -46,10 +46,10 @@ const AdmConveGet = () => {
     obtenerConves();
   };
   // Estado para almacenar el término de búsqueda
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   //URL estatica, luego cambiar por variable de entorno
-  const URL = "http://localhost:8080/admconvenios/";
+  const URL = 'http://localhost:8080/admconvenios/';
 
   const handleVerIntegrantes = (id) => {
     setSelectedConve(id);
@@ -69,17 +69,17 @@ const AdmConveGet = () => {
       const response = await axios.get(URL);
       setConve(response.data);
     } catch (error) {
-      console.log("Error al obtener las personas :", error);
+      console.log('Error al obtener las personas :', error);
     }
   };
 
   const handleEliminarConve = async (id) => {
-    const confirmacion = window.confirm("¿Seguro que desea eliminar?");
+    const confirmacion = window.confirm('¿Seguro que desea eliminar?');
     if (confirmacion) {
       try {
         const url = `${URL}${id}`;
         const respuesta = await fetch(url, {
-          method: "DELETE",
+          method: 'DELETE'
         });
         await respuesta.json();
         const arrayConve = conve.filter((conve) => conve.id !== id);
@@ -163,6 +163,21 @@ const AdmConveGet = () => {
     setSelectedConve2(conve);
     setmodalNewConve(true);
   };
+  // Estado para almacenar el término de búsqueda
+  const [filterSede, setFilterSede] = useState(''); // Estado para el filtro de sede
+
+  // Función para manejar el cambio en el filtro de sede
+  const handleFilterSedeChange = (event) => {
+    setFilterSede(event.target.value);
+  };
+
+  const applySedeFilter = (conve) => {
+    if (!filterSede) {
+      return true; // Si no hay filtro de sede seleccionado, mostrar todo
+    }
+    const sede = conve.sede || ''; // Asignar una cadena vacía si `conve2.sede` es `null` o `undefined`
+    return sede.toLowerCase().includes(filterSede.toLowerCase());
+  };
   return (
     <>
       <NavbarStaff />
@@ -194,6 +209,16 @@ const AdmConveGet = () => {
                 placeholder="Buscar convenio"
                 className="border rounded-sm"
               />
+              <select
+                value={filterSede}
+                onChange={handleFilterSedeChange}
+                className="border rounded-sm ml-3"
+              >
+                <option value="">Todas las sedes</option>
+                <option value="Multisede">Multi Sede</option>
+                <option value="Monteros">Monteros</option>
+                <option value="Concepción">Concepción</option>
+              </select>
             </form>
             {/* formulario de busqueda */}
 
@@ -224,17 +249,22 @@ const AdmConveGet = () => {
           ) : (
             <div>
               <div className="grid grid-cols-3 gap-10 mx-auto pb-10 lg:grid-cols-3 max-sm:grid-cols-1 md:grid-cols-2">
-                {results.map((conve) => (
+                {results.filter(applySedeFilter).map((conve) => (
                   <div key={conve.id} className="bg-white p-6 rounded-md">
-                    <h2>
-                      CONVENIO:{' '}
-                      <span className="font-semibold">{conve.nameConve}</span>
+                    <h2 className="btnstaff">
+                      {/* CONVENIO:{' '} */}
+                      <span className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
+                        {conve.nameConve}
+                      </span>
                     </h2>
-                    <p>
+
+                    {/* <p>
                       DESCRIPCIÓN:{' '}
                       <span className="font-semibold">{conve.descConve}</span>
                     </p>
-                    {(userLevel === 'admin' ||
+                     */}
+
+                    {/* {(userLevel === 'admin' ||
                       userLevel === 'administrador') && (
                       <p>
                         PRECIO:{' '}
@@ -247,8 +277,8 @@ const AdmConveGet = () => {
                             : 'Sin precio'}
                         </span>
                       </p>
-                    )}
-                    {(userLevel === 'admin' ||
+                    )} */}
+                    {/* {(userLevel === 'admin' ||
                       userLevel === 'administrador') && (
                       <p>
                         DESCUENTO:{' '}
@@ -258,8 +288,8 @@ const AdmConveGet = () => {
                             : 'Sin descuento'}
                         </span>
                       </p>
-                    )}
-                    {(userLevel === 'admin' ||
+                    )} */}
+                    {/* {(userLevel === 'admin' ||
                       userLevel === 'administrador') && (
                       <p>
                         PRECIO FINAL:{' '}
@@ -275,15 +305,27 @@ const AdmConveGet = () => {
                             : 'Sin precio final'}
                         </span>
                       </p>
-                    )}
-                    <p>
+                    )} */}
+
+                    {/* <p>
                       <span className="font-semibold">
-                        {/* {console.log('permiteFam:', conve.permiteFam)} */}
                         {Number(conve.permiteFam) === 1
                           ? `Permite familiar: ${conve.cantFamiliares}`
                           : 'No permite familiar'}
                       </span>
                     </p>
+                     */}
+
+                    {(userLevel === 'admin' ||
+                      userLevel === 'administrador') && (
+                      <p className="btnstaff mt-2">
+                        SEDE:{' '}
+                        <span className="font-semibold uppercase">
+                          {conve.sede}
+                        </span>
+                      </p>
+                    )}
+
                     <Link
                       to={`/dashboard/admconvenios/${conve.id}/integrantes/`}
                     >
@@ -294,30 +336,23 @@ const AdmConveGet = () => {
                       </button>
                     </Link>
 
-                    {
-                      /*
-                      userLevel === 'gerente' ||
-                      userLevel === 'vendedor' ||
-                      userLevel === 'convenio' ||
-                      */
-                      (userLevel === 'admin' ||
-                        userLevel === 'administrador') && (
-                        <div>
-                          <button
-                            onClick={() => handleEliminarConve(conve.id)}
-                            style={{ ...styles.button, backgroundColor: 'red' }}
-                          >
-                            Eliminar
-                          </button>
-                          <button
-                            onClick={() => handleEditarConve(conve)}
-                            className="py-2 px-4 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
-                          >
-                            Editar
-                          </button>
-                        </div>
-                      )
-                    }
+                    {(userLevel === 'admin' ||
+                      userLevel === 'administrador') && (
+                      <div>
+                        <button
+                          onClick={() => handleEliminarConve(conve.id)}
+                          style={{ ...styles.button, backgroundColor: 'red' }}
+                        >
+                          Eliminar
+                        </button>
+                        <button
+                          onClick={() => handleEditarConve(conve)}
+                          className="py-2 px-4 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
+                        >
+                          Editar
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
                 {selectedConve && (

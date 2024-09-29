@@ -139,7 +139,8 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
             descuento: conve2 ? conve2.descuento : '',
             preciofinal: conve2 ? conve2.preciofinal : '',
             permiteFam: conve2 ? conve2.permiteFam : false,
-            cantFamiliares: conve2 ? conve2.cantFamiliares : 0
+            cantFamiliares: conve2 ? conve2.cantFamiliares : 0,
+            permiteFec: conve2 ? conve2.permiteFec : 0 // Ajustado para ser un valor numérico nuevo requerimiento R8 - BO
           }}
           enableReinitialize
           // cuando hacemos el submit esperamos a que cargen los valores y esos valores tomados se lo pasamos a la funcion handlesubmit que es la que los espera
@@ -281,13 +282,34 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                           {number}
                         </label>
                       ))}
-                      {/* <ErrorMessage
-                        name="cantFamiliares"
-                        component="div"
-                        className="text-red-500"
-                      /> */}
                     </div>
                   )}
+                  <div className="mb-3 px-4">
+                    <label>Permite Fechas</label>
+                    <div className="d-flex">
+                      <label className="me-3">
+                        <Field
+                          type="radio"
+                          name="permiteFec"
+                          value="1"
+                          checked={values.permiteFec === 1}
+                          onChange={() => setFieldValue('permiteFec', 1)}
+                        />
+                        Sí
+                      </label>
+                      <label>
+                        <Field
+                          type="radio"
+                          name="permiteFec"
+                          value="0"
+                          checked={values.permiteFec === 0}
+                          onChange={() => setFieldValue('permiteFec', 0)}
+                        />
+                        No
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="mx-auto flex justify-center my-5">
                     <input
                       type="submit"
