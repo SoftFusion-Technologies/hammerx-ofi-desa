@@ -84,8 +84,23 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
     return imageMonth === parseInt(selectedMonth, 10);
   });
 
+  // Definir el año y el día:
+  const year = new Date().getFullYear(); // El año actual
+  const day = 1; // Primer día del mes
+
+  // Crear una fecha con el formato: YYYY-MM-DD HH:MM:SS
+  const fechaCompleta = new Date(year, selectedMonth, day, 0, 0, 0);
+
+  // Convertir la fecha a una cadena en el formato que MySQL acepta: YYYY-MM-DD HH:MM:SS
+  const fechaFormateada = fechaCompleta
+    .toISOString()
+    .slice(0, 19)
+    .replace('T', ' ');
+
+  console.log(fechaFormateada);
+ 
   // Handle file change
-  const handleFileChange = (e) => {
+   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
 
@@ -102,6 +117,10 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
     const formData = new FormData();
     formData.append('file', file);
 
+    // pasar fecha
+    const newFec = fechaFormateada
+    formData.append('fecha', newFec); // Añade la fecha al FormData
+
     try {
       const response = await axios.post(
         `http://localhost:8080/uploadfac/${convenioId}`,
@@ -114,7 +133,6 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
       );
 
       if (response.status === 200) {
-        // Add the newly uploaded image to the list
         setImagess([...imagess, response.data.imageUrl]);
         alert('Imagen subida con éxito.');
       }

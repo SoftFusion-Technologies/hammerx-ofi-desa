@@ -61,9 +61,9 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
         // Verificar si hay registros y si el mes de "created_at" coincide con el mes seleccionado
         const existeRegistroEnMes = data.some((item) => {
           // Obtener el mes del campo "created_at" (0 = Enero, 1 = Febrero, etc.) y sumarle 1 para representar de 1 a 12
-          const mesRegistro = new Date(item.created_at).getMonth();
+          const mesRegistro = new Date(item.created_at).getMonth() + 1;
           console.log('mes', mesRegistro);
-          return mesRegistro === selectedMonth;
+          return mesRegistro === selectedMonth + 1;
         });
 
         setRegistroExistente(existeRegistroEnMes);
@@ -82,6 +82,22 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
     const imageMonth = new Date(image.created_at).getMonth();
     return imageMonth === parseInt(selectedMonth, 10);
   });
+
+  // Definir el año y el día:
+  const year = new Date().getFullYear(); // El año actual
+  const day = 1; // Primer día del mes
+
+  // Crear una fecha con el formato: YYYY-MM-DD HH:MM:SS
+  const fechaCompleta = new Date(year, selectedMonth, day, 0, 0, 0);
+
+  // Convertir la fecha a una cadena en el formato que MySQL acepta: YYYY-MM-DD HH:MM:SS
+  const fechaFormateada = fechaCompleta
+    .toISOString()
+    .slice(0, 19)
+    .replace('T', ' ');
+
+  console.log(fechaFormateada);
+
   // Handle file change
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -99,6 +115,10 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
 
     const formData = new FormData();
     formData.append('file', file);
+
+    // pasar fecha
+    const newFec = fechaFormateada;
+    formData.append('fecha', newFec); // Añade la fecha al FormData
 
     try {
       const response = await axios.post(
@@ -146,7 +166,7 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
         </span>
       </h2>
 
-      {userLevel === '' && !registroExistente && (
+      {userLevel === 'admin' && !registroExistente && (
         <div className="input-group flex items-center space-x-4 mb-4">
           <input
             type="file"
