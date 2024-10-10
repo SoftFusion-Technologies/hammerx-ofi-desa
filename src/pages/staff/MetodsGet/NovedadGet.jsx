@@ -610,6 +610,22 @@ const NovedadGet = () => {
                         </b>
                       </div>
 
+                      {userLevel === 'admin' ||
+                        userLevel === 'administrador' || (
+                          <div>
+                            {novedad.novedadUsers &&
+                              novedad.novedadUsers.some(
+                                (novedadUser) => !novedadUser.leido
+                              ) && (
+                                <div className="border border-black bg-white  p-4 rounded mt-4">
+                                  <p className="text-red-500 font-bold uppercase text-center">
+                                    NO MARCASTE COMO LEIDA ESTA NOVEDAD
+                                  </p>
+                                </div>
+                              )}
+                          </div>
+                        )}
+
                       {vencimientos
                         .filter(
                           (vencimiento) => vencimiento.novedad_id === novedad.id
