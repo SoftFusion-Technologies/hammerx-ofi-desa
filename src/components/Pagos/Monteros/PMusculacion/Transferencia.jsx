@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import '../../../../styles/Pagos/styles/transferencia.css';
 // import copy from '../../Images/copy.png';
 import copy from '../../../../images/Pagos/Images/copy.png';
@@ -14,6 +14,9 @@ const Transferencia = () => {
       console.error("Error al copiar el CBU: ", err);
     });
   };
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []); // El array vacío asegura que useEffect solo se ejecute al montar el componente
 
 const numMonteros = '3863564651';
 

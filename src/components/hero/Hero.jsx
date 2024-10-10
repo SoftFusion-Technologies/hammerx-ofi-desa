@@ -17,7 +17,8 @@ import { guionesnar } from "../../images";
 import { useEffect, useState } from "react";
 import { flecha1, flecha2, logo, hero2 } from "../../images/svg/index";
 import { video } from "../../Video";
-
+import { video2 } from '../../Video';
+import './hero.css'
 const Hero = () => {
   useEffect(() => {
     Aos.init({ duration: 1500, delay: "200" });
@@ -25,6 +26,17 @@ const Hero = () => {
 
   const [mostrarBotonesSedes, setMostrarBotonesSedes] = useState(false);
   const [videoVisible, setVideoVisible] = useState(true);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+
+  // Esto espera 2 segundos y luego habilita el video
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVideoReady(true);
+    }, 1000);
+
+    return () => clearTimeout(timer); // Limpiar el temporizador al desmontar el componente
+  }, []);
+
 
   const toggleSedes = () => {
     //mostrar botones de sedes
@@ -47,7 +59,7 @@ const Hero = () => {
         <div className="w-5/6 h-auto pb-5 border-4 border-orange-600 rounded-xl mx-auto mt-5 max-sm:mt-16">
           <div>
             <p className="max-md:text-sm text-center px-6 pt-6 font-messina dark:text-white">
-              ¡Bienvenidos a nuestro sitio oficial!{" "}
+              ¡Bienvenidos a nuestro sitio oficial!{' '}
             </p>
             <p className="max-md:text-sm text-center px-6 font-messina dark:text-white">
               Todo lo que necesitas saber para entrenar con nosotros en un solo
@@ -71,12 +83,12 @@ const Hero = () => {
               </li>
               {mostrarBotonesSedes && (
                 <div className="flex mx-auto mb-2 max-sm:flex-col">
-                  <Link to={"/Sedes/Concepcion"} className="max-sm:mx-auto">
+                  <Link to={'/Sedes/Concepcion'} className="max-sm:mx-auto">
                     <button className="bg-[#fc4b08] transition hover:bg-[#fc6e08] text-white  py-2 px-4 rounded sm:mr-4">
                       CONCEPCIÓN
                     </button>
                   </Link>
-                  <Link to={"/Sedes/Monteros"} className="max-sm:mx-auto">
+                  <Link to={'/Sedes/Monteros'} className="max-sm:mx-auto">
                     <button className="bg-[#fc4b08] transition hover:bg-[#fc6e08] text-white  py-2 px-4 rounded max-sm:mt-2">
                       MONTEROS
                     </button>
@@ -140,30 +152,24 @@ const Hero = () => {
       </div>
 
       {/* Mobile content */}
-      <div className="md:hidden w-full px-10 max-sm:px-6 mt-5 flex flex-col py-10">
-
+      <div className="md:hidden w-full  mt-1 mb-1 py-10">
         <img src={logo} alt="logo" className="max-sm:mt-5" />
 
-        <div
-          data-aos="fade-left"
-          className="relative dark:bg-gradient-to-r from-gray-700 to-gray-900"
-        >
-          {/* <video
-            src={video}
-            autoPlay
-            loop
-            controls
-            muted
-            className="w-full h-[300px] object-cover pt-10"
-          /> */}
-          <iframe
-            src="https://www.youtube.com/embed/SQ_Lv07MOSg?autoplay=1&controls=1&showinfo=0&modestbranding=1"
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-            className="w-full h-[300px] object-cover pt-10"
-          ></iframe>
+        <div className="relative w-full dark:bg-gradient-to-r from-gray-700 to-gray-900">
+          {isVideoReady ? (
+            <video
+              src={video2}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              className="full-width-video h-[300px] object-cover pt-10"
+            />
+          ) : (
+            <p className="text-center pt-10 text-black"></p>
+          )}
         </div>
-
         <img
           className="w-8 h-80 absolute bottom-10 left-0 sm:hidden max-sm:-ml-4"
           src={guionesnar}
@@ -178,7 +184,7 @@ const Hero = () => {
         <div className="w-5/6 h-auto pb-5 border-4 border-orange-600 rounded-xl mx-auto mt-5 max-sm:mt-16">
           <div>
             <p className="max-md:text-sm text-center px-6 pt-6 font-messina dark:text-white">
-              ¡Bienvenidos a nuestro sitio oficial!{" "}
+              ¡Bienvenidos a nuestro sitio oficial!{' '}
             </p>
             <p className="max-md:text-sm text-center px-6 font-messina dark:text-white">
               Todo lo que necesitas saber para entrenar con nosotros en un solo
@@ -202,12 +208,12 @@ const Hero = () => {
               </li>
               {mostrarBotonesSedes && (
                 <div className="flex mx-auto mb-2 max-sm:flex-col">
-                  <Link to={"/Sedes/Concepcion"} className="max-sm:mx-auto">
+                  <Link to={'/Sedes/Concepcion'} className="max-sm:mx-auto">
                     <button className="bg-[#fc4b08] transition hover:bg-[#fc6e08] text-white  py-2 px-4 rounded sm:mr-4">
                       CONCEPCIÓN
                     </button>
                   </Link>
-                  <Link to={"/Sedes/Monteros"} className="max-sm:mx-auto">
+                  <Link to={'/Sedes/Monteros'} className="max-sm:mx-auto">
                     <button className="bg-[#fc4b08] transition hover:bg-[#fc6e08] text-white  py-2 px-4 rounded max-sm:mt-2">
                       MONTEROS
                     </button>

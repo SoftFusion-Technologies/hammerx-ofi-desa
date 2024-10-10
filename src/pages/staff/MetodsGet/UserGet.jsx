@@ -32,7 +32,6 @@ const UserGet = () => {
   const [filterLevel, setFilterLevel] = useState(''); // Estado para el filtro de level (ROL)
   const { userLevel } = useAuth();
 
-
   const abrirModal = () => {
     setModalNewUser(true);
   };
@@ -128,13 +127,14 @@ const UserGet = () => {
     setFilterSede(event.target.value);
   };
 
-  // Función para aplicar el filtro por sede
-  const applySedeFilter = (user) => {
-    if (!filterSede) {
-      return true; // Si no hay filtro de sede seleccionado, mostrar todos los usuarios
-    }
-    return user.sede.toLowerCase().includes(filterSede.toLowerCase());
-  };
+const applySedeFilter = (user) => {
+  if (!filterSede) {
+    return true; // Si no hay filtro de sede seleccionado, mostrar todos los usuarios
+  }
+  const sede = user.sede || ''; // Asignar una cadena vacía si `user.sede` es `null` o `undefined`
+  return sede.toLowerCase().includes(filterSede.toLowerCase());
+};
+
 
   // Función para manejar el cambio en el filtro de level (ROL)
   const handleFilterLevelChange = (event) => {
@@ -151,7 +151,11 @@ const UserGet = () => {
 
   // Función para ordenar los integrantes de forma alfabética basado en el nombre
   const ordenarIntegranteAlfabeticamente = (user) => {
-    return [...user].sort((a, b) => a.sede.localeCompare(b.sede));
+    return [...user].sort((a, b) => {
+      const sedeA = a.sede || ''; // Reemplaza null o undefined por una cadena vacía
+      const sedeB = b.sede || '';
+      return sedeA.localeCompare(sedeB);
+    });
   };
 
   // Llamada a la función para obtener los usuarios ordenados de forma creciente

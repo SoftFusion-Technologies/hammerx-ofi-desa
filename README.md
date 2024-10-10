@@ -60,4 +60,3 @@ Contacto
 Si tienes alguna pregunta o inquietud relacionada con este repositorio, no dudes en ponerte en contacto con el equipo de desarrollo de SoftFusion a través de correo electrónico o abriendo un issue.
 
 ¡Gracias por contribuir al éxito de SoftFusion!
-# hammerx-ofi-desa

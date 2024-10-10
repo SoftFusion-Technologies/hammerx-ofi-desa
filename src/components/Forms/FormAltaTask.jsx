@@ -85,12 +85,12 @@ const FormAltaTask = ({ isOpen, onClose, task, setSelectedTask }) => {
         setTimeout(() => {
           setShowModal(false);
           onClose();
-        }, 3000);
+        }, 1500);
       }
     } catch (error) {
       console.error("Error al insertar el registro:", error.message);
       setErrorModal(true);
-      setTimeout(() => setErrorModal(false), 3000);
+      setTimeout(() => setErrorModal(false), 1500);
     }
   };
 

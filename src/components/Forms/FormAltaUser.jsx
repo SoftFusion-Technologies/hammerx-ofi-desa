@@ -98,7 +98,7 @@ const FormAltaUser = ({ isOpen, onClose, user, setSelectedUser }) => {
         setTimeout(() => {
           setShowModal(false);
           onClose();
-        }, 3000);
+        }, 1500);
       }
     } catch (error) {
       console.error('Error al insertar el registro:', error.message);
@@ -109,7 +109,7 @@ const FormAltaUser = ({ isOpen, onClose, user, setSelectedUser }) => {
       // Ocultar la ventana modal de éxito después de 3 segundos
       setTimeout(() => {
         setErrorModal(false);
-      }, 3000);
+      }, 1500);
     }
   };
   const handleClose = () => {

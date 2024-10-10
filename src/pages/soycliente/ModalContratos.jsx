@@ -2,10 +2,19 @@ import React, { useState } from "react";
 import "../../styles/clients/botones.css";
 import "../../styles/clients/cards.css";
 import flecha from '../../images/flecha.png'
+import { FaWhatsapp } from 'react-icons/fa';  // Importamos el ícono de WhatsApp
 
-function ModalContratos({ anterior, siguiente}) { //recibo las funciones que contienen la posición del modal siguiente y anterior
+function ModalContratos({ anterior, siguiente}) {
+  //recibo las funciones que contienen la posición del modal siguiente y anterior
   const [isOpen, setIsOpen] = useState(true);
 
+  const [mensajeMonteros, setMensajeMonteros] = useState(
+    'Hola! Vengo de la página web, quiero consultar por Congelamiento de Contratos Monteros.'
+  );
+
+  const [mensajeConcepcion, setMensajeConcepcion] = useState(
+    'Hola! Vengo de la página web, quiero consultar por Congelamiento de Contratos Concepción.'
+  );
   const toggleModal = () => {
     setIsOpen(!isOpen);
   };
@@ -13,6 +22,19 @@ function ModalContratos({ anterior, siguiente}) { //recibo las funciones que con
   const closeModal = () => {
     setIsOpen(false);
   };
+
+
+  const encodeMessage = (message) => {
+    return encodeURIComponent(message);
+  };
+
+
+  const wspLinkMonteros = `https://wa.me/5493863564651?text=${encodeMessage(
+    mensajeMonteros
+  )}`; // Número de WhatsApp para Monteros
+  const wspLinkConcepcion = `https://wa.me/5493865855100?text=${encodeMessage(
+    mensajeConcepcion
+  )}`; // Número de WhatsApp para Concepción
 
   return (
     <>
@@ -33,8 +55,15 @@ function ModalContratos({ anterior, siguiente}) { //recibo las funciones que con
             className="flex items-center justify-center fixed top-0 right-0 left-0 bottom-0 z-50"
           >
             {/* En la flecha anterior el evento click muestra el modal de la posición recibida por parametro */}
-            <img onClick={anterior} className="h-10 cursor-pointer transition hover:invert" src={flecha} alt="Flecha" />
-            <div className="relative p-4 w-[80%] lg:w-full max-w-5xl max-h-full mt-10"> {/* Se modificó en ancho del modal de full a 80% para que se visualicen las flechas en mobile, cambiado por Rafael Peralta */}
+            <img
+              onClick={anterior}
+              className="h-10 cursor-pointer transition hover:invert"
+              src={flecha}
+              alt="Flecha"
+            />
+            <div className="relative p-4 w-[80%] lg:w-full max-w-5xl max-h-full mt-10">
+              {' '}
+              {/* Se modificó en ancho del modal de full a 80% para que se visualicen las flechas en mobile, cambiado por Rafael Peralta */}
               {/* Modal content */}
               <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
                 {/* Modal header */}
@@ -69,21 +98,35 @@ function ModalContratos({ anterior, siguiente}) { //recibo las funciones que con
                 {/* Modal body */}
                 <div className="p-4 md:p-5 space-y-4 overflow-y-auto max-h-96 overflow-hidden">
                   <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
-                    Se podrá solicitar el congelamiento de contratos desde el
-                    día solicitado en adelante (no pudiendo ser recuperados
-                    aquellos días ya perdidos), por un plazo máximo variable y
-                    dependiente del tipo de plan contratado.
+                    El gimnasio se compromete a brindar su servicio por el
+                    periodo de tiempo contratado, el congelamiento de contrato
+                    es un beneficio con el que cuenta el cliente y solo podrá
+                    solicitarlo en situaciones particulares respetando las
+                    siguientes condiciones:
                   </p>
                   <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
-                    Para activar el beneficio de congelamiento, la fecha debe
-                    ser acordada previamente y luego no podrá ser modificada.
-                    Plazo para pedir el congelamiento:
+                    1_ El congelamiento se puede solicitar POR UNICA VEZ por
+                    contrato.
+                  </p>
+                  <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
+                    2_ Casos de solicitud: Lesiones o enfermedades que
+                    imposibiliten al mismo asistir al gimnasio con certificado
+                    medico que lo avale Viajes en temporada o vacaciones con
+                    comprobante de reserva (pasaje, hospedaje, etc).
+                  </p>
+                  <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
+                    3_ No se realizan devoluciones o recuperaciones de días
+                    perdidos, el congelamiento siempre se debe solicitar previo
+                    a la inasistencia.
                   </p>
                   <div className="flex max-md:flex-col">
                     <div className="cardcontratos max-md:mx-auto">
                       <div className="content">
-                        <p className="heading">Planes mensuales</p>
-                        <p className="para">
+                        <p className="heading">
+                          Plan Mensual y Trimestral: 7 (mínimo) a 30 (máximo)
+                          días
+                        </p>
+                        {/* <p className="para">
                           Se podrá realizar dentro de toda la duración del
                           contrato y por única vez, con una extensión mínima de
                           14 días y máxima de 30 días, solicitados por los
@@ -93,13 +136,15 @@ function ModalContratos({ anterior, siguiente}) { //recibo las funciones que con
                           ocurridas fuera del gimnasio) y en el cual HAMMER
                           asuma responsabilidad de la misma, Viajes laborales o
                           vacaciones en temporada (con factura de reserva).
-                        </p>
+                        </p> */}
                       </div>
                     </div>
                     <div className="cardcontratos  max-md:mx-auto">
                       <div className="content">
-                        <p className="heading">Planes Semestrales</p>
-                        <p className="para">
+                        <p className="heading">
+                          Plan Semestral: 7 (mínimo) a 30 (máximo) días
+                        </p>
+                        {/* <p className="para">
                           Se podrá congelar dentro de toda la duración del mismo
                           y por única vez, con una extensión mínima de 14 días y
                           máxima de 60 días y solicitados por los siguientes
@@ -109,13 +154,15 @@ function ModalContratos({ anterior, siguiente}) { //recibo las funciones que con
                           gimnasio) y en el cual HAMMER asuma responsabilidad de
                           la misma, Viajes laborales o vacaciones en temporada
                           (con factura de reserva).
-                        </p>
+                        </p> */}
                       </div>
                     </div>
                     <div className="cardcontratos  max-md:mx-auto">
                       <div className="content">
-                        <p className="heading">Planes Anuales</p>
-                        <p className="para">
+                        <p className="heading">
+                          Plan Anual: 7 (mínimo) a 60 (máximo) días.
+                        </p>
+                        {/* <p className="para">
                           Se podrá congelar dentro de toda la duración del
                           mismo, con una extensión mínima de 14 días y máxima de
                           45 días y solicitados por los siguientes motivos.
@@ -125,25 +172,58 @@ function ModalContratos({ anterior, siguiente}) { //recibo las funciones que con
                           el cual HAMMER asuma responsabilidad de la misma,
                           Viajes laborales o vacaciones en temporada (con
                           factura de reserva).
-                        </p>
+                        </p> */}
                       </div>
                     </div>
                   </div>
-                  <p className="text-gray-500">Todos los congelamientos deben ser solicitados y aceptados antes de la inasistencia, quedando imposibilitada la opcion de recuperar los días luego de ya haber sido perdidos. NOTA: Todos los planes pueden ser abonados y dar inicio en la fecha acordada.</p>
+                  {/* <p className="text-gray-500">
+                    Todos los congelamientos deben ser solicitados y aceptados
+                    antes de la inasistencia, quedando imposibilitada la opcion
+                    de recuperar los días luego de ya haber sido perdidos. NOTA:
+                    Todos los planes pueden ser abonados y dar inicio en la
+                    fecha acordada.
+                  </p> */}
                 </div>
                 {/* Modal footer */}
-                <div className="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
+                <div className="flex flex-col md:flex-row items-center justify-between p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600 space-y-4 md:space-y-0 md:space-x-4">
                   <button
                     onClick={closeModal}
                     type="button"
-                    className="text-white bg-orange-500 hover:bg-[#fc4b08] focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-[#fc4b08] dark:focus:ring-orange-700"
+                    className="w-full md:w-auto text-white bg-orange-500 hover:bg-[#fc4b08] focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-[#fc4b08] dark:focus:ring-orange-700"
                   >
                     Aceptar
                   </button>
+
+                  {/* Iconos de WhatsApp */}
+                  <div className="flex w-full md:w-auto justify-between space-x-4">
+                    <a
+                      href={wspLinkMonteros}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2"
+                    >
+                      <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
+                      <span className="text-sm text-gray-900 dark:text-white">
+                        Monteros
+                      </span>
+                    </a>
+                    <a
+                      href={wspLinkConcepcion}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2"
+                    >
+                      <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
+                      <span className="text-sm text-gray-900 dark:text-white">
+                        Concepción
+                      </span>
+                    </a>
+                  </div>
+
                   <button
                     onClick={closeModal}
                     type="button"
-                    className="py-2.5 px-5 ms-3 text-sm font-medium text-gray-600 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-[#fc4b08] focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                    className="w-full md:w-auto py-2.5 px-5 text-sm font-medium text-gray-600 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-[#fc4b08] focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
                   >
                     Cancelar
                   </button>
@@ -151,7 +231,12 @@ function ModalContratos({ anterior, siguiente}) { //recibo las funciones que con
               </div>
             </div>
             {/* En la flecha anterior el evento click muestra el modal de la posición recibida por parametro */}
-            <img onClick={siguiente} className="h-10 transform rotate-180 cursor-pointer transition hover:invert" src={flecha} alt="Flecha" />
+            <img
+              onClick={siguiente}
+              className="h-10 transform rotate-180 cursor-pointer transition hover:invert"
+              src={flecha}
+              alt="Flecha"
+            />
           </div>
         </>
       )}

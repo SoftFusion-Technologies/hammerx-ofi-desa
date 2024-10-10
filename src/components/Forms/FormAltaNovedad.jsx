@@ -28,6 +28,7 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
   const [users, setUsers] = useState([]);
   const [selectedSede, setSelectedSede] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectAllUsers, setSelectAllUsers] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
@@ -76,6 +77,17 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
     );
   };
 
+  const handleSelectAllUsers = () => {
+    setSelectAllUsers(!selectAllUsers);
+
+    if (!selectAllUsers) {
+      // Selecciona todos los usuarios
+      setSelectedUsers(users.map((user) => user.id));
+    } else {
+      // Deselecciona todos los usuarios
+      setSelectedUsers([]);
+    }
+  };
   const handleSubmitNovedad = async (valores) => {
      try {
        const data = {
@@ -119,11 +131,11 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
        console.log('Registro insertado correctamente:', result);
 
        setShowModal(true);
-       setTimeout(() => setShowModal(false), 3000);
+       setTimeout(() => setShowModal(false), 1500);
      } catch (error) {
        console.error('Error al insertar el registro:', error.message);
        setErrorModal(true);
-       setTimeout(() => setErrorModal(false), 3000);
+       setTimeout(() => setErrorModal(false), 1500);
      }
   };
   const handleClose = () => {
@@ -158,7 +170,7 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
           validationSchema={nuevoNovedadSchema}
         >
           {({ errors, touched, setFieldValue, values }) => (
-            <div className="py-0 max-h-[500px] max-w-[400px] w-[400px] overflow-y-auto bg-white rounded-xl">
+            <div className="-mt-10 py-0 max-h-[900px] max-w-[500px] w-[400px] overflow-y-auto bg-white rounded-xl">
               <Form className="formulario max-sm:w-[300px] bg-white">
                 <div className="flex justify-between">
                   <div className="tools">
@@ -193,20 +205,31 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
                     required
                   >
                     <option value="" disabled>
-                      Sucursal: Todas
+                      Selecciona tu sucursal
                     </option>
-                    <option value="todas">Todas</option>
+                    <option value="todas">Sucursal: Todas</option>
                     <option value="monteros">Monteros</option>
                     <option value="concepcion">Concepción</option>
+
+                    
                   </Field>
                   {errors.sede && touched.sede ? (
                     <Alerta>{errors.sede}</Alerta>
                   ) : null}
                 </div>
                 <div className="mb-4 px-4">
-                  <label className="form-label">
-                    Selecciona uno o más usuarios:
-                  </label>
+                  <div className="form-check">
+                    <input
+                      type="checkbox"
+                      id="select-all-users"
+                      className="form-check-input"
+                      onChange={handleSelectAllUsers}
+                      checked={selectAllUsers}
+                    />
+                    <label htmlFor="select-all-users" className="form-check-label">
+                      Seleccionar todos los usuarios
+                    </label>
+                  </div>
                   {Array.isArray(users) && users.length > 0 ? (
                     users.map((user) => (
                       <div key={user.id} className="form-check">

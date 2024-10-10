@@ -6,6 +6,7 @@ import Transferencia from '../../../images/Pagos/Images/transferencia.png';
 import Efectivo from '../../../images/Pagos/Images/efectivo.png';
 import Promociones from '../../../components/Pagos/Promociones';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const PrincipalMusculacion = () => {
     
@@ -24,6 +25,10 @@ const handleDebitoClick = () => {
 };
   const numMonteros = '3863564651';
   
+    useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []); // El array vacío asegura que useEffect solo se ejecute al montar el componente
+
   return (
     <div className="content_v2 back_v2">
       <img src={Logo1} alt="Logo1_v2" className="logo_v2" />
@@ -35,21 +40,6 @@ const handleDebitoClick = () => {
           Estás por abonar $19.000 de: mes musculación (sede monteros)
         </p>
       </div>
-      {/* <div className="plan-info_v2">
-        <p className="plan-text_v2">Monto a abonar: $19.000</p>
-      </div> */}
-
-      {/* <div className="payment-info_v2" style={{ cursor: 'not-allowed' }}>
-        <img
-          src={Tarjeta}
-          alt="Tarjeta de crédito"
-          className="card-icon_v2"
-          style={{ backgroundColor: '#C3C3C3' }}
-        />
-        <p className="payment-text_v2" style={{ backgroundColor: '#C3C3C3' }}>
-          Tarjeta de crédito
-        </p>
-      </div> */}
 
       <div className="payment-info_v2" onClick={handleDebitoClick}>
         <img src={Tarjeta} alt="Tarjeta de débito" className="card-icon_v2" />

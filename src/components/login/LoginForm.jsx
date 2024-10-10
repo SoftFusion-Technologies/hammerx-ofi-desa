@@ -57,13 +57,13 @@ const LoginForm = () => {
       setLoading(true);
 
       axios
-        .post("http://localhost:8080/login", values)
+        .post('http://localhost:8080/login', values)
         .then((res) => {
-          if (res.data.message === "Success") {
+          if (res.data.message === 'Success') {
             login(res.data.token, values.email, res.data.level);
-            navigate("/dashboard");
+            navigate('/dashboard');
           } else {
-            setModalMessage("Usuario o Contraseña incorrectos");
+            setModalMessage('Usuario o Contraseña incorrectos');
             setIsModalOpen(true);
           }
         })

@@ -1,18 +1,22 @@
-import React from 'react'
+import React,{useEffect} from 'react'
 import '../../../../styles/Pagos/styles/efectivo.css'
 import Promociones from '../../Promociones';
 import BackButton from '../../Arrow';
 
 const Efectivo = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []); // El array vacío asegura que useEffect solo se ejecute al montar el componente
+
 const numMonteros = '3863564651'
   return (
     <div className="content-efectivo_v2 font-bignoodle">
-      <div className='header_2'>
+      <div className="header_2">
         <div>
-          <p className='fondo_v2'>EFECTIVO</p>
-          <p className='title_v2'>EFECTIVO</p>
+          <p className="fondo_v2">EFECTIVO</p>
+          <p className="title_v2">EFECTIVO</p>
         </div>
-        <div className='backarrow'>
+        <div className="backarrow">
           <BackButton />
         </div>
       </div>

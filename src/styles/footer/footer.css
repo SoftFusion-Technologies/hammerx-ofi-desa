@@ -1,7 +1,7 @@
 .main6 {
   height: auto;
   padding: 60px;
-  background: linear-gradient(rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.88)), url('../images/a.jpg') center/cover no-repeat;
+  /* background: linear-gradient(rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.88)), url('../images/a.jpg') center/cover no-repeat; */
   background-size: cover;
   background-color: #000;
   color: #fff;

@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { guionesnar } from "../../images/index";
 import "../../styles/main/about.css";
-
 const About = () => {
+
   return (
     <>
       <section
@@ -24,7 +24,7 @@ const About = () => {
             <div className="w-full px-4 lg:w-6/12 ">
               <div className="max-lg:flex-col flex items-center sm:-mx-4 justify-center max-lg:pt-20 lg:pt-0 ">
                 <div className="grid grid-cols-2 max-sm:flex max-sm:flex-col ">
-                  <Link to={"/clientes"} className="mx-auto">
+                  <Link to={'/clientes'} className="mx-auto">
                     <button
                       data-aos="fade-in"
                       data-aos-duration="2000"
@@ -33,7 +33,7 @@ const About = () => {
                       Ya soy cliente
                     </button>
                   </Link>
-                  <Link to={"/nosotros"} className="mx-auto">
+                  <Link to={'/nosotros'} className="mx-auto">
                     <button
                       data-aos="fade-in"
                       data-aos-duration="2000"

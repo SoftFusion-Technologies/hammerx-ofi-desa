@@ -66,13 +66,13 @@ const FormAltaValoracion = ({ isOpen, onClose, user }) => {
               setShowModal(true);
               setTimeout(() => {
                 setShowModal(false);
-              }, 3000);
+              }, 1500);
             } catch (error) {
               console.error('Error al insertar el registro:', error.message);
               setErrorModal(true);
               setTimeout(() => {
                 setErrorModal(false);
-              }, 3000);
+              }, 1500);
             } finally {
               resetForm();
             }

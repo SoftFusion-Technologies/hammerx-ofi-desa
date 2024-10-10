@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import '../../../styles/MetodsGet/GetUserId.css';
+import React,{useState} from 'react';
+import "../../../styles/MetodsGet/GetUserId.css";
 import FormAltaNota from '../../../components/Forms/FormAltaNota';
 import { Link } from 'react-router-dom';
 import FormAltaIntegranteConve from '../../../components/Forms/FormAltaIntegranteConve';
@@ -14,7 +14,8 @@ const IntegranteDetails = ({
   onClose,
   obtenerIntegrantes2,
   permiteFam,
-  cantFamiliares
+  cantFamiliares,
+  formatearFecha
 }) => {
   if (!isOpen) {
     return null;
@@ -39,8 +40,8 @@ const IntegranteDetails = ({
     setmodalNewConve2(false);
     obtenerIntegrantes2();
   };
-
-  // Función para solicitar autorización - R6-Autorizar Integrantes - BO -15-09-2024
+  // Función para solicitar autorización -
+  // R6 - Autorizar Integrantes - BO - 15 -09 - 2024
   const solicitarAutorizacion = async () => {
     try {
       await axios.put(
@@ -90,6 +91,7 @@ const IntegranteDetails = ({
     }
   };
   //R6 - Autorizar Integrantes - BO- 15-09-24 - final
+
   return (
     <div className="modal-overlay">
       <div className="modal-content">
@@ -113,14 +115,15 @@ const IntegranteDetails = ({
         <p>
           <span className="font-semibold ">Email:</span> {user.email}
         </p>
-        <p>
+        {/* <p>
           <span className="font-semibold ">Sede:</span> {user.sede}
+        </p> */}
+
+        <p>
+          <span className="font-semibold ">Creado por:</span> {user.userName == '' ? 'Sin usuario' : user.userName}
         </p>
         <p>
-          <span className="font-semibold ">Creado por:</span> {user.userName}
-        </p>
-        <p>
-          <span className="font-semibold ">El dia :</span> {user.fechaCreacion}
+          <span className="font-semibold ">El dia :</span> {formatearFecha(user.fechaCreacion)}
         </p>
         <p>
           <span className="font-semibold ">Notas:</span> {user.notas}

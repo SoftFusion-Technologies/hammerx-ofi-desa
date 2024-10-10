@@ -20,7 +20,7 @@ import "../../../styles/MetodsGet/Tabla.css";
 import "../../../styles/staff/background.css";
 import Footer from "../../../components/footer/Footer";
 import { useAuth } from "../../../AuthContext";
-
+import { FaWhatsapp } from 'react-icons/fa'; 
 const FreeClassGet = () => {
   const { userLevel } = useAuth();
 
@@ -32,7 +32,7 @@ const FreeClassGet = () => {
   const [search, setSearch] = useState("");
 
   //URL estatica, luego cambiar por variable de entorno
-  const URL = "http://localhost:8080/testclass/";
+  const URL = 'http://localhost:8080/testclass/';
 
   useEffect(() => {
     // utilizamos get para obtenerPersonas los datos contenidos en la url
@@ -174,18 +174,40 @@ const FreeClassGet = () => {
   };
 
   const contactarTestClass = (celular, id) => {
-    const link = `https://api.whatsapp.com/send/?phone=%2B549${celular}&text&type=phone_number&app_absent=0`;
-    const newWindow = window.open(link, "_blank");
+    // const link = `https://api.whatsapp.com/send/?phone=%2B549${celular}&text&type=phone_number&app_absent=0`;
+    // const newWindow = window.open(link, "_blank");
 
-    if (newWindow) {
-      const interval = setInterval(async () => {
-        if (newWindow.closed) {
-          clearInterval(interval);
-          await updateContactState(id, true);
-        }
-      }, 1000); // Verificar cada segundo si la ventana se cerró
-    }
+    // if (newWindow) {
+    //   const interval = setInterval(async () => {
+    //     if (newWindow.closed) {
+    //       clearInterval(interval);
+    //       await updateContactState(id, true);
+    //     }
+    //   }, 1000); // Verificar cada segundo si la ventana se cerró
+    // }
+    updateContactState(id, true);
   };
+
+  
+  const handleContact = (celular, id) => {
+    // Aquí actualiza el estado de contactedTestClass para reflejar que la persona ha sido contactada
+    setContactedTestClass((prevState) => ({
+      ...prevState,
+      [id]: true
+    }));
+
+    
+    // Si necesitas hacer algo más cuando se contacta, agrégalo aquí
+  };
+
+  const handleWhatsAppRedirect = (celular) => {
+    // Redirecciona al chat de WhatsApp usando el número de celular
+    window.open(
+      `https://api.whatsapp.com/send/?phone=%2B549${celular}&text&type=phone_number&app_absent=0`,
+      '_blank'
+    );
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -200,7 +222,7 @@ const FreeClassGet = () => {
           </div>
           <div className="flex justify-center">
             <h1 className="pb-5">
-              Listado de Personas :{" "}
+              Listado de Personas :{' '}
               <span className="text-center">
                 Cantidad de registros : {results.length}
               </span>
@@ -220,7 +242,7 @@ const FreeClassGet = () => {
 
           {Object.keys(results).length === 0 ? (
             <p className="text-center pb-10">
-              La Persona NO Existe ||{" "}
+              La Persona NO Existe ||{' '}
               <span className="text-span"> Persona: {results.length}</span>
             </p>
           ) : (
@@ -254,8 +276,8 @@ const FreeClassGet = () => {
 
                       {/* ACCIONES */}
 
-                      {(userLevel === "admin" ||
-                        userLevel === "administrador") && (
+                      {(userLevel === 'admin' ||
+                        userLevel === 'administrador') && (
                         <td className="flex space-x-3 px-2">
                           <button
                             onClick={() =>
@@ -266,26 +288,38 @@ const FreeClassGet = () => {
                           >
                             Eliminar
                           </button>
+                        </td>
+                      )}
+                        <td className="flex items-center">
                           <button
                             onClick={() =>
-                              contactarTestClass(
-                                personClass.celular,
-                                personClass.id
-                              )
+                              contactarTestClass(personClass.celular, personClass.id)
                             }
                             type="button"
                             className={`py-2 px-4 my-1 rounded-md text-white ${
                               contactedTestClass[personClass.id]
-                                ? "bg-green-500 hover:bg-green-600"
-                                : "bg-blue-500 hover:bg-blue-600"
+                                ? 'bg-green-500 hover:bg-green-600'
+                                : 'bg-blue-500 hover:bg-blue-600'
                             }`}
                           >
                             {contactedTestClass[personClass.id]
-                              ? "Contactado"
-                              : "Contactar"}
+                              ? 'Contactado'
+                              : 'Contactar'}
+                          </button>
+
+                          {/* Botón de WhatsApp */}
+                          <button
+                            onClick={() =>
+                              handleWhatsAppRedirect(personClass.celular)
+                            }
+                            type="button"
+                            className="ml-2 py-2 px-4 my-1 rounded-md text-white bg-green-600 hover:bg-green-700 flex items-center"
+                          >
+                            <FaWhatsapp className="mr-2" />{' '}
+                            {/* Icono de WhatsApp */}
+                            WhatsApp
                           </button>
                         </td>
-                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -300,7 +334,7 @@ const FreeClassGet = () => {
                   {numbers.map((number, index) => (
                     <li
                       className={`page-item ${
-                        currentPage === number ? "active" : ""
+                        currentPage === number ? 'active' : ''
                       }`}
                       key={index}
                     >

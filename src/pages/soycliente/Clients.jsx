@@ -25,27 +25,36 @@ import "../../styles/clients/volver.css";
 import "../../styles/clients/botones.css";
 import "../../styles/clients/background.css";
 import Footer from "../../components/footer/Footer";
+import NuevaVista from "./NuevaVista";
+import Promociones from "./Promociones";
 
 const Clients = () => {
   useEffect(() => {
-    document.title = "Soy Cliente";
+    document.title = 'Soy Cliente';
   }, []);
 
   //estados que se utilizarán para el renderizado de los modals
-  const [showModal, setShowModal] = useState("");
+  const [showModal, setShowModal] = useState('');
 
   //array con los modals
   const modals = [
-    "entrenador",
-    "promociones",
-    "contratos",
-    "convenios",
-    "transferencia",
+    'entrenador',
+    'promociones',
+    'contratos',
+    'convenios',
+    'transferencia'
   ];
+
+  const isOpen = (type) => showModal === type;
+
+  const toggleModal = (type) => {
+    setShowModal((prev) => (prev === type ? '' : type));
+  };
 
   //Estas funciones cambian el estado que renderiza el modal, usando el índice del array que corresponda
   const entrenador = () => {
     setShowModal(modals[0]);
+    setShowModal('');
   };
   const promociones = () => {
     setShowModal(modals[1]);
@@ -104,12 +113,19 @@ const Clients = () => {
     console.log(setShowModal);
   };
 
+  const scrollToPromociones = () => {
+    const element = document.getElementById('promociones');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   return (
     <>
       <Navbar />
-      <div className="w-full pt-16 bg-gradient-to-b from-orange-500 to-[#fc4b08]">
-        <div className="bglcli pb-20">
-          <header className="w-full">
+      <NuevaVista></NuevaVista>
+      <div className="w-full bg-gradient-to-b from-orange-500 to-[#fc4b08]">
+        <div className="bglcli pb-5">
+          <header className="w-full" id="promociones">
             <div className="pl-10 pt-5 max-sm:pl-2">
               <Link to="/">
                 <button className="button">
@@ -131,7 +147,6 @@ const Clients = () => {
                 </button>
               </Link>
             </div>
-
             <h1 className="text-white max-md:text-[40px] text-[50px] text-center font-bignoodle ">
               Soy Cliente
             </h1>
@@ -143,14 +158,14 @@ const Clients = () => {
               {/* Se pasaron el jsx y los estilos de los botones a este archivo para poder controlar desde aquí el evento click para renderizar cada uno de los modals */}
               <div className="flex justify-center gap-4 max-sm:flex-col md:space-x-5">
                 <button
-                  onClick={entrenador} //este evento llama a la función para cambiar el estado que renderiza los modals y así mostrarlo
+                  onClick={() => toggleModal('entrenador')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
                   Contás con tu entrenador
                 </button>
                 <button
-                  onClick={promociones} //este evento llama a la función para cambiar el estado que renderiza los modals y así mostrarlo y así con los demás botones
+                  onClick={() => toggleModal('promociones')} //este evento llama a la función para cambiar el estado que renderiza los modals y así mostrarlo y así con los demás botones
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
@@ -158,7 +173,7 @@ const Clients = () => {
                 </button>
                 {
                   //verificación del estado para renderizar los componentes
-                  showModal === "entrenador" && (
+                  showModal === 'entrenador' && (
                     //reciben las funciones que contienen la posición del modal que se mostrará en anterior y siguiente
                     <ModalEntrenador
                       anterior={entrenadorAnt}
@@ -166,7 +181,7 @@ const Clients = () => {
                     />
                   )
                 }
-                {showModal === "promociones" && (
+                {showModal === 'promociones' && (
                   <ModalPromociones
                     anterior={promocionesAnt}
                     siguiente={promocionesSig}
@@ -176,39 +191,39 @@ const Clients = () => {
               {/* Segundo grupo de 3 botones */}
               <div className="flex justify-center gap-4 mt-4 max-sm:mt-0 sm:flex-wrap max-sm:flex-col md:space-x-5">
                 <button
-                  onClick={contratos}
+                  onClick={() => toggleModal('contratos')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
                   Congelamiento de Contratos
                 </button>
-                {showModal === "contratos" && (
+                {showModal === 'contratos' && (
                   <ModalContratos
                     anterior={contratosAnt}
                     siguiente={contratosSig}
                   />
                 )}
                 <button
-                  onClick={convenios}
+                  onClick={() => toggleModal('convenios')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
                   Convenios
                 </button>
-                {showModal === "convenios" && (
+                {showModal === 'convenios' && (
                   <ModalConvenios
                     anterior={conveniosAnt}
                     siguiente={conveniosSig}
                   />
                 )}
                 <button
-                  onClick={transferencia}
+                  onClick={() => toggleModal('transferencia')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
                   Transferencia de planes
                 </button>
-                {showModal === "transferencia" && (
+                {showModal === 'transferencia' && (
                   <ModalTransferencia
                     anterior={transfeAnt}
                     siguiente={transfeSig}
@@ -219,7 +234,15 @@ const Clients = () => {
           </div>
         </div>
       </div>
+      <Promociones />
       <Footer />
+      <button
+        className="btn btn-primary btn-floating"
+        onClick={scrollToPromociones}
+        aria-label="Scroll to promociones"
+      >
+        <i className="bi bi-arrow-down"></i>
+      </button>
     </>
   );
 };

@@ -37,6 +37,7 @@ const FormAltaIntegranteConve = ({
   const [errorModal, setErrorModal] = useState(false);
   const { id_conv } = useParams(); // Obtener el id_conv de la URL
   const { userName } = useAuth();
+  
   // const textoModal = 'Integrante creado correctamente.'; se elimina el texto
   // nuevo estado para gestionar dinámicamente según el método (PUT o POST)
   const [textoModal, setTextoModal] = useState('');
@@ -50,13 +51,13 @@ const FormAltaIntegranteConve = ({
   // yup sirve para validar formulario este ya trae sus propias sentencias
   // este esquema de cliente es para utilizar su validacion en los inputs
   const nuevoIntegranteSchema = Yup.object().shape({
-    nombre: Yup.string().required('El Titulo es obligatorio'),
+    nombre: Yup.string().required('El Nombre es obligatorio'),
     telefono: Yup.string(),
     direccion: Yup.string(),
-    trabajo: Yup.string(),
-    sede: Yup.string()
+    trabajo: Yup.string()
   });
-
+          // ? `http://localhost:8080/integrantes/${integrante.id}`
+          // : 'http://localhost:8080/integrantes/';
   const handleSubmitIntegrante = async (valores) => {
     try {
       // Verificamos si los campos obligatorios están vacíos
@@ -99,7 +100,7 @@ const FormAltaIntegranteConve = ({
         // Ocultar la ventana modal de éxito después de 3 segundos
         setTimeout(() => {
           setShowModal(false);
-        }, 3000);
+        }, 1500);
       }
     } catch (error) {
       console.error('Error al insertar el registro:', error.message);
@@ -110,18 +111,19 @@ const FormAltaIntegranteConve = ({
       // Ocultar la ventana modal de éxito después de 3 segundos
       setTimeout(() => {
         setErrorModal(false);
-      }, 3000);
+      }, 1500);
     }
   };
 
-    const handleClose = () => {
-      if (integrante && formikRef.current) {
-        formikRef.current.resetForm();
-        setSelectedUser(null);
-      }
+  const handleClose = () => {
+    if (integrante && formikRef.current) {
+      formikRef.current.resetForm();
+      setSelectedUser(null);
+    }
       onClose();
     };
-const obtenerFechaActual = () => {
+  
+  const obtenerFechaActual = () => {
     const hoy = new Date();
     const año = hoy.getFullYear();
     const mes = String(hoy.getMonth() + 1).padStart(2, '0'); // Los meses son indexados desde 0
@@ -155,13 +157,14 @@ const obtenerFechaActual = () => {
             dni: integrante ? integrante.dni : '',
             telefono: integrante ? integrante.telefono : '',
             email: integrante ? integrante.email : '',
-            sede: integrante ? integrante.sede : '',
+            sede: '',
             notas: integrante ? integrante.notas : '',
             precio: integrante ? integrante.precio : newPrecio,
             descuento: integrante ? integrante.descuento : newDescuento,
             preciofinal: integrante ? integrante.preciofinal : newPrecioFinal,
             userName: userName || '',
             fechaCreacion:obtenerFechaActual() // Envía la fecha en formato ISO 8601
+         
           }}
           enableReinitialize
           // cuando hacemos el submit esperamos a que cargen los valores y esos valores tomados se lo pasamos a la funcion handlesubmit que es la que los espera
@@ -254,13 +257,12 @@ const obtenerFechaActual = () => {
                     ) : null}
                   </div>
 
-                  <div className="mb-4 px-4">
+                  {/* <div className="mb-4 px-4">
                     <Field
                       as="select"
                       id="sede"
                       name="sede"
                       className="form-select mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      required
                     >
                       <option value="" disabled>
                         Sede:
@@ -271,7 +273,7 @@ const obtenerFechaActual = () => {
                     {errors.sede && touched.sede ? (
                       <Alerta>{errors.sede}</Alerta>
                     ) : null}
-                  </div>
+                  </div> */}
 
                   <div className="mx-auto flex justify-center my-5">
                     <input

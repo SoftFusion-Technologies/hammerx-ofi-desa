@@ -8,6 +8,7 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
   const [registroExistente, setRegistroExistente] = useState(false);
 
   const [imagess, setImagess] = useState([]); // Estado para almacenar imágenes del convenioId
@@ -98,9 +99,9 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
     .replace('T', ' ');
 
   console.log(fechaFormateada);
- 
+
   // Handle file change
-   const handleFileChange = (e) => {
+  const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
 
@@ -117,10 +118,8 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    // pasar fecha
-    const newFec = fechaFormateada
-    formData.append('fecha', newFec); // Añade la fecha al FormData
-
+    const newFec = fechaFormateada;
+    formData.append('fecha', newFec); //
     try {
       const response = await axios.post(
         `http://localhost:8080/uploadfac/${convenioId}`,
@@ -133,6 +132,7 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
       );
 
       if (response.status === 200) {
+        // Add the newly uploaded image to the list
         setImagess([...imagess, response.data.imageUrl]);
         alert('Imagen subida con éxito.');
       }
@@ -161,14 +161,15 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
         <FechasConvenios onMonthChange={setSelectedMonth} />
         {userLevel === 'admin' && (
           <span className="text-base font-normal">
-            1. Presionar Seleccionar Archivo, SOLO PUEDE SUBIR UNA FACTURA
+            1. Presionar Seleccionar Archivo,
             <br />
             2. Subir Imagen solo(jpg, png, jpeg) hasta 30MB
           </span>
         )}
       </h2>
-      {userLevel === 'admin' && !registroExistente && (
-        <div className="input-group flex items-center space-x-4 mb-4">
+
+      {userLevel === 'admin' && (
+        <div className="input-group flex flex-col space-y-2 mb-4">
           <input
             type="file"
             id="file-upload"
@@ -184,9 +185,14 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
           </button>
         </div>
       )}
+
       {error && (
         <p className="error-message text-red-500 font-semibold">{error}</p>
       )}
+
+      <h3 className="text-lg font-medium text-gray-700 mt-6 mb-2">
+        {/* Imágenes Disponibles */}
+      </h3>
       <ul className="image-list space-y-4">
         {/* {imagess.map((image, index) => (
           <li
@@ -214,7 +220,7 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
                     download={image.image_path}
                     className="download-link text-blue-500 hover:underline"
                   >
-                    Descargar
+                    Ver Imagen
                   </a>
                   {userLevel === 'admin' && (
                     <button
@@ -232,6 +238,7 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
           <p>No hay imágenes disponibles.</p>
         )}
       </ul>
+
       <h1 className="mt-5 text-sm font-light text-gray-600">
         RECUERDE QUE AL (ELIMINAR, CARGAR) IMAGEN, DEBE RECARGAR LA PÁGINA
       </h1>

@@ -47,6 +47,7 @@ const AdmConveGet = () => {
   };
   // Estado para almacenar el término de búsqueda
   const [search, setSearch] = useState('');
+  const [filterSede, setFilterSede] = useState(''); // Estado para el filtro de sede
 
   //URL estatica, luego cambiar por variable de entorno
   const URL = 'http://localhost:8080/admconvenios/';
@@ -163,8 +164,6 @@ const AdmConveGet = () => {
     setSelectedConve2(conve);
     setmodalNewConve(true);
   };
-  // Estado para almacenar el término de búsqueda
-  const [filterSede, setFilterSede] = useState(''); // Estado para el filtro de sede
 
   // Función para manejar el cambio en el filtro de sede
   const handleFilterSedeChange = (event) => {
@@ -178,6 +177,7 @@ const AdmConveGet = () => {
     const sede = conve.sede || ''; // Asignar una cadena vacía si `conve2.sede` es `null` o `undefined`
     return sede.toLowerCase().includes(filterSede.toLowerCase());
   };
+
   return (
     <>
       <NavbarStaff />
@@ -209,16 +209,16 @@ const AdmConveGet = () => {
                 placeholder="Buscar convenio"
                 className="border rounded-sm"
               />
-              <select
-                value={filterSede}
-                onChange={handleFilterSedeChange}
-                className="border rounded-sm ml-3"
-              >
-                <option value="">Todas las sedes</option>
-                <option value="Multisede">Multi Sede</option>
-                <option value="Monteros">Monteros</option>
-                <option value="Concepción">Concepción</option>
-              </select>
+                <select
+                  value={filterSede}
+                  onChange={handleFilterSedeChange}
+                  className="border rounded-sm ml-3"
+                >
+                  <option value="">Todas las sedes</option>
+                  <option value="Multisede">Multi Sede</option>
+                  <option value="Monteros">Monteros</option>
+                  <option value="Concepción">Concepción</option>
+                  </select>
             </form>
             {/* formulario de busqueda */}
 

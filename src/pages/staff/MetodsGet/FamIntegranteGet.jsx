@@ -336,7 +336,7 @@ const FamIntegranteGet = ({ integrantes }) => {
                     <th>DNI</th>
                     <th>Telefono</th>
                     <th>Email</th>
-                    <th>Sede</th>
+                    {/* <th>Sede</th> */}
                     <th>Precio</th>
                     <th>Descuento</th>
                     <th>Precio Final</th>
@@ -362,16 +362,16 @@ const FamIntegranteGet = ({ integrantes }) => {
                         {integrante.email}
                       </td>
 
-                      <td onClick={() => obtenerIntegrante(integrante.id)}>
+                      {/* <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {integrante.sede}
-                      </td>
+                      </td> */}
 
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {formatearMoneda(integrante.precio)}
                       </td>
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {integrante.descuento !== '0'
-                          ? `%${integrante.descuento}`
+                          ? `${integrante.descuento}%`
                           : 'Sin descuento'}
                       </td>
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
@@ -391,10 +391,7 @@ const FamIntegranteGet = ({ integrantes }) => {
                       userLevel === 'convenio' ||
                       */
                         (userLevel === 'admin' ||
-                          userLevel === '' ||
-                          userLevel === 'vendedor' ||
                           userLevel === 'gerente' ||
-                          userLevel === 'convenio' ||
                           userLevel === 'administrador') && (
                           <td className="">
                             <button

@@ -1,10 +1,13 @@
-import React from 'react';
+import React,{useEffect} from 'react';
 import '../../../../styles/Pagos/styles/transferencia.css';
 import Promociones from '../../Promociones';
 import BackButton from '../../Arrow';
 
 const TarjetaDebito = () => {
-  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []); // El array vacío asegura que useEffect solo se ejecute al montar el componente
+
   const numMonteros = '3863564651';
   
   return (

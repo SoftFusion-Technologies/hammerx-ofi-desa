@@ -34,13 +34,19 @@ const PostulanteDetails = ({ user, isOpen, onClose, obtenerPostulantes }) => {
           <span className="font-semibold ">Nombre:</span> {user.name}
         </p>
         <p>
-          <span className="font-semibold ">Email:</span> {user.edad}
+          <span className="font-semibold ">Edad:</span> {user.edad}
         </p>
         <p>
-          <span className="font-semibold ">Email:</span> {user.sexo}
+          <span className="font-semibold ">Sexo:</span> {user.sexo}
         </p>
         <p>
           <span className="font-semibold ">Rol:</span> {user.puesto}
+        </p>
+        <p>
+          <span className="font-semibold ">Instagram:</span> {user.redes}
+        </p>
+        <p>
+          <span className="font-semibold ">WhatsApp:</span> {user.celular}
         </p>
         <p>
           <span className="font-semibold ">Sede:</span> {user.sede}

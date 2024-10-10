@@ -3,6 +3,7 @@ import Trimestral from '../../images/Pagos/Images/trimestral.png';
 import Semestral from '../../images/Pagos/Images/semestral.png';
 import Anual from '../../images/Pagos/Images/anual.png';
 import Macro from '../../images/Pagos/Images/macro.png';
+import LogoSoftFusion from '../../images/marcas/comercio9.png'; // Asegúrate de que la ruta sea correcta
 
 const Plan = ({ imageSrc, altText, message, num }) => {
   const encodedMessage = encodeURIComponent(
@@ -51,6 +52,15 @@ const Promociones = ({num}) => {
         message="PLAN MACRO"
         num={num}
       />
+
+      <a href="https://softfusion.com.ar/" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center text-gray-500">
+      <div className="flex flex-col items-center text-white">
+        <p className="mb-2  text-5xl font-bignoodle">
+          Este sitio está desarrollado por SoftFusion
+        </p>
+        <img src={LogoSoftFusion} alt="Soft Fusion Logo" className="w-100 h-auto" />
+        </div>
+      </a>
     </div>
   );
 };

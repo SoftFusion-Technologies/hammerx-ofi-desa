@@ -44,6 +44,8 @@ const OurValues = lazy(() => import('./pages/quieroconocerlos/OurValues'));
 const Sedeconcepcion = lazy(() => import('./pages/sedes/Concepcion'));
 const Sedemonteros = lazy(() => import('./pages/sedes/Monteros'));
 const Loading = lazy(() => import('./components/Loading')); // Importa el componente de carga
+const Miclasefree = lazy(() => import('./pages/Mi-clase-free'));
+const MiCV = lazy(() => import('./pages/Mi-CV'));
 const Pautas = lazy(() => import('./pages/Pautas'));
 const Legales = lazy(() => import('./pages/Legales'));
 const Contacto = lazy(() => import('./pages/Contacto'));
@@ -71,10 +73,87 @@ const AltaFreAskForm = lazy(() => import('./components/Forms/FormAltaFrecAsk'));
 // Renderizado de pagina del STAFF, para los metodos Get, y listado
 
 // Renderizado de los nuevos COMPONENTES / PAGOS - INICIO - Benjamin Orellana - 27 Jul 24
+// Musculacion Monteros
 import PrincipalMusculacion from './pages/Pagos/Monteros/PrincipalMusculacion.jsx';
 import Efectivo from './components/Pagos/Monteros/PMusculacion/Efectivo.jsx';
 import TarjetaDebito from './components/Pagos/Monteros/PMusculacion/TarjetaDebito.jsx';
 import Transferencia from './components/Pagos/Monteros/PMusculacion/Transferencia.jsx';
+// Grupales Monteros
+import PrincipalGrupales from './pages/Pagos/Monteros/PrincipalGrupales.jsx';
+import EfectivoG from './components/Pagos/Monteros/PGrupales/Efectivo.jsx';
+import TarjetaDebitoG from './components/Pagos/Monteros/PGrupales/TarjetaDebito.jsx';
+import TransferenciaG from './components/Pagos/Monteros/PGrupales/Transferencia.jsx';
+// Pase Libre Monteros
+import PrincipalPaseLibre from './pages/Pagos/Monteros/PrincipalPaseLibre.jsx';
+import EfectivoP from './components/Pagos/Monteros/PPaseLibre/Efectivo.jsx';
+import TarjetaDebitoP from './components/Pagos/Monteros/PPaseLibre/TarjetaDebito.jsx';
+import TransferenciaP from './components/Pagos/Monteros/PPaseLibre/Transferencia.jsx';
+// Plan Trimestral Monteros
+import PrincipalTrimestrales from './pages/Pagos/Monteros/PrincipalTrimestrales.jsx';
+import EfectivoT from './components/Pagos/Monteros/PTrimestral/Efectivo.jsx';
+import TarjetaDebitoT from './components/Pagos/Monteros/PTrimestral/TarjetaDebito.jsx';
+import TarjetaCreditoT from './components/Pagos/Monteros/PTrimestral/TarjetaCredito.jsx';
+import TransferenciaT from './components/Pagos/Monteros/PTrimestral/Transferencia.jsx';
+import CuotasTrimestral from './components/Pagos/Monteros/PTrimestral/CuotasTrimestral.jsx';
+// Plan Semestral Monteros
+import PrincipalSemestrales from './pages/Pagos/Monteros/PrincipalSemestrales.jsx';
+import EfectivoS from './components/Pagos/Monteros/PSemestral/Efectivo.jsx';
+import TarjetaDebitoS from './components/Pagos/Monteros/PSemestral/TarjetaDebito.jsx';
+import TarjetaCreditoS from './components/Pagos/Monteros/PSemestral/TarjetaCredito.jsx';
+import TransferenciaS from './components/Pagos/Monteros/PSemestral/Transferencia.jsx';
+import CuotasSemestral from './components/Pagos/Monteros/PSemestral/CuotasSemestral.jsx';
+
+// Plan Anual Monteros
+import PrincipalAnual from './pages/Pagos/Monteros/PrincipalAnual.jsx';
+import EfectivoA from './components/Pagos/Monteros/PAnual/Efectivo.jsx';
+import TarjetaDebitoA from './components/Pagos/Monteros/PAnual/TarjetaDebito.jsx';
+import TarjetaCreditoA from './components/Pagos/Monteros/PAnual/TarjetaCredito.jsx';
+import TransferenciaA from './components/Pagos/Monteros/PAnual/Transferencia.jsx';
+import CuotasAnual from './components/Pagos/Monteros/PAnual/CuotasAnual.jsx';
+
+// Renderizado de los nuevos COMPONENTES / PAGOS - INICIO - Benjamin Orellana - 27 Jul 24
+// Musculacion Concepcion
+import PrincipalMusculacionC from './pages/Pagos/Concepcion/PrincipalMusculacion.jsx';
+import EfectivoC from './components/Pagos/Concepcion/PMusculacion/Efectivo.jsx';
+import TarjetaDebitoC from './components/Pagos/Concepcion/PMusculacion/TarjetaDebito.jsx';
+import TransferenciaC from './components/Pagos/Concepcion/PMusculacion/Transferencia.jsx';
+
+// Grupales Concepcion
+import PrincipalGrupalesC from './pages/Pagos/Concepcion/PrincipalGrupales.jsx';
+import EfectivoGC from './components/Pagos/Concepcion/PGrupales/Efectivo.jsx';
+import TarjetaDebitoGC from './components/Pagos/Concepcion/PGrupales/TarjetaDebito.jsx';
+import TransferenciaGC from './components/Pagos/Concepcion/PGrupales/Transferencia.jsx';
+
+// Pase Libre Concepcion
+import PrincipalPaseLibreC from './pages/Pagos/Concepcion/PrincipalPaseLibre.jsx';
+import EfectivoPC from './components/Pagos/Concepcion/PPaseLibre/Efectivo.jsx';
+import TarjetaDebitoPC from './components/Pagos/Concepcion/PPaseLibre/TarjetaDebito.jsx';
+import TransferenciaPC from './components/Pagos/Concepcion/PPaseLibre/Transferencia.jsx';
+
+// Plan Trimestral Concepcion
+import PrincipalTrimestralesC from './pages/Pagos/Concepcion/PrincipalTrimestrales.jsx';
+import EfectivoTC from './components/Pagos/Concepcion/PTrimestral/Efectivo.jsx';
+import TarjetaDebitoTC from './components/Pagos/Concepcion/PTrimestral/TarjetaDebito.jsx';
+import TarjetaCreditoTC from './components/Pagos/Concepcion/PTrimestral/TarjetaCredito.jsx';
+import TransferenciaTC from './components/Pagos/Concepcion/PTrimestral/Transferencia.jsx';
+import CuotasTrimestralC from './components/Pagos/Concepcion/PTrimestral/CuotasTrimestral.jsx';
+// Plan Semestral Concepcion
+import PrincipalSemestralesC from './pages/Pagos/Concepcion/PrincipalSemestrales.jsx';
+import EfectivoSC from './components/Pagos/Concepcion/PSemestral/Efectivo.jsx';
+import TarjetaDebitoSC from './components/Pagos/Concepcion/PSemestral/TarjetaDebito.jsx';
+import TarjetaCreditoSC from './components/Pagos/Concepcion/PSemestral/TarjetaCredito.jsx';
+import TransferenciaSC from './components/Pagos/Concepcion/PSemestral/Transferencia.jsx';
+import CuotasSemestralC from './components/Pagos/Concepcion/PSemestral/CuotasSemestral.jsx';
+
+// Plan Anual Concepcion
+import PrincipalAnualC from './pages/Pagos/Concepcion/PrincipalAnual.jsx';
+import EfectivoAC from './components/Pagos/Concepcion/PAnual/Efectivo.jsx';
+import TarjetaDebitoAC from './components/Pagos/Concepcion/PAnual/TarjetaDebito.jsx';
+import TarjetaCreditoAC from './components/Pagos/Concepcion/PAnual/TarjetaCredito.jsx';
+import TransferenciaAC from './components/Pagos/Concepcion/PAnual/Transferencia.jsx';
+import CuotasAnualC from './components/Pagos/Concepcion/PAnual/CuotasAnual.jsx';
+
+import NotFound from './pages/NotFound.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
 /**
  * Componente principal de la aplicación.
@@ -88,6 +167,7 @@ const App = memo(() => {
   const [tasks, setTasks] = useState([]);
 
   // URL para obtener las tareas
+  // const URL = 'http://localhost:8080/schedulertask/';
   const URL = 'http://localhost:8080/schedulertask/';
 
   // Función para obtener las tareas
@@ -96,7 +176,7 @@ const App = memo(() => {
       const response = await axios.get(URL);
       setTasks(response.data);
     } catch (error) {
-      console.log('Error al obtener las tareas:', error);
+      // console.log('Error al obtener las tareas:', error);
     }
   };
 
@@ -122,193 +202,434 @@ const App = memo(() => {
   return (
     <AuthProvider>
       {/* <div className="back_v2"> */}
-        <Router>
-          {/* Componente de Suspense para manejar la carga de componentes lazy */}
-          <Suspense fallback={<Loading />}>
-            {/* Condición para mostrar el componente de carga o el contenido de la aplicación */}
-            {showLoading ? (
-              <Loading />
-            ) : (
-              <>
-                {/* Enrutamiento de las diferentes páginas */}
-                <Rutas>
-                  <Ruta path="/" element={<HomePage />} />{' '}
-                  {/* Página principal */}
-                  <Ruta path="/clientes" element={<Clients />} />{' '}
-                  {/* Página de clientes */}
-                  <Ruta path="/nosotros" element={<AboutUs />} />{' '}
-                  {/* Página "Nosotros" */}
+      <Router>
+        {/* Componente de Suspense para manejar la carga de componentes lazy */}
+        <Suspense fallback={<Loading />}>
+          {/* Condición para mostrar el componente de carga o el contenido de la aplicación */}
+          {showLoading ? (
+            <Loading />
+          ) : (
+            <>
+              {/* Enrutamiento de las diferentes páginas */}
+              <Rutas>
+                <Ruta path="/" element={<HomePage />} />{' '}
+                {/* Página principal */}
+                <Ruta path="/clientes" element={<Clients />} />{' '}
+                {/* Página de clientes */}
+                <Ruta path="/nosotros" element={<AboutUs />} />{' '}
+                {/* Página "Nosotros" */}
+                <Ruta
+                  path="/nosotros/quienessomos"
+                  element={<OurTeam />}
+                />{' '}
+                {/* Página "Quiénes somos" */}
+                <Ruta
+                  path="/nosotros/nuestrosvalores"
+                  element={<OurValues />}
+                />{' '}
+                {/* Página "Nuestros valores" */}
+                <Ruta
+                  path="/Sedes/Concepcion"
+                  element={<Sedeconcepcion />}
+                />{' '}
+                {/* Página de la sede de Concepción */}
+                <Ruta path="/Sedes/Monteros" element={<Sedemonteros />} />{' '}
+                {/* Página de la sede de Monteros */}
+                <Ruta path="/mi-clase-free" element={<Miclasefree />} />{' '}
+                <Ruta path="/mi-cv" element={<MiCV />} />{' '}
+                <Ruta path="/pautas" element={<Pautas />} />{' '}
+                {/* Página de Pautas */}
+                <Ruta path="/legales" element={<Legales />} />{' '}
+                {/* Página de Legales */}
+                <Ruta path="/contacto" element={<Contacto />} />{' '}
+                {/* Página de Contacto */}
+                <Ruta path="/login" element={<LoginForm />} />{' '}
+                {/* Página de Logeo */}
+                {/* <Ruta path="/form" element={<FormPostu />} /> Rutas de prueba para testear funcionamiento */}
+                <Ruta path="/formusers" element={<AltaUserForm />} />{' '}
+                {/*  TABLA USERS Rutas de prueba para testear funcionamiento */}
+                <Ruta path="/formnovedad" element={<AltaNovedadForm />} />{' '}
+                {/* TABLA NOVEDAD Rutas de prueba para testear funcionamiento */}
+                <Ruta path="/formtask" element={<AltaTaskForm />} />{' '}
+                {/* TABLA SCHEDULERTASK Rutas de prueba para testear funcionamiento */}
+                <Ruta path="/formask" element={<AltaFreAskForm />} />{' '}
+                {/* TABLA FRECASK Rutas de prueba para testear funcionamiento */}
+                {/* Ruta para la página del staff */}
+                <Ruta
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <AdminPage />{' '}
+                    </ProtectedRoute>
+                  }
+                />
+                <Ruta
+                  path="/dashboard/postulantes"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <PostulanteGet />
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                {/* Rutas de prueba para testear funcionamiento */}
+                <Ruta
+                  path="/dashboard/testclass"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <ClasesGet />
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                {/* Rutas de prueba para testear funcionamiento */}
+                <Ruta
+                  path="/dashboard/users"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <UsersGet />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                {/* Rutas de prueba para testear funcionamiento */}
+                <Ruta
+                  path="/dashboard/novedades"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <NovedadGet />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                {/* Rutas de prueba para testear funcionamiento */}
+                <Ruta
+                  path="/dashboard/ask"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <PreguntasFrecuentesGet />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                {/* Rutas de prueba para testear funcionamiento */}
+                <Ruta
+                  path="/dashboard/task"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <TaskGet />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                {/* Rutas de prueba para testear funcionamiento */}
+                <Ruta
+                  path="/dashboard/admconvenios"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <AdmConveGet />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                {/* Rutas de prueba para testear funcionamiento */}
+                {/* <Ruta path="/dashboard/admprecio" element={<ProtectedRoute>  <AdmPrecioGet /> </ProtectedRoute> } /> Rutas de prueba para testear funcionamiento */}
+                <Ruta
+                  path="/dashboard/vendedores"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <VendedoresGet />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                {/* Rutas de prueba para testear funcionamiento */}
+                {/* <Ruta path="/dashboard/integrantes" element={<ProtectedRoute>  <IntegranteConveGet /> </ProtectedRoute> } /> Rutas de prueba para testear funcionamiento */}
+                <Ruta
+                  path="/dashboard/admconvenios/:id_conv/integrantes/"
+                  element={<IntegranteConveGet />}
+                />
+                <Ruta
+                  path="/dashboard/admconvenios/:id_conv/integrantes/:id_integrante/integrantesfam/"
+                  element={<FamIntegranteGet />}
+                />
+                {/* Rutas para obtener por los registros por id*/}
+                <Ruta path="/users/:id" element={<UserDetails />} />
+                <Ruta path="/postulantes/:id" element={<PostulanteDetails />} />
+                <Ruta path="/integrantes/:id" element={<IntegranteDetails />} />
+                <Ruta path="/ask/:id" element={<FrequentDetails />} />
+                <Ruta path="/task/:id" element={<TaskDetails />} />
+               
+                {/* pagos monteros */}
+                <Ruta
+                  path="/pagos/monteros/musculacion"
+                  element={<PrincipalMusculacion />}
+                />
+                <Ruta
+                  path="/pagos/monteros/musculacion/efectivo"
+                  element={<Efectivo />}
+                />
+                <Ruta
+                  path="/pagos/monteros/musculacion/tarjeta-debito"
+                  element={<TarjetaDebito />}
+                />
+                <Ruta
+                  path="/pagos/monteros/musculacion/transferencia"
+                  element={<Transferencia />}
+                  />
+                  
+                <Ruta
+                  path="/pagos/monteros/grupales"
+                  element={<PrincipalGrupales />}
+                />
+                <Ruta
+                  path="/pagos/monteros/grupales/efectivo"
+                  element={<EfectivoG />}
+                />
+                <Ruta
+                  path="/pagos/monteros/grupales/tarjeta-debito"
+                  element={<TarjetaDebitoG />}
+                />
+                <Ruta
+                  path="/pagos/monteros/grupales/transferencia"
+                  element={<TransferenciaG/>}
+                  />
+                  
+                 <Ruta
+                  path="/pagos/monteros/paselibre"
+                  element={<PrincipalPaseLibre />}
+                />
+                <Ruta
+                  path="/pagos/monteros/paselibre/efectivo"
+                  element={<EfectivoP />}
+                />
+                <Ruta
+                  path="/pagos/monteros/paselibre/tarjeta-debito"
+                  element={<TarjetaDebitoP />}
+                />
+                <Ruta
+                  path="/pagos/monteros/paselibre/transferencia"
+                  element={<TransferenciaP/>}
+                  />
+                  
                   <Ruta
-                    path="/nosotros/quienessomos"
-                    element={<OurTeam />}
-                  />{' '}
-                  {/* Página "Quiénes somos" */}
+                  path="/pagos/monteros/trimestral"
+                  element={<PrincipalTrimestrales />}
+                  />
+
                   <Ruta
-                    path="/nosotros/nuestrosvalores"
-                    element={<OurValues />}
-                  />{' '}
-                  {/* Página "Nuestros valores" */}
-                  <Ruta
-                    path="/Sedes/Concepcion"
-                    element={<Sedeconcepcion />}
-                  />{' '}
-                  {/* Página de la sede de Concepción */}
-                  <Ruta
-                    path="/Sedes/Monteros"
-                    element={<Sedemonteros />}
-                  />{' '}
-                  {/* Página de la sede de Monteros */}
-                  <Ruta path="/pautas" element={<Pautas />} />{' '}
-                  {/* Página de Pautas */}
-                  <Ruta path="/legales" element={<Legales />} />{' '}
-                  {/* Página de Legales */}
-                  <Ruta path="/contacto" element={<Contacto />} />{' '}
-                  {/* Página de Contacto */}
-                  <Ruta path="/login" element={<LoginForm />} />{' '}
-                  {/* Página de Logeo */}
-                  {/* <Ruta path="/form" element={<FormPostu />} /> Rutas de prueba para testear funcionamiento */}
-                  <Ruta path="/formusers" element={<AltaUserForm />} />{' '}
-                  {/*  TABLA USERS Rutas de prueba para testear funcionamiento */}
-                  <Ruta path="/formnovedad" element={<AltaNovedadForm />} />{' '}
-                  {/* TABLA NOVEDAD Rutas de prueba para testear funcionamiento */}
-                  <Ruta path="/formtask" element={<AltaTaskForm />} />{' '}
-                  {/* TABLA SCHEDULERTASK Rutas de prueba para testear funcionamiento */}
-                  <Ruta path="/formask" element={<AltaFreAskForm />} />{' '}
-                  {/* TABLA FRECASK Rutas de prueba para testear funcionamiento */}
-                  {/* Ruta para la página del staff */}
-                  <Ruta
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        {' '}
-                        <AdminPage />{' '}
-                      </ProtectedRoute>
-                    }
+                  path="/pagos/monteros/trimestral/efectivo"
+                  element={<EfectivoT />}
+                />
+                <Ruta
+                  path="/pagos/monteros/trimestral/tarjeta-debito"
+                  element={<TarjetaDebitoT />}
                   />
                   <Ruta
-                    path="/dashboard/postulantes"
-                    element={
-                      <ProtectedRoute>
-                        {' '}
-                        <PostulanteGet />
-                      </ProtectedRoute>
-                    }
-                  />{' '}
-                  {/* Rutas de prueba para testear funcionamiento */}
+                  path="/pagos/monteros/trimestral/cuotas/tarjeta-credito"
+                  element={<TarjetaCreditoT />}
+                />
+                <Ruta
+                  path="/pagos/monteros/trimestral/transferencia"
+                  element={<TransferenciaT/>}
+                  />
+                  
+                   <Ruta
+                  path="/pagos/monteros/trimestral/cuotas"
+                  element={<CuotasTrimestral/>}
+                  />
+
                   <Ruta
-                    path="/dashboard/testclass"
-                    element={
-                      <ProtectedRoute>
-                        {' '}
-                        <ClasesGet />
-                      </ProtectedRoute>
-                    }
-                  />{' '}
-                  {/* Rutas de prueba para testear funcionamiento */}
+                  path="/pagos/monteros/semestral"
+                  element={<PrincipalSemestrales />}
+                  />
+
                   <Ruta
-                    path="/dashboard/users"
-                    element={
-                      <ProtectedRoute>
-                        {' '}
-                        <UsersGet />{' '}
-                      </ProtectedRoute>
-                    }
-                  />{' '}
-                  {/* Rutas de prueba para testear funcionamiento */}
-                  <Ruta
-                    path="/dashboard/novedades"
-                    element={
-                      <ProtectedRoute>
-                        {' '}
-                        <NovedadGet />{' '}
-                      </ProtectedRoute>
-                    }
-                  />{' '}
-                  {/* Rutas de prueba para testear funcionamiento */}
-                  <Ruta
-                    path="/dashboard/ask"
-                    element={
-                      <ProtectedRoute>
-                        {' '}
-                        <PreguntasFrecuentesGet />{' '}
-                      </ProtectedRoute>
-                    }
-                  />{' '}
-                  {/* Rutas de prueba para testear funcionamiento */}
-                  <Ruta
-                    path="/dashboard/task"
-                    element={
-                      <ProtectedRoute>
-                        {' '}
-                        <TaskGet />{' '}
-                      </ProtectedRoute>
-                    }
-                  />{' '}
-                  {/* Rutas de prueba para testear funcionamiento */}
-                  <Ruta
-                    path="/dashboard/admconvenios"
-                    element={
-                      <ProtectedRoute>
-                        {' '}
-                        <AdmConveGet />{' '}
-                      </ProtectedRoute>
-                    }
-                  />{' '}
-                  {/* Rutas de prueba para testear funcionamiento */}
-                  {/* <Ruta path="/dashboard/admprecio" element={<ProtectedRoute>  <AdmPrecioGet /> </ProtectedRoute> } /> Rutas de prueba para testear funcionamiento */}
-                  <Ruta
-                    path="/dashboard/vendedores"
-                    element={
-                      <ProtectedRoute>
-                        {' '}
-                        <VendedoresGet />{' '}
-                      </ProtectedRoute>
-                    }
-                  />{' '}
-                  {/* Rutas de prueba para testear funcionamiento */}
-                  {/* <Ruta path="/dashboard/integrantes" element={<ProtectedRoute>  <IntegranteConveGet /> </ProtectedRoute> } /> Rutas de prueba para testear funcionamiento */}
-                  <Ruta
-                    path="/dashboard/admconvenios/:id_conv/integrantes/"
-                    element={<IntegranteConveGet />}
+                  path="/pagos/monteros/semestral/efectivo"
+                  element={<EfectivoS />}
+                />
+                <Ruta
+                  path="/pagos/monteros/semestral/tarjeta-debito"
+                  element={<TarjetaDebitoS />}
                   />
                   <Ruta
-                    path="/dashboard/admconvenios/:id_conv/integrantes/:id_integrante/integrantesfam/"
-                    element={<FamIntegranteGet />}
+                  path="/pagos/monteros/semestral/cuotas/tarjeta-credito"
+                  element={<TarjetaCreditoS />}
+                />
+                <Ruta
+                  path="/pagos/monteros/semestral/transferencia"
+                  element={<TransferenciaS/>}
                   />
-                  {/* Rutas para obtener por los registros por id*/}
-                  <Ruta path="/users/:id" element={<UserDetails />} />
-                  <Ruta
-                    path="/postulantes/:id"
-                    element={<PostulanteDetails />}
+                   <Ruta
+                  path="/pagos/monteros/semestral/cuotas"
+                  element={<CuotasSemestral/>}
                   />
+
                   <Ruta
-                    path="/integrantes/:id"
-                    element={<IntegranteDetails />}
+                  path="/pagos/monteros/anual"
+                  element={<PrincipalAnual />}
                   />
-                  <Ruta path="/ask/:id" element={<FrequentDetails />} />
-                  <Ruta path="/task/:id" element={<TaskDetails />} />
+
                   <Ruta
-                    path="/pagos/monteros/musculacion"
-                    element={<PrincipalMusculacion />}
-                  />
-                  <Ruta
-                    path="/pagos/monteros/musculacion/efectivo"
-                    element={<Efectivo />}
-                  />
-                  <Ruta
-                    path="/pagos/monteros/musculacion/tarjeta-debito"
-                    element={<TarjetaDebito />}
+                  path="/pagos/monteros/anual/efectivo"
+                  element={<EfectivoA />}
+                />
+                <Ruta
+                  path="/pagos/monteros/anual/tarjeta-debito"
+                  element={<TarjetaDebitoA />}
                   />
                   <Ruta
-                    path="/pagos/monteros/musculacion/transferencia"
-                    element={<Transferencia />}
+                  path="/pagos/monteros/anual/cuotas/tarjeta-credito"
+                  element={<TarjetaCreditoA />}
+                />
+                <Ruta
+                  path="/pagos/monteros/anual/transferencia"
+                  element={<TransferenciaA/>}
                   />
-                </Rutas>
-                <TaskReminder2 tasks={tasks} />
-              </>
-            )}
-          </Suspense>
-        </Router>
+                   <Ruta
+                  path="/pagos/monteros/anual/cuotas"
+                  element={<CuotasAnual/>}
+                  />
+
+                {/* pagos concepcion */}
+                <Ruta
+                  path="/pagos/concepcion/musculacion"
+                  element={<PrincipalMusculacionC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/musculacion/efectivo"
+                  element={<EfectivoC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/musculacion/tarjeta-debito"
+                  element={<TarjetaDebitoC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/musculacion/transferencia"
+                  element={<TransferenciaC />}
+                  />
+               
+                <Ruta
+                  path="/pagos/concepcion/grupales"
+                  element={<PrincipalGrupalesC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/grupales/efectivo"
+                  element={<EfectivoGC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/grupales/tarjeta-debito"
+                  element={<TarjetaDebitoGC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/grupales/transferencia"
+                  element={<TransferenciaGC/>}
+                  />
+
+                <Ruta
+                  path="/pagos/concepcion/paselibre"
+                  element={<PrincipalPaseLibreC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/paselibre/efectivo"
+                  element={<EfectivoPC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/paselibre/tarjeta-debito"
+                  element={<TarjetaDebitoPC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/paselibre/transferencia"
+                  element={<TransferenciaPC/>}
+                  />
+
+                  <Ruta
+                  path="/pagos/concepcion/trimestral"
+                  element={<PrincipalTrimestralesC />}
+                  />
+
+                  <Ruta
+                  path="/pagos/concepcion/trimestral/efectivo"
+                  element={<EfectivoTC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/trimestral/tarjeta-debito"
+                  element={<TarjetaDebitoTC />}
+                  />
+                  <Ruta
+                  path="/pagos/concepcion/trimestral/cuotas/tarjeta-credito"
+                  element={<TarjetaCreditoTC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/trimestral/transferencia"
+                  element={<TransferenciaTC/>}
+                  />
+                  
+                   <Ruta
+                  path="/pagos/concepcion/trimestral/cuotas"
+                  element={<CuotasTrimestralC/>}
+                  />
+
+                  <Ruta
+                  path="/pagos/concepcion/semestral"
+                  element={<PrincipalSemestralesC />}
+                  />
+
+                  <Ruta
+                  path="/pagos/concepcion/semestral/efectivo"
+                  element={<EfectivoSC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/semestral/tarjeta-debito"
+                  element={<TarjetaDebitoSC />}
+                  />
+                  <Ruta
+                  path="/pagos/concepcion/semestral/cuotas/tarjeta-credito"
+                  element={<TarjetaCreditoSC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/semestral/transferencia"
+                  element={<TransferenciaSC/>}
+                  />
+                   <Ruta
+                  path="/pagos/concepcion/semestral/cuotas"
+                  element={<CuotasSemestralC/>}
+                  />
+
+                  <Ruta
+                  path="/pagos/concepcion/anual"
+                  element={<PrincipalAnualC />}
+                  />
+
+                  <Ruta
+                  path="/pagos/concepcion/anual/efectivo"
+                  element={<EfectivoAC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/anual/tarjeta-debito"
+                  element={<TarjetaDebitoAC />}
+                  />
+                  <Ruta
+                  path="/pagos/concepcion/anual/cuotas/tarjeta-credito"
+                  element={<TarjetaCreditoAC />}
+                />
+                <Ruta
+                  path="/pagos/concepcion/anual/transferencia"
+                  element={<TransferenciaAC/>}
+                  />
+                   <Ruta
+                  path="/pagos/concepcion/anual/cuotas"
+                  element={<CuotasAnualC/>}
+                  />
+
+                <Ruta path="/*" element={<NotFound />} />
+              </Rutas>
+              <TaskReminder2 tasks={tasks} />
+            </>
+          )}
+        </Suspense>
+      </Router>
       {/* </div> */}
     </AuthProvider>
   );

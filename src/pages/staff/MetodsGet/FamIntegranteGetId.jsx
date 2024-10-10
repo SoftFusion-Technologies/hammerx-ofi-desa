@@ -54,9 +54,9 @@ const IntegranteDetails = ({ user, isOpen, onClose, obtenerIntegrantes2 }) => {
         <p>
           <span className="font-semibold ">Email:</span> {user.email}
         </p>
-        <p>
+        {/* <p>
           <span className="font-semibold ">Sede:</span> {user.sede}
-        </p>
+        </p> */}
         <p>
           <span className="font-semibold ">Notas:</span> {user.notas}
         </p>

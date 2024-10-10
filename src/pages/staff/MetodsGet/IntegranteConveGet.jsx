@@ -24,7 +24,7 @@ import Footer from '../../../components/footer/Footer';
 import FormAltaIntegranteConve from '../../../components/Forms/FormAltaIntegranteConve';
 import IntegranteDetails from './IntegranteConveGetId';
 import Copy from '../../../images/copy.png';
-import subirArch from '../../../images/subirArch.png';
+// import subirArch from '../../../images/subirArch.png'
 
 import { useAuth } from '../../../AuthContext';
 import ImagesUpload from './ImagesUpload.jsx';
@@ -38,24 +38,24 @@ const IntegranteConveGet = ({ integrantes }) => {
   const [integrante, setIntegrantes] = useState([]);
   const [modalNewIntegrante, setModalNewIntegrant] = useState(false);
   const [totalPrecioFinal, setTotalPrecioFinal] = useState(0);
-  const { userLevel, userName } = useAuth();
+  const { userLevel } = useAuth();
 
   // Estado para tomar los nombres de los convenios
   const [convenioNombre, setConvenioNombre] = useState('');
   const [convenioDescripcion, setConvenioDescripcion] = useState('');
   const [convenioDescripcionUsu, setConvenioDescripcionUsu] = useState('');
 
-  // Estado para almacenar el mes seleccionado en `FechasConvenios`
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [registroExistente, setRegistroExistente] = useState(false);
-
   // Estado para tomar los valores de permiteFam de los convenios
   const [permiteFam, setpermiteFam] = useState(0);
-  const [permiteFec, setpermiteFec] = useState(0);
   const [cantFam, setcantFam] = useState(0);
 
   const [selectedUser, setSelectedUser] = useState(null); // Estado para el usuario seleccionado
   const [modalUserDetails, setModalUserDetails] = useState(false); // Estado para controlar el modal de detalles del usuario
+
+  // Estado para almacenar el mes seleccionado en `FechasConvenios`
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [registroExistente, setRegistroExistente] = useState(false);
+  const [permiteFec, setpermiteFec] = useState(0);
 
   // nueva variable para almacenar el valor de permiteFec cuando inicia el componente
   const newPermite = permiteFec;
@@ -75,6 +75,7 @@ const IntegranteConveGet = ({ integrantes }) => {
   const URL = 'http://localhost:8080/integrantes/';
   const URL2 = `http://localhost:8080/admconvenios/${id_conv}/integrantes/`;
   // para recuperar los valores de precio INI
+  const URL3 = 'http://localhost:8080/admconvenios/';
   const URL4 = 'http://localhost:8080/admconvenios/';
 
   const [precio, setPrecio] = useState('');
@@ -263,7 +264,11 @@ const IntegranteConveGet = ({ integrantes }) => {
       setCurrentPage(currentPage + 1);
     }
   }
-
+  // Función para formatear la fecha y extraer el mes
+  const obtenerMes = (fecha) => {
+    const date = new Date(fecha);
+    return date.getMonth(); // Retorna el número de mes (0-11)
+  };
   useEffect(() => {
     // Filtrar los registros para mostrar solo los del mes seleccionado
     const registrosFiltrados = records.filter((integrante) => {
@@ -327,13 +332,7 @@ const IntegranteConveGet = ({ integrantes }) => {
   };
 
   const obtenerNombreUsuario = (email) => {
-    // return email.split('@')[0];
-  };
-
-  // Función para formatear la fecha y extraer el mes
-  const obtenerMes = (fecha) => {
-    const date = new Date(fecha);
-    return date.getMonth(); // Retorna el número de mes (0-11)
+    return email.split('@')[0];
   };
 
   // Filtrar los registros para mostrar solo los del mes seleccionado
@@ -351,7 +350,6 @@ const IntegranteConveGet = ({ integrantes }) => {
   const handleRadioChange = (e) => {
     setShowFileUpload(e.target.value === 'yes'); // Muestra el componente si se selecciona "Sí"
   };
-
   return (
     <>
       <NavbarStaff />
@@ -374,26 +372,32 @@ const IntegranteConveGet = ({ integrantes }) => {
             userLevel === '' ||
             userLevel === 'administrador') && (
             <div className="flex justify-center">
-              <h1 className="pb-5">Descripción: {convenioDescripcion}</h1>
+              <h1 className="pb-5">
+                <b className="mr-2">Descripción: </b>
+              </h1>
+              <span dangerouslySetInnerHTML={{ __html: convenioDescripcion }} />
             </div>
           )}
           {/* Descripcion Usuario */}
           {(userLevel === 'admin' ||
             userLevel === 'gerente' ||
+            userLevel === 'vendedor' ||
             userLevel === 'administrador') && (
             <div className="flex justify-center">
               <h1 className="pb-5">
-                Descripción Usuario: {convenioDescripcionUsu}
+                <b className="mr-2">Descripción Usuario: </b>
               </h1>
+              <span
+                dangerouslySetInnerHTML={{ __html: convenioDescripcionUsu }}
+              />
             </div>
           )}
+
           <div className="flex justify-center">
-            <h1 className="pb-5">
-              Listado de Integrantes: &nbsp;
-              <span className="text-center">
-                Cantidad de registros: {results.length}
-              </span>
-            </h1>
+            <h1 className="pb-5 font-bold ">Listado de Integrantes: &nbsp;</h1>
+            <span className="text-center">
+              Cantidad de registros: {results.length}
+            </span>
           </div>
           {/* formulario de busqueda */}
           <form className="flex justify-center pb-5">
@@ -401,56 +405,65 @@ const IntegranteConveGet = ({ integrantes }) => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               type="text"
-              placeholder="Buscar Integrante"
+              placeholder="Buscar Integrante por Nombre"
               className="border rounded-sm"
             />
           </form>
           {/* formulario de busqueda */}
           {(userLevel === 'gerente' ||
             userLevel === 'admin' ||
+            userLevel === 'vendedor' ||
             userLevel === '' ||
-            userLevel === 'administrador') &&
-            !registroExistente && (
-              <div className="flex justify-center pb-10">
-                <Link to="#">
-                  <button
-                    onClick={abrirModal}
-                    className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
-                  >
-                    Nuevo Integrante
-                  </button>
-                </Link>
-              </div>
-            )}
-          {/* Importar Clientes Excel - INICIO */}
-          <div className="text-center mb-4 font-bold uppercase">
-            <h3>Importar Clientes Excel</h3>
-            <div>
-              <label className="mr-2">
-                <input
-                  type="radio"
-                  value="yes"
-                  checked={showFileUpload}
-                  onChange={handleRadioChange}
-                />
-                Sí
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  value="no"
-                  checked={!showFileUpload}
-                  onChange={handleRadioChange}
-                />
-                No
-              </label>
+            userLevel === 'administrador') && (
+            <div className="flex justify-center pb-10">
+              <Link to="#">
+                <button
+                  onClick={registroExistente ? undefined : abrirModal} // Evita la ejecución si está en gris
+                  className={`${
+                    registroExistente
+                      ? 'bg-gray-500 hover:bg-gray-400'
+                      : 'bg-[#58b35e] hover:bg-[#4e8a52]'
+                  } text-white py-2 px-4 rounded transition-colors duration-100 z-10`}
+                >
+                  Nuevo Integrante
+                </button>
+              </Link>
             </div>
+          )}
+          {/* Importar Clientes Excel - INICIO */}
+          {(userLevel === 'admin' ||
+            userLevel === '' ||
+            userLevel === 'gerente' ||
+            userLevel === 'administrador') && (
+            <div className="text-center mb-4 font-bold uppercase">
+              <h3>Importar Clientes Excel</h3>
+              <div>
+                <label className="mr-2">
+                  <input
+                    type="radio"
+                    value="yes"
+                    checked={showFileUpload}
+                    onChange={handleRadioChange}
+                  />
+                  Sí
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    value="no"
+                    checked={!showFileUpload}
+                    onChange={handleRadioChange}
+                  />
+                  No
+                </label>
+              </div>
 
-            {(userLevel === 'admin' ||
-              userLevel === '' ||
-              userLevel === 'administrador') &&
-              showFileUpload && <FileUpload convenioId={id_conv} />}
-          </div>
+              {(userLevel === 'admin' ||
+                userLevel === '' ||
+                userLevel === 'administrador') &&
+                showFileUpload && <FileUpload convenioId={id_conv} />}
+            </div>
+          )}
           {/* Importar Clientes Excel - FINAL */}
 
           {/* R8 - SE AGREGAN FECHAS PARA TRABAJAR EN CONVENIOS INICIO - BENJAMIN ORELLANA */}
@@ -481,12 +494,18 @@ const IntegranteConveGet = ({ integrantes }) => {
                     <th>Usuario</th>
                     <th>Fecha</th>
                     <th>Estado de Autorización</th> {/* Nueva columna R6-BO*/}
-                    <th>Acciones</th>
+                    {(userLevel === 'admin' ||
+                      userLevel === '' ||
+                      userLevel === 'gerente' ||
+                      userLevel === 'administrador') && <th>Acciones</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {registrosFiltrados.map((integrante) => (
-                    <tr key={integrante.id}>
+                    <tr
+                      className={registroExistente ? 'tr-gris' : ''}
+                      key={integrante.id}
+                    >
                       {/* <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {i.id}
                       </td> */}
@@ -509,31 +528,64 @@ const IntegranteConveGet = ({ integrantes }) => {
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {integrante.email}
                       </td>
-
                       {/* <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {integrante.sede}
                       </td> */}
 
-                      <td onClick={() => obtenerIntegrante(integrante.id)}>
-                        {integrante.precio !== '0'
-                          ? formatearMoneda(integrante.precio)
-                          : 'Sin Precio'}
-                      </td>
-                      <td onClick={() => obtenerIntegrante(integrante.id)}>
-                        {integrante.descuento !== '0'
-                          ? `${integrante.descuento}%`
-                          : 'Sin descuento'}
-                      </td>
-                      <td onClick={() => obtenerIntegrante(integrante.id)}>
-                        {integrante.preciofinal !== '0'
-                          ? formatearMoneda(integrante.preciofinal)
-                          : 'Sin Precio Final'}
-                      </td>
+                      {(userLevel === 'admin' ||
+                        userLevel === '' ||
+                        userLevel === 'gerente' ||
+                        userLevel === 'administrador') && (
+                        <td onClick={() => obtenerIntegrante(integrante.id)}>
+                          {integrante.precio !== '0'
+                            ? formatearMoneda(integrante.precio)
+                            : 'Sin Precio'}
+                        </td>
+                      )}
+                      {(userLevel === 'admin' ||
+                        userLevel === '' ||
+                        userLevel === 'gerente' ||
+                        userLevel === 'administrador') && (
+                        <td onClick={() => obtenerIntegrante(integrante.id)}>
+                          {integrante.descuento !== '0'
+                            ? `${integrante.descuento}%`
+                            : 'Sin descuento'}
+                        </td>
+                      )}
+                      {(userLevel === 'admin' ||
+                        userLevel === '' ||
+                        userLevel === 'gerente' ||
+                        userLevel === 'administrador') && (
+                        <td onClick={() => obtenerIntegrante(integrante.id)}>
+                          {integrante.preciofinal !== '0'
+                            ? formatearMoneda(integrante.preciofinal)
+                            : 'Sin Precio Final'}
+                        </td>
+                      )}
+
+                      {/* Ocultamos campos precios para usuarios de tipo vendedor - inicio */}
+
+                      {userLevel === 'vendedor' && (
+                        <td onClick={() => obtenerIntegrante(integrante.id)}>
+                          Oculto
+                        </td>
+                      )}
+                      {userLevel === 'vendedor' && (
+                        <td onClick={() => obtenerIntegrante(integrante.id)}>
+                          Oculto
+                        </td>
+                      )}
+                      {userLevel === 'vendedor' && (
+                        <td onClick={() => obtenerIntegrante(integrante.id)}>
+                          Oculto
+                        </td>
+                      )}
+
+                      {/* Ocultamos campos precios para usuarios de tipo vendedor - Fin */}
 
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {obtenerNombreUsuario(integrante.userName)}
                       </td>
-
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {formatearFecha(integrante.fechaCreacion)}
                       </td>
@@ -554,35 +606,49 @@ const IntegranteConveGet = ({ integrantes }) => {
                           ? 'Pendiente'
                           : 'Autorizado'}
                       </td>
-
                       {/* <td onClick={() => obtenerIntegrante(i.id)}>
                         {formatearFecha(i.vencimiento)}
                       </td> */}
-
                       {/* ACCIONES */}
-                      {(userLevel === 'admin' ||
-                        userLevel === 'gerente' ||
-                        userLevel === 'administrador') &&
-                        !registroExistente && (
+                      {
+                        /*
+                      userLevel === 'gerente' ||
+                      userLevel === 'vendedor' ||
+                      userLevel === 'convenio' ||
+                      */
+                        (userLevel === 'admin' ||
+                          userLevel === 'gerente' ||
+                          userLevel === 'administrador') && (
                           <td className="">
                             <button
                               onClick={() =>
                                 handleEliminarIntegrante(integrante.id)
                               }
                               type="button"
-                              className="py-2 px-4 my-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+                              className={`py-2 px-4 my-1 ${
+                                registroExistente
+                                  ? 'btn-gris'
+                                  : 'bg-red-500 hover:bg-red-600'
+                              } text-white rounded-md`}
+                              disabled={registroExistente} // Desactiva el botón si está en gris
                             >
                               Eliminar
                             </button>
                             <button
-                              onClick={() => handleEditarIntegrante(integrante)} // (NUEVO)
+                              onClick={() => handleEditarIntegrante(integrante)}
                               type="button"
-                              className="py-2 px-4 my-1 ml-5 bg-yellow-500 text-black rounded-md hover:bg-red-600"
+                              className={`py-2 px-4 my-1 ml-5 ${
+                                registroExistente
+                                  ? 'btn-gris'
+                                  : 'bg-yellow-500 hover:bg-yellow-600'
+                              } text-black rounded-md`}
+                              disabled={registroExistente} // Desactiva el botón si está en gris
                             >
                               Editar
                             </button>
                           </td>
-                        )}
+                        )
+                      }
                     </tr>
                   ))}
                 </tbody>
@@ -617,51 +683,61 @@ const IntegranteConveGet = ({ integrantes }) => {
                   </li>
                 </ul>
               </nav>
-              <div className="text-center mt-10">
-                <div className="cbu-container font-bignoodle">
-                  <span className="cbutext text-gray-600">
-                    {' '}
-                    REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU:
-                    0110372230037217312133
-                  </span>
-                  <img
-                    className="copy-icon"
-                    src={Copy}
-                    alt="Copy Icon"
-                    onClick={handleCopyClick}
-                  />
-                </div>
-                <p className="font-bignoodle text-gray-600 text-2xl">
-                  Titular: Marcelo Javier Garcia
-                </p>
-                <p className="font-bignoodle text-gray-600 text-2xl">
-                  CUIT: 20- 34.764.843 -5
-                </p>
-                <div colSpan="7" className="font-bold text-[#fc4b08] text-2xl">
-                  TOTAL
-                </div>
-                <div className="text-2xl">
-                  {formatearMoneda(totalPrecioFinal)}
-                </div>
-                <div className="flex gap-4 flex-wrap">
-                  <div className="flex-1 min-w-[300px]">
-                    {(userLevel === '' || userLevel === 'admin') && (
-                      <ImagesUpload
-                        convenioId={id_conv}
-                        selectedMonth={selectedMonth}
-                        setSelectedMonth={setSelectedMonth}
-                      />
-                    )}
+
+              {(userLevel === 'admin' ||
+                userLevel === '' ||
+                userLevel === 'gerente' ||
+                userLevel === 'administrador') && (
+                <div className="text-center mt-10">
+                  <div className="cbu-container font-bignoodle">
+                    <span className="cbutext text-gray-600">
+                      {' '}
+                      REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU:
+                      0110372230037217312133
+                    </span>
+                    <img
+                      className="copy-icon"
+                      src={Copy}
+                      alt="Copy Icon"
+                      onClick={handleCopyClick}
+                    />
                   </div>
-                  <div className="flex-1 min-w-[300px]">
-                    {(userLevel === '' || userLevel === 'admin') && (
-                      <InvoicesUpload
-                        convenioId={id_conv}
-                        selectedMonth={selectedMonth}
-                        setSelectedMonth={setSelectedMonth}
-                      />
-                    )}
+                  <p className="font-bignoodle text-gray-600 text-2xl">
+                    Titular: Marcelo Javier Garcia
+                  </p>
+                  <p className="font-bignoodle text-gray-600 text-2xl">
+                    CUIT: 20- 34.764.843 -5
+                  </p>
+                  <div
+                    colSpan="7"
+                    className="font-bold text-[#fc4b08] text-2xl"
+                  >
+                    TOTAL
                   </div>
+                  <div className="text-2xl">
+                    {formatearMoneda(totalPrecioFinal)}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-4 flex-wrap">
+                <div className="flex-1 min-w-[300px]">
+                  {(userLevel === '' || userLevel === 'admin') && (
+                    <ImagesUpload
+                      convenioId={id_conv}
+                      selectedMonth={selectedMonth}
+                      setSelectedMonth={setSelectedMonth}
+                    />
+                  )}
+                </div>
+                <div className="flex-1 min-w-[300px]">
+                  {(userLevel === '' || userLevel === 'admin') && (
+                    <InvoicesUpload
+                      convenioId={id_conv}
+                      selectedMonth={selectedMonth}
+                      setSelectedMonth={setSelectedMonth}
+                    />
+                  )}
                 </div>
               </div>
             </>
@@ -686,6 +762,7 @@ const IntegranteConveGet = ({ integrantes }) => {
           permiteFam={permiteFam}
           id_conv={id_conv}
           cantFam={cantFam}
+          formatearFecha={formatearFecha}
         />
       )}
       <Footer />

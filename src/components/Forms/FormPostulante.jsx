@@ -70,12 +70,12 @@ const FormPostulante = ({ isOpen, onClose }) => {
         alert("Por favor, complete todos los campos obligatorios.");
       } else {
         // Realizar la solicitud POST al servidor
-        const respuesta = await fetch("http://localhost:8080/postulantes/", {
-          method: "POST",
+        const respuesta = await fetch('http://localhost:8080/postulantes/', {
+          method: 'POST',
           body: JSON.stringify(valores),
           headers: {
-            "Content-Type": "application/json",
-          },
+            'Content-Type': 'application/json'
+          }
         });
 
         // Verificar si la solicitud fue exitosa
@@ -85,7 +85,7 @@ const FormPostulante = ({ isOpen, onClose }) => {
 
         // Convertir la respuesta a JSON
         const data = await respuesta.json();
-        console.log("Registro insertado correctamente:", data);
+        // console.log("Registro insertado correctamente:", data);
 
         // Mostrar la ventana modal de éxito
         setShowModal(true);
@@ -96,7 +96,7 @@ const FormPostulante = ({ isOpen, onClose }) => {
         }, 3000);
       }
     } catch (error) {
-      console.error("Error al insertar el registro:", error.message);
+      // console.error("Error al insertar el registro:", error.message);
 
       // Mostrar la ventana modal de error
       setErrorModal(true);
@@ -146,7 +146,7 @@ const FormPostulante = ({ isOpen, onClose }) => {
         >
           {({ errors, touched }) => {
             return (
-              <div className="py-0 max-h-[500px] overflow-y-auto bg-white rounded-xl">
+              <div className="-mt-10 py-0 max-h-[900px] overflow-y-auto bg-white rounded-xl">
                 {' '}
                 {/* Cuando se haga el modal, sacarle el padding o ponerle uno de un solo digito */}
                 <Form className="formulario max-sm:w-[300px]">

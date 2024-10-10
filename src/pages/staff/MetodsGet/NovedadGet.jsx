@@ -9,7 +9,9 @@ import Footer from '../../../components/footer/Footer';
 import FormAltaNovedad from '../../../components/Forms/FormAltaNovedad';
 import { useAuth } from '../../../AuthContext';
 import ModalNovedad from '../MetodsGet/ModalNovedad';
+import Switch from 'react-switch';
 import FechasNovedad from './Novedad/FechasNovedad'; //R7- nuevo componente para agregar mas fechas 22/09/2024 - Benjamin Orellana
+
 const NovedadGet = () => {
   const [modalNewNovedad, setModalNewNovedad] = useState(false);
   const [modalData, setModalData] = useState({ isOpen: false, mensaje: '' });
@@ -17,18 +19,19 @@ const NovedadGet = () => {
   const [search, setSearch] = useState('');
   const [novedad, setNovedad] = useState([]);
   const [archivos, setArchivos] = useState([]);
+  const [userId, setUserId] = useState(null); // Añadimos estado para userId
 
   const [novedadId, setNovedadId] = useState(null); // R7 -Estado para almacenar el ID de la novedad
   const [modalFechas, setModalFechas] = useState(false); // R7  Estado para el modal de fechas
   const [vencimientos, setVencimientos] = useState([]); // R7  Estado para el modal de fechas
 
-  const [selectednovedad, setSelectedNovedad] = useState(null); // Estado para el usuario seleccionado
-  const [userId, setUserId] = useState(null); // Añadimos estado para userId
-
   const URL = 'http://localhost:8080/novedades/';
   const URL_ARCH = 'http://localhost:8080/novedadesarch/';
   const USERS_URL = 'http://localhost:8080/users/';
   const URLVEC = 'http://localhost:8080/novedades-vencimientos/';
+
+  const [selectednovedad, setSelectedNovedad] = useState(null); // Estado para el usuario seleccionado
+  // console.log(userId);
 
   useEffect(() => {
     // Se obtiene el userId usando el userName (email)
@@ -70,18 +73,15 @@ const NovedadGet = () => {
     }
   };
 
-  const obtenerArchivosPorNovedad = async (novedadId) => {
-    try {
-      const response = await axios.get(`${URL_ARCH}${novedadId}`);
-      setArchivosNovedad(response.data);
-    } catch (error) {
-      console.error('Error al obtener archivos de la novedad:', error);
-    }
-  };
   // R5-SUBIR ARCHIVOS A NOVEDADES - 16-09-2024 - Benjamin Orellana - FINAL
 
   const abrirModal = () => {
     setModalNewNovedad(true);
+  };
+
+  const cerrarModal = () => {
+    setModalNewNovedad(false);
+    obtenerNovedades();
   };
 
   // R7 - Agregar varias fechas a las novedades
@@ -90,12 +90,8 @@ const NovedadGet = () => {
     setModalNewNovedad(false); // Cierra el modal de alta novedad si está abierto
     setModalData({ isOpen: false, mensaje: '' }); // Cierra el modal de detalle si está abierto
     setModalFechas(true); // Abre el modal de fechas
-    loadVencimientos(id); // Carga vencimientos al abrir el modal
+    // loadVencimientos(id); // Carga vencimientos al abrir el modal
     setNovedadId(id);
-  };
-  const cerrarModal = () => {
-    setModalNewNovedad(false);
-    obtenerNovedades();
   };
 
   const searcher = (e) => {
@@ -151,9 +147,20 @@ const NovedadGet = () => {
         novedad.novedadUsers &&
         novedad.novedadUsers.some((user) => user.user.id === parseInt(userId));
       const userAdminOrGerente =
-        userLevel === 'admin' || userLevel === 'gerente';
+        userLevel === 'admin' || userLevel === 'administrador';
       return userAssigned || userAdminOrGerente;
     });
+  };
+
+  // Filtrar los usuarios asignados para mostrar solo el usuario autenticado
+  const filtrarUsuariosAsignados = (novedadUsers, userLevel, userId) => {
+    if (userLevel === 'admin' || userLevel === 'administrador') {
+      // Si es admin, mostrar todos los usuarios asignados
+      return novedadUsers;
+    } else {
+      // Si no es admin, mostrar solo el usuario autenticado
+      return novedadUsers.filter((user) => user.user.id === parseInt(userId));
+    }
   };
 
   const results = !search
@@ -163,7 +170,7 @@ const NovedadGet = () => {
       });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 40;
   const lastIndex = currentPage * itemsPerPage;
   const firstIndex = lastIndex - itemsPerPage;
   const records = results.slice(firstIndex, lastIndex);
@@ -186,6 +193,10 @@ const NovedadGet = () => {
     }
   }
 
+  // R6- Agregar mas fechas a novedades  18-09-2024 - Benjamin Orellana - INICIO
+
+  // Función para verificar si una fecha está cerca (por ejemplo, dentro de los próximos 3 días)
+
   // Normalizar las fechas de hoy y mañana para comparar correctamente
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Normaliza la fecha a las 00:00:00
@@ -196,7 +207,6 @@ const NovedadGet = () => {
   // 1. Crear un array combinado de novedades con sus fechas adicionales de republicación
   const novedadesConFechas = records.map((novedad) => {
     // Buscar las fechas de vencimiento adicionales de `novedades-vencimientos` que coincidan con esta novedad
-   
     const fechasAdicionales = vencimientos
       .filter((v) => v.novedad_id === novedad.id)
       .map((v) => new Date(v.vencimiento));
@@ -208,9 +218,9 @@ const NovedadGet = () => {
   });
 
   // 2. Filtrar `novedades programadas` y `últimas novedades` con las fechas de vencimiento correspondientes
-  const novedadesProgramadas = records.filter(
-    (novedad) => new Date(novedad.vencimiento) > new Date()
-  );
+  const novedadesProgramadas = records
+    .filter((novedad) => new Date(novedad.vencimiento) >= new Date())
+    .sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
 
   const ultimasNovedades = novedadesConFechas.filter((novedad) =>
     novedad.fechasVencimiento.some((fecha) => fecha <= today)
@@ -222,11 +232,12 @@ const NovedadGet = () => {
     const fechaB = Math.max(...b.fechasVencimiento.map((f) => f.getTime()));
     return fechaB - fechaA;
   });
+  // R6- Agregar mas fechas a novedades  18-09-2024 - Benjamin Orellana - FINAL
 
-  const handleEditarNovedad = async (novedad) => {
+  const handleEditarNovedad = (novedad) => {
+    // (NUEVO)
     setSelectedNovedad(novedad);
     setModalNewNovedad(true);
-    await obtenerArchivosPorNovedad(novedad.id); // Obtener archivos de la novedad seleccionada
   };
 
   const handleFileUpload = async (event, novedadId) => {
@@ -269,22 +280,42 @@ const NovedadGet = () => {
     }
   };
 
-  // R7 - Agregar varias fechas a las novedades
-  const loadVencimientos = async (id) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8080/novedades-vencimientos/${id}`
-      );
+  const [switchStates, setSwitchStates] = useState({});
 
-      if (response.data && response.data.length > 0) {
-        setVencimientos(response.data); // Si hay datos, actualiza el estado
-      } else {
-        console.log('No hay vencimientos registrados para esta novedad.');
-        alert('No hay vencimientos registrados para esta novedad.');
-      }
+  // Inicializa el estado local del switch basado en los datos de novedad
+  useEffect(() => {
+    if (novedad && novedad.novedadUsers) {
+      const initialStates = novedad.novedadUsers.reduce((acc, user) => {
+        acc[user.id] = user.leido === 1;
+        return acc;
+      }, {});
+      setSwitchStates(initialStates);
+    }
+  }, [novedad]);
+
+  const toggleLeido = async (id) => {
+    try {
+      // Obtén el estado actual del switch
+      const currentState = switchStates[id];
+
+      // Actualiza el estado local del switch
+      setSwitchStates((prevStates) => ({
+        ...prevStates,
+        [id]: !prevStates[id]
+      }));
+
+      // Cambia el estado 'leido' en la base de datos
+      await axios.put(`http://localhost:8080/novedad_user/${id}`, {
+        leido: !currentState ? 1 : 0 // Actualiza el estado 'leido' en el backend
+      });
     } catch (error) {
-      // console.error('Error al cargar vencimientos:', error);
-      // alert('Error al cargar vencimientos.');
+      console.error('Error al marcar como leída:', error);
+
+      // Revertir el estado local si ocurre un error
+      setSwitchStates((prevStates) => ({
+        ...prevStates,
+        [id]: currentState
+      }));
     }
   };
 
@@ -300,24 +331,27 @@ const NovedadGet = () => {
               </button>
             </Link>
           </div>
-          <div className="flex justify-center">
-            <h1 className="pb-5">
-              Listado de Novedades: &nbsp;
-              <span className="text-center">
-                Cantidad de registros: {results.length}
-              </span>
-            </h1>
-          </div>
-          <form className="flex justify-center pb-5">
-            <input
-              value={search}
-              onChange={searcher}
-              type="text"
-              placeholder="Buscar novedades"
-              className="border rounded-sm"
-            />
-          </form>
-
+          {userLevel === 'vendedor' || userLevel === 'gerente' || (
+            <>
+              <div className="flex justify-center">
+                <h1 className="pb-5">
+                  Listado de Novedades: &nbsp;
+                  <span className="text-center">
+                    Cantidad de registros: {results.length}
+                  </span>
+                </h1>
+              </div>
+              <form className="flex justify-center pb-5">
+                <input
+                  value={search}
+                  onChange={searcher}
+                  type="text"
+                  placeholder="Buscar novedades"
+                  className="border rounded-sm"
+                />
+              </form>
+            </>
+          )}
           {(userLevel === 'admin' || userLevel === 'administrador') && (
             <div className="flex justify-center pb-10">
               <Link to="#">
@@ -351,14 +385,14 @@ const NovedadGet = () => {
                         // onClick={() => handleOpenModal(novedad.mensaje)} se elimina de este div, ya que al presionar en cualquier parte o en eliminar y editar se abre el modal
                       >
                         <h2
-                          className="text-xl text-gray-300 font-semibold mb-4"
+                          className="text-xl text-black font-semibold mb-4 uppercase"
                           onClick={() => handleOpenModal(novedad.mensaje)}
                         >
-                          Sucursal: {novedad.sede}
+                          Sede: {novedad.sede}
                         </h2>
                         <b>
                           <p
-                            className="text-orange-500 mb-4"
+                            className="text-orange-500 mb-4 uppercase"
                             onClick={() => handleOpenModal(novedad.mensaje)}
                           >
                             {novedad.titulo}
@@ -367,41 +401,14 @@ const NovedadGet = () => {
                         <p>Usuarios asignados a la novedad:</p>
                         <b>
                           <div onClick={() => handleOpenModal(novedad.mensaje)}>
-                            <p className="text-gray-600 mb-4">
+                            <p className="text-black uppercase mb-4">
                               {novedad.novedadUsers &&
                               novedad.novedadUsers.length > 0
                                 ? novedad.novedadUsers
                                     .map((novedadUser) => novedadUser.user.name)
                                     .join(', ')
-                                : 'No users assigned'}
+                                : 'Sin usuarios asignados'}
                             </p>
-
-                            {novedad.novedadUsers &&
-                            novedad.novedadUsers.length > 0 ? (
-                              novedad.novedadUsers.map((novedadUser, index) => (
-                                <p
-                                  onClick={() =>
-                                    handleOpenModal(novedad.mensaje)
-                                  }
-                                  key={index}
-                                  className={
-                                    novedad.estado === 0
-                                      ? 'text-green-500 mb-4'
-                                      : 'text-red-500 mb-4'
-                                  }
-                                >
-                                  {novedadUser.user.name}:{' '}
-                                  {novedad.estado === 0 ? 'Leido' : 'No Leido'}
-                                </p>
-                              ))
-                            ) : (
-                              <p
-                                className="text-red-500 mb-4"
-                                onClick={() => handleOpenModal(novedad.mensaje)}
-                              >
-                                Sin Usuarios asignados
-                              </p>
-                            )}
                           </div>
                         </b>
                         {archivos.filter(
@@ -448,7 +455,7 @@ const NovedadGet = () => {
                             </ul>
                           </>
                         )}
-                        <p>Fecha de publicacion:</p>
+                        <p>Fecha:</p>
                         <b>
                           <p
                             className="text-gray-600"
@@ -476,10 +483,11 @@ const NovedadGet = () => {
                               >
                                 Editar
                               </button>
+
                               {/* Nuevo botón para subir archivos R5-Subir archivos a novedades */}
                               <label
                                 htmlFor={`file-upload-${novedad.id}`}
-                                className="py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600"
+                                className="ml-2 py-3 px-3 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600"
                               >
                                 Subir Archivo
                               </label>
@@ -491,6 +499,12 @@ const NovedadGet = () => {
                                   handleFileUpload(e, novedad.id)
                                 }
                               />
+                              <button
+                                onClick={() => abrirModalFechas(novedad.id)}
+                                className="ml-2 py-3 px-3 bg-green-500 text-white rounded-md hover:bg-yellow-600"
+                              >
+                                Ver Fechas
+                              </button>
                             </div>
                           )}
                         </div>
@@ -503,86 +517,133 @@ const NovedadGet = () => {
                 <h2 className="text-xl font-semibold ml-4">
                   ÚLTIMAS NOVEDADES
                 </h2>
-                <div className="block space-y-4">
+                <div className="block space-y-4 ">
                   {novedadesOrdenadas.map((novedad) => (
                     <div
                       key={novedad.id}
-                      className="border m-5 border-gray-300 p-4 rounded-lg cursor-pointer mb-4"
+                      className="border bg-orange-500 m-5 border-black p-4 rounded-lg cursor-pointer mb-4"
                       // onClick={() => handleOpenModal(novedad.mensaje)}
                     >
-                      <h2
+                      {/* <h2 se elimina Sede
                         className="text-xl text-gray-300 font-semibold mb-4"
                         onClick={() => handleOpenModal(novedad.mensaje)}
                       >
-                        Sucursal: {novedad.sede}
-                      </h2>
-                      <b>
-                        <p
-                          className="text-orange-500 mb-4"
-                          onClick={() => handleOpenModal(novedad.mensaje)}
-                        >
-                          {novedad.titulo}
-                        </p>
-                      </b>
-                      <p>Usuarios asignados a la novedad:</p>
-                      <b>
-                        <div onClick={() => handleOpenModal(novedad.mensaje)}>
-                          <p className="text-gray-600 mb-4">
-                            {novedad.novedadUsers &&
-                            novedad.novedadUsers.length > 0
-                              ? novedad.novedadUsers
-                                  .map((novedadUser) => novedadUser.user.name)
-                                  .join(', ')
-                              : 'No users assigned'}
-                          </p>
+                        Sede: {novedad.sede}
+                      </h2> */}
 
-                          {novedad.novedadUsers &&
-                          novedad.novedadUsers.length > 0 ? (
-                            novedad.novedadUsers.map((novedadUser, index) => (
-                              <p
-                                onClick={() => handleOpenModal(novedad.mensaje)}
-                                key={index}
-                                className={
-                                  novedad.estado === 0
-                                    ? 'text-green-500 mb-4'
-                                    : 'text-red-500 mb-4'
-                                }
-                              >
-                                {novedadUser.user.name}:{' '}
-                                {novedad.estado === 0 ? 'Leido' : 'No Leido'}
-                              </p>
-                            ))
-                          ) : (
-                            <p className="text-red-500 mb-4">
-                              Sin Usuarios asignados
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-white p-4 rounded shadow-lg inline-block max-w-full break-words">
+                          <b>
+                            <p
+                              className="text-black mb-4 uppercase"
+                              onClick={() => handleOpenModal(novedad.mensaje)}
+                            >
+                              {novedad.titulo}
                             </p>
-                          )}
+                          </b>
                         </div>
-                      </b>
+                        {userLevel === 'vendedor' ||
+                          userLevel === 'admin' ||
+                          userLevel === 'administrador' ||
+                          userLevel === 'gerente' || (
+                            <p>Usuarios asignados a la novedad:</p>
+                          )}
 
-                      <p>Fecha de publicacion:</p>
-                      <b>
-                        <p
-                          className="text-gray-600"
-                          onClick={() => handleOpenModal(novedad.mensaje)}
-                        >
-                          {novedad.vencimiento}
-                        </p>
-                      </b>
+                        <div className="bg-white p-4 rounded shadow-lg inline-block max-w-full break-words">
+                          <p className="text-black">Fechas:</p>
+                          <b>
+                            <p
+                              className="text-gray-600"
+                              onClick={() => handleOpenModal(novedad.mensaje)}
+                            >
+                              {novedad.vencimiento}
+                            </p>
+                          </b>
+                        </div>
+
+                        <b>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {novedad &&
+                            novedad.novedadUsers &&
+                            novedad.novedadUsers.length > 0 ? (
+                              filtrarUsuariosAsignados(
+                                novedad.novedadUsers,
+                                userLevel,
+                                userId
+                              ).map((novedadUser) => (
+                                <div
+                                  key={novedadUser.id}
+                                  className="flex items-center justify-between mb-4 p-4 border border-gray-200 rounded-lg shadow-sm"
+                                >
+                                  <p
+                                    onClick={() =>
+                                      handleOpenModal(novedad.mensaje)
+                                    }
+                                    className="text-black cursor-pointer"
+                                  >
+                                    <span className="mr-5 mt-1">
+                                      {novedadUser.user.name}
+                                    </span>
+                                  </p>
+                                  <Switch
+                                    onChange={() => toggleLeido(novedadUser.id)}
+                                    checked={
+                                      switchStates[novedadUser.id] ||
+                                      novedadUser.leido
+                                    }
+                                    offColor="#e30505"
+                                    onColor="#4CAF50"
+                                    handleDiameter={28}
+                                    height={20}
+                                    width={48}
+                                    uncheckedIcon={false}
+                                    checkedIcon={false}
+                                  />
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-red-500 mb-4">
+                                Sin Usuarios asignados
+                              </p>
+                            )}
+                          </div>
+                        </b>
+                      </div>
+
+                      {vencimientos
+                        .filter(
+                          (vencimiento) => vencimiento.novedad_id === novedad.id
+                        ) // Filtrar vencimientos por novedad_id
+                        .map((vencimiento) => (
+                          <div
+                            key={vencimiento.id}
+                            className="m-1 border bg-orange-500 border-black p-4 rounded-lg cursor-pointer mb-4"
+                            style={{ display: 'inline-block' }} // Ajusta el ancho al contenido
+                            // onClick={() => handleOpenModal(novedad.mensaje)} // Puedes agregar un evento aquí si es necesario
+                          >
+                            <p className="text-white">
+                              Esta Novedad tiene NUEVA FECHA de publicación:{' '}
+                              {new Date(
+                                vencimiento.vencimiento
+                              ).toLocaleDateString()}
+                            </p>
+                            {/* Opcional muestra el mensaje del vencimiento */}
+                          </div>
+                        ))}
 
                       {archivos.filter(
                         (archivo) => archivo.novedad_id === novedad.id
                       ).length > 0 && (
                         <>
-                          <p>
-                            Archivos subidos:{' '}
+                          <p className="text-white font-messina mt-4">
+                            ARCHIVOS SUBIDOS:{' '}
                             {
                               archivos.filter(
                                 (archivo) => archivo.novedad_id === novedad.id
                               ).length
                             }
                           </p>
-                          <ul>
+                          <ul className="text-white font-messina ">
                             {archivos
                               .filter(
                                 (archivo) => archivo.novedad_id === novedad.id
@@ -592,38 +653,49 @@ const NovedadGet = () => {
                                   {archivo.nombre_archivo} -{' '}
                                   <a
                                     href={`http://localhost:8080/download/novedad/${archivo.id}`}
-                                    className="text-blue-500 underline"
+                                    className="text-blue-600 underline uppercase"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                   >
                                     Descargar
                                   </a>
+                                  {(userLevel === 'admin' ||
+                                    userLevel === 'administrador') && (
+                                    <button
+                                      onClick={() =>
+                                        handleDeleteArchivo(archivo.id)
+                                      }
+                                      className="ml-2 text-red-500 underline uppercase"
+                                    >
+                                      Eliminar
+                                    </button>
+                                  )}
                                 </li>
                               ))}
                           </ul>
                         </>
                       )}
-
                       <div className="flex justify-end space-x-4">
                         {(userLevel === 'admin' ||
                           userLevel === 'administrador') && (
                           <div>
                             <button
                               onClick={() => handleEliminarNovedad(novedad.id)}
-                              className="py-2 px-4 mr-3 bg-red-500 text-white rounded-md hover:bg-red-600"
+                              className="py-3 px-3 mr-3 bg-red-500 text-white rounded-md hover:bg-red-600"
                             >
                               Eliminar
                             </button>
                             <button
                               onClick={() => handleEditarNovedad(novedad)}
-                              className="py-2 px-4 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
+                              className="py-3 px-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
                             >
                               Editar
                             </button>
+
                             {/* Nuevo botón para subir archivos R5-Subir archivos a novedades */}
                             <label
                               htmlFor={`file-upload-${novedad.id}`}
-                              className="py-2 px-4 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600"
+                              className="ml-2 py-3 px-3 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600"
                             >
                               Subir Archivo
                             </label>
@@ -635,7 +707,7 @@ const NovedadGet = () => {
                             />
                             <button
                               onClick={() => abrirModalFechas(novedad.id)}
-                              className="py-2 px-4 bg-green-500 text-white rounded-md hover:bg-yellow-600"
+                              className="ml-2 py-3 px-3 bg-green-500 text-white rounded-md hover:bg-yellow-600"
                             >
                               Ver Fechas
                             </button>
@@ -702,7 +774,7 @@ const NovedadGet = () => {
         isOpen={modalFechas}
         onClose={() => {
           setModalFechas(false);
-          setVencimientos([]); // Limpia los vencimientos al cerrar
+          // setVencimientos([]); // Limpia los vencimientos al cerrar
         }}
         novedadId={novedadId}
         vencimientos={vencimientos} // Pasa los vencimientos al modal

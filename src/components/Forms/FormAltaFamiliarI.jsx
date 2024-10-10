@@ -52,10 +52,12 @@ const FormAltaFamiliarI = ({
     nombre: Yup.string().required('El Titulo es obligatorio'),
     telefono: Yup.string(),
     direccion: Yup.string(),
-    trabajo: Yup.string(),
-    sede: Yup.string()
+    trabajo: Yup.string()
+    // sede: Yup.string()
   });
 
+      // ? `http://localhost:8080/integrantesfam/${integrante.id}`
+      //     : 'http://localhost:8080/integrantesfam/';
   const handleSubmitFamIntegrante = async (valores) => {
     try {
       // Verificamos si los campos obligatorios están vacíos
@@ -96,7 +98,7 @@ const FormAltaFamiliarI = ({
         // Ocultar la ventana modal de éxito después de 3 segundos
         setTimeout(() => {
           setShowModal(false);
-        }, 3000);
+        }, 1500);
       }
     } catch (error) {
       console.error('Error al insertar el registro:', error.message);
@@ -107,7 +109,7 @@ const FormAltaFamiliarI = ({
       // Ocultar la ventana modal de éxito después de 3 segundos
       setTimeout(() => {
         setErrorModal(false);
-      }, 3000);
+      }, 1500);
     }
   };
 
@@ -139,7 +141,7 @@ const FormAltaFamiliarI = ({
             dni: integrante ? integrante.dni : '',
             telefono: integrante ? integrante.telefono : '',
             email: integrante ? integrante.email : '',
-            sede: integrante ? integrante.sede : '',
+            sede: '',
             notas: integrante ? integrante.notas : '',
             precio: integrante ? integrante.precio : newPrecio,
             descuento: integrante ? integrante.descuento : newDescuento,
@@ -242,7 +244,7 @@ const FormAltaFamiliarI = ({
                       id="sede"
                       name="sede"
                       className="form-select mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      required
+                      // required
                     >
                       <option value="" disabled>
                         Sede:

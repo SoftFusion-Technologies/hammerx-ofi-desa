@@ -49,7 +49,7 @@ const PreguntasFrecuentesGet = () => {
   };
 
   //URL estatica, luego cambiar por variable de entorno
-  const URL = "http://localhost:8080/ask/";
+  const URL = 'http://localhost:8080/ask/';
   // Estado para almacenar la lista de Novedad
   const [frecAsk, setFreAsk] = useState([]);
 

@@ -21,13 +21,17 @@ import * as Yup from 'yup';
 import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
 import Alerta from '../Error';
-
+import ReactQuill from 'react-quill';
+import '../../styles/Forms/FormAltaConve.css'
 const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
   // const [conve, setConve] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
 
+  const [descConveCount, setDescConveCount] = useState(0);
+  const [descUsuCount, setDescUsuCount] = useState(0);
+  const maxLength = 2550;
   // const textoModal = 'Conve creado correctamente.'; se elimina el texto
   // nuevo estado para gestionar dinámicamente según el método (PUT o POST)
   const [textoModal, setTextoModal] = useState('');
@@ -53,6 +57,9 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
           permiteFam: valores.permiteFam ? 1 : 0
         };
 
+    //    
+    // ? `http://localhost:8080/admconvenios/${conve2.id}`
+    //       : 'http://localhost:8080/admconvenios/';
         // Definir URL y método basados en la existencia de conve
         const url = conve2
           ? `http://localhost:8080/admconvenios/${conve2.id}`
@@ -88,7 +95,7 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
         // Ocultar la ventana modal de éxito después de 3 segundos
         setTimeout(() => {
           setShowModal(false);
-        }, 3000);
+        }, 1500);
       }
     } catch (error) {
       console.error('Error al insertar el registro:', error.message);
@@ -99,7 +106,7 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
       // Ocultar la ventana modal de éxito después de 3 segundos
       setTimeout(() => {
         setErrorModal(false);
-      }, 3000);
+      }, 1500);
     }
   };
   const handleClose = () => {
@@ -140,6 +147,8 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
             preciofinal: conve2 ? conve2.preciofinal : '',
             permiteFam: conve2 ? conve2.permiteFam : false,
             cantFamiliares: conve2 ? conve2.cantFamiliares : 0,
+            sede: conve2 ? conve2.sede : '',
+            desc_usu: conve2 ? conve2.desc_usu : '',
             permiteFec: conve2 ? conve2.permiteFec : 0 // Ajustado para ser un valor numérico nuevo requerimiento R8 - BO
           }}
           enableReinitialize
@@ -153,10 +162,10 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
         >
           {({ isSubmitting, setFieldValue, errors, touched, values }) => {
             return (
-              <div className="py-0 max-h-[500px] max-w-[400px] w-[400px] overflow-y-auto bg-white rounded-xl">
+              <div className="-mt-10 py-0 max-h-[1200px] max-w-[1200px] w-full h-full bg-white rounded-xl overflow-y-auto relative">
                 {' '}
                 {/* Cuando se haga el modal, sacarle el padding o ponerle uno de un solo digito */}
-                <Form className="formulario max-sm:w-[300px] bg-white ">
+                <Form className="formulario bg-white ">
                   <div className="flex justify-between">
                     <div className="tools">
                       <div className="circle">
@@ -177,11 +186,11 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                     </div>
                   </div>
 
-                  <div className="mb-3 px-4">
+                  <div className="mb-4 px-6">
                     <Field
                       id="nameConve"
                       type="text"
-                      className="mt-2 block w-full p-3  text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                      className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
                       placeholder="Titulo del Convenio"
                       name="nameConve"
                       maxLength="70"
@@ -192,25 +201,34 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                   </div>
 
                   <div className="mb-3 px-4">
-                    <Field
-                      id="descConve"
-                      type="textarea"
-                      className="mt-2 block w-full p-3  text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      placeholder="Descripción"
-                      name="descConve"
-                      maxLength="70"
+                    <ReactQuill
+                      theme="snow"
+                      value={values.descConve}
+                      onChange={(content) => {
+                        setFieldValue('descConve', content);
+                        setDescUsuCount(content.length);
+                      }}
+                      placeholder="Descripcion para Colaboradores"
+                      className={`mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 custom-quill-editor`}
                     />
+                    {descConveCount > maxLength && (
+                      <style>{`
+                      .ql-editor {
+                        background-color: #f36464;
+                      }
+                    `}</style>
+                    )}
                     {errors.descConve && touched.descConve ? (
                       <Alerta>{errors.descConve}</Alerta>
                     ) : null}
                   </div>
 
-                  <div className="mb-4 px-4">
+                  <div className="mb-4 px-6">
                     <Field
                       id="precio"
                       name="precio"
                       type="text"
-                      className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                      className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
                       placeholder="Precio"
                       maxLength="14"
                       onChange={(e) => {
@@ -222,12 +240,13 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                       }}
                     />
                   </div>
-                  <div className="mb-4 px-4">
+
+                  <div className="mb-4 px-6">
                     <Field
                       id="descuento"
                       name="descuento"
                       type="text"
-                      className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                      className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
                       placeholder="Descuento"
                       maxLength="14"
                       onChange={(e) => {
@@ -239,12 +258,13 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                       }}
                     />
                   </div>
-                  <div className="mb-4 px-4">
+
+                  <div className="mb-4 px-6">
                     <Field
                       id="preciofinal"
                       name="preciofinal"
                       type="text"
-                      className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                      className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
                       placeholder="Precio Final"
                       maxLength="14"
                       readOnly
@@ -252,9 +272,52 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                     />
                   </div>
 
+                  <div className="mb-4 px-6">
+                    <Field
+                      as="select"
+                      id="sede"
+                      name="sede"
+                      className="form-select mt-2 block w-full p-4 text-black bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                      required
+                    >
+                      <option value="" disabled>
+                        Sede:
+                      </option>
+                      <option value="Multisede">Multi Sede</option>
+                      <option value="Monteros">Monteros</option>
+                      <option value="Concepción">Concepción</option>
+                    </Field>
+                    {errors.sede && touched.sede ? (
+                      <Alerta>{errors.sede}</Alerta>
+                    ) : null}
+                  </div>
+                  <div className="mb-3 px-4">
+                    <ReactQuill
+                      theme="snow"
+                      value={values.desc_usu}
+                      onChange={(content) => {
+                        setFieldValue('desc_usu', content);
+                        setDescUsuCount(content.length);
+                      }}
+                      placeholder="Descripcion para Usuarios"
+                      className={`mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 custom-quill-editor`}
+                    />
+                    {descUsuCount > maxLength && (
+                      <style>{`
+                      .ql-editor {
+                        background-color: #f36464;
+                      }
+                    `}</style>
+                    )}
+                    {errors.desc_usu && touched.desc_usu ? (
+                      <Alerta>{errors.desc_usu}</Alerta>
+                    ) : null}
+                  </div>
+
                   <div className="mb-3 px-4">
                     <label>
                       <Field
+                        className="ml-2"
                         type="checkbox"
                         name="permiteFam"
                         checked={values.permiteFam}
@@ -284,6 +347,7 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                       ))}
                     </div>
                   )}
+
                   <div className="mb-3 px-4">
                     <label>Permite Fechas</label>
                     <div className="d-flex">
@@ -309,8 +373,8 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                       </label>
                     </div>
                   </div>
-
-                  <div className="mx-auto flex justify-center my-5">
+                  
+                  <div className="fixed-button-container flex justify-center">
                     <input
                       type="submit"
                       value={conve2 ? 'Actualizar' : 'Crear Convenio'}

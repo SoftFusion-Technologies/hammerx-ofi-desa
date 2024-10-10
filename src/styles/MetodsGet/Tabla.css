@@ -41,6 +41,10 @@ tr:hover {
   cursor: pointer;
 }
 
+.tr-gris:hover {
+  background-color: rgb(125, 123, 121);
+  color: white;
+}
 .pagination {
   display: flex;
   justify-content: flex-end;
@@ -191,4 +195,10 @@ tr:hover {
   width: 2.5rem; /* Ajusta este valor al tamaño del texto */
   margin-left: 10px; /* Espacio entre el CBU y el icono */
   cursor: pointer;
+}
+
+.btn-gris {
+  background-color: rgb(211, 211, 211); /* Color gris */
+  color: black; /* Cambia el color del texto si es necesario */
+  cursor: not-allowed; /* Cambia el cursor para indicar que no es clickeable */
 }

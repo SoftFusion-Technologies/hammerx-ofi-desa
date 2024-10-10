@@ -29,7 +29,7 @@ const ModalNovedad = ({ isOpen, onClose, mensaje, obtenerNovedades }) => {
           className="text-gray-800 mb-4 overflow-y-auto max-w-[900px]"
           dangerouslySetInnerHTML={{ __html: mensaje }}
         />
-
+{/* 
         {(userLevel === 'gerente' || userLevel === 'vendedor') && (
           <button
             onClick={actualizarEstado}
@@ -41,7 +41,7 @@ const ModalNovedad = ({ isOpen, onClose, mensaje, obtenerNovedades }) => {
           >
             {estado === 1 ? 'No Leído' : 'Leído'}
           </button>
-        )}
+        )} */}
 
         <button
           onClick={onClose}

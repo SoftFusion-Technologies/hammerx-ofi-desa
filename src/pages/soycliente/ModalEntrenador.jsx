@@ -1,10 +1,18 @@
 import React, { useState } from "react";
 import "../../styles/clients/botones.css";
 import flecha from '../../images/flecha.png'
+import { FaWhatsapp } from 'react-icons/fa';  // Importamos el ícono de WhatsApp
 
-function ModalEntrenador({ anterior, siguiente}) { //recibo las funciones que contienen la posición del modal siguiente y anterior
+function ModalEntrenador({ anterior, siguiente}) {
+  //recibo las funciones que contienen la posición del modal siguiente y anterior
   const [isOpen, setIsOpen] = useState(true);
+  const [mensajeMonteros, setMensajeMonteros] = useState(
+    'Hola! Vengo de la página web, quiero consultar por Entrenadores Monteros.'
+  );
 
+  const [mensajeConcepcion, setMensajeConcepcion] = useState(
+    'Hola! Vengo de la página web, quiero consultar por Entrenadores Concepción.'
+  );
   const toggleModal = () => {
     setIsOpen(!isOpen);
   };
@@ -12,6 +20,17 @@ function ModalEntrenador({ anterior, siguiente}) { //recibo las funciones que co
   const closeModal = () => {
     setIsOpen(false);
   };
+
+  const encodeMessage = (message) => {
+    return encodeURIComponent(message);
+  };
+
+  const wspLinkMonteros = `https://wa.me/5493863564651?text=${encodeMessage(
+    mensajeMonteros
+  )}`; // Número de WhatsApp para Monteros
+  const wspLinkConcepcion = `https://wa.me/5493865855100?text=${encodeMessage(
+    mensajeConcepcion
+  )}`; // Número de WhatsApp para Concepción
 
   return (
     <>
@@ -32,8 +51,15 @@ function ModalEntrenador({ anterior, siguiente}) { //recibo las funciones que co
             className="flex items-center justify-center fixed top-0 right-0 left-0 bottom-0 z-50"
           >
             {/* En la flecha anterior el evento click muestra el modal de la posición recibida por parametro */}
-            <img onClick={anterior} className="h-10 cursor-pointer transition hover:invert" src={flecha} alt="Flecha" />
-            <div className="relative p-4 w-[80%] sm:w-full max-w-2xl max-h-full"> {/* Se modificó en ancho del modal de full a 80% para que se visualicen las flechas en mobile, cambiado por Rafael Peralta */}
+            <img
+              onClick={anterior}
+              className="h-10 cursor-pointer transition hover:invert"
+              src={flecha}
+              alt="Flecha"
+            />
+            <div className="relative p-4 w-[80%] sm:w-full max-w-2xl max-h-full">
+              {' '}
+              {/* Se modificó en ancho del modal de full a 80% para que se visualicen las flechas en mobile, cambiado por Rafael Peralta */}
               {/* Modal content */}
               <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
                 {/* Modal header */}
@@ -68,25 +94,58 @@ function ModalEntrenador({ anterior, siguiente}) { //recibo las funciones que co
                 {/* Modal body */}
                 <div className="p-4 md:p-5 space-y-4">
                   <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
-                    Todas nuestras actividades cuentan con instructores y Coachs para poder garantizar un entrenamiento adecuado, minimizando los riesgos de lesiones y garantizando un acompañamiento óptimo y de esa manera poder realizar los ejercicios de manera correcta y lograr los objetivos deseados.
+                    Todas nuestras actividades cuentan con instructores y Coachs
+                    para poder garantizar un entrenamiento adecuado, minimizando
+                    los riesgos de lesiones y garantizando un acompañamiento
+                    óptimo y de esa manera poder realizar los ejercicios de
+                    manera correcta y lograr los objetivos deseados.
                   </p>
                   <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
-                    HAMMER no se responsabiliza de las actividades y ejercicios que se realicen con instructores y coachs particulares que no trabajen para nuestro gimnasio.
+                    HAMMER no se responsabiliza de las actividades y ejercicios
+                    que se realicen con instructores y coachs particulares que
+                    no trabajen para nuestro gimnasio.
                   </p>
                 </div>
                 {/* Modal footer */}
-                <div className="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
+                <div className="flex flex-col md:flex-row items-center justify-between p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600 space-y-4 md:space-y-0 md:space-x-4">
                   <button
                     onClick={closeModal}
                     type="button"
-                    className="text-white bg-orange-500 hover:bg-[#fc4b08] focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-[#fc4b08] dark:focus:ring-orange-700"
+                    className="w-full md:w-auto text-white bg-orange-500 hover:bg-[#fc4b08] focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-[#fc4b08] dark:focus:ring-orange-700"
                   >
                     Aceptar
                   </button>
+
+                  {/* Iconos de WhatsApp */}
+                  <div className="flex w-full md:w-auto justify-between space-x-4">
+                    <a
+                      href={wspLinkMonteros}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2"
+                    >
+                      <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
+                      <span className="text-sm text-gray-900 dark:text-white">
+                        Monteros
+                      </span>
+                    </a>
+                    <a
+                      href={wspLinkConcepcion}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2"
+                    >
+                      <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
+                      <span className="text-sm text-gray-900 dark:text-white">
+                        Concepción
+                      </span>
+                    </a>
+                  </div>
+
                   <button
                     onClick={closeModal}
                     type="button"
-                    className="py-2.5 px-5 ms-3 text-sm font-medium text-gray-600 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-[#fc4b08] focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                    className="w-full md:w-auto py-2.5 px-5 text-sm font-medium text-gray-600 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-[#fc4b08] focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
                   >
                     Cancelar
                   </button>
@@ -94,7 +153,12 @@ function ModalEntrenador({ anterior, siguiente}) { //recibo las funciones que co
               </div>
             </div>
             {/* En la flecha siguiente el evento click muestra el modal de la posición recibida por parametro */}
-            <img onClick={siguiente} className="h-10 transform rotate-180 cursor-pointer transition hover:invert" src={flecha} alt="Flecha" />
+            <img
+              onClick={siguiente}
+              className="h-10 transform rotate-180 cursor-pointer transition hover:invert"
+              src={flecha}
+              alt="Flecha"
+            />
           </div>
         </>
       )}

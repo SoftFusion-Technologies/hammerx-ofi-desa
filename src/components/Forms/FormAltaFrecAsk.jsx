@@ -67,9 +67,12 @@ const FormAltaFrecAsk = ({ isOpen, onClose, ask }) => {
         return;
       } else {
         // (NUEVO)
+        
+              //  ? `http://localhost:8080/ask/${ask.id}`
+          // : 'http://localhost:8080/ask/';
         const url = ask
-          ? `http://localhost:8080/ask/${ask.id}`
-          : 'http://localhost:8080/ask/';
+          ? `https://vps-4294061-x.dattaweb.com/ask/${ask.id}`
+          : 'https://vps-4294061-x.dattaweb.com/ask/';
         const method = ask ? 'PUT' : 'POST';
 
         const respuesta = await fetch(url, {
@@ -100,14 +103,14 @@ const FormAltaFrecAsk = ({ isOpen, onClose, ask }) => {
         setTimeout(() => {
           setShowModal(false);
           onClose();
-        }, 3000);
+        }, 1500);
       }
     } catch (error) {
       console.error('Error al insertar el registro:', error.message);
       setErrorModal(true);
       setTimeout(() => {
         setErrorModal(false);
-      }, 3000);
+      }, 1500);
     }
   };
 

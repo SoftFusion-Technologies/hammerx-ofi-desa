@@ -1,0 +1,30 @@
+.custom-quill-editor .ql-editor {
+  font-size: 18px;
+}
+
+.formulario {
+  max-width: 1200px; /* Aumentar el ancho máximo del formulario */
+  width: 100%;       /* Hacer que ocupe todo el ancho posible */
+  height: 100%;      /* Ajustar la altura del formulario */
+  padding: 20px;     /* Añadir algo de espacio alrededor */
+}
+
+.formulario__input {
+  font-size: 1.2rem; /* Tamaño más grande del texto de entrada */
+  padding: 15px;     /* Más espacio dentro del input */
+}
+
+input[type="submit"] {
+  font-size: 1.2rem; /* Aumentar el tamaño de la fuente del botón */
+  padding: 15px 30px; /* Más espacio en el botón */
+}
+
+
+.fixed-button-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  z-index: 10;
+}

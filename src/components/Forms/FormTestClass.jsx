@@ -71,12 +71,14 @@ const FormTestClass = ({ isOpen, onClose }) => {
         alert("Por favor, complete todos los campos obligatorios.");
       } else {
         // Realizamos la solicitud POST al servidor
-        const respuesta = await fetch("http://localhost:8080/testclass/", {
-          method: "POST",
+        // URL DESARROLLO DESCOMENTAR CUANDO SE UTILICE DESARROLLO
+        // const respuesta = await fetch("http://localhost:8080/testclass/", {
+        const respuesta = await fetch('http://localhost:8080/testclass/', {
+          method: 'POST',
           body: JSON.stringify(valores),
           headers: {
-            "Content-Type": "application/json",
-          },
+            'Content-Type': 'application/json'
+          }
         });
 
         // Verificamos si la solicitud fue exitosa
@@ -86,7 +88,7 @@ const FormTestClass = ({ isOpen, onClose }) => {
 
         // Convertimos la respuesta a JSON
         const data = await respuesta.json();
-        console.log("Registro insertado correctamente:", data)
+        // console.log("Registro insertado correctamente:", data)
 
         // Mostrar la ventana modal de éxito
         setShowModal(true);
@@ -97,7 +99,7 @@ const FormTestClass = ({ isOpen, onClose }) => {
         }, 3000);
       }
     } catch (error) {
-      console.error("Error al insertar el registro:", error.message);
+      // console.error("Error al insertar el registro:", error.message);
 
       // Mostrar la ventana modal de error
       setErrorModal(true);

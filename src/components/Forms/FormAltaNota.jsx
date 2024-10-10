@@ -19,17 +19,30 @@ import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
+import { useAuth } from '../../AuthContext';
 
 const FormAltaNota = ( {isOpen, onClose, user }) => {
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
- 
+  const [charCount, setCharCount] = useState(0);
+
   const [precio, setPrecio] = useState('');
   const textoModal = 'Nota agregada correctamente.';
   
   const nuevoNotaSchema = Yup.object().shape({
-  
+      notas: Yup.string()
+    .max(500, 'Las notas no pueden exceder los 500 caracteres')
+    .required('El campo de notas es requerido'),
+      precio: Yup.string()
+        .required('El precio es obligatorio'),
+      descuento: Yup.string()
+        .required('El descuento es obligatorio'),
+      preciofinal: Yup.string()
+        .required('El precio final es obligatorio'),
   });
+
+  const { userLevel } = useAuth();
+
   
    const handlePrecioChange = (values, setFieldValue) => {
      const precio = parseFloat(values.precio) || 0;
@@ -47,60 +60,77 @@ const FormAltaNota = ( {isOpen, onClose, user }) => {
      setPrecioFinal(precioFinalCalculado.toFixed(2));
    };
   
+  
   return (
     <div
       className={`h-screen w-screen fixed inset-0 flex pt-10 justify-center items-center ${
         isOpen ? 'block' : 'hidden'
       } bg-gray-800 bg-opacity-75 z-50`}
     >
+      {/* `http://localhost:8080/integrantes/${user.id}`, */}
       <div className={`container-inputs`}>
-        <Formik
-          initialValues={{
-            notas: user ? user.notas : '',
-            precio:  user ? user.precio : '',
-            descuento:  user ? user. descuento : '',  
-            preciofinal: user ? user.preciofinal : '',
-          }}
-          onSubmit={async (values, { resetForm }) => {
-            try {
-              const response = await fetch(
-                `http://localhost:8080/integrantes/${user.id}`,
-                {
-                  method: 'PUT',
-                  body: JSON.stringify({
-                     notas: values.notas,
-                     precio: parseFloat(values.precio),
-                     descuento: parseFloat(values.descuento),
-                     preciofinal: parseFloat(values.preciofinal)
-                  }),
-                  headers: {
-                    'Content-Type': 'application/json'
-                  }
-                }
-              );
-              if (!response.ok) {
-                throw new Error(
-                  'Error en la solicitud PUT: ' + response.status
-                );
-              }
+          <Formik
+        initialValues={{
+          notas: user ? user.notas : '',
+          precio: user ? user.precio : '',
+          descuento: user ? user.descuento : '',
+          preciofinal: user ? user.preciofinal : '',
+        }}
+        onSubmit={async (values, { resetForm, setSubmitting }) => {
+          // Comparamos los valores del formulario con los valores iniciales
+          if (
+            values.notas === (user?.notas || '') &&
+            values.precio === (user?.precio || '') &&
+            values.descuento === (user?.descuento || '') &&
+            values.preciofinal === (user?.preciofinal || '')
+          ) {
+            // No hay cambios, no enviamos la solicitud
+            alert('No se realizaron cambios.');
+            setSubmitting(false);
+            return;
+          }
 
-              setShowModal(true);
-              setTimeout(() => {
-                setShowModal(false);
-              }, 3000);
-            } catch (error) {
-              console.error('Error al insertar el registro:', error.message);
-              setErrorModal(true);
-              setTimeout(() => {
-                setErrorModal(false);
-              }, 3000);
-            } finally {
-              resetForm();
+          // Si hay cambios, realizamos la solicitud PUT
+          try {
+            const response = await fetch(
+              `http://localhost:8080/integrantes/${user.id}`,
+              {
+                method: 'PUT',
+                body: JSON.stringify({
+                  notas: values.notas,
+                  precio: parseFloat(values.precio),
+                  descuento: parseFloat(values.descuento),
+                  preciofinal: parseFloat(values.preciofinal)
+                }),
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            if (!response.ok) {
+              throw new Error(
+                'Error en la solicitud PUT: ' + response.status
+              );
             }
-          }}
-          validationSchema={nuevoNotaSchema}
-        >
-          {({ isSubmitting, values, setFieldValue }) => (
+
+            setShowModal(true);
+            setTimeout(() => {
+              setShowModal(false);
+            }, 3000);
+          } catch (error) {
+            console.error('Error al insertar el registro:', error.message);
+            setErrorModal(true);
+            setTimeout(() => {
+              setErrorModal(false);
+            }, 3000);
+          } finally {
+            setSubmitting(false);
+            resetForm();
+          }
+        }}
+        validationSchema={nuevoNotaSchema}
+      >
+          {({ isSubmitting, values, setFieldValue , handleChange}) => (
             <div className="py-0 max-h-[500px] max-w-[400px] w-[400px] overflow-y-auto bg-white rounded-xl">
               <Form className="formulario max-sm:w-[300px] bg-white ">
                 <div className="flex justify-between items-center mt-3 mx-5 pb-2">
@@ -115,63 +145,87 @@ const FormAltaNota = ( {isOpen, onClose, user }) => {
                     x
                   </div>
                 </div>
-                <div className="mb-3 px-4">
-                  <Field
-                    id="notas"
-                    as="textarea"
-                    className="mt-2 block w-full p-3  text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                    placeholder="Notas"
-                    name="notas"
-                    maxLength="70"
-                  />
-                  {/* <ErrorMessage name="observaciones" component={Alerta} /> */}
-                </div>
-                 <div className="mb-4 px-4">
-                  <Field
-                    id="precio"
-                    name="precio"
-                    type="text"
-                    className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                    placeholder="Precio"
-                    maxLength="14"
-                    onChange={(e) => {
-                      setFieldValue('precio', e.target.value);
-                      handlePrecioChange(
-                        { ...values, precio: e.target.value },
-                        setFieldValue
-                      );
-                    }}
-                  />
-                </div>
-                <div className="mb-4 px-4">
-                  <Field
-                    id="descuento"
-                    name="descuento"
-                    type="text"
-                    className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                    placeholder="Descuento"
-                    maxLength="14"
-                    onChange={(e) => {
-                      setFieldValue('descuento', e.target.value);
-                      handlePrecioChange(
-                        { ...values, descuento: e.target.value },
-                        setFieldValue
-                      );
-                    }}
-                  />
-                </div>
-                <div className="mb-4 px-4">
-                  <Field
-                    id="preciofinal"
-                    name="preciofinal"
-                    type="text"
-                    className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                    placeholder="Precio Final"
-                    maxLength="14"
-                    readOnly
-                    value={values.preciofinal}
-                  />
-                </div>
+             
+            <div className="mb-3 px-4 relative">
+              <Field
+                id="notas"
+                as="textarea"
+                className={`mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                  charCount >= 500
+                    ? 'focus-visible:outline-red-500 border-red-500'
+                    : 'focus-visible:outline-orange-500'
+                }`}
+                placeholder="Notas"
+                name="notas"
+                maxLength="500"
+                onChange={(e) => {
+                  setCharCount(e.target.value.length);
+                  handleChange(e);
+                }}
+              />
+              <div className="absolute right-4 top-1 text-sm text-gray-600">
+                {charCount}/500
+              </div>
+              </div>
+                
+                   {(userLevel === 'admin' ||
+                      userLevel === 'administrador') && (
+                      <div className="mb-4 px-4">
+                          <Field
+                            id="precio"
+                            name="precio"
+                            type="text"
+                            className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                            placeholder="Precio"
+                            maxLength="14"
+                            onChange={(e) => {
+                              setFieldValue('precio', e.target.value);
+                              handlePrecioChange(
+                                { ...values, precio: e.target.value },
+                                setFieldValue
+                              );
+                            }}
+                          />
+                      </div>
+                    )}
+                
+                    {(userLevel === 'admin' ||
+                      userLevel === 'administrador') && (
+                          <div className="mb-4 px-4">
+                            <Field
+                              id="descuento"
+                              name="descuento"
+                              type="text"
+                              className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                              placeholder="Descuento"
+                              maxLength="14"
+                              onChange={(e) => {
+                                setFieldValue('descuento', e.target.value);
+                                handlePrecioChange(
+                                  { ...values, descuento: e.target.value },
+                                  setFieldValue
+                                );
+                              }}
+                            />
+                          </div>
+                    )}
+            
+                    {(userLevel === 'admin' ||
+                      userLevel === 'administrador') && (
+                        <div className="mb-4 px-4">
+                          <Field
+                            id="preciofinal"
+                            name="preciofinal"
+                            type="text"
+                            className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                            placeholder="Precio Final"
+                            maxLength="14"
+                            readOnly
+                            value={values.preciofinal}
+                          />
+                        </div>
+                    )}
+
                 <div className="mx-auto flex justify-center my-5">
                   <button
                     type="submit"

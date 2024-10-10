@@ -12,6 +12,7 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
   const [registroExistente, setRegistroExistente] = useState(false);
 
   const [imagesGet, setImagesGet] = useState([]);
+
   const { userLevel } = useAuth();
 
   const URL = 'http://localhost:8080/imagesget/';
@@ -61,9 +62,9 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
         // Verificar si hay registros y si el mes de "created_at" coincide con el mes seleccionado
         const existeRegistroEnMes = data.some((item) => {
           // Obtener el mes del campo "created_at" (0 = Enero, 1 = Febrero, etc.) y sumarle 1 para representar de 1 a 12
-          const mesRegistro = new Date(item.created_at).getMonth() + 1;
+          const mesRegistro = new Date(item.created_at).getMonth();
           console.log('mes', mesRegistro);
-          return mesRegistro === selectedMonth + 1;
+          return mesRegistro === selectedMonth;
         });
 
         setRegistroExistente(existeRegistroEnMes);
@@ -97,7 +98,7 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
     .replace('T', ' ');
 
   console.log(fechaFormateada);
-
+  
   // Handle file change
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -116,10 +117,8 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    // pasar fecha
     const newFec = fechaFormateada;
-    formData.append('fecha', newFec); // Añade la fecha al FormData
-
+    formData.append('fecha', newFec); //
     try {
       const response = await axios.post(
         `http://localhost:8080/upload/${convenioId}`,
@@ -157,17 +156,17 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
   return (
     <div className="upload-container bg-gray-100 p-6 rounded-lg shadow-lg max-w-xl mx-auto">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        ADJUNTAR COMPROBANTE <br />
+        ADJUNTA TU COMPROBANTE DE PAGO <br />
         <FechasConvenios onMonthChange={setSelectedMonth} />
         <span className="text-base font-normal">
           1. Presionar Seleccionar Archivo, SOLO PUEDE SUBIR UNA FACTURA
           <br />
-          2. Subir Imagen solo(jpg, png, jpeg) hasta 30MB
+          2. Subir Imagen solo (jpg, png, jpeg) hasta 30MB
         </span>
       </h2>
 
-      {userLevel === 'admin' && !registroExistente && (
-        <div className="input-group flex items-center space-x-4 mb-4">
+      {userLevel === 'admin' && (
+        <div className="input-group flex flex-col space-y-2 mb-4">
           <input
             type="file"
             id="file-upload"
@@ -189,23 +188,14 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
       )}
 
       <h3 className="text-lg font-medium text-gray-700 mt-6 mb-2">
-        {/* Imágenes Disponibles */}
+        Imágenes Disponibles
       </h3>
       <ul className="image-list space-y-4">
-        {/* {images.map((image, index) => (
-      <li key={index} className="image-item flex items-center justify-between bg-white p-4 rounded shadow-md">
-        <img
-          src={`http://localhost:8080/public/${image}`}
-          alt={`Imagen ${index + 1}`}
-          className="thumbnail w-24 h-24 object-cover rounded"
-        />
-      </li>
-    ))} */}
         {filteredImages.length > 0 ? (
           filteredImages.map((image, index) => (
             <div key={image.id}>
               <h3 className="text-lg font-medium text-gray-700 mt-2 mb-2">
-                Imágenes Disponibles {index + 1}
+                Imagen {index + 1}
               </h3>
               <li className="image-item flex items-center justify-between bg-white p-4 rounded shadow-md">
                 <div className="flex items-center space-x-4">
@@ -214,7 +204,7 @@ const ImagesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
                     download={image.image_path}
                     className="download-link text-blue-500 hover:underline"
                   >
-                    Descargar
+                    Ver Imagen
                   </a>
                   {userLevel === 'admin' && (
                     <button
