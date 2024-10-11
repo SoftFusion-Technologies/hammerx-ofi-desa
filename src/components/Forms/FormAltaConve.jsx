@@ -22,7 +22,7 @@ import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
 import Alerta from '../Error';
 import ReactQuill from 'react-quill';
-import '../../styles/Forms/FormAltaConve.css'
+import '../../styles/Forms/FormAltaConve.css';
 const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
   // const [conve, setConve] = useState([]);
 
@@ -31,6 +31,8 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
 
   const [descConveCount, setDescConveCount] = useState(0);
   const [descUsuCount, setDescUsuCount] = useState(0);
+  const [visible, setVisible] = useState(false);
+
   const maxLength = 2550;
   // const textoModal = 'Conve creado correctamente.'; se elimina el texto
   // nuevo estado para gestionar dinámicamente según el método (PUT o POST)
@@ -39,12 +41,18 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
   // nueva variable para administrar el contenido de formulario para saber cuando limpiarlo
   const formikRef = useRef(null);
 
+
+  useEffect(() => {
+    setVisible(false);
+  }, []);
+  
   // yup sirve para validar formulario este ya trae sus propias sentencias
   // este esquema de cliente es para utilizar su validacion en los inputs
   const nuevoConveSchema = Yup.object().shape({
     nameConve: Yup.string().required('El Titulo es obligatorio'),
     descConve: Yup.string().required('La descripción es obligatoria')
   });
+
 
   const handleSubmitConve = async (valores) => {
     try {
@@ -57,9 +65,9 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
           permiteFam: valores.permiteFam ? 1 : 0
         };
 
-    //    
-    // ? `http://localhost:8080/admconvenios/${conve2.id}`
-    //       : 'http://localhost:8080/admconvenios/';
+        //
+        // ? `http://localhost:8080/admconvenios/${conve2.id}`
+        //       : 'http://localhost:8080/admconvenios/';
         // Definir URL y método basados en la existencia de conve
         const url = conve2
           ? `http://localhost:8080/admconvenios/${conve2.id}`
@@ -112,15 +120,23 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
   const handleClose = () => {
     if (formikRef.current) {
       formikRef.current.resetForm();
-   }
+    }
     onClose();
   };
 
-  const handlePrecioChange = (values, setFieldValue) => {
-    const precio = parseFloat(values.precio) || 0;
-    const descuento = parseFloat(values.descuento) || 0;
+  const handlePrecioChange = (
+    values,
+    setFieldValue,
+    precioField,
+    descuentoField,
+    precioFinalField
+  ) => {
+    const precio = parseFloat(values[precioField]) || 0;
+    const descuento = parseFloat(values[descuentoField]) || 0;
     const precioFinal = precio - (precio * descuento) / 100;
-    setFieldValue('preciofinal', precioFinal);
+
+    // Establecer el valor calculado en el campo correspondiente
+    setFieldValue(precioFinalField, precioFinal);
   };
 
   return (
@@ -149,7 +165,11 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
             cantFamiliares: conve2 ? conve2.cantFamiliares : 0,
             sede: conve2 ? conve2.sede : '',
             desc_usu: conve2 ? conve2.desc_usu : '',
-            permiteFec: conve2 ? conve2.permiteFec : 0 // Ajustado para ser un valor numérico nuevo requerimiento R8 - BO
+            permiteFec: conve2 ? conve2.permiteFec : 0, // Ajustado para ser un valor numérico nuevo requerimiento R8 - BO
+            // nuevos valores para precios en multisede
+            precio_concep: conve2 ? conve2.precio_concep : '',
+            descuento_concep: conve2 ? conve2.descuento_concep : '',
+            preciofinal_concep: conve2 ? conve2.preciofinal_concep : ''
           }}
           enableReinitialize
           // cuando hacemos el submit esperamos a que cargen los valores y esos valores tomados se lo pasamos a la funcion handlesubmit que es la que los espera
@@ -235,7 +255,10 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                         setFieldValue('precio', e.target.value);
                         handlePrecioChange(
                           { ...values, precio: e.target.value },
-                          setFieldValue
+                          setFieldValue,
+                          'precio',
+                          'descuento',
+                          'preciofinal'
                         );
                       }}
                     />
@@ -253,7 +276,10 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                         setFieldValue('descuento', e.target.value);
                         handlePrecioChange(
                           { ...values, descuento: e.target.value },
-                          setFieldValue
+                          setFieldValue,
+                          'precio',
+                          'descuento',
+                          'preciofinal'
                         );
                       }}
                     />
@@ -278,7 +304,10 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                       id="sede"
                       name="sede"
                       className="form-select mt-2 block w-full p-4 text-black bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      required
+                      onChange={(e) => {
+                        setFieldValue('sede', e.target.value);
+                        setVisible(e.target.value === 'Multisede');
+                      }}
                     >
                       <option value="" disabled>
                         Sede:
@@ -314,6 +343,64 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                     ) : null}
                   </div>
 
+                  {visible && (
+                    <div>
+                      <div className="mb-4 px-6">
+                        <Field
+                          id="precio_concep"
+                          name="precio_concep"
+                          type="text"
+                          className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                          placeholder="Precio Concepción"
+                          maxLength="14"
+                          onChange={(e) => {
+                            setFieldValue('precio_concep', e.target.value);
+                            handlePrecioChange(
+                              { ...values, precio_concep: e.target.value },
+                              setFieldValue,
+                              'precio_concep',
+                              'descuento_concep',
+                              'preciofinal_concep'
+                            );
+                          }}
+                        />
+                      </div>
+
+                      <div className="mb-4 px-6">
+                        <Field
+                          id="descuento_concep"
+                          name="descuento_concep"
+                          type="text"
+                          className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                          placeholder="Descuento Concepción"
+                          maxLength="14"
+                          onChange={(e) => {
+                            setFieldValue('descuento_concep', e.target.value);
+                            handlePrecioChange(
+                              { ...values, descuento_concep: e.target.value },
+                              setFieldValue,
+                              'precio_concep', // Campo de precio
+                              'descuento_concep', // Campo de descuento
+                              'preciofinal_concep' // Campo de precio final
+                            );
+                          }}
+                        />
+                      </div>
+
+                      <div className="mb-4 px-6">
+                        <Field
+                          id="preciofinal_concep"
+                          name="preciofinal_concep"
+                          type="text"
+                          className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                          placeholder="Precio Final Concepción"
+                          maxLength="14"
+                          readOnly
+                          value={values.preciofinal_concep}
+                        />
+                      </div>
+                    </div>
+                  )}
                   <div className="mb-3 px-4">
                     <label>
                       <Field
@@ -373,7 +460,7 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                       </label>
                     </div>
                   </div>
-                  
+
                   <div className="fixed-button-container flex justify-center">
                     <input
                       type="submit"
@@ -402,4 +489,4 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
 //   conve: {}
 // };
 
-export default FormAltaConve
+export default FormAltaConve;

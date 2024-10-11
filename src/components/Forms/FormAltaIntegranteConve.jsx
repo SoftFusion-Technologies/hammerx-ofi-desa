@@ -14,7 +14,7 @@
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
 
-import React, { useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Formik, Form, Field } from 'formik';
@@ -22,7 +22,7 @@ import * as Yup from 'yup';
 import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
 import Alerta from '../Error';
-import { useAuth } from "../../AuthContext";
+import { useAuth } from '../../AuthContext';
 
 const FormAltaIntegranteConve = ({
   isOpen,
@@ -31,22 +31,23 @@ const FormAltaIntegranteConve = ({
   descuento,
   preciofinal,
   integrante,
-  setSelectedUser
+  setSelectedUser,
+  precio_concep,
+  descuento_concep,
+  preciofinal_concep
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
   const { id_conv } = useParams(); // Obtener el id_conv de la URL
   const { userName } = useAuth();
-  
+
   // const textoModal = 'Integrante creado correctamente.'; se elimina el texto
   // nuevo estado para gestionar dinámicamente según el método (PUT o POST)
   const [textoModal, setTextoModal] = useState('');
 
   // nueva variable para administrar el contenido de formulario para saber cuando limpiarlo
   const formikRef = useRef(null);
-  const newPrecio = precio;
-  const newDescuento = descuento;
-  const newPrecioFinal = preciofinal;
+
 
   // yup sirve para validar formulario este ya trae sus propias sentencias
   // este esquema de cliente es para utilizar su validacion en los inputs
@@ -56,14 +57,14 @@ const FormAltaIntegranteConve = ({
     direccion: Yup.string(),
     trabajo: Yup.string()
   });
-          // ? `http://localhost:8080/integrantes/${integrante.id}`
-          // : 'http://localhost:8080/integrantes/';
+  // ? `http://localhost:8080/integrantes/${integrante.id}`
+  // : 'http://localhost:8080/integrantes/';
   const handleSubmitIntegrante = async (valores) => {
     try {
       // Verificamos si los campos obligatorios están vacíos
       if (valores.nombre === '' || valores.telefono === '') {
         alert('Por favor, complete todos los campos obligatorios.');
-      }else {
+      } else {
         // (NUEVO)
         const url = integrante
           ? `http://localhost:8080/integrantes/${integrante.id}`
@@ -78,12 +79,12 @@ const FormAltaIntegranteConve = ({
           }
         });
 
-          if (method === 'PUT') {
-            // setName(null); // una vez que sale del metodo PUT, limpiamos el campo descripcion
-            setTextoModal('Integrante actualizado correctamente.');
-          } else {
-            setTextoModal('Integrante creado correctamente.');
-          }
+        if (method === 'PUT') {
+          // setName(null); // una vez que sale del metodo PUT, limpiamos el campo descripcion
+          setTextoModal('Integrante actualizado correctamente.');
+        } else {
+          setTextoModal('Integrante creado correctamente.');
+        }
 
         // Verificamos si la solicitud fue exitosa
         if (!respuesta.ok) {
@@ -120,9 +121,9 @@ const FormAltaIntegranteConve = ({
       formikRef.current.resetForm();
       setSelectedUser(null);
     }
-      onClose();
-    };
-  
+    onClose();
+  };
+
   const obtenerFechaActual = () => {
     const hoy = new Date();
     const año = hoy.getFullYear();
@@ -131,9 +132,9 @@ const FormAltaIntegranteConve = ({
     const horas = String(hoy.getHours()).padStart(2, '0');
     const minutos = String(hoy.getMinutes()).padStart(2, '0');
     const segundos = String(hoy.getSeconds()).padStart(2, '0');
-    
+
     return `${año}-${mes}-${dia} ${horas}:${minutos}:${segundos}`;
-};
+  };
 
   return (
     <div
@@ -157,14 +158,14 @@ const FormAltaIntegranteConve = ({
             dni: integrante ? integrante.dni : '',
             telefono: integrante ? integrante.telefono : '',
             email: integrante ? integrante.email : '',
-            sede: '',
+            sede: integrante ? integrante.sede : '',
             notas: integrante ? integrante.notas : '',
-            precio: integrante ? integrante.precio : newPrecio,
-            descuento: integrante ? integrante.descuento : newDescuento,
-            preciofinal: integrante ? integrante.preciofinal : newPrecioFinal,
+            precio: integrante ? integrante.precio : precio,
+            descuento: integrante ? integrante.descuento : descuento,
+            preciofinal: integrante ? integrante.preciofinal : preciofinal,
+
             userName: userName || '',
-            fechaCreacion:obtenerFechaActual() // Envía la fecha en formato ISO 8601
-         
+            fechaCreacion: obtenerFechaActual() // Envía la fecha en formato ISO 8601
           }}
           enableReinitialize
           // cuando hacemos el submit esperamos a que cargen los valores y esos valores tomados se lo pasamos a la funcion handlesubmit que es la que los espera
@@ -257,12 +258,27 @@ const FormAltaIntegranteConve = ({
                     ) : null}
                   </div>
 
-                  {/* <div className="mb-4 px-4">
+                  <div className="mb-4 px-4">
                     <Field
                       as="select"
                       id="sede"
                       name="sede"
-                      className="form-select mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                      className="form-select mt-2 block w-full p-4 text-black bg-slate-100 rounded-xl text-lg"
+                      onChange={(e) => {
+                        const selectedSede = e.target.value;
+                        setFieldValue('sede', selectedSede);
+
+                        // Cambiar los valores de precio, descuento y preciofinal según la sede
+                        if (selectedSede === 'Monteros') {
+                          setFieldValue('precio', precio);
+                          setFieldValue('descuento', descuento);
+                          setFieldValue('preciofinal', preciofinal);
+                        } else if (selectedSede === 'Concepción') {
+                          setFieldValue('precio', precio_concep);
+                          setFieldValue('descuento', descuento_concep);
+                          setFieldValue('preciofinal', preciofinal_concep);
+                        }
+                      }}
                     >
                       <option value="" disabled>
                         Sede:
@@ -273,7 +289,7 @@ const FormAltaIntegranteConve = ({
                     {errors.sede && touched.sede ? (
                       <Alerta>{errors.sede}</Alerta>
                     ) : null}
-                  </div> */}
+                  </div>
 
                   <div className="mx-auto flex justify-center my-5">
                     <input

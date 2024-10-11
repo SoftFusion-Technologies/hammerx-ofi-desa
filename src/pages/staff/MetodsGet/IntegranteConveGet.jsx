@@ -82,6 +82,9 @@ const IntegranteConveGet = ({ integrantes }) => {
   const [descuento, setDescuento] = useState('');
   const [preciofinal, setPrecioFinal] = useState('');
 
+  const [precio_concep, setPrecio_concep] = useState('');
+  const [descuento_concep, setDescuento_concep] = useState('');
+  const [preciofinal_concep, setPrecioFinal_concep] = useState('');
   useEffect(() => {
     obtenerDatosAdmConvenio(id_conv);
   }, [id_conv]);
@@ -100,6 +103,11 @@ const IntegranteConveGet = ({ integrantes }) => {
         setPrecio(data.precio);
         setDescuento(data.descuento);
         setPrecioFinal(data.preciofinal);
+
+        // concepcion en multisede nuevos precios
+        setPrecio_concep(data.precio_concep);
+        setDescuento_concep(data.descuento_concep);
+        setPrecioFinal_concep(data.preciofinal_concep);
       } else {
         console.log('Datos del convenio incompletos o incorrectos:', data);
       }
@@ -487,7 +495,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                     <th>DNI</th>
                     <th>Telefono</th>
                     <th>Email</th>
-                    {/* <th>Sede</th> */}
+                    <th>Sede</th>
                     <th>Precio</th>
                     <th>Descuento</th>
                     <th>Precio Final</th>
@@ -528,9 +536,9 @@ const IntegranteConveGet = ({ integrantes }) => {
                       <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {integrante.email}
                       </td>
-                      {/* <td onClick={() => obtenerIntegrante(integrante.id)}>
+                      <td onClick={() => obtenerIntegrante(integrante.id)}>
                         {integrante.sede}
-                      </td> */}
+                      </td>
 
                       {(userLevel === 'admin' ||
                         userLevel === '' ||
@@ -750,6 +758,9 @@ const IntegranteConveGet = ({ integrantes }) => {
             preciofinal={preciofinal}
             integrante={selectedUser}
             setSelectedUser={setSelectedUser}
+            precio_concep={precio_concep}
+            descuento_concep={descuento_concep}
+            preciofinal_concep={preciofinal_concep}
           />
         </div>
       </div>
