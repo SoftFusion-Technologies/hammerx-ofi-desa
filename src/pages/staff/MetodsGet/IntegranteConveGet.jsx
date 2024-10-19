@@ -31,7 +31,7 @@ import ImagesUpload from './ImagesUpload.jsx';
 import InvoicesUpload from './InvoicesUpload.jsx';
 import FileUpload from './FileUpload.jsx';
 import FechasConvenios from './Novedad/FechasConvenios.jsx';
-
+import CongelarIntegrantes from './Integrantes/CongelarIntegrantes';
 const IntegranteConveGet = ({ integrantes }) => {
   // Estado para almacenar la lista de personas
   const { id_conv, id_adm } = useParams();
@@ -54,11 +54,15 @@ const IntegranteConveGet = ({ integrantes }) => {
 
   // Estado para almacenar el mes seleccionado en `FechasConvenios`
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [registroExistente, setRegistroExistente] = useState(false);
   const [permiteFec, setpermiteFec] = useState(0);
 
   // nueva variable para almacenar el valor de permiteFec cuando inicia el componente
   const newPermite = permiteFec;
+
+  // nuevo req para congelar listados
+  const [estado, setEstado] = useState(0);
+  const [congelamientos, setCongelamientos] = useState([]);
+  const [vencimiento, setVencimiento] = useState(null); // Almacena la fecha de vencimiento
 
   const abrirModal = () => {
     setModalNewIntegrant(true);
@@ -77,6 +81,7 @@ const IntegranteConveGet = ({ integrantes }) => {
   // para recuperar los valores de precio INI
   const URL3 = 'http://localhost:8080/admconvenios/';
   const URL4 = 'http://localhost:8080/admconvenios/';
+  const URL5 = 'http://localhost:8080/';
 
   const [precio, setPrecio] = useState('');
   const [descuento, setDescuento] = useState('');
@@ -85,9 +90,34 @@ const IntegranteConveGet = ({ integrantes }) => {
   const [precio_concep, setPrecio_concep] = useState('');
   const [descuento_concep, setDescuento_concep] = useState('');
   const [preciofinal_concep, setPrecioFinal_concep] = useState('');
+
   useEffect(() => {
     obtenerDatosAdmConvenio(id_conv);
   }, [id_conv]);
+
+  useEffect(() => {
+    const ObtenerCongelamientos = async () => {
+      try {
+        const response = await axios.get(
+          `${URL5}integrantes-congelados/${id_conv}?month=${selectedMonth + 1}`
+        );
+        setCongelamientos(response.data);
+        setVencimiento(response.data[0]?.vencimiento);
+
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          setEstado(response.data[0].estado);
+          console.log('Estado actualizado integrante', response.data[0].estado);
+        } else {
+          setEstado(0);
+          console.log('Estado actualizado integrante', 0);
+        }
+      } catch (error) {
+        console.log('Error al obtener las personas:', error);
+      }
+    };
+
+    ObtenerCongelamientos();
+  }, [id_conv, selectedMonth]);
 
   const obtenerDatosAdmConvenio = async (id) => {
     try {
@@ -115,32 +145,6 @@ const IntegranteConveGet = ({ integrantes }) => {
       console.error('Error al obtener datos del convenio:', error);
     }
   };
-
-  useEffect(() => {
-    const checkRegistroExistente = async () => {
-      try {
-        const response = await fetch(
-          `http://localhost:8080/facget/?convenio_id=${id_conv}`
-        );
-        const data = await response.json();
-
-        // Verificar si hay registros y si el mes de "created_at" coincide con el mes seleccionado
-        const existeRegistroEnMes = data.some((item) => {
-          // Obtener el mes del campo "created_at" (0 = Enero, 1 = Febrero, etc.) y sumarle 1 para representar de 1 a 12
-          const mesRegistro = new Date(item.created_at).getMonth();
-          console.log('mes', mesRegistro);
-          return mesRegistro === selectedMonth;
-        });
-
-        setRegistroExistente(existeRegistroEnMes);
-      } catch (error) {
-        console.error('Error al verificar el registro:', error);
-      }
-    };
-
-    // Ejecutar la función de verificación cuando cambie `id_conv` o `selectedMonth`
-    checkRegistroExistente();
-  }, [id_conv, selectedMonth]);
 
   // para recuperar los valores de precio FIN
   useEffect(() => {
@@ -358,6 +362,16 @@ const IntegranteConveGet = ({ integrantes }) => {
   const handleRadioChange = (e) => {
     setShowFileUpload(e.target.value === 'yes'); // Muestra el componente si se selecciona "Sí"
   };
+
+  const isMonthFrozen = (month) => {
+    return congelamientos.some((congelamiento) => {
+      const vencimientoDate = new Date(congelamiento.vencimiento);
+      return vencimientoDate.getMonth() === month && congelamiento.estado === 1;
+    });
+  };
+
+  const disabledFileUpload = estado === 1 || isMonthFrozen(selectedMonth); // Desactivar si estado es 1 o mes congelado
+
   return (
     <>
       <NavbarStaff />
@@ -417,7 +431,7 @@ const IntegranteConveGet = ({ integrantes }) => {
               className="border rounded-sm"
             />
           </form>
-          {/* formulario de busqueda */}
+          {/* formulario de busqueda fin */}
           {(userLevel === 'gerente' ||
             userLevel === 'admin' ||
             userLevel === 'vendedor' ||
@@ -426,18 +440,24 @@ const IntegranteConveGet = ({ integrantes }) => {
             <div className="flex justify-center pb-10">
               <Link to="#">
                 <button
-                  onClick={registroExistente ? undefined : abrirModal} // Evita la ejecución si está en gris
+                  onClick={
+                    estado === 1 || isMonthFrozen(selectedMonth)
+                      ? undefined
+                      : abrirModal
+                  }
                   className={`${
-                    registroExistente
-                      ? 'bg-gray-500 hover:bg-gray-400'
+                    estado === 1 || isMonthFrozen(selectedMonth)
+                      ? 'bg-gray-500 hover:bg-gray-400 cursor-not-allowed'
                       : 'bg-[#58b35e] hover:bg-[#4e8a52]'
                   } text-white py-2 px-4 rounded transition-colors duration-100 z-10`}
+                  disabled={estado === 1 || isMonthFrozen(selectedMonth)}
                 >
                   Nuevo Integrante
                 </button>
               </Link>
             </div>
           )}
+
           {/* Importar Clientes Excel - INICIO */}
           {(userLevel === 'admin' ||
             userLevel === '' ||
@@ -452,6 +472,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                     value="yes"
                     checked={showFileUpload}
                     onChange={handleRadioChange}
+                    disabled={disabledFileUpload} // Desactiva si estado es 1 o mes congelado
                   />
                   Sí
                 </label>
@@ -461,6 +482,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                     value="no"
                     checked={!showFileUpload}
                     onChange={handleRadioChange}
+                    disabled={disabledFileUpload} // Desactiva si estado es 1 o mes congelado
                   />
                   No
                 </label>
@@ -473,6 +495,13 @@ const IntegranteConveGet = ({ integrantes }) => {
             </div>
           )}
           {/* Importar Clientes Excel - FINAL */}
+
+          {/* Nuevo requerimiento para congelar listados R9 - INICIO  */}
+          <CongelarIntegrantes
+            id_conv={id_conv}
+            selectedMonth={selectedMonth}
+          />
+          {/* Nuevo requerimiento para congelar listados R9 - INICIO  */}
 
           {/* R8 - SE AGREGAN FECHAS PARA TRABAJAR EN CONVENIOS INICIO - BENJAMIN ORELLANA */}
           {permiteFec == 1 && (
@@ -511,7 +540,11 @@ const IntegranteConveGet = ({ integrantes }) => {
                 <tbody>
                   {registrosFiltrados.map((integrante) => (
                     <tr
-                      className={registroExistente ? 'tr-gris' : ''}
+                      className={
+                        estado === 1 || isMonthFrozen(selectedMonth)
+                          ? 'tr-gris'
+                          : ''
+                      }
                       key={integrante.id}
                     >
                       {/* <td onClick={() => obtenerIntegrante(integrante.id)}>
@@ -634,11 +667,13 @@ const IntegranteConveGet = ({ integrantes }) => {
                               }
                               type="button"
                               className={`py-2 px-4 my-1 ${
-                                registroExistente
+                                estado === 1 || isMonthFrozen(selectedMonth)
                                   ? 'btn-gris'
                                   : 'bg-red-500 hover:bg-red-600'
                               } text-white rounded-md`}
-                              disabled={registroExistente} // Desactiva el botón si está en gris
+                              disabled={
+                                estado === 1 || isMonthFrozen(selectedMonth)
+                              } // Desactiva el botón si estado es 1 o mes está congelado
                             >
                               Eliminar
                             </button>
@@ -646,11 +681,13 @@ const IntegranteConveGet = ({ integrantes }) => {
                               onClick={() => handleEditarIntegrante(integrante)}
                               type="button"
                               className={`py-2 px-4 my-1 ml-5 ${
-                                registroExistente
+                                estado === 1 || isMonthFrozen(selectedMonth)
                                   ? 'btn-gris'
                                   : 'bg-yellow-500 hover:bg-yellow-600'
                               } text-black rounded-md`}
-                              disabled={registroExistente} // Desactiva el botón si está en gris
+                              disabled={
+                                estado === 1 || isMonthFrozen(selectedMonth)
+                              } // Desactiva el botón si estado es 1 o mes está congelado
                             >
                               Editar
                             </button>

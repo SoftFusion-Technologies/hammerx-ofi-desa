@@ -9,7 +9,6 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const [registroExistente, setRegistroExistente] = useState(false);
 
   const [imagess, setImagess] = useState([]); // Estado para almacenar imágenes del convenioId
   const [imagesFac, setImagesFac] = useState([]); // Todas las imágenes
@@ -51,32 +50,6 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
 
     fetchImages();
   }, [convenioId]);
-
-  useEffect(() => {
-    const checkRegistroExistente = async () => {
-      try {
-        const response = await fetch(
-          `http://localhost:8080/facget/?convenio_id=${convenioId}`
-        );
-        const data = await response.json();
-
-        // Verificar si hay registros y si el mes de "created_at" coincide con el mes seleccionado
-        const existeRegistroEnMes = data.some((item) => {
-          // Obtener el mes del campo "created_at" (0 = Enero, 1 = Febrero, etc.) y sumarle 1 para representar de 1 a 12
-          const mesRegistro = new Date(item.created_at).getMonth();
-          console.log('mes', mesRegistro);
-          return mesRegistro === selectedMonth;
-        });
-
-        setRegistroExistente(existeRegistroEnMes);
-      } catch (error) {
-        console.error('Error al verificar el registro:', error);
-      }
-    };
-
-    // Ejecutar la función de verificación cuando cambie `id_conv` o `selectedMonth`
-    checkRegistroExistente();
-  }, [convenioId, selectedMonth]);
 
   // Filtrar imágenes basadas en el mes seleccionado
   const filteredImages = imagesFac.filter((image) => {
