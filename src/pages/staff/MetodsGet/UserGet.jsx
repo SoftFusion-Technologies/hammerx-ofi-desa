@@ -240,7 +240,7 @@ const applySedeFilter = (user) => {
               <option value="admin">Administrador</option>
               <option value="vendedor">Vendedor</option>
               <option value="gerente">Gerente</option>
-              <option value="convenio">Convenio</option>
+              <option value="instructor">Instructor</option>
               {/* Agrega más opciones según tus necesidades */}
             </select>
           </form>

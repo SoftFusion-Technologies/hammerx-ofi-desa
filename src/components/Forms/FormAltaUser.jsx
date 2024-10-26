@@ -227,8 +227,8 @@ const FormAltaUser = ({ isOpen, onClose, user, setSelectedUser }) => {
                       <option value="admin">Administrador</option>
                       <option value="vendedor">Vendedor</option>
                       <option value="gerente">Gerente</option>
-                      {/* Se agrega nuevo rol para que los convenios puedan cargar sus Usuarios */}
-                      <option value="convenio">Convenio</option>
+                      {/* Se agrega nuevo rol para que los instructor puedan cargar sus Usuarios */}
+                      <option value="instructor">Instructor</option>
 
                       {/* Cambio realizado por Benjamin Orellana 12/06/2024 - FINAL */}
                     </Field>

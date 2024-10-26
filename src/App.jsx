@@ -64,7 +64,12 @@ const AdmConveGet = lazy(() => import('./pages/staff/MetodsGet/AdmConveGet'));
 // const AdmPrecioGet = lazy(() => import('./pages/staff/MetodsGet/AdmPrecioGet'));
 const IntegranteConveGet= lazy(() => import('./pages/staff/MetodsGet/IntegranteConveGet'));
 const FamIntegranteGet = lazy(() =>  import('./pages/staff/MetodsGet/FamIntegranteGet'));
-const VendedoresGet = lazy(() => import('./pages/staff/MetodsGet/VendedoresGet'))
+const VendedoresGet = lazy(() =>
+  import('./pages/staff/MetodsGet/VendedoresGet')
+);
+const PlantillaEntrenador = lazy(() =>
+  import('./pages/staff/PlantillaEntrenador.jsx')
+);
 
 const AltaUserForm = lazy(() => import('./components/Forms/FormAltaUser'));
 const AltaNovedadForm = lazy(() => import('./components/Forms/FormAltaNovedad'));
@@ -344,6 +349,15 @@ const App = memo(() => {
                     </ProtectedRoute>
                   }
                 />{' '}
+                <Ruta
+                  path="/dashboard/instructores"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <PlantillaEntrenador />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
                 {/* Rutas de prueba para testear funcionamiento */}
                 {/* <Ruta path="/dashboard/integrantes" element={<ProtectedRoute>  <IntegranteConveGet /> </ProtectedRoute> } /> Rutas de prueba para testear funcionamiento */}
                 <Ruta
@@ -360,7 +374,6 @@ const App = memo(() => {
                 <Ruta path="/integrantes/:id" element={<IntegranteDetails />} />
                 <Ruta path="/ask/:id" element={<FrequentDetails />} />
                 <Ruta path="/task/:id" element={<TaskDetails />} />
-               
                 {/* pagos monteros */}
                 <Ruta
                   path="/pagos/monteros/musculacion"
@@ -377,8 +390,7 @@ const App = memo(() => {
                 <Ruta
                   path="/pagos/monteros/musculacion/transferencia"
                   element={<Transferencia />}
-                  />
-                  
+                />
                 <Ruta
                   path="/pagos/monteros/grupales"
                   element={<PrincipalGrupales />}
@@ -393,10 +405,9 @@ const App = memo(() => {
                 />
                 <Ruta
                   path="/pagos/monteros/grupales/transferencia"
-                  element={<TransferenciaG/>}
-                  />
-                  
-                 <Ruta
+                  element={<TransferenciaG />}
+                />
+                <Ruta
                   path="/pagos/monteros/paselibre"
                   element={<PrincipalPaseLibre />}
                 />
@@ -410,88 +421,80 @@ const App = memo(() => {
                 />
                 <Ruta
                   path="/pagos/monteros/paselibre/transferencia"
-                  element={<TransferenciaP/>}
-                  />
-                  
-                  <Ruta
+                  element={<TransferenciaP />}
+                />
+                <Ruta
                   path="/pagos/monteros/trimestral"
                   element={<PrincipalTrimestrales />}
-                  />
-
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/monteros/trimestral/efectivo"
                   element={<EfectivoT />}
                 />
                 <Ruta
                   path="/pagos/monteros/trimestral/tarjeta-debito"
                   element={<TarjetaDebitoT />}
-                  />
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/monteros/trimestral/cuotas/tarjeta-credito"
                   element={<TarjetaCreditoT />}
                 />
                 <Ruta
                   path="/pagos/monteros/trimestral/transferencia"
-                  element={<TransferenciaT/>}
-                  />
-                  
-                   <Ruta
+                  element={<TransferenciaT />}
+                />
+                <Ruta
                   path="/pagos/monteros/trimestral/cuotas"
-                  element={<CuotasTrimestral/>}
-                  />
-
-                  <Ruta
+                  element={<CuotasTrimestral />}
+                />
+                <Ruta
                   path="/pagos/monteros/semestral"
                   element={<PrincipalSemestrales />}
-                  />
-
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/monteros/semestral/efectivo"
                   element={<EfectivoS />}
                 />
                 <Ruta
                   path="/pagos/monteros/semestral/tarjeta-debito"
                   element={<TarjetaDebitoS />}
-                  />
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/monteros/semestral/cuotas/tarjeta-credito"
                   element={<TarjetaCreditoS />}
                 />
                 <Ruta
                   path="/pagos/monteros/semestral/transferencia"
-                  element={<TransferenciaS/>}
-                  />
-                   <Ruta
+                  element={<TransferenciaS />}
+                />
+                <Ruta
                   path="/pagos/monteros/semestral/cuotas"
-                  element={<CuotasSemestral/>}
-                  />
-
-                  <Ruta
+                  element={<CuotasSemestral />}
+                />
+                <Ruta
                   path="/pagos/monteros/anual"
                   element={<PrincipalAnual />}
-                  />
-
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/monteros/anual/efectivo"
                   element={<EfectivoA />}
                 />
                 <Ruta
                   path="/pagos/monteros/anual/tarjeta-debito"
                   element={<TarjetaDebitoA />}
-                  />
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/monteros/anual/cuotas/tarjeta-credito"
                   element={<TarjetaCreditoA />}
                 />
                 <Ruta
                   path="/pagos/monteros/anual/transferencia"
-                  element={<TransferenciaA/>}
-                  />
-                   <Ruta
+                  element={<TransferenciaA />}
+                />
+                <Ruta
                   path="/pagos/monteros/anual/cuotas"
-                  element={<CuotasAnual/>}
-                  />
-
+                  element={<CuotasAnual />}
+                />
                 {/* pagos concepcion */}
                 <Ruta
                   path="/pagos/concepcion/musculacion"
@@ -508,8 +511,7 @@ const App = memo(() => {
                 <Ruta
                   path="/pagos/concepcion/musculacion/transferencia"
                   element={<TransferenciaC />}
-                  />
-               
+                />
                 <Ruta
                   path="/pagos/concepcion/grupales"
                   element={<PrincipalGrupalesC />}
@@ -524,9 +526,8 @@ const App = memo(() => {
                 />
                 <Ruta
                   path="/pagos/concepcion/grupales/transferencia"
-                  element={<TransferenciaGC/>}
-                  />
-
+                  element={<TransferenciaGC />}
+                />
                 <Ruta
                   path="/pagos/concepcion/paselibre"
                   element={<PrincipalPaseLibreC />}
@@ -541,88 +542,80 @@ const App = memo(() => {
                 />
                 <Ruta
                   path="/pagos/concepcion/paselibre/transferencia"
-                  element={<TransferenciaPC/>}
-                  />
-
-                  <Ruta
+                  element={<TransferenciaPC />}
+                />
+                <Ruta
                   path="/pagos/concepcion/trimestral"
                   element={<PrincipalTrimestralesC />}
-                  />
-
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/concepcion/trimestral/efectivo"
                   element={<EfectivoTC />}
                 />
                 <Ruta
                   path="/pagos/concepcion/trimestral/tarjeta-debito"
                   element={<TarjetaDebitoTC />}
-                  />
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/concepcion/trimestral/cuotas/tarjeta-credito"
                   element={<TarjetaCreditoTC />}
                 />
                 <Ruta
                   path="/pagos/concepcion/trimestral/transferencia"
-                  element={<TransferenciaTC/>}
-                  />
-                  
-                   <Ruta
+                  element={<TransferenciaTC />}
+                />
+                <Ruta
                   path="/pagos/concepcion/trimestral/cuotas"
-                  element={<CuotasTrimestralC/>}
-                  />
-
-                  <Ruta
+                  element={<CuotasTrimestralC />}
+                />
+                <Ruta
                   path="/pagos/concepcion/semestral"
                   element={<PrincipalSemestralesC />}
-                  />
-
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/concepcion/semestral/efectivo"
                   element={<EfectivoSC />}
                 />
                 <Ruta
                   path="/pagos/concepcion/semestral/tarjeta-debito"
                   element={<TarjetaDebitoSC />}
-                  />
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/concepcion/semestral/cuotas/tarjeta-credito"
                   element={<TarjetaCreditoSC />}
                 />
                 <Ruta
                   path="/pagos/concepcion/semestral/transferencia"
-                  element={<TransferenciaSC/>}
-                  />
-                   <Ruta
+                  element={<TransferenciaSC />}
+                />
+                <Ruta
                   path="/pagos/concepcion/semestral/cuotas"
-                  element={<CuotasSemestralC/>}
-                  />
-
-                  <Ruta
+                  element={<CuotasSemestralC />}
+                />
+                <Ruta
                   path="/pagos/concepcion/anual"
                   element={<PrincipalAnualC />}
-                  />
-
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/concepcion/anual/efectivo"
                   element={<EfectivoAC />}
                 />
                 <Ruta
                   path="/pagos/concepcion/anual/tarjeta-debito"
                   element={<TarjetaDebitoAC />}
-                  />
-                  <Ruta
+                />
+                <Ruta
                   path="/pagos/concepcion/anual/cuotas/tarjeta-credito"
                   element={<TarjetaCreditoAC />}
                 />
                 <Ruta
                   path="/pagos/concepcion/anual/transferencia"
-                  element={<TransferenciaAC/>}
-                  />
-                   <Ruta
+                  element={<TransferenciaAC />}
+                />
+                <Ruta
                   path="/pagos/concepcion/anual/cuotas"
-                  element={<CuotasAnualC/>}
-                  />
-
+                  element={<CuotasAnualC />}
+                />
                 <Ruta path="/*" element={<NotFound />} />
               </Rutas>
               <TaskReminder2 tasks={tasks} />

@@ -104,7 +104,19 @@ const AdminPage = () => {
                 </Link>
               </div>
             )}
+
+            {(userLevel === 'gerente' ||
+              userLevel === 'admin' ||
+              userLevel === 'instructor' ||
+              userLevel === 'administrador') && (
+              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
+                <Link to="/dashboard/instructores">
+                  <button className="btnstaff">Instructores</button>
+                </Link>
+              </div>
+            )}
           </div>
+          
           <div className="flex justify-end p-5">
             <a
               className="relative inline-block"
