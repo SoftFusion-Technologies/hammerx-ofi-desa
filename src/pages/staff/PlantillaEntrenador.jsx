@@ -7,10 +7,16 @@ import { useAuth } from '../../AuthContext';
 const PlantillaEntrenador = () => {
   const URL = 'http://localhost:8080/';
 
-  const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState([]); // estado que almacena los alumnos
+  const [search, setSearch] = useState(''); // estado de busquedas
+  const [filteredAlumnos, setFilteredAlumnos] = useState([]);
+
+  // estado de carga
   const [loading, setLoading] = useState(true);
 
+  // estado para obtener el id del usuario conectado
   const [userId, setUserId] = useState(null);
+
   const [error, setError] = useState(null);
   const { userName } = useAuth();
 
@@ -59,49 +65,52 @@ const PlantillaEntrenador = () => {
         );
 
         // Inicializar asistencias y agendas para cada alumno filtrado
-        const alumnosConAsistencias = alumnosFiltrados.map((alumno) => {
-          const asistenciasDelAlumno = Array(31).fill(''); // Inicializar asistencias
-          const agendasDelAlumno = responseAgendas.data
-            .filter((agenda) => agenda.alumno_id === alumno.id)
-            .map((agenda) => agenda.contenido || '');
+        const alumnosConAsistencias = alumnosFiltrados
+          .map((alumno) => {
+            const asistenciasDelAlumno = Array(31).fill(''); // Inicializar asistencias
+            const agendasDelAlumno = responseAgendas.data
+              .filter((agenda) => agenda.alumno_id === alumno.id)
+              .map((agenda) => agenda.contenido || '');
 
-          // Llenar asistencias basadas en las asistencias existentes
-          responseAsistencias.data.forEach((asistencia) => {
-            if (asistencia.alumno_id === alumno.id) {
-              const diaIndex = asistencia.dia - 1; // Convertir día a índice (0-30)
-              if (diaIndex >= 0 && diaIndex < 31) {
-                asistenciasDelAlumno[diaIndex] = asistencia.estado;
+            // Llenar asistencias basadas en las asistencias existentes
+            responseAsistencias.data.forEach((asistencia) => {
+              if (asistencia.alumno_id === alumno.id) {
+                const diaIndex = asistencia.dia - 1; // Convertir día a índice (0-30)
+                if (diaIndex >= 0 && diaIndex < 31) {
+                  asistenciasDelAlumno[diaIndex] = asistencia.estado;
+                }
               }
-            }
-          });
+            });
 
-          // Lógica para agendas completa
-          const agendasCompleta =
-            agendasDelAlumno.length < 5
-              ? [
-                  ...agendasDelAlumno,
-                  ...Array(5 - agendasDelAlumno.length).fill('')
-                ]
-              : agendasDelAlumno;
+            // Lógica para agendas completa
+            const agendasCompleta =
+              agendasDelAlumno.length < 5
+                ? [
+                    ...agendasDelAlumno,
+                    ...Array(5 - agendasDelAlumno.length).fill('')
+                  ]
+                : agendasDelAlumno;
 
-          // Filtrar asistencias para el alumno y calcular total
-          const asistenciasDelAlumno2 = responseAsistencias.data.filter(
-            (asistencia) => asistencia.alumno_id === alumno.id
-          );
-          
-          const totalAsistencias = asistenciasDelAlumno2.reduce(
-            (total, asistencia) => total + (asistencia.estado === 'P' ? 1 : 0),
-            0
-          );
+            // Filtrar asistencias para el alumno y calcular total
+            const asistenciasDelAlumno2 = responseAsistencias.data.filter(
+              (asistencia) => asistencia.alumno_id === alumno.id
+            );
 
-          return {
-            ...alumno,
-            asistencias: asistenciasDelAlumno,
-            agendas: agendasCompleta, // Agregar las agendas
-            punto_d: alumno.punto_d || '',
-            totalAsistencias
-          };
-        });
+            const totalAsistencias = asistenciasDelAlumno2.reduce(
+              (total, asistencia) =>
+                total + (asistencia.estado === 'P' ? 1 : 0),
+              0
+            );
+
+            return {
+              ...alumno,
+              asistencias: asistenciasDelAlumno,
+              agendas: agendasCompleta, // Agregar las agendas
+              punto_d: alumno.punto_d || '',
+              totalAsistencias
+            };
+          })
+          .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
         // Llenar las filas restantes hasta 100 \\ aumentar ese numero en caso de que se necesiten mas filas
         const filasRestantes = 100 - alumnosConAsistencias.length;
@@ -116,7 +125,9 @@ const PlantillaEntrenador = () => {
         }));
 
         // De esta forma mostramos en la planilla los datos
-        setRows([...alumnosConAsistencias, ...filasVacias]);
+        const allRows = [...alumnosConAsistencias, ...filasVacias];
+        setRows(allRows);
+        setFilteredAlumnos(allRows);
       } catch (error) {
         console.error('Error fetching alumnos:', error);
       } finally {
@@ -126,6 +137,18 @@ const PlantillaEntrenador = () => {
 
     fetchAlumnos();
   }, [URL, userId]); // Agrega userId como dependencia
+
+  // Filtrar alumnos cuando cambia el valor de búsqueda
+  useEffect(() => {
+    if (search.trim() === '') {
+      setFilteredAlumnos(rows); // Si no hay búsqueda, muestra todos los alumnos
+    } else {
+      const filtered = rows.filter((alumno) =>
+        alumno.nombre?.toLowerCase().includes(search.toLowerCase())
+      );
+      setFilteredAlumnos(filtered);
+    }
+  }, [search, rows]);
 
   // Manejar cambios en las celdas
   const handleInputChange = (rowIndex, field, value) => {
@@ -151,7 +174,7 @@ const PlantillaEntrenador = () => {
     });
   };
 
-  // Función para editar un alumno 
+  // Función para editar un alumno
   const handleEdit = async (rowIndex) => {
     const alumno = rows[rowIndex]; // Obtener el ID del alumno correspondiente
 
@@ -172,6 +195,8 @@ const PlantillaEntrenador = () => {
 
           if (!response.ok) {
             throw new Error('Error al actualizar el registro');
+          } else {
+            alert('Registro actualizado correctamente');
           }
 
           const data = await response.json();
@@ -206,6 +231,8 @@ const PlantillaEntrenador = () => {
 
           if (!response.ok) {
             throw new Error('Error al crear el registro');
+          } else {
+            alert('Registro creado correctamente');
           }
 
           const data = await response.json();
@@ -368,7 +395,6 @@ const PlantillaEntrenador = () => {
           newRows[rowIndex].agendas[agendaIndex] = contenido; // Actualiza la agenda en el estado
           return newRows;
         });
-        
       } else {
         // Crear una nueva agenda si no existe
         await fetch(`${URL}agendas`, {
@@ -403,6 +429,17 @@ const PlantillaEntrenador = () => {
     <>
       <NavBar />
       <div className="overflow-x-auto mt-20">
+        {/* Formulario de búsqueda */}
+        <form className="flex justify-center items-center pb-5 space-x-2">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            type="text"
+            placeholder="Buscar alumno por Nombre"
+            className="w-80 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent shadow-sm transition duration-200 ease-in-out"
+          />
+        </form>
+        {/* Formulario de búsqueda fin */}
         <table className="min-w-full border-collapse table-auto border border-gray-400">
           <thead>
             <tr>
@@ -432,7 +469,7 @@ const PlantillaEntrenador = () => {
                 </td>
               </tr>
             ) : (
-              rows.map((row, rowIndex) => (
+              filteredAlumnos.map((row, rowIndex) => (
                 <tr key={rowIndex}>
                   <td className="border border-gray-400 text-center">
                     {rowIndex + 1}
@@ -467,12 +504,11 @@ const PlantillaEntrenador = () => {
                     <input
                       type="text"
                       className="w-40 px-2 py-3 text-center"
-                      value={row.celular || ''} // Asegura que el input tenga un valor válido
-                      onChange={
-                        (e) =>
-                          handleInputChange(rowIndex, 'celular', e.target.value) // Actualiza el estado
-                      }
-                      // placeholder="Ingresa tu número" // Placeholder opcional
+                      value={row.celular || ''}
+                      onChange={(e) => {
+                        const valorNumerico = e.target.value.replace(/\D/g, ''); // Remueve cualquier carácter no numérico
+                        handleInputChange(rowIndex, 'celular', valorNumerico);
+                      }}
                     />
                   </td>
 
@@ -486,6 +522,7 @@ const PlantillaEntrenador = () => {
                       }
                     />
                   </td>
+
                   {row.asistencias.map((asistencia, asistenciaIndex) => (
                     <td
                       key={asistenciaIndex}
