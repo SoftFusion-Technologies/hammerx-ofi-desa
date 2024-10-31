@@ -4,7 +4,7 @@ import NavBar from './NavbarStaff';
 import Footer from '../../components/footer/Footer';
 import { useAuth } from '../../AuthContext';
 
-const PlantillaEntrenador = () => {
+const PlanillaEntrenador = () => {
   const URL = 'http://localhost:8080/';
 
   const [rows, setRows] = useState([]); // estado que almacena los alumnos
@@ -18,28 +18,32 @@ const PlantillaEntrenador = () => {
   const [userId, setUserId] = useState(null);
 
   const [error, setError] = useState(null);
-  const { userName } = useAuth();
+  const { userName, userLevel } = useAuth();
 
   useEffect(() => {
     const getUserIdByEmail = async () => {
       try {
-        const response = await fetch(`${URL}users/`);
+        if (userLevel === 'instructor') {
+          // Verificamos si el nivel es 'instructor'
+          const response = await fetch(`${URL}users/`);
 
-        if (!response.ok) {
-          throw new Error(
-            `Error al obtener los usuarios: ${response.statusText}`
-          );
-        }
+          if (!response.ok) {
+            throw new Error(
+              `Error al obtener los usuarios: ${response.statusText}`
+            );
+          }
 
-        const users = await response.json();
+          const users = await response.json();
 
-        // Filtrar el usuario por email
-        const user = users.find((u) => u.email === userName);
-        if (user) {
-          setUserId(user.id); // Guardar el ID del usuario en el estado
-          console.log(`ID del usuario ${userName}:`, user.id);
-        } else {
-          console.log(`Usuario con email ${userName} no encontrado`);
+          // Buscar el usuario por email, ya que el nivel es 'instructor'
+          const user = users.find((u) => u.email === userName);
+
+          if (user) {
+            setUserId(user.id); // Guardar el ID del usuario en el estado
+            console.log(`ID del usuario ${userName}:`, user.id);
+          } else {
+            console.log(`Usuario con email ${userName} no encontrado`);
+          }
         }
       } catch (err) {
         setError(err.message);
@@ -49,7 +53,7 @@ const PlantillaEntrenador = () => {
     };
 
     getUserIdByEmail();
-  }, [userName]);
+  }, [userName, userLevel]); // Aseguramos que el efecto se ejecute si cambia el userLevel o userName
 
   // Cargar los registros de alumnos al iniciar el componente
   useEffect(() => {
@@ -113,7 +117,7 @@ const PlantillaEntrenador = () => {
           .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
         // Llenar las filas restantes hasta 100 \\ aumentar ese numero en caso de que se necesiten mas filas
-        const filasRestantes = 100 - alumnosConAsistencias.length;
+        const filasRestantes = 10 - alumnosConAsistencias.length;
         const filasVacias = Array.from({ length: filasRestantes }, () => ({
           id: null,
           nombre: '',
@@ -288,27 +292,34 @@ const PlantillaEntrenador = () => {
         const dia = index + 1; // Días empezando desde 1
 
         // Solo enviar si el nuevo estado está definido (es decir, no vacío y no 'N')
+
         if (nuevoEstado && nuevoEstado !== 'N') {
-          // Verificar si ya existe un registro de asistencia
+          // Verifica si ya existe un registro de asistencia
           const checkResponse = await fetch(
             `${URL}asistencias/${alumnoId}/${dia}`
           );
           const checkData = await checkResponse.json();
 
           if (checkData.existe) {
+            // Obtener el ID de la asistencia
+            const existingRecordId = checkData.id; // Asumimos que tienes acceso a esto
+
             // Obtener el estado actual del registro existente
             const existingRecordResponse = await fetch(
               `${URL}asistencias/${alumnoId}/${dia}`
             );
+
+            console.log(existingRecordId);
             const existingRecordData = await existingRecordResponse.json();
 
+            // console.log(existingRecordData.estado);
             // Solo actualizar si hay un cambio de 'P' a 'A' o de 'A' a 'P'
             if (
               (existingRecordData.estado === 'P' && nuevoEstado === 'A') ||
               (existingRecordData.estado === 'A' && nuevoEstado === 'P')
             ) {
               const response = await fetch(
-                `${URL}asistencias/${alumnoId}/${dia}`,
+                `${URL}asistencias/${existingRecordId}`,
                 {
                   method: 'PUT', // Suponiendo que tienes un endpoint para actualizar
                   headers: {
@@ -633,4 +644,4 @@ const PlantillaEntrenador = () => {
   );
 };
 
-export default PlantillaEntrenador;
+export default PlanillaEntrenador;

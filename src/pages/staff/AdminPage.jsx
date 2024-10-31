@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import NavbarStaff from './NavbarStaff';
 import '../../styles/staff/dashboard.css';
 import '../../styles/staff/background.css';
@@ -41,6 +41,15 @@ const AdminPage = () => {
     setModalDetalleOpen(false);
   };
 
+  const navigate = useNavigate();
+
+  const handleButtonClick = () => {
+    if (userLevel === 'instructor') {
+      navigate('/dashboard/instructores/planilla');
+    } else {
+      navigate('/dashboard/instructores');
+    }
+  };
   return (
     <>
       {/* Navbar section */}
@@ -110,13 +119,13 @@ const AdminPage = () => {
               userLevel === 'instructor' ||
               userLevel === 'administrador') && (
               <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
-                <Link to="/dashboard/instructores">
-                  <button className="btnstaff">Instructores</button>
-                </Link>
+                <button className="btnstaff" onClick={handleButtonClick}>
+                  Instructores
+                </button>
               </div>
             )}
           </div>
-          
+
           <div className="flex justify-end p-5">
             <a
               className="relative inline-block"

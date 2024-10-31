@@ -15,7 +15,7 @@
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
 import axios from 'axios';
-import React, { lazy, Suspense, useState, useEffect , memo} from 'react';
+import React, { lazy, Suspense, useState, useEffect, memo } from 'react';
 
 import {
   BrowserRouter as Router,
@@ -34,6 +34,7 @@ import FrequentDetails from './pages/staff/MetodsGet/FrequentAsksGetId';
 import TaskDetails from './pages/staff/MetodsGet/TaskGetId';
 
 import TaskReminder2 from './components/TaskReminder2.jsx';
+
 // Importa los diferentes componentes de las páginas usando lazy loading para mejorar el rendimiento
 // COMPONENTES PRINCIPALES DE LA PAGINA
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -55,24 +56,36 @@ const AdminPage = lazy(() => import('./pages/staff/AdminPage'));
 // const FormPostu = lazy(() => import('./components/Forms/FormPostulante')); se elimina
 
 // Renderizado de pagina del STAFF, para los metodos Get, y listado
-const PostulanteGet = lazy(() => import('./pages/staff/MetodsGet/PostulanteGet'));
+const PostulanteGet = lazy(() =>
+  import('./pages/staff/MetodsGet/PostulanteGet')
+);
 const NovedadGet = lazy(() => import('./pages/staff/MetodsGet/NovedadGet'));
 const TaskGet = lazy(() => import('./pages/staff/MetodsGet/TaskGet'));
 const ClasesGet = lazy(() => import('./pages/staff/MetodsGet/FreeClassGet'));
 const UsersGet = lazy(() => import('./pages/staff/MetodsGet/UserGet'));
 const AdmConveGet = lazy(() => import('./pages/staff/MetodsGet/AdmConveGet'));
 // const AdmPrecioGet = lazy(() => import('./pages/staff/MetodsGet/AdmPrecioGet'));
-const IntegranteConveGet= lazy(() => import('./pages/staff/MetodsGet/IntegranteConveGet'));
-const FamIntegranteGet = lazy(() =>  import('./pages/staff/MetodsGet/FamIntegranteGet'));
+const IntegranteConveGet = lazy(() =>
+  import('./pages/staff/MetodsGet/IntegranteConveGet')
+);
+const FamIntegranteGet = lazy(() =>
+  import('./pages/staff/MetodsGet/FamIntegranteGet')
+);
 const VendedoresGet = lazy(() =>
   import('./pages/staff/MetodsGet/VendedoresGet')
 );
-const PlantillaEntrenador = lazy(() =>
-  import('./pages/staff/PlantillaEntrenador.jsx')
+const PlanillaEntrenador = lazy(() =>
+  import('./pages/staff/PlanillaEntrenador.jsx')
+);
+
+const InstructoresGet = lazy(() =>
+  import('./pages/staff/MetodsGet/InstructoresGet.jsx')
 );
 
 const AltaUserForm = lazy(() => import('./components/Forms/FormAltaUser'));
-const AltaNovedadForm = lazy(() => import('./components/Forms/FormAltaNovedad'));
+const AltaNovedadForm = lazy(() =>
+  import('./components/Forms/FormAltaNovedad')
+);
 const AltaTaskForm = lazy(() => import('./components/Forms/FormAltaTask'));
 const AltaFreAskForm = lazy(() => import('./components/Forms/FormAltaFrecAsk'));
 // Renderizado de pagina del STAFF, para los metodos Get, y listado
@@ -162,7 +175,7 @@ import NotFound from './pages/NotFound.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
 /**
  * Componente principal de la aplicación.
- * 
+ *
  * @returns {JSX.Element} Elemento JSX que representa la aplicación.
  */
 
@@ -203,7 +216,6 @@ const App = memo(() => {
     return () => clearTimeout(timer);
   }, []); // Este efecto se ejecuta solo una vez, al montar el componente
 
-  // Renderizado del componente
   return (
     <AuthProvider>
       {/* <div className="back_v2"> */}
@@ -354,7 +366,16 @@ const App = memo(() => {
                   element={
                     <ProtectedRoute>
                       {' '}
-                      <PlantillaEntrenador />{' '}
+                      <InstructoresGet />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                <Ruta
+                  path="/dashboard/instructores/planilla"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <PlanillaEntrenador />{' '}
                     </ProtectedRoute>
                   }
                 />{' '}
@@ -364,6 +385,15 @@ const App = memo(() => {
                   path="/dashboard/admconvenios/:id_conv/integrantes/"
                   element={<IntegranteConveGet />}
                 />
+                <Ruta
+                  path="/dashboard/instructores/:user_id/planilla"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <PlanillaEntrenador />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
                 <Ruta
                   path="/dashboard/admconvenios/:id_conv/integrantes/:id_integrante/integrantesfam/"
                   element={<FamIntegranteGet />}
