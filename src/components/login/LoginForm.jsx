@@ -83,8 +83,8 @@ const LoginForm = () => {
             onSubmit={handleSubmit}
           >
             <div className="m-5">
-              <h1 className="font-montserrat text-[25px] font-medium tracking-wide text-center">
-                Login
+              <h1 className="font-montserrat text-[25px] font-bold tracking-wide text-center">
+                BIENVENIDO
               </h1>
             </div>
 

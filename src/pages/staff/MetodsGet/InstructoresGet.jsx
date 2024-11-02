@@ -19,18 +19,13 @@ import NavbarStaff from '../NavbarStaff';
 import '../../../styles/MetodsGet/Tabla.css';
 import '../../../styles/staff/background.css';
 import Footer from '../../../components/footer/Footer';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../AuthContext';
-
+import { useNavigate } from 'react-router-dom';
 const InstructoresGet = () => {
   // Estado para almacenar la lista de personas
   const [instructor, setInstructor] = useState([]);
 
-  const navigate = useNavigate(); // Hook para navegación
-
   const { userLevel } = useAuth();
-
-
 
   // Estado para almacenar el término de búsqueda
   const [search, setSearch] = useState('');
@@ -38,6 +33,8 @@ const InstructoresGet = () => {
 
   //URL estatica, luego cambiar por variable de entorno
   const URL = 'http://localhost:8080/instructores/';
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     // utilizamos get para obtenerPersonas los datos contenidos en la url
@@ -47,7 +44,7 @@ const InstructoresGet = () => {
     });
   }, []);
 
-  // Función para obtener todos los personClass desde la API
+  // Función para obtener todos los instructores desde la API
   const obtenerInstructor = async () => {
     try {
       const response = await axios.get(URL);
@@ -56,6 +53,19 @@ const InstructoresGet = () => {
       console.log('Error al obtener las personas :', error);
     }
   };
+
+  useEffect(() => {
+    const obtenerInstructores = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/instructores/');
+        setInstructor(response.data);
+      } catch (error) {
+        console.error('Error al obtener los instructores:', error);
+      }
+    };
+
+    obtenerInstructores();
+  }, []);
 
   const searcher = (e) => {
     setSearch(e.target.value);
@@ -67,9 +77,7 @@ const InstructoresGet = () => {
     results = instructor;
   } else if (search) {
     results = instructor.filter((dato) => {
-      const nameMatch = dato.name
-        .toLowerCase()
-        .includes(search.toLowerCase());
+      const nameMatch = dato.name.toLowerCase().includes(search.toLowerCase());
 
       return nameMatch;
     });
@@ -102,6 +110,14 @@ const InstructoresGet = () => {
     }
     const sede = instructor.sede || ''; // Asignar una cadena vacía si `instructor.sede` es `null` o `undefined`
     return sede.toLowerCase().includes(filterSede.toLowerCase());
+  };
+
+  const handleEnviarEmail = (instructor) => {
+    navigate(
+      `/dashboard/instructores/${
+        instructor.id
+      }/planilla/?email=${encodeURIComponent(instructor.email)}`
+    );
   };
 
   return (
@@ -174,15 +190,16 @@ const InstructoresGet = () => {
                       </p>
                     )}
 
-                    <Link
-                      to={`/dashboard/instructores/${instructor.id}/planilla/`}
-                    >
+                    {(userLevel === 'admin' ||
+                      userLevel === 'gerente' ||
+                      userLevel === 'administrador') && (
                       <button
                         style={{ ...styles.button, backgroundColor: '#fc4b08' }}
+                        onClick={() => handleEnviarEmail(instructor)}
                       >
                         Ver Alumnos
                       </button>
-                    </Link>
+                    )}
                   </div>
                 ))}
               </div>

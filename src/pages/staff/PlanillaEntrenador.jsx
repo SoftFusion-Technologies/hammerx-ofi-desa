@@ -3,6 +3,9 @@ import axios from 'axios';
 import NavBar from './NavbarStaff';
 import Footer from '../../components/footer/Footer';
 import { useAuth } from '../../AuthContext';
+import { useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 const PlanillaEntrenador = () => {
   const URL = 'http://localhost:8080/';
@@ -10,6 +13,9 @@ const PlanillaEntrenador = () => {
   const [rows, setRows] = useState([]); // estado que almacena los alumnos
   const [search, setSearch] = useState(''); // estado de busquedas
   const [filteredAlumnos, setFilteredAlumnos] = useState([]);
+
+  const location = useLocation();
+  const { user_id } = useParams();
 
   // estado de carga
   const [loading, setLoading] = useState(true);
@@ -19,6 +25,11 @@ const PlanillaEntrenador = () => {
 
   const [error, setError] = useState(null);
   const { userName, userLevel } = useAuth();
+
+  const [nombreInstructor, setNombreInstructor] = useState('');
+
+  const queryParams = new URLSearchParams(location.search);
+  const email = queryParams.get('email'); // Obtener el email de los parámetros de consulta
 
   useEffect(() => {
     const getUserIdByEmail = async () => {
@@ -55,6 +66,20 @@ const PlanillaEntrenador = () => {
     getUserIdByEmail();
   }, [userName, userLevel]); // Aseguramos que el efecto se ejecute si cambia el userLevel o userName
 
+  useEffect(() => {
+    const obtenerEmailInstructor = async () => {
+      try {
+        const response = await axios.get(`${URL}users/${user_id}`);
+        setNombreInstructor(response.data.name);
+        setEmailInstructor(response.data.email);
+      } catch (error) {
+        console.error('Error al obtener el instructor:', error);
+      }
+    };
+
+    obtenerEmailInstructor();
+  }, [user_id]);
+
   // Cargar los registros de alumnos al iniciar el componente
   useEffect(() => {
     const fetchAlumnos = async () => {
@@ -64,9 +89,10 @@ const PlanillaEntrenador = () => {
         const responseAgendas = await axios.get(`${URL}agendas`);
 
         // Filtrar alumnos por user_id
-        const alumnosFiltrados = responseAlumnos.data.filter(
-          (alumno) => alumno.user_id === userId
-        );
+        const alumnosFiltrados =
+          userLevel === 'instructor'
+            ? responseAlumnos.data.filter((alumno) => alumno.user_id === userId)
+            : responseAlumnos.data.filter((alumno) => alumno.email === email);
 
         // Inicializar asistencias y agendas para cada alumno filtrado
         const alumnosConAsistencias = alumnosFiltrados
@@ -217,10 +243,11 @@ const PlanillaEntrenador = () => {
         try {
           const newAlumno = {
             nombre: alumno.nombre, // Valor del input de nombre
+            email: email || userName, //userName es el email del usuario
             celular: alumno.celular || '', // Valor del input de celular
             punto_d: alumno.punto_d || '', // Valor del input de punto_d
             motivo: alumno.motivo || '', // Valor del input de punto_d
-            user_id: userId // Valor levantado del id del usuario
+            user_id: userId || user_id // Valor levantado del id del usuario
           };
 
           // console.log('datos del alumno', newAlumno);
@@ -440,6 +467,23 @@ const PlanillaEntrenador = () => {
     <>
       <NavBar />
       <div className="overflow-x-auto mt-20">
+        {(userLevel === 'admin' ||
+          userLevel === 'gerente' ||
+          userLevel === 'administrador') && (
+          <div className="pl-5 pt-5">
+            <Link to="/dashboard/instructores">
+              <button className="py-2 px-5 bg-[#fc4b08] rounded-lg text-sm text-white hover:bg-orange-500">
+                Volver
+              </button>
+            </Link>
+          </div>
+        )}
+
+        <div className="flex justify-center">
+          <h2 className="pb-5 font-bignoodle text-[#fc4b08] text-5xl">
+            {nombreInstructor}
+          </h2>
+        </div>
         {/* Formulario de búsqueda */}
         <form className="flex justify-center items-center pb-5 space-x-2">
           <input
@@ -469,7 +513,7 @@ const PlanillaEntrenador = () => {
                   Agenda {i + 1}
                 </th>
               ))}
-              <th className="border border-gray-400 px-2">MOTIVO</th>
+              <th className="border border-gray-400 px-2">OBSERVACIONES</th>
             </tr>
           </thead>
           <tbody>
