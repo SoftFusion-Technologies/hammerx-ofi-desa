@@ -463,6 +463,29 @@ const PlanillaEntrenador = () => {
     return number.replace(/\D/g, ''); // Elimina cualquier carácter que no sea un dígito
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+  const lastIndex = currentPage * itemsPerPage;
+  const firstIndex = lastIndex - itemsPerPage;
+  const records = filteredAlumnos.slice(firstIndex, lastIndex);
+  const nPage = Math.ceil(filteredAlumnos.length / itemsPerPage);
+  const numbers = [...Array(nPage + 1).keys()].slice(1);
+
+  function prevPage() {
+    if (currentPage !== firstIndex) {
+      setCurrentPage(currentPage - 1);
+    }
+  }
+
+  function changeCPage(id) {
+    setCurrentPage(id);
+  }
+
+  function nextPage() {
+    if (currentPage !== firstIndex) {
+      setCurrentPage(currentPage + 1);
+    }
+  }
   return (
     <>
       <NavBar />
@@ -524,7 +547,7 @@ const PlanillaEntrenador = () => {
                 </td>
               </tr>
             ) : (
-              filteredAlumnos.map((row, rowIndex) => (
+              records.map((row, rowIndex) => (
                 <tr key={rowIndex}>
                   <td className="border border-gray-400 text-center">
                     {rowIndex + 1}
@@ -545,7 +568,7 @@ const PlanillaEntrenador = () => {
                     onClick={() => {
                       if (row.celular) {
                         const userConfirmed = window.confirm(
-                          '¿Desea ir a WhatsApp?'
+                          `¿Desea ir a WhatsApp del alumno? ${''}${row.nombre}`
                         );
                         if (userConfirmed) {
                           window.open(
@@ -680,6 +703,39 @@ const PlanillaEntrenador = () => {
                 </tr>
               ))
             )}
+
+            <div className="flex justify-center">
+              <nav className="flex justify-center items-center my-10">
+                <ul className="pagination">
+                  <li className="page-item">
+                    <a href="#" className="page-link" onClick={prevPage}>
+                      Prev
+                    </a>
+                  </li>
+                  {numbers.map((number, index) => (
+                    <li
+                      className={`page-item ${
+                        currentPage === number ? 'active' : ''
+                      }`}
+                      key={index}
+                    >
+                      <a
+                        href="#"
+                        className="page-link"
+                        onClick={() => changeCPage(number)}
+                      >
+                        {number}
+                      </a>
+                    </li>
+                  ))}
+                  <li className="page-item">
+                    <a href="#" className="page-link" onClick={nextPage}>
+                      Next
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
           </tbody>
         </table>
       </div>
