@@ -139,7 +139,7 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
      }
   };
   const handleClose = () => {
-    if (novedad && formikRef.current) {
+    if (formikRef.current) {
       formikRef.current.resetForm();
       setSelectedNovedad(null);
     }

@@ -115,7 +115,7 @@ const FormAltaFrecAsk = ({ isOpen, onClose, ask }) => {
   };
 
   const handleClose = () => {
-    if (ask && formikRef.current) {
+    if (formikRef.current) {
       formikRef.current.resetForm();
       setDescripcion(null); // una vez que sale del metodo PUT, limpiamos el campo descripcion
     }

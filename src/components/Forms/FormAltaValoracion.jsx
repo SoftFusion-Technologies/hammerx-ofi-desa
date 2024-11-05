@@ -14,24 +14,32 @@
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
 
-import React, { useState } from "react";
+import React, { useState, useRef } from 'react';
 
-import { Formik, Form, Field } from "formik";
-import * as Yup from "yup";
-import ModalSuccess from "./ModalSuccess";
-import ModalError from "./ModalError";
+import { Formik, Form, Field } from 'formik';
+import * as Yup from 'yup';
+import ModalSuccess from './ModalSuccess';
+import ModalError from './ModalError';
 
 const FormAltaValoracion = ({ isOpen, onClose, user }) => {
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
 
-  const textoModal = "Se valoró correctamente el postulante.";
+  const textoModal = 'Se valoró correctamente el postulante.';
+
+  const formikRef = useRef(null);
 
   const nuevoValSchema = Yup.object().shape({
-    valoracion: Yup.string().required("La valoración es obligatoria"),
-    observaciones: Yup.string().required("Las observaciones son obligatorias"),
+    valoracion: Yup.string().required('La valoración es obligatoria'),
+    observaciones: Yup.string().required('Las observaciones son obligatorias')
   });
 
+  const handleClose = () => {
+    if (formikRef.current) {
+      formikRef.current.resetForm();
+    }
+    onClose();
+  };
   return (
     <div
       className={`h-screen w-screen fixed inset-0 flex pt-10 justify-center items-center ${
@@ -40,6 +48,7 @@ const FormAltaValoracion = ({ isOpen, onClose, user }) => {
     >
       <div className={`container-inputs`}>
         <Formik
+          innerRef={formikRef}
           initialValues={{
             valoracion: '',
             observaciones: ''
@@ -89,7 +98,7 @@ const FormAltaValoracion = ({ isOpen, onClose, user }) => {
                   </h1>
                   <div
                     className="text-[20px] cursor-pointer font-semibold"
-                    onClick={onClose}
+                    onClick={handleClose}
                   >
                     x
                   </div>
@@ -113,7 +122,6 @@ const FormAltaValoracion = ({ isOpen, onClose, user }) => {
                     <option value="4">Buena</option>
                     <option value="5">Muy Buena</option>
                   </Field>
-               
                 </div>
 
                 <div className="mb-3 px-4">

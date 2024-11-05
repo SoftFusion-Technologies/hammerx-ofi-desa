@@ -95,7 +95,7 @@ const FormAltaTask = ({ isOpen, onClose, task, setSelectedTask }) => {
   };
 
   const handleClose = () => {
-    if (task && formikRef.current) {
+    if (formikRef.current) {
       formikRef.current.resetForm();
       setSelectedTask(null);
     }

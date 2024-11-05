@@ -14,61 +14,61 @@
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
 
-import React, { useState } from "react";
+import React, { useState, useRef } from 'react';
 
-import { Formik, Form, Field } from "formik";
-import * as Yup from "yup";
-import ModalSuccess from "./ModalSuccess";
-import ModalError from "./ModalError";
-import Alerta from "../Error";
-import "../../styles/Forms/FormPostulante.css";
+import { Formik, Form, Field } from 'formik';
+import * as Yup from 'yup';
+import ModalSuccess from './ModalSuccess';
+import ModalError from './ModalError';
+import Alerta from '../Error';
+import '../../styles/Forms/FormPostulante.css';
 
 // isOpen y onCLose son los metodos que recibe para abrir y cerrar el modal
 const FormTestClass = ({ isOpen, onClose }) => {
-
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
 
-  const textoModal = "Hola, hemos recibimos tu información, ya puedes pasar por nuestras Sedes, a probar tu clase!"
+  // nueva variable para administrar el contenido de formulario para saber cuando limpiarlo
+  const formikRef = useRef(null);
+  const textoModal =
+    'Hola, hemos recibimos tu información, ya puedes pasar por nuestras Sedes, a probar tu clase!';
   // yup sirve para validar formulario este ya trae sus propias sentencias
   // este esquema de cliente es para utilizar su validacion en los inputs
   const nuevoTestClassSchema = Yup.object().shape({
     name: Yup.string()
-      .min(3, "El nombre es muy corto")
-      .max(70, "El nombre es muy largo")
-      .required("El Nombre es obligatorio"),
+      .min(3, 'El nombre es muy corto')
+      .max(70, 'El nombre es muy largo')
+      .required('El Nombre es obligatorio'),
     last_name: Yup.string()
-      .min(3, "El apellido es muy corto")
-      .max(70, "El apellido es muy largo")
-      .required("El Apellido es Obligatorio"),
+      .min(3, 'El apellido es muy corto')
+      .max(70, 'El apellido es muy largo')
+      .required('El Apellido es Obligatorio'),
     dni: Yup.string()
-      .min(6, "El DNI es muy corto")
-      .max(13, "El DNI es muy largo")
-      .required("El DNI es Obligatorio"),
+      .min(6, 'El DNI es muy corto')
+      .max(13, 'El DNI es muy largo')
+      .required('El DNI es Obligatorio'),
     celular: Yup.string()
-      .min(8, "El número de celular es muy corto")
-      .max(15, "El número de celular es muy largo")
-      .required("El Celular es obligatorio"),
-    sede: Yup.string()
-      .required("La Sede es obligatoria"),
-    objetivo: Yup.string()
-      .required("El Objetivo es obligatorio"),
-    user: Yup.string().max(255, "Usuario demasiado largo"),
-    observaciones: Yup.string().max(255, "Observaciones demasiado largas"),
+      .min(8, 'El número de celular es muy corto')
+      .max(15, 'El número de celular es muy largo')
+      .required('El Celular es obligatorio'),
+    sede: Yup.string().required('La Sede es obligatoria'),
+    objetivo: Yup.string().required('El Objetivo es obligatorio'),
+    user: Yup.string().max(255, 'Usuario demasiado largo'),
+    observaciones: Yup.string().max(255, 'Observaciones demasiado largas'),
     state: Yup.boolean().required(),
     created_at: Yup.date().nullable(true),
-    updated_at: Yup.date().nullable(true),
-  })
+    updated_at: Yup.date().nullable(true)
+  });
 
   const handleSubmitTestClass = async (valores) => {
     try {
       // Verificamos si los campos obligatorios están vacíos
       if (
-        valores.last_name === "" ||
-        valores.dni === "" ||
-        valores.celular === ""
+        valores.last_name === '' ||
+        valores.dni === '' ||
+        valores.celular === ''
       ) {
-        alert("Por favor, complete todos los campos obligatorios.");
+        alert('Por favor, complete todos los campos obligatorios.');
       } else {
         // Realizamos la solicitud POST al servidor
         // URL DESARROLLO DESCOMENTAR CUANDO SE UTILICE DESARROLLO
@@ -83,7 +83,7 @@ const FormTestClass = ({ isOpen, onClose }) => {
 
         // Verificamos si la solicitud fue exitosa
         if (!respuesta.ok) {
-          throw new Error("Error en la solicitud POST: " + respuesta.status)
+          throw new Error('Error en la solicitud POST: ' + respuesta.status);
         }
 
         // Convertimos la respuesta a JSON
@@ -111,8 +111,19 @@ const FormTestClass = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleClose = () => {
+    if (formikRef.current) {
+      formikRef.current.resetForm();
+    }
+    onClose();
+  };
+
   return (
-    <div className={`h-screen w-screen mt-16 fixed inset-0 flex pt-10 justify-center ${isOpen ? 'block' : 'hidden'} bg-gray-800 bg-opacity-75 z-50`}>
+    <div
+      className={`h-screen w-screen mt-16 fixed inset-0 flex pt-10 justify-center ${
+        isOpen ? 'block' : 'hidden'
+      } bg-gray-800 bg-opacity-75 z-50`}
+    >
       <div className={`container-inputs`}>
         {/*
                 Formik es una biblioteca de formularios React de terceros.
@@ -121,17 +132,18 @@ const FormTestClass = ({ isOpen, onClose }) => {
                 y reduce en gran medida el tiempo de programación de formularios.
             */}
         <Formik
+          innerRef={formikRef}
           // valores con los cuales el formulario inicia y este objeto tambien lo utilizo para cargar los datos en la API
           initialValues={{
-            name: "",
-            last_name: "",
-            dni: "",
-            celular: "",
-            sede: "",
-            objetivo: "",
+            name: '',
+            last_name: '',
+            dni: '',
+            celular: '',
+            sede: '',
+            objetivo: '',
             state: false,
             created_at: null,
-            updated_at: null,
+            updated_at: null
           }}
           enableReinitialize={!isOpen}
           // cuando hacemos el submit esperamos a que cargen los valores y esos valores tomados se lo pasamos a la funcion handlesubmit que es la que los espera
@@ -162,7 +174,7 @@ const FormTestClass = ({ isOpen, onClose }) => {
                     </div>
                     <div
                       className="pr-6 pt-3 text-[20px] cursor-pointer"
-                      onClick={onClose}
+                      onClick={handleClose}
                     >
                       x
                     </div>
@@ -302,10 +314,13 @@ const FormTestClass = ({ isOpen, onClose }) => {
           }}
         </Formik>
       </div>
-      <ModalSuccess textoModal={textoModal} isVisible={showModal} onClose={() => setShowModal(false)} />
+      <ModalSuccess
+        textoModal={textoModal}
+        isVisible={showModal}
+        onClose={() => setShowModal(false)}
+      />
       <ModalError isVisible={errorModal} onClose={() => setErrorModal(false)} />
     </div>
-
   );
 };
 

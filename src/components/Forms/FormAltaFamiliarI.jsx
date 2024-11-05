@@ -114,7 +114,7 @@ const FormAltaFamiliarI = ({
   };
 
     const handleClose = () => {
-      if (integrante && formikRef.current) {
+      if (formikRef.current) {
         formikRef.current.resetForm();
         setSelectedUser(null);
       }

@@ -113,7 +113,7 @@ const FormAltaUser = ({ isOpen, onClose, user, setSelectedUser }) => {
     }
   };
   const handleClose = () => {
-    if (user && formikRef.current) {
+    if (formikRef.current) {
       formikRef.current.resetForm();
       setSelectedUser(null)
     }

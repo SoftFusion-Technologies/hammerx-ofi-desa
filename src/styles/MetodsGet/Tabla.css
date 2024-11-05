@@ -40,7 +40,10 @@ tr:hover {
   color: white;
   cursor: pointer;
 }
-
+.tr-planilla{
+  color: black !important;
+  cursor: pointer !important;
+}
 .tr-gris:hover {
   background-color: rgb(125, 123, 121);
   color: white;

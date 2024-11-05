@@ -6,6 +6,7 @@ import { useAuth } from '../../AuthContext';
 import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
+import FormAltaAlumno from '../../components/Forms/FormAltaAlumno';
 
 const PlanillaEntrenador = () => {
   const URL = 'http://localhost:8080/';
@@ -27,9 +28,13 @@ const PlanillaEntrenador = () => {
   const { userName, userLevel } = useAuth();
 
   const [nombreInstructor, setNombreInstructor] = useState('');
+  const [emailInstructor, setEmailInstructor] = useState('');
 
   const queryParams = new URLSearchParams(location.search);
   const email = queryParams.get('email'); // Obtener el email de los parámetros de consulta
+
+  const [modalNewAlumn, setModalNewAlumn] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null); // Estado para el usuario seleccionado
 
   useEffect(() => {
     const getUserIdByEmail = async () => {
@@ -52,6 +57,7 @@ const PlanillaEntrenador = () => {
           if (user) {
             setUserId(user.id); // Guardar el ID del usuario en el estado
             console.log(`ID del usuario ${userName}:`, user.id);
+            setNombreInstructor(user.name);
           } else {
             console.log(`Usuario con email ${userName} no encontrado`);
           }
@@ -81,93 +87,91 @@ const PlanillaEntrenador = () => {
   }, [user_id]);
 
   // Cargar los registros de alumnos al iniciar el componente
-  useEffect(() => {
-    const fetchAlumnos = async () => {
-      try {
-        const responseAlumnos = await axios.get(`${URL}alumnos`);
-        const responseAsistencias = await axios.get(`${URL}asistencias`);
-        const responseAgendas = await axios.get(`${URL}agendas`);
+  const fetchAlumnos = async () => {
+    try {
+      const responseAlumnos = await axios.get(`${URL}alumnos`);
+      const responseAsistencias = await axios.get(`${URL}asistencias`);
+      const responseAgendas = await axios.get(`${URL}agendas`);
 
-        // Filtrar alumnos por user_id
-        const alumnosFiltrados =
-          userLevel === 'instructor'
-            ? responseAlumnos.data.filter((alumno) => alumno.user_id === userId)
-            : responseAlumnos.data.filter((alumno) => alumno.email === email);
+      // Filtrar alumnos por user_id
+      const alumnosFiltrados =
+        userLevel === 'instructor'
+          ? responseAlumnos.data.filter((alumno) => alumno.user_id === userId)
+          : responseAlumnos.data.filter((alumno) => alumno.email === email);
 
-        // Inicializar asistencias y agendas para cada alumno filtrado
-        const alumnosConAsistencias = alumnosFiltrados
-          .map((alumno) => {
-            const asistenciasDelAlumno = Array(31).fill(''); // Inicializar asistencias
-            const agendasDelAlumno = responseAgendas.data
-              .filter((agenda) => agenda.alumno_id === alumno.id)
-              .map((agenda) => agenda.contenido || '');
+      // Inicializar asistencias y agendas para cada alumno filtrado
+      const alumnosConAsistencias = alumnosFiltrados
+        .map((alumno) => {
+          const asistenciasDelAlumno = Array(31).fill(''); // Inicializar asistencias
+          const agendasDelAlumno = responseAgendas.data
+            .filter((agenda) => agenda.alumno_id === alumno.id)
+            .map((agenda) => agenda.contenido || '');
 
-            // Llenar asistencias basadas en las asistencias existentes
-            responseAsistencias.data.forEach((asistencia) => {
-              if (asistencia.alumno_id === alumno.id) {
-                const diaIndex = asistencia.dia - 1; // Convertir día a índice (0-30)
-                if (diaIndex >= 0 && diaIndex < 31) {
-                  asistenciasDelAlumno[diaIndex] = asistencia.estado;
-                }
+          // Llenar asistencias basadas en las asistencias existentes
+          responseAsistencias.data.forEach((asistencia) => {
+            if (asistencia.alumno_id === alumno.id) {
+              const diaIndex = asistencia.dia - 1; // Convertir día a índice (0-30)
+              if (diaIndex >= 0 && diaIndex < 31) {
+                asistenciasDelAlumno[diaIndex] = asistencia.estado;
               }
-            });
+            }
+          });
 
-            // Lógica para agendas completa
-            const agendasCompleta =
-              agendasDelAlumno.length < 5
-                ? [
-                    ...agendasDelAlumno,
-                    ...Array(5 - agendasDelAlumno.length).fill('')
-                  ]
-                : agendasDelAlumno;
+          // Lógica para agendas completa
+          const agendasCompleta =
+            agendasDelAlumno.length < 5
+              ? [
+                  ...agendasDelAlumno,
+                  ...Array(5 - agendasDelAlumno.length).fill('')
+                ]
+              : agendasDelAlumno;
 
-            // Filtrar asistencias para el alumno y calcular total
-            const asistenciasDelAlumno2 = responseAsistencias.data.filter(
-              (asistencia) => asistencia.alumno_id === alumno.id
-            );
+          // Filtrar asistencias para el alumno y calcular total
+          const asistenciasDelAlumno2 = responseAsistencias.data.filter(
+            (asistencia) => asistencia.alumno_id === alumno.id
+          );
 
-            const totalAsistencias = asistenciasDelAlumno2.reduce(
-              (total, asistencia) =>
-                total + (asistencia.estado === 'P' ? 1 : 0),
-              0
-            );
+          const totalAsistencias = asistenciasDelAlumno2.reduce(
+            (total, asistencia) => total + (asistencia.estado === 'P' ? 1 : 0),
+            0
+          );
 
-            return {
-              ...alumno,
-              asistencias: asistenciasDelAlumno,
-              agendas: agendasCompleta, // Agregar las agendas
-              punto_d: alumno.punto_d || '',
-              totalAsistencias
-            };
-          })
-          .sort((a, b) => a.nombre.localeCompare(b.nombre));
+          return {
+            ...alumno,
+            asistencias: asistenciasDelAlumno,
+            agendas: agendasCompleta, // Agregar las agendas
+            punto_d: alumno.punto_d || '',
+            totalAsistencias
+          };
+        })
+        .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-        // Llenar las filas restantes hasta 100 \\ aumentar ese numero en caso de que se necesiten mas filas
-        const filasRestantes = 10 - alumnosConAsistencias.length;
-        const filasVacias = Array.from({ length: filasRestantes }, () => ({
-          id: null,
-          nombre: '',
-          punto_d: '',
-          motivo: '',
-          asistencias: Array(31).fill(''),
-          agendas: Array(5).fill(''),
-          totalAsistencias: 0
-        }));
+      // Llenar las filas restantes hasta 100 \\ aumentar ese numero en caso de que se necesiten mas filas
+      const filasRestantes = 10 - alumnosConAsistencias.length;
+      const filasVacias = Array.from({ length: filasRestantes }, () => ({
+        id: null,
+        nombre: '',
+        punto_d: '',
+        motivo: '',
+        asistencias: Array(31).fill(''),
+        agendas: Array(5).fill(''),
+        totalAsistencias: 0
+      }));
 
-        // De esta forma mostramos en la planilla los datos
-        const allRows = [...alumnosConAsistencias, ...filasVacias];
-        setRows(allRows);
-        setFilteredAlumnos(allRows);
-      } catch (error) {
-        console.error('Error fetching alumnos:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      // De esta forma mostramos en la planilla los datos
+      const allRows = [...alumnosConAsistencias, ...filasVacias];
+      setRows(allRows);
+      setFilteredAlumnos(allRows);
+    } catch (error) {
+      console.error('Error fetching alumnos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchAlumnos();
-  }, [URL, userId]); // Agrega userId como dependencia
-
+  }, [URL, userId]);
   // Filtrar alumnos cuando cambia el valor de búsqueda
   useEffect(() => {
     if (search.trim() === '') {
@@ -463,29 +467,15 @@ const PlanillaEntrenador = () => {
     return number.replace(/\D/g, ''); // Elimina cualquier carácter que no sea un dígito
   };
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
-  const lastIndex = currentPage * itemsPerPage;
-  const firstIndex = lastIndex - itemsPerPage;
-  const records = filteredAlumnos.slice(firstIndex, lastIndex);
-  const nPage = Math.ceil(filteredAlumnos.length / itemsPerPage);
-  const numbers = [...Array(nPage + 1).keys()].slice(1);
+  const abrirModal = () => {
+    setModalNewAlumn(true);
+  };
 
-  function prevPage() {
-    if (currentPage !== firstIndex) {
-      setCurrentPage(currentPage - 1);
-    }
-  }
+  const cerarModal = () => {
+    setModalNewAlumn(false);
+    fetchAlumnos();
+  };
 
-  function changeCPage(id) {
-    setCurrentPage(id);
-  }
-
-  function nextPage() {
-    if (currentPage !== firstIndex) {
-      setCurrentPage(currentPage + 1);
-    }
-  }
   return (
     <>
       <NavBar />
@@ -518,9 +508,18 @@ const PlanillaEntrenador = () => {
           />
         </form>
         {/* Formulario de búsqueda fin */}
+
+        <div className="flex justify-center pb-10">
+          <button
+            onClick={abrirModal}
+            className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
+          >
+            Nuevo Alumno
+          </button>
+        </div>
         <table className="min-w-full border-collapse table-auto border border-gray-400">
           <thead>
-            <tr>
+            <tr className="tr-planilla">
               <th className="border border-gray-400 px-2">#</th>
               <th className="border border-gray-400 px-2">APELLIDO Y NOMBRE</th>
               <th className="border border-gray-400 px-2">CELULAR</th>{' '}
@@ -547,8 +546,8 @@ const PlanillaEntrenador = () => {
                 </td>
               </tr>
             ) : (
-              records.map((row, rowIndex) => (
-                <tr key={rowIndex}>
+              filteredAlumnos.map((row, rowIndex) => (
+                <tr key={rowIndex} className="tr-planilla">
                   <td className="border border-gray-400 text-center">
                     {rowIndex + 1}
                   </td>
@@ -703,39 +702,15 @@ const PlanillaEntrenador = () => {
                 </tr>
               ))
             )}
-
-            <div className="flex justify-center">
-              <nav className="flex justify-center items-center my-10">
-                <ul className="pagination">
-                  <li className="page-item">
-                    <a href="#" className="page-link" onClick={prevPage}>
-                      Prev
-                    </a>
-                  </li>
-                  {numbers.map((number, index) => (
-                    <li
-                      className={`page-item ${
-                        currentPage === number ? 'active' : ''
-                      }`}
-                      key={index}
-                    >
-                      <a
-                        href="#"
-                        className="page-link"
-                        onClick={() => changeCPage(number)}
-                      >
-                        {number}
-                      </a>
-                    </li>
-                  ))}
-                  <li className="page-item">
-                    <a href="#" className="page-link" onClick={nextPage}>
-                      Next
-                    </a>
-                  </li>
-                </ul>
-              </nav>
-            </div>
+            {/* Modal para abrir formulario de alumno */}
+            <FormAltaAlumno
+              isOpen={modalNewAlumn}
+              onClose={cerarModal}
+              email1={userName}
+              email2={email}
+              user1={userId}
+              user2={user_id}
+            />
           </tbody>
         </table>
       </div>

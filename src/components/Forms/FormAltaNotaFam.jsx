@@ -13,7 +13,7 @@
  *
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
@@ -28,8 +28,10 @@ const FormAltaNotaFam = ({ isOpen, onClose, user }) => {
   const [precio, setPrecio] = useState('');
   const textoModal = 'Nota agregada correctamente.';
 
-  const nuevoNotaSchema = Yup.object().shape({
-  });
+  const nuevoNotaSchema = Yup.object().shape({});
+
+  // nueva variable para administrar el contenido de formulario para saber cuando limpiarlo
+  const formikRef = useRef(null);
 
   const handlePrecioChange = (values, setFieldValue) => {
     const precio = parseFloat(values.precio) || 0;
@@ -47,6 +49,13 @@ const FormAltaNotaFam = ({ isOpen, onClose, user }) => {
     setPrecioFinal(precioFinalCalculado.toFixed(2));
   };
 
+  const handleClose = () => {
+    if (formikRef.current) {
+      formikRef.current.resetForm();
+    }
+    onClose();
+  };
+
   return (
     <div
       className={`h-screen w-screen fixed inset-0 flex pt-10 justify-center items-center ${
@@ -55,6 +64,7 @@ const FormAltaNotaFam = ({ isOpen, onClose, user }) => {
     >
       <div className={`container-inputs`}>
         <Formik
+          innerRef={formikRef}
           initialValues={{
             notas: user ? user.notas : '',
             precio: user ? user.precio : '',
@@ -110,7 +120,7 @@ const FormAltaNotaFam = ({ isOpen, onClose, user }) => {
                   </h1>
                   <div
                     className="text-[20px] cursor-pointer font-semibold"
-                    onClick={onClose}
+                    onClick={handleClose}
                   >
                     x
                   </div>
