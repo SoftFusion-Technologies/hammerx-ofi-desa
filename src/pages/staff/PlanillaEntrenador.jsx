@@ -199,8 +199,12 @@ const PlanillaEntrenador = () => {
         updatedRow.agendas = value; // Actualizar el array completo de agendas
       } else if (field === 'celular') {
         updatedRow.celular = value; // Actualizar el número de celular
+      } else if (field === 'c' && updatedRow.prospecto === 'prospecto') {
+        // Solo permitir actualizar "c" si "prospecto" es "prospecto"
+        updatedRow.c = value;
+        console.log(updatedRow.c);
       } else {
-        updatedRow[field] = value; // Para cualquier otro campo
+        updatedRow[field] = value;
       }
 
       newRows[rowIndex] = updatedRow; // Actualizar la fila específica
@@ -247,6 +251,8 @@ const PlanillaEntrenador = () => {
         try {
           const newAlumno = {
             nombre: alumno.nombre, // Valor del input de nombre
+            prospecto: '',
+            c: '',
             email: email || userName, //userName es el email del usuario
             celular: alumno.celular || '', // Valor del input de celular
             punto_d: alumno.punto_d || '', // Valor del input de punto_d
@@ -476,6 +482,12 @@ const PlanillaEntrenador = () => {
     fetchAlumnos();
   };
 
+  // Definimos las etiquetas de prospecto
+  const prospectoLabels = {
+    nuevo: 'N',
+    prospecto: 'P',
+    socio: 'S'
+  };
   return (
     <>
       <NavBar />
@@ -522,6 +534,10 @@ const PlanillaEntrenador = () => {
             <tr className="tr-planilla">
               <th className="border border-gray-400 px-2">#</th>
               <th className="border border-gray-400 px-2">APELLIDO Y NOMBRE</th>
+              {/* Nueva columna para Prospecto */}
+              <th className="border border-gray-400 px-2">P</th>{' '}
+              {/* Nueva columna para C */}
+              <th className="border border-gray-400 px-2">C</th>{' '}
               <th className="border border-gray-400 px-2">CELULAR</th>{' '}
               <th className="border border-gray-400 px-2">PUNTO D</th>
               {Array.from({ length: 31 }, (_, i) => (
@@ -530,12 +546,23 @@ const PlanillaEntrenador = () => {
                 </th>
               ))}
               <th className="border border-gray-400 px-2">T</th>
-              {Array.from({ length: 5 }, (_, i) => (
+              {/* {Array.from({ length: 5 }, (_, i) => (
                 <th key={i} className="border border-gray-400 px-2">
                   Agenda {i + 1}
                 </th>
-              ))}
-              <th className="border border-gray-400 px-2">OBSERVACIONES</th>
+              ))} */}
+              {/* Nueva forma de mostrar Agendas INICIO / Benjamin Orellana / 8/11/24 */}
+              <th className="border border-gray-400 px-2 uppercase">
+                Nuevo Primera Semana
+              </th>
+              <th className="border border-gray-400 px-2 uppercase">Nuevo 3ra semana</th>
+              <th className="border border-gray-400 px-2 uppercase">
+                Clase/semana de prueba{' '}
+              </th>
+              <th className="border border-gray-400 px-2 uppercase">Inactivo </th>
+              <th className="border border-gray-400 px-2 uppercase">Devolución final</th>
+              {/* Nueva forma de mostrar Agendas FINAL / Benjamin Orellana / 8/11/24 */}
+              <th className="border border-gray-400 px-2 uppercase">OBSERVACIONES</th>
             </tr>
           </thead>
           <tbody>
@@ -558,6 +585,22 @@ const PlanillaEntrenador = () => {
                       value={row.nombre}
                       onChange={(e) =>
                         handleInputChange(rowIndex, 'nombre', e.target.value)
+                      }
+                    />
+                  </td>
+
+                  <td className="border border-gray-400 px-2">
+                    {prospectoLabels[row.prospecto] || 'N/A'}
+                  </td>
+
+                  <td className="border border-gray-400">
+                    <input
+                      type="text"
+                      className="w-10 px-2 py-3 uppercase"
+                      value={row.c || ''}
+                      disabled={row.prospecto !== 'prospecto'} // Desactiva si no es "prospecto"
+                      onChange={(e) =>
+                        handleInputChange(rowIndex, 'c', e.target.value)
                       }
                     />
                   </td>
@@ -643,6 +686,7 @@ const PlanillaEntrenador = () => {
                     <td key={agendaIndex} className="border border-gray-400">
                       <input
                         type="text"
+                        disabled
                         className="w-full px-2 py-1"
                         value={agenda || ''} // Asegura que el campo sea editable aunque esté vacío
                         onChange={(e) => {
