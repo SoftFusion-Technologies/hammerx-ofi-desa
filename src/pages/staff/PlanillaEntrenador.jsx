@@ -551,18 +551,27 @@ const PlanillaEntrenador = () => {
                   Agenda {i + 1}
                 </th>
               ))} */}
+              <th className="border border-gray-400 px-2">T</th>
               {/* Nueva forma de mostrar Agendas INICIO / Benjamin Orellana / 8/11/24 */}
               <th className="border border-gray-400 px-2 uppercase">
                 Nuevo Primera Semana
               </th>
-              <th className="border border-gray-400 px-2 uppercase">Nuevo 3ra semana</th>
+              <th className="border border-gray-400 px-2 uppercase">
+                Nuevo 3ra semana
+              </th>
               <th className="border border-gray-400 px-2 uppercase">
                 Clase/semana de prueba{' '}
               </th>
-              <th className="border border-gray-400 px-2 uppercase">Inactivo </th>
-              <th className="border border-gray-400 px-2 uppercase">Devolución final</th>
+              <th className="border border-gray-400 px-2 uppercase">
+                Inactivo{' '}
+              </th>
+              <th className="border border-gray-400 px-2 uppercase">
+                Devolución final
+              </th>
               {/* Nueva forma de mostrar Agendas FINAL / Benjamin Orellana / 8/11/24 */}
-              <th className="border border-gray-400 px-2 uppercase">OBSERVACIONES</th>
+              <th className="border border-gray-400 px-2 uppercase">
+                OBSERVACIONES
+              </th>
             </tr>
           </thead>
           <tbody>
