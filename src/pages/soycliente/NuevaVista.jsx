@@ -54,9 +54,8 @@ const NuevaVista = () => {
       {/* Mobile content */}
       <div className="md:hidden w-full px-10 max-sm:px-6 mt-5 flex flex-col py-10">
         <div className="relative dark:bg-gradient-to-r from-gray-700 to-gray-900">
-          {/* Puedes agregar contenido adicional aquí si es necesario */}
         </div>
-        <div className="w-5/6 h-auto pb-5 border-4 border-orange-600 rounded-xl mx-auto mt-5 max-sm:mt-16">
+        <div className="w-4/4 h-auto pb-5 rounded-xl mx-auto mt-5 max-sm:mt-8">
           <div>
             <div className="bg-white p-6 rounded-lg shadow-lg mb-8 md:mb-0 md:w-1/2 lg:w-1/3">
               <h1 className="text-orange-500 text-4xl md:text-5xl font-bold mb-4 text-center font-bignoodle">
