@@ -131,6 +131,8 @@ const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2, user, s
           // valores con los cuales el formulario inicia y este objeto tambien lo utilizo para cargar los datos en la API
           initialValues={{
             nombre: '',
+            prospecto: 'nuevo',
+            c: '',
             email: email2 || email1,
             celular: '',
             punto_d: '',
@@ -210,6 +212,23 @@ const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2, user, s
                     />
                     {errors.punto_d && touched.punto_d ? (
                       <Alerta>{errors.punto_d}</Alerta>
+                    ) : null}
+                  </div>
+
+                  {/* Campo para `prospecto` */}
+                  <div className="mb-4 px-4">
+                    <Field
+                      as="select"
+                      id="prospecto"
+                      name="prospecto"
+                      className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                    >
+                      <option value="nuevo">Nuevo</option>
+                      <option value="prospecto">Prospecto</option>
+                      <option value="socio">Socio</option>
+                    </Field>
+                    {errors.prospecto && touched.prospecto ? (
+                      <Alerta>{errors.prospecto}</Alerta>
                     ) : null}
                   </div>
 
