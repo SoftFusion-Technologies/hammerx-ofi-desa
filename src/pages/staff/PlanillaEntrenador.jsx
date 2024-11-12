@@ -36,6 +36,7 @@ const PlanillaEntrenador = () => {
   const [modalNewAlumn, setModalNewAlumn] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null); // Estado para el usuario seleccionado
 
+
   useEffect(() => {
     const getUserIdByEmail = async () => {
       try {
@@ -85,6 +86,7 @@ const PlanillaEntrenador = () => {
 
     obtenerEmailInstructor();
   }, [user_id]);
+
 
   // Cargar los registros de alumnos al iniciar el componente
   const fetchAlumnos = async () => {
@@ -183,6 +185,15 @@ const PlanillaEntrenador = () => {
       setFilteredAlumnos(filtered);
     }
   }, [search, rows]);
+
+  //Funcion para el boton de PRESENTE
+  const handlePresente = (rowIndex, field, value) => {
+      setRows((prevRows) => {
+          const newRow = [...prevRows];
+          const updatedRow = {...newRow[rowIndex] };
+      }
+    )
+  };
 
   // Manejar cambios en las celdas
   const handleInputChange = (rowIndex, field, value) => {
@@ -288,7 +299,11 @@ const PlanillaEntrenador = () => {
       try {
         // Obtenmos el ID del alumno que deseamos eliminar
         const alumnoId = rows[rowIndex].id;
-
+        console.log(alumnoId);
+        console.log(rowIndex);
+        console.log(idAlumno);
+          
+          
         // Realiza la petición DELETE a la API
         const response = await fetch(`${URL}alumnos/${alumnoId}`, {
           method: 'DELETE',
@@ -312,6 +327,127 @@ const PlanillaEntrenador = () => {
       }
     }
   };
+
+
+  //boton de PRESENTE para un alumno en particular
+  const handleBotonAsistencia = async (idAlumno) => {
+    const alumnoId = idAlumno; // Obtener el ID del alumno correspondiente
+
+    try {
+      // Iterar sobre las asistencias y enviar solo aquellas que cambian de 'P' a 'A' o de 'A' a 'P'
+      for (let index = 0; index < 31; index++) {
+        const dia = index + 1; // Días empezando desde 1
+        
+          // Verifica si ya existe un registro de asistencia
+          const checkResponse = await fetch(
+            `${URL}asistencias/${alumnoId}/${dia}`
+          );
+          const checkData = await checkResponse.json();
+
+          if (checkData.existe) {
+
+            continue; // Si existe hacemos que continue con el ciclo for
+
+          } else {
+            // Si no existe, crear un nuevo registro
+            const response = await fetch(`${URL}asistencias`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                alumno_id: alumnoId,
+                dia: dia,
+                estado: 'P'
+              })
+             
+            });
+
+            fetchAlumnos();
+            if (!response.ok) {
+              throw new Error(`Error al guardar la asistencia del día ${dia}`);
+            }
+
+            const data = await response.json();
+            console.log(
+              `Asistencia para el día ${dia} guardada:`,
+              data.message
+            );
+            break;
+          }    
+      }
+
+      
+
+    } catch (error) {
+      console.error('Error al guardar las asistencias:', error);
+      }
+  };
+
+  const handleBotonEditar = async (idAlumno) => {
+    const alumno = rows[idAlumno]; // Obtener el ID del alumno correspondiente
+
+    if (alumno && alumno.alumno_id) {
+      // Si existe, realizar la actualización
+      const confirmEdit = window.confirm(
+        '¿Estás seguro de que deseas editar este alumno?'
+      );
+      if (confirmEdit) {
+        try {
+          const response = await fetch(`${URL}alumnos/${alumno.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(alumno) // Enviar los datos del alumno
+          });
+
+          if (!response.ok) {
+            throw new Error('Error al actualizar el registro');
+          } else {
+            alert('Registro actualizado correctamente');
+          }
+
+          const data = await response.json();
+          console.log(data.message); // Mensaje de éxito
+          // Actualiza el estado si es necesario
+          fetchAlumnos()
+        } catch (error) {
+          console.error('Error al editar el alumno:', error);
+        }
+      }
+    }
+  };
+
+  const handleBotonDelete = async (idAlumno) => {
+    const confirmacion = window.confirm('¿Seguro que desea eliminar?');
+    if (confirmacion) {
+      try {
+  
+
+         // Realiza la petición DELETE a la API
+         const response = await fetch(`${URL}alumnos/${idAlumno}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al eliminar el registro');
+        }
+
+        fetchAlumnos();
+        setSearch('');
+
+        alert('Registro eliminado correctamente');
+      } catch (error) {
+        console.error('Error al eliminar el registro:', error);
+        alert('Error al eliminar el registro. Intenta nuevamente.');
+      }    
+    }
+  };
+
 
   const handleSaveAsistencias = async (rowIndex, asistencias) => {
     const alumnoId = rows[rowIndex].id; // Obtener el ID del alumno correspondiente
@@ -475,6 +611,31 @@ const PlanillaEntrenador = () => {
     setModalNewAlumn(false);
     fetchAlumnos();
   };
+  const obtenerIdAlumnoPorSearch = () => {
+    // Buscar el alumno que coincide con el valor de 'search'
+    const alumnoEncontrado = filteredAlumnos.find(
+      (alumno) => alumno.nombre.toLowerCase() === search.toLowerCase()
+    );   
+    // Retornar el id si se encuentra el alumno, o null si no existe coincidencia
+    return alumnoEncontrado ? alumnoEncontrado.id : null;
+  };
+
+  const idAlumno = obtenerIdAlumnoPorSearch();
+  console.log(rows); // Muestra el id del alumno o null si no se encontró
+
+  // Función para obtener el próximo día sin asistencia
+  const obtenerProximoDiaSinAsistencia = (asistencias) => {
+    const asistenciasAlumno = asistencias.filter(a => a.alumno_id === alumnoId);
+    const diasConAsistencia = new Set(asistenciasAlumno.map(a => a.dia));
+
+    for (let dia = 1; dia <= 31; dia++) {
+      if (!diasConAsistencia.has(dia)) {
+        return dia; // Retorna el primer día sin asistencia marcada
+      }
+    }
+
+    return null; // Todos los días tienen asistencia marcada
+  };
 
   return (
     <>
@@ -509,14 +670,58 @@ const PlanillaEntrenador = () => {
         </form>
         {/* Formulario de búsqueda fin */}
 
-        <div className="flex justify-center pb-10">
-          <button
-            onClick={abrirModal}
-            className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
-          >
-            Nuevo Alumno
-          </button>
-        </div>
+        {
+  search === '' ? (
+    <div className="flex justify-center pb-10">
+      <button
+        onClick={abrirModal}
+        className="bg-[#58b35e] hover:bg-[#4e8a52] text-white pb-3 py-2 px-4 rounded transition-colors duration-100 z-10"
+      >
+        Nuevo Alumno
+      </button>
+    </div>
+  ) : (
+    <div className="flex justify-center pb-10">
+      <button
+        onClick={() => handleBotonAsistencia(idAlumno)}
+        className={`pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
+          idAlumno === null
+            ? 'bg-gray-400 text-gray-700 cursor-not-allowed'  // Botón deshabilitado en gris
+            : 'bg-[#58b35e] hover:bg-[#4e8a52] text-white'  // Botón habilitado en verde
+        }`}
+        disabled={idAlumno === null}  // Deshabilitar el botón si idAlumno es null
+      >
+        {idAlumno === null ? 'Presente' : 'Presente'}
+      </button>
+
+      <button
+        onClick={() => handleBotonEditar(idAlumno)}
+        className={`ml-2 pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
+          idAlumno === null
+            ? 'bg-gray-400 text-gray-700 cursor-not-allowed'  // Botón deshabilitado en gris
+            : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+        }`}
+        disabled={idAlumno === null}  // Deshabilitar el botón si idAlumno es null
+      >
+        {idAlumno === null ? 'Editar' : 'Editar'}
+      </button>
+
+      <button
+        onClick={() => handleBotonDelete(idAlumno)}
+        className={`ml-2 pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
+          idAlumno === null
+            ? 'bg-gray-400 text-gray-700 cursor-not-allowed'  // Botón deshabilitado en gris
+            : 'bg-red-500 hover:bg-red-600 text-white'
+        }`}
+        disabled={idAlumno === null}  // Deshabilitar el botón si idAlumno es null
+      >
+        {idAlumno === null ? 'Eliminar' : 'Eliminar'}
+      </button>
+    </div>
+  )
+}
+
+        
         <table className="min-w-full border-collapse table-auto border border-gray-400">
           <thead>
             <tr className="tr-planilla">
@@ -710,6 +915,8 @@ const PlanillaEntrenador = () => {
               email2={email}
               user1={userId}
               user2={user_id}
+              user={selectedUser}
+              setSelectedUser={setSelectedUser}
             />
           </tbody>
         </table>

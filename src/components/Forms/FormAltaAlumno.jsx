@@ -24,7 +24,7 @@ import Alerta from '../Error';
 import '../../styles/Forms/FormPostulante.css';
 
 // isOpen y onCLose son los metodos que recibe para abrir y cerrar el modal
-const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2 }) => {
+const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2, user, setSelectedUser }) => {
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
   const [textoModal, setTextoModal] = useState('');
@@ -50,8 +50,10 @@ const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2 }) => {
         alert('Por favor, complete todos los campos obligatorios.');
       } else {
         // (NUEVO)
-        const url = 'http://localhost:8080/alumnos/';
-        const method = 'POST';
+        const url = user
+          ? `http://localhost:8080/alumnos/${user.id}`
+          : 'http://localhost:8080/alumnos/';
+        const method = user ? 'PUT' : 'POST';
 
         const respuesta = await fetch(url, {
           method: method,
@@ -61,7 +63,21 @@ const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2 }) => {
           }
         });
 
-        setTextoModal('Alumno creado correctamente.');
+        if (method === 'PUT') {
+          // setName(null); // una vez que sale del metodo PUT, limpiamos el campo descripcion
+          setTextoModal('Usuario actualizado correctamente.');
+        } else {
+          setTextoModal('Usuario creado correctamente.');
+        }
+
+        // Verificamos si la solicitud fue exitosa
+        if (!respuesta.ok) {
+          throw new Error(
+            'Error en la solicitud ${method}: ' + respuesta.status
+          );
+        }
+
+
 
         // Verificamos si la solicitud fue exitosa
         if (!respuesta.ok) {
