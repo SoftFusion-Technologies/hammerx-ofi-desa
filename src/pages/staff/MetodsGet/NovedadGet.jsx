@@ -319,6 +319,36 @@ const NovedadGet = () => {
     }
   };
 
+  if (userLevel != 'admin') {
+    useEffect(() => {
+      const novedadesNoLeidas = novedadesOrdenadas.filter((novedad) =>
+        novedad.novedadUsers.some((user) => !user.leido)
+      );
+
+      if (novedadesNoLeidas.length > 0) {
+        toast.info(`TIENES NOVEDADES SIN LEER`, {
+          position: 'top-right',
+          autoClose: 7000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true
+        });
+
+        const primeraNovedadNoLeida = novedadesNoLeidas[0].id;
+
+        console.log(primeraNovedadNoLeida);
+        const elemento = document.getElementById(
+          `novedad-${primeraNovedadNoLeida}`
+        );
+
+        if (elemento) {
+          elemento.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }, [novedadesOrdenadas]);
+  }
+
   return (
     <>
       <NavbarStaff />
@@ -432,7 +462,7 @@ const NovedadGet = () => {
                                   <li key={archivo.id}>
                                     {archivo.nombre_archivo} -{' '}
                                     <a
-                                      href={`http://localhost:8080/download/novedad/${archivo.id}`}
+                                      href={`https://localhost:8080/download/novedad/${archivo.id}`}
                                       className="text-blue-500 underline"
                                       target="_blank"
                                       rel="noopener noreferrer"
@@ -517,10 +547,12 @@ const NovedadGet = () => {
                 <h2 className="text-xl font-semibold ml-4">
                   ÚLTIMAS NOVEDADES
                 </h2>
+                <ToastContainer />
                 <div className="block space-y-4 ">
                   {novedadesOrdenadas.map((novedad) => (
                     <div
                       key={novedad.id}
+                      id={`novedad-${novedad.id}`}
                       className="border bg-orange-500 m-5 border-black p-4 rounded-lg cursor-pointer mb-4"
                       // onClick={() => handleOpenModal(novedad.mensaje)}
                     >
@@ -610,20 +642,16 @@ const NovedadGet = () => {
                         </b>
                       </div>
 
-                      {userLevel === 'admin' ||
-                        userLevel === 'administrador' || (
-                          <div>
-                            {novedad.novedadUsers &&
-                              novedad.novedadUsers.some(
-                                (novedadUser) => !novedadUser.leido
-                              ) && (
-                                <div className="border border-black bg-white  p-4 rounded mt-4">
-                                  <p className="text-red-500 font-bold uppercase text-center">
-                                    NO MARCASTE COMO LEIDA ESTA NOVEDAD
-                                  </p>
-                                </div>
-                              )}
-                          </div>
+                      {novedad &&
+                        novedad.novedadUsers &&
+                        filtrarUsuariosAsignados(
+                          novedad.novedadUsers,
+                          userLevel,
+                          userId
+                        ).some((user) => !user.leido) && (
+                          <p className="text-red-500 mb-4 bg-black rounded-lg p-2 text-center uppercase border border-black">
+                            No leíste esta novedad
+                          </p>
                         )}
 
                       {vencimientos
@@ -668,7 +696,7 @@ const NovedadGet = () => {
                                 <li key={archivo.id}>
                                   {archivo.nombre_archivo} -{' '}
                                   <a
-                                    href={`http://localhost:8080/download/novedad/${archivo.id}`}
+                                    href={`https://localhost:8080/download/novedad/${archivo.id}`}
                                     className="text-blue-600 underline uppercase"
                                     target="_blank"
                                     rel="noopener noreferrer"

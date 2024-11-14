@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import FormAltaAlumno from '../../components/Forms/FormAltaAlumno';
+import AlumnoDetails from './MetodsGet/Details/AlumnoGetId';
 
 const PlanillaEntrenador = () => {
   const URL = 'http://localhost:8080/';
@@ -35,7 +36,9 @@ const PlanillaEntrenador = () => {
   const email = queryParams.get('email'); // Obtener el email de los parámetros de consulta
 
   const [modalNewAlumn, setModalNewAlumn] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null); // Estado para el usuario seleccionado
+  const [selectedAlumn, setSelectedAlumn] = useState(null); // Estado para el usuario seleccionado
+
+  const [modalAlumnoDetails, setModalAlumnoDetails] = useState(false); // Estado para controlar el modal de detalles del usuario
 
   useEffect(() => {
     const getUserIdByEmail = async () => {
@@ -487,6 +490,7 @@ const PlanillaEntrenador = () => {
     fetchAlumnos();
   };
 
+  // Obtenemos el id del alumno que se filtro - Baltazar Almiron - 11/11/2024
   const obtenerIdAlumnoPorSearch = () => {
     // Buscar el alumno que coincide con el valor de 'search'
     const alumnoEncontrado = filteredAlumnos.find(
@@ -499,7 +503,7 @@ const PlanillaEntrenador = () => {
   const idAlumno_recf = obtenerIdAlumnoPorSearch();
   // console.log(rows); // Muestra el id del alumno o null si no se encontró
 
-  //boton de PRESENTE para un alumno en particular
+  //boton de PRESENTE para un alumno en particular - Baltazar Almiron - 11/11/2024
   const handleBotonAsistencia = async (idAlumno) => {
     const alumnoId = idAlumno; // Obtener el ID del alumno correspondiente
 
@@ -545,6 +549,8 @@ const PlanillaEntrenador = () => {
     }
   };
 
+  //boton de ELIMINAR para un alumno en particular - Baltazar Almiron - 11/11/2024
+
   const handleBotonDelete = async (idAlumno) => {
     const confirmacion = window.confirm('¿Seguro que desea eliminar?');
     if (confirmacion) {
@@ -572,47 +578,57 @@ const PlanillaEntrenador = () => {
     }
   };
 
-  // boton para editar desde el filtrado
-  const handleBotonEditar = async (idAlumno) => {
-    const alumno = rows[idAlumno]; // Obtener el ID del alumno correspondiente
-
-    if (alumno && alumno.alumno_id) {
-      // Si existe, realizar la actualización
-      const confirmEdit = window.confirm(
-        '¿Estás seguro de que deseas editar este alumno?'
-      );
-      if (confirmEdit) {
-        try {
-          const response = await fetch(`${URL}alumnos/${alumno.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(alumno) // Enviar los datos del alumno
-          });
-
-          if (!response.ok) {
-            throw new Error('Error al actualizar el registro');
-          } else {
-            alert('Registro actualizado correctamente');
-          }
-
-          const data = await response.json();
-          console.log(data.message); // Mensaje de éxito
-          // Actualiza el estado si es necesario
-          fetchAlumnos();
-        } catch (error) {
-          console.error('Error al editar el alumno:', error);
-        }
-      }
-    }
-  };
-  // Definimos las etiquetas de prospecto
+  // Definimos las etiquetas de prospecto Benjamin Orellana - 10-11-2024
   const prospectoLabels = {
     nuevo: 'N',
     prospecto: 'P',
     socio: 'S'
   };
+
+  //funcion para obtener un alumno a editar por su id y cargar el estado - Benjamin Orellana  - 12/11/2024
+  const obtenerAlumn = async (id) => {
+    try {
+      const url = `${URL}alumnos/${id}`;
+      const respuesta = await fetch(url);
+      const resultado = await respuesta.json();
+      setSelectedAlumn(resultado);
+      setModalAlumnoDetails(true);
+    } catch (error) {
+      console.log('Error al obtener el alumno:', error);
+    }
+  };
+  //funcion para abrir el modal con un alumno a editar por su id - Benjamin Orellana  - 12/11/2024
+  const handleEditarAlumno = async (alumno) => {
+    await obtenerAlumn(alumno);
+    setModalNewAlumn(true);
+    // si presionamos editar, no mostramos los detalles del alumno
+    setModalAlumnoDetails(false)
+  };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  const lastIndex = currentPage * itemsPerPage;
+  const firstIndex = lastIndex - itemsPerPage;
+  const records = filteredAlumnos.slice(firstIndex, lastIndex);
+  const nPage = Math.ceil(filteredAlumnos.length / itemsPerPage);
+  const numbers = [...Array(nPage + 1).keys()].slice(1);
+
+  function prevPage() {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  }
+
+  function changeCPage(id) {
+    setCurrentPage(id);
+  }
+
+  function nextPage() {
+    if (currentPage < nPage) {
+      setCurrentPage(currentPage + 1);
+    }
+  }
   return (
     <>
       <NavBar />
@@ -656,42 +672,62 @@ const PlanillaEntrenador = () => {
             </button>
           </div>
         ) : (
-          <div className="flex justify-center pb-10">
-            <button
-              onClick={() => handleBotonAsistencia(idAlumno_recf)}
-              className={`pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
-                idAlumno_recf === null
-                  ? 'bg-gray-400 text-gray-700 cursor-not-allowed' // Botón deshabilitado en gris
-                  : 'bg-[#58b35e] hover:bg-[#4e8a52] text-white' // Botón habilitado en verde
-              }`}
-              disabled={idAlumno_recf === null} // Deshabilitar el botón si idAlumno_recf es null
-            >
-              {idAlumno_recf === null ? 'Presente' : 'Presente'}
-            </button>
+          <div className="flex flex-col items-center pb-10">
+            <div className="flex justify-center space-x-2">
+              {/* botón para poner presente */}
+              <button
+                onClick={() => handleBotonAsistencia(idAlumno_recf)}
+                className={`pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
+                  idAlumno_recf === null
+                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                    : 'bg-[#58b35e] hover:bg-[#4e8a52] text-white'
+                }`}
+                disabled={idAlumno_recf === null}
+              >
+                Presente
+              </button>
 
-            <button
-              onClick={() => handleBotonEditar(idAlumno_recf)}
-              className={`ml-2 pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
-                idAlumno_recf === null
-                  ? 'bg-gray-400 text-gray-700 cursor-not-allowed' // Botón deshabilitado en gris
-                  : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-              }`}
-              disabled={idAlumno_recf === null} // Deshabilitar el botón si idAlumno_recf es null
-            >
-              {idAlumno_recf === null ? 'Editar' : 'Editar'}
-            </button>
+              {/* botón para editar */}
+              <button
+                onClick={() => handleEditarAlumno(idAlumno_recf)}
+                className={`pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
+                  idAlumno_recf === null
+                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                    : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                }`}
+                disabled={idAlumno_recf === null}
+              >
+                Editar
+              </button>
 
-            <button
-              onClick={() => handleBotonDelete(idAlumno_recf)}
-              className={`ml-2 pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
-                idAlumno_recf === null
-                  ? 'bg-gray-400 text-gray-700 cursor-not-allowed' // Botón deshabilitado en gris
-                  : 'bg-red-500 hover:bg-red-600 text-white'
-              }`}
-              disabled={idAlumno_recf === null} // Deshabilitar el botón si idAlumno_recf es null
-            >
-              {idAlumno_recf === null ? 'Eliminar' : 'Eliminar'}
-            </button>
+              {/* botón para eliminar */}
+              <button
+                onClick={() => handleBotonDelete(idAlumno_recf)}
+                className={`pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
+                  idAlumno_recf === null
+                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                    : 'bg-red-500 hover:bg-red-600 text-white'
+                }`}
+                disabled={idAlumno_recf === null}
+              >
+                Eliminar
+              </button>
+            </div>
+
+            {/* botón para ver detalles */}
+            <div className="pt-3">
+              <button
+                onClick={() => obtenerAlumn(idAlumno_recf)}
+                className={`pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
+                  idAlumno_recf === null
+                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                    : 'bg-orange-500 hover:bg-orange-600 text-white'
+                }`}
+                disabled={idAlumno_recf === null}
+              >
+                Ver Detalles
+              </button>
+            </div>
           </div>
         )}
 
@@ -717,7 +753,6 @@ const PlanillaEntrenador = () => {
                   Agenda {i + 1}
                 </th>
               ))} */}
-              <th className="border border-gray-400 px-2">T</th>
               {/* Nueva forma de mostrar Agendas INICIO / Benjamin Orellana / 8/11/24 */}
               <th className="border border-gray-400 px-2 uppercase">
                 Nuevo Primera Semana
@@ -748,7 +783,7 @@ const PlanillaEntrenador = () => {
                 </td>
               </tr>
             ) : (
-              filteredAlumnos.map((row, rowIndex) => (
+              records.map((row, rowIndex) => (
                 <tr key={rowIndex} className="tr-planilla">
                   <td className="border border-gray-400 text-center">
                     {rowIndex + 1}
@@ -929,12 +964,53 @@ const PlanillaEntrenador = () => {
               email2={email}
               user1={userId}
               user2={user_id}
-              user={selectedUser}
-              setSelectedUser={setSelectedUser}
+              alumno={selectedAlumn}
+              setSelectedAlumn={setSelectedAlumn}
             />
           </tbody>
         </table>
+
+        <div className="flex justify-center">
+          <nav className="flex justify-center items-center my-10">
+            <ul className="pagination">
+              <li className="page-item">
+                <a href="#" className="page-link" onClick={prevPage}>
+                  Prev
+                </a>
+              </li>
+              {numbers.map((number, index) => (
+                <li
+                  className={`page-item ${
+                    currentPage === number ? 'active' : ''
+                  }`}
+                  key={index}
+                >
+                  <a
+                    href="#"
+                    className="page-link"
+                    onClick={() => changeCPage(number)}
+                  >
+                    {number}
+                  </a>
+                </li>
+              ))}
+              <li className="page-item">
+                <a href="#" className="page-link" onClick={nextPage}>
+                  Next
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
       </div>
+      {selectedAlumn && (
+        <AlumnoDetails
+          alumno={selectedAlumn}
+          setSelectedAlumn={setSelectedAlumn}
+          isOpen={modalAlumnoDetails}
+          onClose={() => setModalAlumnoDetails(false)}
+        />
+      )}
       <Footer />
     </>
   );

@@ -170,6 +170,7 @@ import TarjetaDebitoAC from './components/Pagos/Concepcion/PAnual/TarjetaDebito.
 import TarjetaCreditoAC from './components/Pagos/Concepcion/PAnual/TarjetaCredito.jsx';
 import TransferenciaAC from './components/Pagos/Concepcion/PAnual/Transferencia.jsx';
 import CuotasAnualC from './components/Pagos/Concepcion/PAnual/CuotasAnual.jsx';
+import ComentariosPage from './pages/ComentariosPage.jsx';
 
 import NotFound from './pages/NotFound.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
@@ -645,6 +646,10 @@ const App = memo(() => {
                 <Ruta
                   path="/pagos/concepcion/anual/cuotas"
                   element={<CuotasAnualC />}
+                />
+                <Ruta
+                  path="/comentarios"
+                  element={<ComentariosPage />}
                 />
                 <Ruta path="/*" element={<NotFound />} />
               </Rutas>

@@ -24,7 +24,16 @@ import Alerta from '../Error';
 import '../../styles/Forms/FormPostulante.css';
 
 // isOpen y onCLose son los metodos que recibe para abrir y cerrar el modal
-const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2, user, setSelectedUser }) => {
+const FormAltaAlumno = ({
+  isOpen,
+  onClose,
+  email1,
+  email2,
+  user1,
+  user2,
+  alumno,
+  setSelectedAlumn
+}) => {
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
   const [textoModal, setTextoModal] = useState('');
@@ -39,6 +48,7 @@ const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2, user, s
       .max(20, 'El nombre es muy largo')
       .required('El Nombre es obligatorio'),
     celular: Yup.string()
+      .matches(/^[0-9]+$/, 'El número solo puede contener dígitos')
       .min(3, 'El número es muy corto')
       .max(15, 'Número demasiado largo')
   });
@@ -50,10 +60,10 @@ const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2, user, s
         alert('Por favor, complete todos los campos obligatorios.');
       } else {
         // (NUEVO)
-        const url = user
-          ? `http://localhost:8080/alumnos/${user.id}`
+        const url = alumno
+          ? `http://localhost:8080/alumnos/${alumno.id}`
           : 'http://localhost:8080/alumnos/';
-        const method = user ? 'PUT' : 'POST';
+        const method = alumno ? 'PUT' : 'POST';
 
         const respuesta = await fetch(url, {
           method: method,
@@ -77,8 +87,6 @@ const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2, user, s
           );
         }
 
-
-
         // Verificamos si la solicitud fue exitosa
         if (!respuesta.ok) {
           throw new Error(
@@ -90,7 +98,7 @@ const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2, user, s
         setShowModal(true);
         setTimeout(() => {
           setShowModal(false);
-          onClose();
+          // onClose();
         }, 1500);
       }
     } catch (error) {
@@ -130,16 +138,16 @@ const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2, user, s
           innerRef={formikRef}
           // valores con los cuales el formulario inicia y este objeto tambien lo utilizo para cargar los datos en la API
           initialValues={{
-            nombre: '',
+            nombre: alumno ? alumno.nombre : '',
             prospecto: 'nuevo',
             c: '',
             email: email2 || email1,
-            celular: '',
-            punto_d: '',
-            motivo: '',
+            celular: alumno ? alumno.celular : '',
+            punto_d: alumno ? alumno.punto_d : '',
+            motivo: alumno ? alumno.motivo : '',
             user_id: user2 || user1
           }}
-          enableReinitialize={!isOpen}
+          enableReinitialize
           // cuando hacemos el submit esperamos a que cargen los valores y esos valores tomados se lo pasamos a la funcion handlesubmit que es la que los espera
           onSubmit={async (values, { resetForm }) => {
             await handleSubmitAlumno(values);
@@ -248,9 +256,8 @@ const FormAltaAlumno = ({ isOpen, onClose, email1, email2, user1, user2, user, s
                   <div className="mx-auto flex justify-center my-5">
                     <input
                       type="submit"
-                      value="ENVIAR"
-                      className="bg-orange-500 py-2 px-5 rounded-xl text-white  font-bold hover:cursor-pointer hover:bg-[#fc4b08] "
-                      id="click2"
+                      value={alumno ? 'Actualizar' : 'Crear Alumno'}
+                      className="bg-orange-500 py-2 px-5 rounded-xl text-white font-bold hover:cursor-pointer hover:bg-[#fc4b08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-100"
                     />
                   </div>
                 </Form>
