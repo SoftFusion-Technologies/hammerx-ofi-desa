@@ -602,7 +602,7 @@ const PlanillaEntrenador = () => {
     await obtenerAlumn(alumno);
     setModalNewAlumn(true);
     // si presionamos editar, no mostramos los detalles del alumno
-    setModalAlumnoDetails(false)
+    setModalAlumnoDetails(false);
   };
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -629,6 +629,17 @@ const PlanillaEntrenador = () => {
       setCurrentPage(currentPage + 1);
     }
   }
+
+  // Función para determinar el color del alumno usando JavaScript nativo
+  const determinarColorAlumno = (fechaCreacion) => {
+    const fechaCreacionDate = new Date(fechaCreacion);
+    const mesActual = new Date().getMonth();
+    const mesCreacion = fechaCreacionDate.getMonth();
+
+    // Retorna el color en función de si el alumno es "nuevo" o no
+    return mesCreacion === mesActual ? 'green' : 'black';
+  };
+
   return (
     <>
       <NavBar />
@@ -791,7 +802,11 @@ const PlanillaEntrenador = () => {
                   <td className="border border-gray-400">
                     <input
                       type="text"
-                      className="w-40 px-2 py-3"
+                      className={`w-40 px-2 py-3 ${
+                        determinarColorAlumno(row.fecha_creacion) === 'green'
+                          ? 'text-green-400'
+                          : 'text-black'
+                      }`}
                       value={row.nombre}
                       onChange={(e) =>
                         handleInputChange(rowIndex, 'nombre', e.target.value)
@@ -816,11 +831,11 @@ const PlanillaEntrenador = () => {
                   </td>
 
                   <td
-                    className="border border-gray-400"
+                    className="border border-gray-400 text-blue-600 cursor-pointer hover:underline"
                     onClick={() => {
                       if (row.celular) {
                         const userConfirmed = window.confirm(
-                          `¿Desea ir a WhatsApp del alumno? ${''}${row.nombre}`
+                          `¿Desea ir a WhatsApp del alumno? ${row.nombre}`
                         );
                         if (userConfirmed) {
                           window.open(
@@ -833,7 +848,7 @@ const PlanillaEntrenador = () => {
                   >
                     <input
                       type="text"
-                      className="w-40 px-2 py-3 text-center"
+                      className="w-40 px-2 py-3 text-center text-blue-600 cursor-pointer"
                       value={row.celular || ''}
                       onChange={(e) => {
                         const valorNumerico = e.target.value.replace(/\D/g, ''); // Remueve cualquier carácter no numérico
@@ -841,7 +856,7 @@ const PlanillaEntrenador = () => {
                       }}
                     />
                   </td>
-
+                  
                   <td className="border border-gray-400">
                     <input
                       type="text"

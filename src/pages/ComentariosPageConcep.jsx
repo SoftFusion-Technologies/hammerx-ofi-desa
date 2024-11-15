@@ -8,9 +8,8 @@ import Semestral from '../images/Pagos/Images/semestral.png';
 import Anual from '../images/Pagos/Images/anual.png';
 import Macro from '../images/Pagos/Images/macro.png';
 import Footer from '../components/footer/Footer';
-import Navbar from '../components/header/Navbar'
-const ComentariosPage = () => {
-
+import Navbar from '../components/header/Navbar';
+const ComentariosPageConcep = () => {
   const numMonteros = '3863564651';
 
   useEffect(() => {
@@ -19,7 +18,7 @@ const ComentariosPage = () => {
 
   const handleRedirect = () => {
     window.open(
-      'https://docs.google.com/forms/d/e/1FAIpQLSc4uYsVo5rZGNw9-wmAHcpNzwNL6oSopdgAo-cDpEN8N2FssQ/viewform',
+      'https://docs.google.com/forms/d/e/1FAIpQLSf9yyERpMt6qgaKw6hYu-EVXbdplQ9sECVN847f0Bt7aOnGLg/viewform',
       '_blank',
       'noopener,noreferrer'
     );
@@ -30,7 +29,8 @@ const ComentariosPage = () => {
       <div className="content_v3 back_v3">
         <img src={Logo1} alt="Logo1_v3" className="logo_v3" />
         <h1 className="message_v3 font-bignoodle text-2xl">
-          ¡DEJANOS TU RECOMENDACIÓN, QUEJA, O TU COMENTARIO POSITIVO SOBRE NUESTRA SEDE: MONTEROS!
+          ¡DEJANOS TU RECOMENDACIÓN, QUEJA, O TU COMENTARIO POSITIVO SOBRE
+          NUESTRA SEDE: CONCEPCIÓN!
         </h1>
         <div className="plan-info_v3">
           <p className="plan-text_v3">
@@ -92,4 +92,4 @@ const ComentariosPage = () => {
   );
 };
 
-export default ComentariosPage;
+export default ComentariosPageConcep;

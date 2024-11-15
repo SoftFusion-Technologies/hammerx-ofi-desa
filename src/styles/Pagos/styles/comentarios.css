@@ -1,0 +1,199 @@
+.back_v3 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgb(252, 167, 8);
+  background: linear-gradient(
+    90deg,
+    rgba(252, 167, 8, 1) 0%,
+    rgba(252, 75, 8, 1) 55%
+  );
+}
+html,
+body,
+#root {
+  overflow-x: hidden; /* Evita la barra de desplazamiento horizontal */
+}
+
+.content_v3 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center; /* Alineación central del contenido */
+  position: relative; /* Necesario para z-index */
+  z-index: 1; /* Necesario para z-index */
+  color: white; /* Color de texto blanco para contrastar con el fondo */
+  box-sizing: border-box; /* Asegura que el padding no afecte el tamaño total */
+}
+
+.logo_v3 {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 20rem; /* Por defecto, máximo 20rem */
+}
+
+@media (min-width: 768px) {
+  /* Cambia 768px según el tamaño deseado */
+  .logo_v3 {
+    max-height: 30rem;
+    margin-bottom: -3rem; /* Aumenta el límite máximo en pantallas grandes */
+  }
+}
+
+.message_v3 {
+  color: white;
+  font-size: 5rem; /* Tamaño base para pantallas grandes */
+  font-weight: 400;
+  text-transform: uppercase;
+  margin-top: -5rem;
+}
+
+/* Para dispositivos más pequeños */
+@media (max-width: 576px) {
+  .message_v3 {
+    font-size: 2rem; /* Reduce el tamaño de la fuente */
+  }
+}
+
+/* Para dispositivos muy pequeños */
+@media (max-width: 360px) {
+  .message_v3 {
+    font-size: 1rem; /* Aún más pequeño para pantallas muy pequeñas */
+  }
+}
+.plan-info_v3 {
+  background-color: white;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.plan-text_v3 {
+  color: rgba(252, 75, 8, 1);
+  font-family: BigNoodle;
+  font-size: 1.5rem; /* Reduce el tamaño de fuente */
+  text-transform: uppercase;
+}
+
+/* Ajuste adicional para dispositivos más pequeños */
+@media (max-width: 576px) {
+  .plan-info_v3 {
+    padding: 15px; /* Reduce el padding en pantallas pequeñas */
+  }
+
+  .plan-text_v3 {
+    font-size: 1.2rem; /* Tamaño de texto más pequeño en dispositivos móviles */
+  }
+}
+
+.payment-info_v3 {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  width: 40%; /* Asegura que cada elemento tenga el mismo ancho */
+  align-items: center;
+  transition: transform 0.3s ease-out; /* Transición suave para transformaciones */
+  cursor: pointer;
+}
+
+.payment-info_v3:hover {
+  transform: scale(1.05); /* Agrandar el elemento al pasar el mouse */
+}
+
+.payment-text_v3 {
+  color: rgba(252, 75, 8, 1);
+  font-family: BigNoodle;
+  font-size: 2rem;
+  text-transform: uppercase;
+  height: 60px;
+  width: 150px; /* Ancho por defecto */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
+
+.payment-info_v3 {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 8px; /* Reduce el espacio entre elementos */
+  padding: 8px; /* Padding más pequeño */
+  width: 35%; /* Ajusta el ancho total */
+  align-items: center;
+  transition: transform 0.3s ease-out; /* Mantén la transición suave */
+  cursor: pointer;
+}
+
+.payment-info_v3:hover {
+  transform: scale(1.05); /* Mantén el efecto hover */
+}
+
+.payment-text_v3 {
+  color: rgba(252, 75, 8, 1);
+  font-family: BigNoodle;
+  font-size: 1.8rem; /* Reduce ligeramente el tamaño de la fuente */
+  text-transform: uppercase;
+  height: 50px; /* Reduce la altura */
+  width: 130px; /* Reduce el ancho */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px; /* Reduce el radio del borde */
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1); /* Sombra más ligera */
+  background-color: white;
+}
+
+/* Ajustes para dispositivos pequeños */
+@media (max-width: 576px) {
+  .payment-info_v3 {
+    width: 50%; /* Ocupa más espacio en pantallas pequeñas */
+    padding: 10px; /* Reduce aún más el padding */
+  }
+
+  .payment-text_v3 {
+    font-size: 1.5rem; /* Tamaño de fuente más pequeño */
+    height: 70px; /* Menor altura */
+    width: 110px; /* Menor ancho */
+  }
+}
+
+.card-icon_v3 {
+  border-radius: 20px;
+  padding: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  width: 50px; /* Ajusta el tamaño del icono según sea necesario */
+  height: auto;
+}
+
+.image-container-pagos {
+  display: flex; /* Usamos Flexbox para alinear los elementos */
+  justify-content: space-between; /* Distribuye las imágenes con espacio entre ellas */
+  gap: 20px; /* Espacio entre cada imagen */
+  flex-wrap: wrap; /* Permite que las imágenes se ajusten en pantallas más pequeñas */
+}
+
+.plan-image {
+  width: 100%; /* Asegura que la imagen ocupe todo el ancho del contenedor */
+  max-width: 250px; /* Aumenta el tamaño máximo de cada imagen */
+  height: auto; /* Mantiene la relación de aspecto */
+}
+
+/* Para pantallas móviles */
+@media (max-width: 768px) {
+  .image-container-pagos {
+    justify-content: center; /* Centra las imágenes en pantallas más pequeñas */
+  }
+
+  .plan-image {
+    max-width: 200px; /* Reducción del tamaño de las imágenes en pantallas pequeñas */
+  }
+}
