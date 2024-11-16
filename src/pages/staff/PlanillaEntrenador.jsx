@@ -492,15 +492,16 @@ const PlanillaEntrenador = () => {
 
   // Obtenemos el id del alumno que se filtro - Baltazar Almiron - 11/11/2024
   const obtenerIdAlumnoPorSearch = () => {
-    // Buscar el alumno que coincide con el valor de 'search'
-    const alumnoEncontrado = filteredAlumnos.find(
-      (alumno) => alumno.nombre.toLowerCase() === search.toLowerCase()
+    // Buscar el alumno que contiene el valor de 'search' en su nombre
+    const alumnoEncontrado = filteredAlumnos.find((alumno) =>
+      alumno.nombre.toLowerCase().includes(search.toLowerCase())
     );
     // Retornar el id si se encuentra el alumno, o null si no existe coincidencia
     return alumnoEncontrado ? alumnoEncontrado.id : null;
   };
 
   const idAlumno_recf = obtenerIdAlumnoPorSearch();
+  console.log(idAlumno_recf);
   // console.log(rows); // Muestra el id del alumno o null si no se encontró
 
   //boton de PRESENTE para un alumno en particular - Baltazar Almiron - 11/11/2024
@@ -535,8 +536,11 @@ const PlanillaEntrenador = () => {
           });
 
           fetchAlumnos();
+
           if (!response.ok) {
             throw new Error(`Error al guardar la asistencia del día ${dia}`);
+          } else {
+            alert(`Alumno marcado como Presente | Dia: ${dia}`);
           }
 
           const data = await response.json();
@@ -746,6 +750,7 @@ const PlanillaEntrenador = () => {
           <thead>
             <tr className="tr-planilla">
               <th className="border border-gray-400 px-2">#</th>
+              <th className="border border-gray-400 px-2">P</th>
               <th className="border border-gray-400 px-2">APELLIDO Y NOMBRE</th>
               {/* Nueva columna para Prospecto */}
               <th className="border border-gray-400 px-2">N/A/P</th>{' '}
@@ -799,14 +804,23 @@ const PlanillaEntrenador = () => {
                   <td className="border border-gray-400 text-center">
                     {rowIndex + 1}
                   </td>
+                  <td className="border border-gray-400 text-center">
+                    <button
+                      className="px-4 py-2 bg-green-500 text-white font-bold rounded hover:bg-green-600 focus:outline-none"
+                      onClick={() => handleBotonAsistencia(row.id)}
+                    >
+                      P
+                    </button>
+                  </td>
                   <td className="border border-gray-400">
                     <input
                       type="text"
-                      className={`w-40 px-2 py-3 ${
-                        determinarColorAlumno(row.fecha_creacion) === 'green'
-                          ? 'text-green-400'
-                          : 'text-black'
-                      }`}
+                      className={`w-40 px-2 py-3`}
+                      // ${
+                      //   determinarColorAlumno(row.fecha_creacion) === 'green'
+                      //     ? 'text-green-400'
+                      //     : 'text-black'
+                      // }`}
                       value={row.nombre}
                       onChange={(e) =>
                         handleInputChange(rowIndex, 'nombre', e.target.value)
@@ -856,11 +870,11 @@ const PlanillaEntrenador = () => {
                       }}
                     />
                   </td>
-                  
+
                   <td className="border border-gray-400">
                     <input
                       type="text"
-                      className="w-full px-2 py-3"
+                      className="w-32 px-2 py-3"
                       value={row.punto_d}
                       onChange={(e) =>
                         handleInputChange(rowIndex, 'punto_d', e.target.value)
