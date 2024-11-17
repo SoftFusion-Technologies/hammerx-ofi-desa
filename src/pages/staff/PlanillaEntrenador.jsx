@@ -109,7 +109,10 @@ const PlanillaEntrenador = () => {
           const asistenciasDelAlumno = Array(31).fill(''); // Inicializar asistencias
           const agendasDelAlumno = responseAgendas.data
             .filter((agenda) => agenda.alumno_id === alumno.id)
-            .map((agenda) => agenda.contenido || '');
+            .map((agenda) => ({
+              agenda_num: agenda.agenda_num,
+              contenido: agenda.contenido || ''
+            }));
 
           // Llenar asistencias basadas en las asistencias existentes
           responseAsistencias.data.forEach((asistencia) => {
@@ -121,14 +124,13 @@ const PlanillaEntrenador = () => {
             }
           });
 
-          // Lógica para agendas completa
-          const agendasCompleta =
-            agendasDelAlumno.length < 5
-              ? [
-                  ...agendasDelAlumno,
-                  ...Array(5 - agendasDelAlumno.length).fill('')
-                ]
-              : agendasDelAlumno;
+          // Creamos un array de 6 elementos, uno por cada agenda (1 a 6)
+          let agendasCompleta = Array(6).fill('');
+
+          // Llenar las agendas existentes según el `agenda_num`
+          agendasDelAlumno.forEach((agenda) => {
+            agendasCompleta[agenda.agenda_num - 1] = agenda.contenido; // `agenda_num - 1` para ajustarlo al índice del array
+          });
 
           // Filtrar asistencias para el alumno y calcular total
           const asistenciasDelAlumno2 = responseAsistencias.data.filter(
@@ -158,7 +160,7 @@ const PlanillaEntrenador = () => {
         punto_d: '',
         motivo: '',
         asistencias: Array(31).fill(''),
-        agendas: Array(5).fill(''),
+        agendas: Array(6).fill(''),
         totalAsistencias: 0
       }));
 
@@ -785,6 +787,9 @@ const PlanillaEntrenador = () => {
               <th className="border border-gray-400 px-2 uppercase">
                 Devolución final
               </th>
+              <th className="border border-gray-400 px-2 uppercase">
+                Otros agendamientos
+              </th>
               {/* Nueva forma de mostrar Agendas FINAL / Benjamin Orellana / 8/11/24 */}
               <th className="border border-gray-400 px-2 uppercase">
                 OBSERVACIONES
@@ -925,8 +930,8 @@ const PlanillaEntrenador = () => {
                     <td key={agendaIndex} className="border border-gray-400">
                       <input
                         type="text"
-                        disabled
-                        className="w-full px-2 py-1"
+                        disabled={agendaIndex !== 4 && agendaIndex !== 5} // La agenda 5 está en el índice 4
+                        className="w-24 px-2 py-1 text-red-600 text-center"
                         value={agenda || ''} // Asegura que el campo sea editable aunque esté vacío
                         onChange={(e) => {
                           // Crea una copia del array de agendas actual
