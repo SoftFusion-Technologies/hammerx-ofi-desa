@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import FormAltaAlumno from '../../components/Forms/FormAltaAlumno';
 import AlumnoDetails from './MetodsGet/Details/AlumnoGetId';
+import UploadImageModal from '../../components/Forms/ModalUploads/UploadImageModal';
 
 const PlanillaEntrenador = () => {
   const URL = 'http://localhost:8080/';
@@ -39,6 +40,16 @@ const PlanillaEntrenador = () => {
   const [selectedAlumn, setSelectedAlumn] = useState(null); // Estado para el usuario seleccionado
 
   const [modalAlumnoDetails, setModalAlumnoDetails] = useState(false); // Estado para controlar el modal de detalles del usuario
+
+  // para subir imagenes a las agendas inicio
+  const [selectedAgendaIndex, setSelectedAgendaIndex] = useState(null);
+  const [selectedAlumnoId, setSelectedAlumnoId] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const [agendas, setAgendas] = useState([]); // Estado para almacenar las agendas
+  const [selectedAgendaId, setSelectedAgendaId] = useState(null); // Para almacenar el id de la agenda
+  const [selectedAgendaNum, setSelectedAgendaNum] = useState(null); // Para almacenar el id de la agenda
+  // para subir imagenes a las agendas fin
 
   useEffect(() => {
     const getUserIdByEmail = async () => {
@@ -129,7 +140,7 @@ const PlanillaEntrenador = () => {
 
           // Llenar las agendas existentes según el `agenda_num`
           agendasDelAlumno.forEach((agenda) => {
-            agendasCompleta[agenda.agenda_num - 1] = agenda.contenido; // `agenda_num - 1` para ajustarlo al índice del array
+            agendasCompleta[agenda.agenda_num - 1] = agenda.contenido; // ` agenda_num - 1` para ajustarlo al índice del array
           });
 
           // Filtrar asistencias para el alumno y calcular total
@@ -302,8 +313,6 @@ const PlanillaEntrenador = () => {
         // Obtenmos el ID del alumno que deseamos eliminar
         const alumnoId = rows[rowIndex].id;
         console.log(alumnoId);
-        console.log(rowIndex);
-        console.log(idAlumno);
 
         // Realiza la petición DELETE a la API
         const response = await fetch(`${URL}alumnos/${alumnoId}`, {
@@ -503,7 +512,7 @@ const PlanillaEntrenador = () => {
   };
 
   const idAlumno_recf = obtenerIdAlumnoPorSearch();
-  console.log(idAlumno_recf);
+  // console.log(idAlumno_recf);
   // console.log(rows); // Muestra el id del alumno o null si no se encontró
 
   //boton de PRESENTE para un alumno en particular - Baltazar Almiron - 11/11/2024
@@ -644,6 +653,51 @@ const PlanillaEntrenador = () => {
 
     // Retorna el color en función de si el alumno es "nuevo" o no
     return mesCreacion === mesActual ? 'green' : 'black';
+  };
+
+  const openModal = async (rowIndex, agendaIndex) => {
+    try {
+      const alumnoId = rows[rowIndex].id;
+      // Hacemos un fetch a la API para obtener las agendas del alumno
+      const response = await axios.get(`${URL}agendas?alumno_id=${alumnoId}`);
+      const agendas = response.data; // Suponemos que la respuesta contiene un arreglo de agendas
+
+      // Buscar la agenda correspondiente a esta celda
+      const selectedAgenda = agendas.find(
+        (agenda) => agenda.agenda_num === agendaIndex + 1
+      );
+
+      if (!selectedAgenda) {
+        console.error('Agenda no encontrada.');
+        return; // Salir si no hay una agenda válida
+      }
+      if (selectedAgenda) {
+        const agendaId = selectedAgenda.id; // Obtener el ID de la agenda
+        const agendaNum = selectedAgenda.agenda_num; // Obtener el número de la agenda
+
+        // Establecer los estados para abrir el modal
+        setSelectedAgendaIndex(agendaIndex);
+        setSelectedAlumnoId(alumnoId);
+        setSelectedAgendaId(agendaId); // Guardamos el ID de la agenda
+        setSelectedAgendaNum(agendaNum); // Guardamos el número de la agenda
+
+        // Establecer las agendas en el estado
+        setAgendas(agendas);
+
+        // Abrir el modal
+        setModalOpen(true);
+      } else {
+        console.error('Agenda no encontrada.');
+      }
+    } catch (error) {
+      console.error('Error al obtener las agendas:', error);
+    }
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedAgendaIndex(null);
+    setSelectedAlumnoId(null);
   };
 
   return (
@@ -930,23 +984,24 @@ const PlanillaEntrenador = () => {
                     <td key={agendaIndex} className="border border-gray-400">
                       <input
                         type="text"
-                        disabled={agendaIndex !== 4 && agendaIndex !== 5} // La agenda 5 está en el índice 4
-                        className="w-24 px-2 py-1 text-red-600 text-center"
-                        value={agenda || ''} // Asegura que el campo sea editable aunque esté vacío
+                        className={`w-24 px-2 py-1 text-center rounded-full ${
+                          agenda === 'ENVIADO'
+                            ? 'bg-green-600 text-white'
+                            : agenda === 'PENDIENTE'
+                            ? 'bg-red-600 text-white'
+                            : ''
+                        }`}
+                        value={agenda || ''}
+                        onClick={() => openModal(rowIndex, agendaIndex)}
                         onChange={(e) => {
-                          // Crea una copia del array de agendas actual
                           const updatedAgendas = [...row.agendas];
-                          // Actualiza solo la agenda específica
                           updatedAgendas[agendaIndex] = e.target.value;
 
-                          // Actualiza la fila en el estado `rows`
                           handleInputChange(
                             rowIndex,
                             'agendas',
                             updatedAgendas
                           );
-
-                          // Llamar a la función para guardar solo esta agenda en la base de datos
                           handleSaveAgenda(
                             rowIndex,
                             agendaIndex,
@@ -1000,6 +1055,15 @@ const PlanillaEntrenador = () => {
               user2={user_id}
               alumno={selectedAlumn}
               setSelectedAlumn={setSelectedAlumn}
+            />
+
+            {/* Modal para subir imágenes */}
+            <UploadImageModal
+              isOpen={modalOpen}
+              onClose={closeModal}
+              alumnoId={selectedAlumnoId}
+              agendaId={selectedAgendaId} // Pasamos el id de la agenda
+              agendaNum={selectedAgendaNum} // Pasamos el número de la agenda
             />
           </tbody>
         </table>
