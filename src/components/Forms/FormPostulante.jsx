@@ -116,7 +116,7 @@ const FormPostulante = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className={`h-screen w-screen mt-16 fixed inset-0 flex pt-10 justify-center ${
+      className={`h-screen w-screen mt-10 fixed inset-0 flex pt-10 justify-center ${
         isOpen ? 'block' : 'hidden'
       } bg-gray-800 bg-opacity-75 z-50`}
     >
@@ -157,10 +157,10 @@ const FormPostulante = ({ isOpen, onClose }) => {
         >
           {({ errors, touched }) => {
             return (
-              <div className="-mt-10 py-0 max-h-[900px] overflow-y-auto bg-white rounded-xl">
+              <div className="-mt-10 py-0 max-h-[800px] overflow-y-auto bg-white rounded-xl">
                 {' '}
                 {/* Cuando se haga el modal, sacarle el padding o ponerle uno de un solo digito */}
-                <Form className="formulario max-sm:w-[300px]">
+                <Form className="formulario max-sm:w-[400px]">
                   <div className="flex justify-between">
                     <div className="tools">
                       <div className="circle">
@@ -323,7 +323,7 @@ const FormPostulante = ({ isOpen, onClose }) => {
                       as="textarea"
                       id="info"
                       type="text"
-                      className="resize-none mt-2 block w-full p-3 h-40 text-black text-md bg-slate-100  rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                      className="resize-none mt-2 block w-full p-3 h-30 text-black text-md bg-slate-100  rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
                       placeholder="Contanos un poco sobre vos. (Max. 100 caracteres.) "
                       name="info"
                       maxLength="301"

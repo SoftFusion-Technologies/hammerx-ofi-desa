@@ -164,7 +164,7 @@ const PlanillaEntrenador = () => {
         .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
       // Llenar las filas restantes hasta 100 \\ aumentar ese numero en caso de que se necesiten mas filas
-      const filasRestantes = 10 - alumnosConAsistencias.length;
+      const filasRestantes = 20 - alumnosConAsistencias.length;
       const filasVacias = Array.from({ length: filasRestantes }, () => ({
         id: null,
         nombre: '',
@@ -707,7 +707,7 @@ const PlanillaEntrenador = () => {
         {(userLevel === 'admin' ||
           userLevel === 'gerente' ||
           userLevel === 'administrador') && (
-          <div className="pl-5 pt-5">
+          <div className="pl-5 mb-10">
             <Link to="/dashboard/instructores">
               <button className="py-2 px-5 bg-[#fc4b08] rounded-lg text-sm text-white hover:bg-orange-500">
                 Volver
@@ -732,15 +732,52 @@ const PlanillaEntrenador = () => {
           />
         </form>
         {/* Formulario de búsqueda fin */}
-
         {search === '' ? (
-          <div className="flex justify-center pb-10">
-            <button
-              onClick={abrirModal}
-              className="bg-[#58b35e] hover:bg-[#4e8a52] text-white pb-3 py-2 px-4 rounded transition-colors duration-100 z-10"
-            >
-              Nuevo Alumno
-            </button>
+          <div>
+            <div className="flex justify-center ">
+              <button
+                onClick={abrirModal}
+                className="bg-[#58b35e] hover:bg-[#4e8a52] text-white pb-3 py-2 px-4 rounded transition-colors duration-100 z-10"
+              >
+                Nuevo Alumno
+              </button>
+            </div>
+
+            <div className="flex justify-center">
+              <nav className="flex justify-center items-center my-5">
+                <ul className="pagination">
+                  <li className="page-item">
+                    <a href="#" className="page-link" onClick={prevPage}>
+                      Prev
+                    </a>
+                  </li>
+                  {numbers.map((number, index) => (
+                    <li
+                      className={`page-item ${
+                        currentPage === number ? 'active' : ''
+                      }`}
+                      key={index}
+                    >
+                      <a
+                        href="#"
+                        className="page-link"
+                        onClick={() => changeCPage(number)}
+                      >
+                        {number}
+                      </a>
+                    </li>
+                  ))}
+                  <li className="page-item">
+                    <a href="#" className="page-link" onClick={nextPage}>
+                      Next
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+            <h1 className="uppercase font-bold text-xl">
+              Cantidad de páginas: {nPage}
+            </h1>
           </div>
         ) : (
           <div className="flex flex-col items-center pb-10">
@@ -1067,39 +1104,6 @@ const PlanillaEntrenador = () => {
             />
           </tbody>
         </table>
-
-        <div className="flex justify-center">
-          <nav className="flex justify-center items-center my-10">
-            <ul className="pagination">
-              <li className="page-item">
-                <a href="#" className="page-link" onClick={prevPage}>
-                  Prev
-                </a>
-              </li>
-              {numbers.map((number, index) => (
-                <li
-                  className={`page-item ${
-                    currentPage === number ? 'active' : ''
-                  }`}
-                  key={index}
-                >
-                  <a
-                    href="#"
-                    className="page-link"
-                    onClick={() => changeCPage(number)}
-                  >
-                    {number}
-                  </a>
-                </li>
-              ))}
-              <li className="page-item">
-                <a href="#" className="page-link" onClick={nextPage}>
-                  Next
-                </a>
-              </li>
-            </ul>
-          </nav>
-        </div>
       </div>
       {selectedAlumn && (
         <AlumnoDetails
