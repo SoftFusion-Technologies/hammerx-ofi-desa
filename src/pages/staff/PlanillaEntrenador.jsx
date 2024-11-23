@@ -51,6 +51,17 @@ const PlanillaEntrenador = () => {
   const [selectedAgendaNum, setSelectedAgendaNum] = useState(null); // Para almacenar el id de la agenda
   // para subir imagenes a las agendas fin
 
+  const [day, setDay] = useState(''); // Día actual
+
+  useEffect(() => {
+    // Obtener la fecha actual
+    const today = new Date();
+    // Formatear la fecha para obtener solo los primeros dos dígitos (día)
+    const day = String(today.getDate()).padStart(2, '0'); // Asegura que tenga dos dígitos (ej. "01", "23")
+
+    setDay(day);
+  }, []);
+
   useEffect(() => {
     const getUserIdByEmail = async () => {
       try {
@@ -526,7 +537,7 @@ const PlanillaEntrenador = () => {
 
         // Verifica si ya existe un registro de asistencia
         const checkResponse = await fetch(
-          `${URL}asistencias/${alumnoId}/${dia}`
+          `${URL}asistencias/${alumnoId}/${day}`
         );
         const checkData = await checkResponse.json();
 
@@ -541,7 +552,7 @@ const PlanillaEntrenador = () => {
             },
             body: JSON.stringify({
               alumno_id: alumnoId,
-              dia: dia,
+              dia: day,
               estado: 'P'
             })
           });
@@ -549,13 +560,13 @@ const PlanillaEntrenador = () => {
           fetchAlumnos();
 
           if (!response.ok) {
-            throw new Error(`Error al guardar la asistencia del día ${dia}`);
+            throw new Error(`Error al guardar la asistencia del día ${day}`);
           } else {
-            alert(`Alumno marcado como Presente | Dia: ${dia}`);
+            alert(`Alumno marcado como Presente | Dia: ${day}`);
           }
 
           const data = await response.json();
-          console.log(`Asistencia para el día ${dia} guardada:`, data.message);
+          console.log(`Asistencia para el día ${day} guardada:`, data.message);
           break;
         }
       }
@@ -900,6 +911,7 @@ const PlanillaEntrenador = () => {
                   <td className="border border-gray-400 text-center">
                     {rowIndex + 1}
                   </td>
+
                   <td className="border border-gray-400 text-center">
                     <button
                       className="px-4 py-2 bg-green-500 text-white font-bold rounded hover:bg-green-600 focus:outline-none"
@@ -908,6 +920,7 @@ const PlanillaEntrenador = () => {
                       P
                     </button>
                   </td>
+
                   <td className="border border-gray-400">
                     <input
                       type="text"
