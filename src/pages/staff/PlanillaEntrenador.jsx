@@ -75,7 +75,7 @@ const PlanillaEntrenador = () => {
 
   const fetchAsistencias = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/asistencia/${day}`);
+      const response = await fetch(`${URL}asistencia/${day}`);
       const data = await response.json();
 
       console.log('Datos de asistencias:', data);
@@ -649,7 +649,6 @@ const PlanillaEntrenador = () => {
   };
 
   //boton de ELIMINAR para un alumno en particular - Baltazar Almiron - 11/11/2024
-
   const handleBotonDelete = async (idAlumno) => {
     const confirmacion = window.confirm('¿Seguro que desea eliminar?');
     if (confirmacion) {
