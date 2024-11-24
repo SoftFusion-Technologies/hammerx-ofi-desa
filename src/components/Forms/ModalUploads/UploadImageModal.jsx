@@ -6,7 +6,8 @@ const UploadImageModal = ({
   onClose,
   alumnoId,
   agendaId,
-  agendaNum
+  agendaNum,
+  fetchAlumnos
 }) => {
   const [file, setFile] = useState(null); // Estado para el archivo
   const [archivos, setArchivos] = useState([]);
@@ -55,6 +56,7 @@ const UploadImageModal = ({
         // Actualizar el estado de la agenda a 'ENVIADO'
         await updateAgendaStatus(agendaId, 'ENVIADO');
         fetchArchivos(); // Actualizar la lista de archivos
+        fetchAlumnos();
         onClose(); // Cerrar el modal
       } else {
         alert(result.message || 'Error al subir la imagen.');
@@ -83,7 +85,7 @@ const UploadImageModal = ({
 
       // Actualizar el estado de la agenda a "PENDIENTE"
       await updateAgendaStatus(agendaId, 'PENDIENTE');
-
+      fetchAlumnos();
       onClose(); // Cerrar el modal o actualizar la interfaz
     } catch (err) {
       console.error('Error al eliminar el archivo:', err);
@@ -106,6 +108,7 @@ const UploadImageModal = ({
 
       if (response.status === 200) {
         console.log('Estado de la agenda actualizado a', nuevoEstado);
+        fetchAlumnos();
       } else {
         console.error('No se pudo actualizar el estado de la agenda');
       }

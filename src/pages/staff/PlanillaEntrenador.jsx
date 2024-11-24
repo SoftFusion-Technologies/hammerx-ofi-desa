@@ -52,6 +52,9 @@ const PlanillaEntrenador = () => {
   // para subir imagenes a las agendas fin
 
   const [day, setDay] = useState(''); // Día actual
+  // esto es para obtener las asistencias del día actual y deshabilitar el botón si tiene una asistencia
+  const [asistencias, setAsistencias] = useState([]);
+  const [botonesDeshabilitados, setBotonesDeshabilitados] = useState({}); // Estado para controlar los botones
 
   useEffect(() => {
     // Obtener la fecha actual
@@ -61,6 +64,44 @@ const PlanillaEntrenador = () => {
 
     setDay(day);
   }, []);
+
+  useEffect(() => {
+    if (!day) return; // Si day no está definido, no hacer la consulta
+
+    console.log('Realizando consulta a la API para el día:', day); // Log antes del fetch
+
+    fetchAsistencias();
+  }, [day]); // Ejecutar cada vez que day cambie
+
+  const fetchAsistencias = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/asistencia/${day}`);
+      const data = await response.json();
+
+      console.log('Datos de asistencias:', data);
+      console.log('Día actual:', day);
+
+      // Si no hay registros para el día, setear asistencias a un array vacío
+      if (data.mensaje && data.mensaje.includes('No hay registros')) {
+        setAsistencias([]);
+      } else {
+        setAsistencias(data);
+        const nuevosBotonesDeshabilitados = {};
+
+        data.forEach((asistencia) => {
+          if (asistencia.estado === 'P') {
+            nuevosBotonesDeshabilitados[asistencia.alumno_id] = true;
+          } else {
+            nuevosBotonesDeshabilitados[asistencia.alumno_id] = false;
+          }
+        });
+
+        setBotonesDeshabilitados(nuevosBotonesDeshabilitados);
+      }
+    } catch (error) {
+      console.error('Error al obtener las asistencias:', error);
+    }
+  };
 
   useEffect(() => {
     const getUserIdByEmail = async () => {
@@ -539,10 +580,41 @@ const PlanillaEntrenador = () => {
         const checkResponse = await fetch(
           `${URL}asistencias/${alumnoId}/${day}`
         );
+
         const checkData = await checkResponse.json();
 
         if (checkData.existe) {
-          continue; // Si existe hacemos que continue con el ciclo for
+          if (checkData.estado === 'A') {
+            // Si el estado existente es 'A', realizar un update
+            const updateResponse = await fetch(
+              `${URL}asistencias/${checkData.id}`,
+              {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  estado: 'P' // Cambiar el estado a 'P'
+                })
+              }
+            );
+
+            if (!updateResponse.ok) {
+              throw new Error(
+                `Error al actualizar la asistencia del día ${day}`
+              );
+            } else {
+              const updateData = await updateResponse.json();
+              console.log(
+                `Asistencia actualizada para el día ${day}:`,
+                updateData.message
+              );
+              alert(`Asistencia actualizada para el día ${day}`);
+            }
+          }
+          fetchAsistencias();
+          fetchAlumnos();
+          continue; // Si ya existe pero no es necesario actualizar, continúa con el siguiente día
         } else {
           // Si no existe, crear un nuevo registro
           const response = await fetch(`${URL}asistencias`, {
@@ -557,6 +629,7 @@ const PlanillaEntrenador = () => {
             })
           });
 
+          fetchAsistencias();
           fetchAlumnos();
 
           if (!response.ok) {
@@ -914,8 +987,16 @@ const PlanillaEntrenador = () => {
 
                   <td className="border border-gray-400 text-center">
                     <button
-                      className="px-4 py-2 bg-green-500 text-white font-bold rounded hover:bg-green-600 focus:outline-none"
-                      onClick={() => handleBotonAsistencia(row.id)}
+                      className={`px-4 py-2 font-bold rounded focus:outline-none ${
+                        botonesDeshabilitados[row.id]
+                          ? 'bg-gray-500 cursor-not-allowed'
+                          : 'bg-green-500 hover:bg-green-600 text-white'
+                      }`}
+                      onClick={() =>
+                        !botonesDeshabilitados[row.id] &&
+                        handleBotonAsistencia(row.id)
+                      }
+                      disabled={botonesDeshabilitados[row.id]}
                     >
                       P
                     </button>
@@ -1114,6 +1195,7 @@ const PlanillaEntrenador = () => {
               alumnoId={selectedAlumnoId}
               agendaId={selectedAgendaId} // Pasamos el id de la agenda
               agendaNum={selectedAgendaNum} // Pasamos el número de la agenda
+              fetchAlumnos={fetchAlumnos}
             />
           </tbody>
         </table>
