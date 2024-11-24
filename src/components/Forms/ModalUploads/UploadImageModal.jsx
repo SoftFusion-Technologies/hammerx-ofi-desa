@@ -11,6 +11,14 @@ const UploadImageModal = ({
 }) => {
   const [file, setFile] = useState(null); // Estado para el archivo
   const [archivos, setArchivos] = useState([]);
+  const [isUploading, setIsUploading] = useState(false); // Estado para controlar el proceso de carga
+
+  useEffect(() => {
+    if (agendaId) {
+      setArchivos([]); // Limpiar archivos al cambiar de agenda
+      fetchArchivos(); // Cargar archivos para la nueva agenda
+    }
+  }, [agendaId]);
 
   const fetchArchivos = async () => {
     try {
@@ -36,6 +44,7 @@ const UploadImageModal = ({
       return;
     }
 
+    setIsUploading(true); // Iniciar el proceso de carga
     const formData = new FormData();
     formData.append('file', file);
     formData.append('agenda_id', agendaId);
@@ -57,13 +66,15 @@ const UploadImageModal = ({
         await updateAgendaStatus(agendaId, 'ENVIADO');
         fetchArchivos(); // Actualizar la lista de archivos
         fetchAlumnos();
-        onClose(); // Cerrar el modal
+        handleCloseModal(); // Cerrar el modal
       } else {
         alert(result.message || 'Error al subir la imagen.');
       }
     } catch (error) {
       console.error('Error al subir la imagen:', error);
       alert('Hubo un problema al subir la imagen.');
+    } finally {
+      setIsUploading(false); // Finalizar el proceso de carga
     }
   };
 
@@ -86,7 +97,7 @@ const UploadImageModal = ({
       // Actualizar el estado de la agenda a "PENDIENTE"
       await updateAgendaStatus(agendaId, 'PENDIENTE');
       fetchAlumnos();
-      onClose(); // Cerrar el modal o actualizar la interfaz
+      handleCloseModal(); // Cerrar el modal o actualizar la interfaz
     } catch (err) {
       console.error('Error al eliminar el archivo:', err);
     }
@@ -125,6 +136,11 @@ const UploadImageModal = ({
 
   if (!isOpen) return null;
 
+  const handleCloseModal = () => {
+    setFile(null); // Limpiar archivo seleccionado
+    setArchivos([]); // Limpiar lista de archivos
+    onClose(); // Llamar al cierre del modal
+  };
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded shadow-md">
@@ -171,13 +187,15 @@ const UploadImageModal = ({
             <button
               type="submit"
               className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 w-1/2"
+              disabled={isUploading} // Deshabilitar el botón mientras se sube la imagen
             >
-              Subir Imagen
+              {isUploading ? 'Subiendo...' : 'Subir Imagen'}{' '}
+              {/* Mostrar texto de carga */}
             </button>
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => handleCloseModal()}
               className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 w-1/2"
             >
               Cerrar

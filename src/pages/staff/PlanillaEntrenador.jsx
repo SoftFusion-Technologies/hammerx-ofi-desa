@@ -173,6 +173,7 @@ const PlanillaEntrenador = () => {
           const agendasDelAlumno = responseAgendas.data
             .filter((agenda) => agenda.alumno_id === alumno.id)
             .map((agenda) => ({
+              id: agenda.id, // Agregar el id de la agenda
               agenda_num: agenda.agenda_num,
               contenido: agenda.contenido || ''
             }));
@@ -188,11 +189,11 @@ const PlanillaEntrenador = () => {
           });
 
           // Creamos un array de 6 elementos, uno por cada agenda (1 a 6)
-          let agendasCompleta = Array(6).fill('');
+          let agendasCompleta = Array(6).fill(null);
 
           // Llenar las agendas existentes según el `agenda_num`
           agendasDelAlumno.forEach((agenda) => {
-            agendasCompleta[agenda.agenda_num - 1] = agenda.contenido; // ` agenda_num - 1` para ajustarlo al índice del array
+            agendasCompleta[agenda.agenda_num - 1] = agenda; // Guardar el objeto completo en la posición correspondiente
           });
 
           // Filtrar asistencias para el alumno y calcular total
@@ -738,7 +739,7 @@ const PlanillaEntrenador = () => {
     return mesCreacion === mesActual ? 'green' : 'black';
   };
 
-  const openModal = async (rowIndex, agendaIndex) => {
+  const openModal = async (rowIndex, agendaIndex, agendaIdRec) => {
     try {
       const alumnoId = rows[rowIndex].id;
       // Hacemos un fetch a la API para obtener las agendas del alumno
@@ -747,15 +748,16 @@ const PlanillaEntrenador = () => {
 
       // Buscar la agenda correspondiente a esta celda
       const selectedAgenda = agendas.find(
-        (agenda) => agenda.agenda_num === agendaIndex + 1
+        (agenda) => agenda.id === agendaIdRec
       );
 
+      console.log('Agenda ID:', selectedAgenda);
       if (!selectedAgenda) {
         console.error('Agenda no encontrada.');
         return; // Salir si no hay una agenda válida
       }
       if (selectedAgenda) {
-        const agendaId = selectedAgenda.id; // Obtener el ID de la agenda
+        const agendaId = agendaIdRec; // Obtener el ID de la agenda
         const agendaNum = selectedAgenda.agenda_num; // Obtener el número de la agenda
 
         // Establecer los estados para abrir el modal
@@ -1115,14 +1117,16 @@ const PlanillaEntrenador = () => {
                       <input
                         type="text"
                         className={`w-24 px-2 py-1 text-center rounded-full ${
-                          agenda === 'ENVIADO'
+                          agenda?.contenido === 'ENVIADO'
                             ? 'bg-green-600 text-white'
-                            : agenda === 'PENDIENTE'
+                            : agenda?.contenido === 'PENDIENTE'
                             ? 'bg-red-600 text-white'
                             : ''
                         }`}
-                        value={agenda || ''}
-                        onClick={() => openModal(rowIndex, agendaIndex)}
+                        value={agenda?.contenido || ''}
+                        onClick={() =>
+                          openModal(rowIndex, agendaIndex, agenda?.id)
+                        } // Pasar el ID
                         onChange={(e) => {
                           const updatedAgendas = [...row.agendas];
                           updatedAgendas[agendaIndex] = e.target.value;
