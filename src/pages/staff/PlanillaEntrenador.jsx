@@ -801,6 +801,15 @@ const PlanillaEntrenador = () => {
           </div>
         )}
 
+        <div className="pl-5 mb-10">
+          <button
+            onClick={() => fetchAlumnos()}
+            className="py-2 px-5 bg-[#fc4b08] rounded-lg text-sm text-white hover:bg-orange-500"
+          >
+            Cargar Alumnos
+          </button>
+        </div>
+
         <div className="flex justify-center">
           <h2 className="pb-5 font-bignoodle text-[#fc4b08] text-5xl">
             {nombreInstructor}
@@ -1026,9 +1035,10 @@ const PlanillaEntrenador = () => {
                   <td className="border border-gray-400">
                     <input
                       type="text"
-                      className="w-10 px-2 py-3 uppercase"
+                      className="w-10 px-2 py-3 uppercase text-center"
                       value={row.c || ''}
-                      disabled={row.prospecto !== 'prospecto'} // Desactiva si no es "prospecto"
+                      disabled
+                      // ={row.prospecto !== 'prospecto'} // Desactiva si no es "prospecto"
                       onChange={(e) =>
                         handleInputChange(rowIndex, 'c', e.target.value)
                       }
@@ -1136,11 +1146,11 @@ const PlanillaEntrenador = () => {
                             'agendas',
                             updatedAgendas
                           );
-                          handleSaveAgenda(
-                            rowIndex,
-                            agendaIndex,
-                            e.target.value
-                          );
+                          // handleSaveAgenda(
+                          //   rowIndex,
+                          //   agendaIndex,
+                          //   e.target.value
+                          // );
                         }}
                       />
                     </td>
