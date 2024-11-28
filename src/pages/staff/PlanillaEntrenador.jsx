@@ -9,6 +9,7 @@ import { useLocation } from 'react-router-dom';
 import FormAltaAlumno from '../../components/Forms/FormAltaAlumno';
 import AlumnoDetails from './MetodsGet/Details/AlumnoGetId';
 import UploadImageModal from '../../components/Forms/ModalUploads/UploadImageModal';
+import NotificationsAgendas from './NotificationsAgendas';
 
 const PlanillaEntrenador = () => {
   const URL = 'http://localhost:8080/';
@@ -809,6 +810,8 @@ const PlanillaEntrenador = () => {
             Cargar Alumnos
           </button>
         </div>
+
+        <NotificationsAgendas user1={user_id} user2={userId} />
 
         <div className="flex justify-center">
           <h2 className="pb-5 font-bignoodle text-[#fc4b08] text-5xl">

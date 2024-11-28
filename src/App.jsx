@@ -47,6 +47,7 @@ const Sedemonteros = lazy(() => import('./pages/sedes/Monteros'));
 const Loading = lazy(() => import('./components/Loading')); // Importa el componente de carga
 const Miclasefree = lazy(() => import('./pages/Mi-clase-free'));
 const MiCV = lazy(() => import('./pages/Mi-CV'));
+const CongelamientosCont = lazy(() => import('./pages/CongelamientosCont.jsx'));
 const Pautas = lazy(() => import('./pages/Pautas'));
 const Legales = lazy(() => import('./pages/Legales'));
 const Contacto = lazy(() => import('./pages/Contacto'));
@@ -71,8 +72,8 @@ const IntegranteConveGet = lazy(() =>
 const FamIntegranteGet = lazy(() =>
   import('./pages/staff/MetodsGet/FamIntegranteGet')
 );
-const VendedoresGet = lazy(() =>
-  import('./pages/staff/MetodsGet/VendedoresGet')
+const EstadisticasIns = lazy(() =>
+  import('./pages/staff/MetodsGet/EstadisticasIns')
 );
 const PlanillaEntrenador = lazy(() =>
   import('./pages/staff/PlanillaEntrenador.jsx')
@@ -256,6 +257,7 @@ const App = memo(() => {
                 {/* Página de la sede de Monteros */}
                 <Ruta path="/mi-clase-free" element={<Miclasefree />} />{' '}
                 <Ruta path="/mi-cv" element={<MiCV />} />{' '}
+                <Ruta path="/congelamientos" element={<CongelamientosCont />} />{' '}
                 <Ruta path="/pautas" element={<Pautas />} />{' '}
                 {/* Página de Pautas */}
                 <Ruta path="/legales" element={<Legales />} />{' '}
@@ -355,11 +357,11 @@ const App = memo(() => {
                 {/* Rutas de prueba para testear funcionamiento */}
                 {/* <Ruta path="/dashboard/admprecio" element={<ProtectedRoute>  <AdmPrecioGet /> </ProtectedRoute> } /> Rutas de prueba para testear funcionamiento */}
                 <Ruta
-                  path="/dashboard/vendedores"
+                  path="/dashboard/estadisticas"
                   element={
                     <ProtectedRoute>
                       {' '}
-                      <VendedoresGet />{' '}
+                      <EstadisticasIns />{' '}
                     </ProtectedRoute>
                   }
                 />{' '}
@@ -648,8 +650,14 @@ const App = memo(() => {
                   path="/pagos/concepcion/anual/cuotas"
                   element={<CuotasAnualC />}
                 />
-                <Ruta path="/comentarios/monteros" element={<ComentariosPage />} />
-                <Ruta path="/comentarios/concepcion" element={<ComentariosPageConcep />} />
+                <Ruta
+                  path="/comentarios/monteros"
+                  element={<ComentariosPage />}
+                />
+                <Ruta
+                  path="/comentarios/concepcion"
+                  element={<ComentariosPageConcep />}
+                />
                 <Ruta path="/*" element={<NotFound />} />
               </Rutas>
               <TaskReminder2 tasks={tasks} />

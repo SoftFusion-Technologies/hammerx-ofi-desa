@@ -105,23 +105,20 @@ const AdminPage = () => {
 
             {(userLevel === 'gerente' ||
               userLevel === 'admin' ||
-              userLevel === 'vendedor' ||
-              userLevel === 'administrador') && (
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
-                <Link to="/dashboard/vendedores">
-                  <button className="btnstaff">Vendedores</button>
-                </Link>
-              </div>
-            )}
-
-            {(userLevel === 'gerente' ||
-              userLevel === 'admin' ||
               userLevel === 'instructor' ||
               userLevel === 'administrador') && (
               <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
                 <button className="btnstaff" onClick={handleButtonClick}>
                   Instructores
                 </button>
+              </div>
+            )}
+
+            {(userLevel === 'admin' || userLevel === 'administrador') && (
+              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
+                <Link to="/dashboard/estadisticas">
+                  <button className="btnstaff">Estadísticas</button>
+                </Link>
               </div>
             )}
           </div>

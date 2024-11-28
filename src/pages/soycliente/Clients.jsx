@@ -201,6 +201,7 @@ const Clients = () => {
                   <ModalContratos
                     anterior={contratosAnt}
                     siguiente={contratosSig}
+                    bandera={1}
                   />
                 )}
                 <button

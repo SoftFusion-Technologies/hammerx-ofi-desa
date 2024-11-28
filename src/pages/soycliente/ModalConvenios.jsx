@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import "../../styles/clients/botones.css";
-import flecha from '../../images/flecha.png'
-import { FaWhatsapp } from 'react-icons/fa';  // Importamos el ícono de WhatsApp
+import React, { useState } from 'react';
+import '../../styles/clients/botones.css';
+import flecha from '../../images/flecha.png';
+import { FaWhatsapp } from 'react-icons/fa'; // Importamos el ícono de WhatsApp
 
-function ModalConvenios({ closeModal, anterior, siguiente }) {
+function ModalConvenios({anterior, siguiente }) {
   //recibo las funciones que contienen la posición del modal siguiente y anterior
   const [isOpen, setIsOpen] = useState(true);
 
@@ -18,9 +18,9 @@ function ModalConvenios({ closeModal, anterior, siguiente }) {
     setIsOpen(!isOpen);
   };
 
-  // const closeModal = () => {
-  //   setIsOpen(false);
-  // };
+  const closeModal = () => {
+    setIsOpen(false);
+  };
 
   const encodeMessage = (message) => {
     return encodeURIComponent(message);
@@ -40,6 +40,7 @@ function ModalConvenios({ closeModal, anterior, siguiente }) {
       {isOpen && (
         <>
           {/* Fondo oscurecido */}
+          
           <div
             className="fixed top-0 left-0 bottom-0 right-0 md:-left-5 w-full h-full bg-black opacity-50 z-40"
             onClick={closeModal}

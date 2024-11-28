@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import "../../styles/clients/botones.css";
-import "../../styles/clients/cards.css";
-import flecha from '../../images/flecha.png'
-import { FaWhatsapp } from 'react-icons/fa';  // Importamos el ícono de WhatsApp
+import React, { useState } from 'react';
+import '../../styles/clients/botones.css';
+import '../../styles/clients/cards.css';
+import flecha from '../../images/flecha.png';
+import { FaWhatsapp } from 'react-icons/fa'; // Importamos el ícono de WhatsApp
 
-function ModalContratos({ anterior, siguiente}) {
+function ModalContratos({ anterior, siguiente, bandera }) {
   //recibo las funciones que contienen la posición del modal siguiente y anterior
   const [isOpen, setIsOpen] = useState(true);
 
@@ -23,11 +23,9 @@ function ModalContratos({ anterior, siguiente}) {
     setIsOpen(false);
   };
 
-
   const encodeMessage = (message) => {
     return encodeURIComponent(message);
   };
-
 
   const wspLinkMonteros = `https://wa.me/5493863564651?text=${encodeMessage(
     mensajeMonteros
@@ -47,6 +45,7 @@ function ModalContratos({ anterior, siguiente}) {
             className="fixed top-0 left-0 bottom-0 right-0 md:-left-5 w-full h-full bg-black opacity-50 z-40"
             onClick={closeModal}
           ></div>
+
           {/* Modal */}
           <div
             id="default-modal"
@@ -55,12 +54,15 @@ function ModalContratos({ anterior, siguiente}) {
             className="flex items-center justify-center fixed top-0 right-0 left-0 bottom-0 z-50"
           >
             {/* En la flecha anterior el evento click muestra el modal de la posición recibida por parametro */}
-            <img
-              onClick={anterior}
-              className="h-10 cursor-pointer transition hover:invert"
-              src={flecha}
-              alt="Flecha"
-            />
+            {bandera > 0 && (
+              <img
+                onClick={anterior}
+                className="h-10 cursor-pointer transition hover:invert"
+                src={flecha}
+                alt="Flecha"
+              />
+            )}
+
             <div className="relative p-4 w-[80%] lg:w-full max-w-5xl max-h-full mt-10">
               {' '}
               {/* Se modificó en ancho del modal de full a 80% para que se visualicen las flechas en mobile, cambiado por Rafael Peralta */}
@@ -231,12 +233,14 @@ function ModalContratos({ anterior, siguiente}) {
               </div>
             </div>
             {/* En la flecha anterior el evento click muestra el modal de la posición recibida por parametro */}
-            <img
-              onClick={siguiente}
-              className="h-10 transform rotate-180 cursor-pointer transition hover:invert"
-              src={flecha}
-              alt="Flecha"
-            />
+            {bandera > 0 && (
+              <img
+                onClick={siguiente}
+                className="h-10 transform rotate-180 cursor-pointer transition hover:invert"
+                src={flecha}
+                alt="Flecha"
+              />
+            )}
           </div>
         </>
       )}
