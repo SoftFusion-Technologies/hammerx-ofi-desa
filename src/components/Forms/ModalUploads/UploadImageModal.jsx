@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useAuth } from '../../../AuthContext';
 
 const UploadImageModal = ({
   isOpen,
@@ -12,6 +13,7 @@ const UploadImageModal = ({
   const [file, setFile] = useState(null); // Estado para el archivo
   const [archivos, setArchivos] = useState([]);
   const [isUploading, setIsUploading] = useState(false); // Estado para controlar el proceso de carga
+  const { userLevel } = useAuth(); // Se obtiene el userLevel del contexto
 
   useEffect(() => {
     if (agendaId) {
@@ -62,8 +64,12 @@ const UploadImageModal = ({
 
       if (response.ok) {
         alert('Imagen subida exitosamente.');
-        // Actualizar el estado de la agenda a 'ENVIADO'
-        await updateAgendaStatus(agendaId, 'ENVIADO');
+        // // Actualizar el estado de la agenda a 'ENVIADO'
+        // await updateAgendaStatus(agendaId, 'ENVIADO');
+        // Nuevo estado REVISION, cuando un profe sube una agenda se pone REVISION
+        // luego el gerente o admin los autoriza y pasan a ser  ENVIADOS
+        // Actualizar el estado de la agenda a 'REVISION'
+        await updateAgendaStatus(agendaId, 'REVISIÓN');
         fetchArchivos(); // Actualizar la lista de archivos
         fetchAlumnos();
         handleCloseModal(); // Cerrar el modal
@@ -141,11 +147,23 @@ const UploadImageModal = ({
     setArchivos([]); // Limpiar lista de archivos
     onClose(); // Llamar al cierre del modal
   };
+
+  const autorizarAgenda = (agendaId, nuevoEstado) => {
+    if (!agendaId) {
+      console.error('El agendaId no está definido');
+      return;
+    }
+    updateAgendaStatus(agendaId, nuevoEstado);
+    handleCloseModal();
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded shadow-md">
         <h2 className="font-bold mb-4 text-orange-500 text-2xl">HAMMERX</h2>
-        <p className="font-bold mb-4 text-lg text-left">Archivos Subidos</p>
+        <p className="font-bold mb-4 text-lg text-left uppercase">
+          Archivos Subidos
+        </p>
 
         {archivos.length > 0 ? (
           <div>
@@ -192,7 +210,6 @@ const UploadImageModal = ({
               {isUploading ? 'Subiendo...' : 'Subir Imagen'}{' '}
               {/* Mostrar texto de carga */}
             </button>
-
             <button
               type="button"
               onClick={() => handleCloseModal()}
@@ -201,6 +218,16 @@ const UploadImageModal = ({
               Cerrar
             </button>
           </div>
+          {/* NUEVO BOTON PARA CAMBIAR EL ESTADO  */}
+          {userLevel === 'instructor' || (
+            <button
+              type="button"
+              onClick={() => autorizarAgenda(agendaId, 'ENVIADO')}
+              className=" mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 w-full"
+            >
+              Autorizar
+            </button>
+          )}
         </form>
       </div>
     </div>

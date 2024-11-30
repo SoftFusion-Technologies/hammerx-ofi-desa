@@ -1130,10 +1130,12 @@ const PlanillaEntrenador = () => {
                       <input
                         type="text"
                         className={`w-24 px-2 py-1 text-center rounded-full ${
-                          agenda?.contenido === 'ENVIADO'
-                            ? 'bg-green-600 text-white'
+                          agenda?.contenido === 'REVISIÓN'
+                            ? 'bg-yellow-600 text-white'
                             : agenda?.contenido === 'PENDIENTE'
                             ? 'bg-red-600 text-white'
+                            : agenda?.contenido === 'ENVIADO'
+                            ? 'bg-green-600 text-white'
                             : ''
                         }`}
                         value={agenda?.contenido || ''}
