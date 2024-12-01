@@ -62,7 +62,12 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
               params: { sede }
             });
 
-      setUsers(response.data);
+      // Filtrar los usuarios para excluir aquellos con level = 'instructor'
+      const usuariosFiltrados = response.data.filter(
+        (user) => user.level !== 'instructor'
+      );
+
+      setUsers(usuariosFiltrados);
     } catch (error) {
       console.log('Error al obtener los usuarios:', error);
       setUsers([]);
@@ -89,54 +94,52 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
     }
   };
   const handleSubmitNovedad = async (valores) => {
-     try {
-       const data = {
-         sede: valores.sede,
-         titulo: valores.titulo,
-         mensaje: valores.mensaje,
-         vencimiento: valores.vencimiento,
-         estado: valores.estado,
-         user: selectedUsers
-       };
+    try {
+      const data = {
+        sede: valores.sede,
+        titulo: valores.titulo,
+        mensaje: valores.mensaje,
+        vencimiento: valores.vencimiento,
+        estado: valores.estado,
+        user: selectedUsers
+      };
 
-       // Definir URL y método basados en la existencia de novedad
-       const url = novedad
-         ? `http://localhost:8080/novedades/${novedad.id}`
-         : 'http://localhost:8080/novedades/';
-       const method = novedad ? 'PUT' : 'POST';
+      // Definir URL y método basados en la existencia de novedad
+      const url = novedad
+        ? `http://localhost:8080/novedades/${novedad.id}`
+        : 'http://localhost:8080/novedades/';
+      const method = novedad ? 'PUT' : 'POST';
 
-       const respuesta = await fetch(url, {
-         method: method,
-         body: JSON.stringify(data),
-         headers: {
-           'Content-Type': 'application/json'
-         }
-       });
+      const respuesta = await fetch(url, {
+        method: method,
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-       if (method === 'PUT') {
-         // setName(null); // una vez que sale del metodo PUT, limpiamos el campo descripcion
-         setTextoModal('Novedad actualizada correctamente.');
-       } else {
-         setTextoModal('Novedad creada correctamente.');
-       }
+      if (method === 'PUT') {
+        // setName(null); // una vez que sale del metodo PUT, limpiamos el campo descripcion
+        setTextoModal('Novedad actualizada correctamente.');
+      } else {
+        setTextoModal('Novedad creada correctamente.');
+      }
 
-       // Verificamos si la solicitud fue exitosa
-       if (!respuesta.ok) {
-         throw new Error(
-           'Error en la solicitud ${method}: ' + respuesta.status
-         );
-       }
+      // Verificamos si la solicitud fue exitosa
+      if (!respuesta.ok) {
+        throw new Error('Error en la solicitud ${method}: ' + respuesta.status);
+      }
 
-       const result = await respuesta.json();
-       console.log('Registro insertado correctamente:', result);
+      const result = await respuesta.json();
+      console.log('Registro insertado correctamente:', result);
 
-       setShowModal(true);
-       setTimeout(() => setShowModal(false), 1500);
-     } catch (error) {
-       console.error('Error al insertar el registro:', error.message);
-       setErrorModal(true);
-       setTimeout(() => setErrorModal(false), 1500);
-     }
+      setShowModal(true);
+      setTimeout(() => setShowModal(false), 1500);
+    } catch (error) {
+      console.error('Error al insertar el registro:', error.message);
+      setErrorModal(true);
+      setTimeout(() => setErrorModal(false), 1500);
+    }
   };
   const handleClose = () => {
     if (formikRef.current) {
@@ -210,49 +213,64 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
                     <option value="todas">Sucursal: Todas</option>
                     <option value="monteros">Monteros</option>
                     <option value="concepcion">Concepción</option>
-
-                    
                   </Field>
                   {errors.sede && touched.sede ? (
                     <Alerta>{errors.sede}</Alerta>
                   ) : null}
                 </div>
-                <div className="mb-4 px-4">
-                  <div className="form-check">
+                
+                <div className="mb-6 px-6 py-4 bg-white rounded-lg shadow-md">
+                  {/* Checkbox para seleccionar todos los usuarios */}
+                  <div className="mb-4 flex items-center">
                     <input
                       type="checkbox"
                       id="select-all-users"
-                      className="form-check-input"
+                      className="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
                       onChange={handleSelectAllUsers}
                       checked={selectAllUsers}
                     />
-                    <label htmlFor="select-all-users" className="form-check-label">
+                    <label
+                      htmlFor="select-all-users"
+                      className="ml-2 text-sm font-medium text-gray-700 cursor-pointer"
+                    >
                       Seleccionar todos los usuarios
                     </label>
                   </div>
-                  {Array.isArray(users) && users.length > 0 ? (
-                    users.map((user) => (
-                      <div key={user.id} className="form-check">
-                        <input
-                          type="checkbox"
-                          id={`user-${user.id}`}
-                          className="form-check-input"
-                          value={user.id}
-                          onChange={() => handleCheckboxChange(user.id)}
-                          checked={selectedUsers.includes(user.id)}
-                        />
-                        <label
-                          htmlFor={`user-${user.id}`}
-                          className="form-check-label"
-                        >
-                          {user.name}
-                        </label>
+
+                  {/* Contenedor con scroll para la lista de usuarios */}
+                  <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
+                    {Array.isArray(users) && users.length > 0 ? (
+                      <div className="space-y-3">
+                        {users.map((user) => (
+                          <div
+                            key={user.id}
+                            className="flex items-center rounded-lg border border-gray-200 px-4 py-2 hover:bg-gray-100"
+                          >
+                            <input
+                              type="checkbox"
+                              id={`user-${user.id}`}
+                              className="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                              value={user.id}
+                              onChange={() => handleCheckboxChange(user.id)}
+                              checked={selectedUsers.includes(user.id)}
+                            />
+                            <label
+                              htmlFor={`user-${user.id}`}
+                              className="ml-3 text-sm font-medium text-gray-800 cursor-pointer"
+                            >
+                              {user.name}
+                            </label>
+                          </div>
+                        ))}
                       </div>
-                    ))
-                  ) : (
-                    <p>No users available</p>
-                  )}
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        No hay usuarios disponibles
+                      </p>
+                    )}
+                  </div>
                 </div>
+
                 <div className="mb-3 px-4">
                   <label
                     htmlFor="vencimiento"

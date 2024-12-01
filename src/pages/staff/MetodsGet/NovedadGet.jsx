@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { formatearFecha } from '../../../Helpers';
 import { Link } from 'react-router-dom';
 import NavbarStaff from '../NavbarStaff';
@@ -11,6 +11,9 @@ import { useAuth } from '../../../AuthContext';
 import ModalNovedad from '../MetodsGet/ModalNovedad';
 import Switch from 'react-switch';
 import FechasNovedad from './Novedad/FechasNovedad'; //R7- nuevo componente para agregar mas fechas 22/09/2024 - Benjamin Orellana
+
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const NovedadGet = () => {
   const [modalNewNovedad, setModalNewNovedad] = useState(false);
@@ -166,7 +169,7 @@ const NovedadGet = () => {
   const results = !search
     ? filtrarNovedades(novedad)
     : filtrarNovedades(novedad).filter((dato) => {
-        return dato.sede.toLowerCase().includes(search.toLowerCase());
+        return dato.titulo.toLowerCase().includes(search.toLowerCase());
       });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -232,6 +235,7 @@ const NovedadGet = () => {
     const fechaB = Math.max(...b.fechasVencimiento.map((f) => f.getTime()));
     return fechaB - fechaA;
   });
+
   // R6- Agregar mas fechas a novedades  18-09-2024 - Benjamin Orellana - FINAL
 
   const handleEditarNovedad = (novedad) => {
@@ -462,7 +466,7 @@ const NovedadGet = () => {
                                   <li key={archivo.id}>
                                     {archivo.nombre_archivo} -{' '}
                                     <a
-                                      href={`https://localhost:8080/download/novedad/${archivo.id}`}
+                                      href={`http://localhost:8080/download/novedad/${archivo.id}`}
                                       className="text-blue-500 underline"
                                       target="_blank"
                                       rel="noopener noreferrer"
@@ -696,7 +700,7 @@ const NovedadGet = () => {
                                 <li key={archivo.id}>
                                   {archivo.nombre_archivo} -{' '}
                                   <a
-                                    href={`https://localhost:8080/download/novedad/${archivo.id}`}
+                                    href={`http://localhost:8080/download/novedad/${archivo.id}`}
                                     className="text-blue-600 underline uppercase"
                                     target="_blank"
                                     rel="noopener noreferrer"

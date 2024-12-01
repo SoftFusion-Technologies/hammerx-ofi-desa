@@ -10,6 +10,8 @@ import FormAltaAlumno from '../../components/Forms/FormAltaAlumno';
 import AlumnoDetails from './MetodsGet/Details/AlumnoGetId';
 import UploadImageModal from '../../components/Forms/ModalUploads/UploadImageModal';
 import NotificationsAgendas from './NotificationsAgendas';
+import * as XLSX from 'xlsx';
+import { formatearFecha } from '../../Helpers/index';
 
 const PlanillaEntrenador = () => {
   const URL = 'http://localhost:8080/';
@@ -786,6 +788,162 @@ const PlanillaEntrenador = () => {
     setSelectedAlumnoId(null);
   };
 
+  // Función para exportar los datos a Excel
+  const exportToExcel = () => {
+    const today = new Date();
+
+    // Crear libro de trabajo
+    const wb = XLSX.utils.book_new();
+
+    // Definir las cabeceras de la hoja
+    // Primero agregamos una fila con la información del instructor y la fecha
+    // Definir las cabeceras de la hoja
+    const header = [
+      [`Instructor: ${nombreInstructor}`, `Fecha: ${formatearFecha(today)}`], // Fila con el nombre del instructor y la fecha
+      [], // Fila vacía para separar de la cabecera
+      [
+        '#',
+        'P',
+        'APELLIDO Y NOMBRE',
+        'N/A/P',
+        'C',
+        'CELULAR',
+        'PUNTO D',
+        ...Array.from({ length: 31 }, (_, i) => `Día ${i + 1}`),
+        'T',
+        'Nuevo Primera Semana',
+        'Nuevo 3ra semana',
+        'Clase/semana de prueba',
+        'Inactivo',
+        'Devolución final',
+        'Otros agendamientos',
+        'OBSERVACIONES'
+      ]
+    ];
+
+    // Crear la matriz de datos completa
+    const wsData = [
+      ...header, // Esto concatena las filas del header
+      ...rows.map((alumno, rowIndex) => [
+        rowIndex + 1,
+        'P',
+        alumno.nombre,
+        alumno.prospecto,
+        alumno.c,
+        alumno.celular,
+        alumno.punto_d,
+        ...alumno.asistencias.map((asistencia) =>
+          asistencia ? asistencia : ''
+        ), // Verifica si asistencia es null/undefined
+        alumno.totalAsistencias,
+        ...alumno.agendas.map((agenda) => (agenda ? agenda.contenido : '')), // Verifica si agenda es null/undefined
+        alumno.motivo
+      ])
+    ];
+
+    // Crear la hoja de trabajo
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Estilos para las cabeceras
+    const headerStyle = {
+      font: { bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '1F4E79' } }, // Azul oscuro para la cabecera
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: {
+        top: { style: 'thin', color: { rgb: '000000' } },
+        left: { style: 'thin', color: { rgb: '000000' } },
+        bottom: { style: 'thin', color: { rgb: '000000' } },
+        right: { style: 'thin', color: { rgb: '000000' } }
+      }
+    };
+
+    // Estilos para las filas de datos
+    const dataStyle = {
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: {
+        top: { style: 'thin', color: { rgb: '000000' } },
+        left: { style: 'thin', color: { rgb: '000000' } },
+        bottom: { style: 'thin', color: { rgb: '000000' } },
+        right: { style: 'thin', color: { rgb: '000000' } }
+      }
+    };
+
+    // Estilo para resaltar filas alternadas
+    const stripedStyle = {
+      fill: { fgColor: { rgb: 'D9E1F2' } } // Color gris claro
+    };
+
+    // Aplicar estilos a las cabeceras
+    for (let col = 0; col < header.length; col++) {
+      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: col })];
+      if (cell) {
+        cell.s = headerStyle;
+      }
+    }
+
+    // Aplicar estilos a las filas de datos (excepto la cabecera)
+    for (let row = 1; row < wsData.length; row++) {
+      for (let col = 0; col < header.length; col++) {
+        const cell = ws[XLSX.utils.encode_cell({ r: row, c: col })];
+        if (cell) {
+          // Estilo alternado para filas
+          if (row % 2 === 0) {
+            cell.s = { ...dataStyle, ...stripedStyle }; // Filas pares con color alterno
+          } else {
+            cell.s = dataStyle; // Filas impares sin color alterno
+          }
+        }
+      }
+    }
+
+    // Establecer estilos especiales para las columnas de Asistencias y Agendas
+    const asistenciaStyle = {
+      fill: { fgColor: { rgb: 'B6D7A8' } }, // Verde claro para asistencias
+      font: { color: { rgb: '1D4418' } }, // Texto verde oscuro
+      alignment: { horizontal: 'center', vertical: 'center' }
+    };
+
+    const agendaStyle = {
+      fill: { fgColor: { rgb: 'FFEB9C' } }, // Amarillo claro para agendas
+      font: { color: { rgb: '9C6500' } }, // Texto amarillo oscuro
+      alignment: { horizontal: 'center', vertical: 'center' }
+    };
+
+    // Aplicar estilos a las celdas de asistencias (de columna 7 a 37)
+    for (let row = 1; row < wsData.length; row++) {
+      for (let col = 7; col < 7 + 31; col++) {
+        // Asistencias (Día 1 a Día 31)
+        const cell = ws[XLSX.utils.encode_cell({ r: row, c: col })];
+        if (cell) {
+          cell.s = asistenciaStyle;
+        }
+      }
+      // Aplicar estilos a las celdas de agendas (últimas columnas)
+      for (let col = header.length - 6; col < header.length; col++) {
+        // Agendas
+        const cell = ws[XLSX.utils.encode_cell({ r: row, c: col })];
+        if (cell) {
+          cell.s = agendaStyle;
+        }
+      }
+    }
+
+    // Ajustar el ancho de las columnas
+    const colWidths = header.map((col, index) => ({
+      wpx: index === 0 ? 50 : 100 // Ancho específico para la columna de índices
+    }));
+    ws['!cols'] = colWidths;
+
+    // Agregar la hoja al libro de trabajo
+    XLSX.utils.book_append_sheet(wb, ws, 'Alumnos');
+
+    // Exportar el archivo Excel con el nombre adecuado
+    XLSX.writeFile(
+      wb,
+      `Planilla_Instructor_${nombreInstructor}_${formatearFecha(today)}.xlsx`
+    );
+  };
+
   return (
     <>
       <NavBar />
@@ -838,6 +996,15 @@ const PlanillaEntrenador = () => {
               >
                 Nuevo Alumno
               </button>
+              
+              {userLevel !== 'instructor' && (
+                <button
+                  className="ml-2 bg-[#58b35e] hover:bg-[#4e8a52] text-white pb-3 py-2 px-4 rounded transition-colors duration-100 z-10"
+                  onClick={exportToExcel}
+                >
+                  Exportar a Excel
+                </button>
+              )}
             </div>
 
             <div className="flex justify-center">
