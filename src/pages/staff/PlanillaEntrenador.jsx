@@ -395,7 +395,12 @@ const PlanillaEntrenador = () => {
   };
 
   const handleSaveAsistencias = async (rowIndex, asistencias) => {
-    const alumnoId = rows[rowIndex].id; // Obtener el ID del alumno correspondiente
+    // const alumnoId = rows[rowIndex].id; // Obtener el ID del alumno correspondiente
+
+    const globalIndex = firstIndex + rowIndex; // Índice global basado en la página
+    const alumnoId = filteredAlumnos[globalIndex].id; // Obtener el ID correcto del alumno
+
+    console.log('id alumno', alumnoId);
 
     try {
       // Iterar sobre las asistencias y enviar solo aquellas que cambian de 'P' a 'A' o de 'A' a 'P'
@@ -420,6 +425,7 @@ const PlanillaEntrenador = () => {
             const existingRecordResponse = await fetch(
               `${URL}asistencias/${alumnoId}/${dia}`
             );
+            console.log(alumnoId);
 
             console.log(existingRecordId);
             const existingRecordData = await existingRecordResponse.json();
@@ -996,7 +1002,7 @@ const PlanillaEntrenador = () => {
               >
                 Nuevo Alumno
               </button>
-              
+
               {userLevel !== 'instructor' && (
                 <button
                   className="ml-2 bg-[#58b35e] hover:bg-[#4e8a52] text-white pb-3 py-2 px-4 rounded transition-colors duration-100 z-10"
@@ -1039,8 +1045,11 @@ const PlanillaEntrenador = () => {
                 </ul>
               </nav>
             </div>
-            <h1 className="uppercase font-bold text-xl">
+            <h1 className="ml-2 uppercase font-bold text-xl">
               Cantidad de páginas: {nPage}
+            </h1>
+            <h1 className="ml-2 mt-2 uppercase font-bold text-xl">
+              Pagina Actual: {currentPage}
             </h1>
           </div>
         ) : (
@@ -1185,7 +1194,7 @@ const PlanillaEntrenador = () => {
                   <td className="border border-gray-400">
                     <input
                       type="text"
-                      className={`w-40 px-2 py-3`}
+                      className={`w-40 px-2 py-3 uppercase`}
                       // ${
                       //   determinarColorAlumno(row.fecha_creacion) === 'green'
                       //     ? 'text-green-400'
@@ -1282,7 +1291,7 @@ const PlanillaEntrenador = () => {
                           );
 
                           // Llama a la función para guardar las asistencias
-                          handleSaveAsistencias(rowIndex, updatedAsistencias);
+                          // handleSaveAsistencias(rowIndex, updatedAsistencias);
                         }}
                       />
                     </td>
