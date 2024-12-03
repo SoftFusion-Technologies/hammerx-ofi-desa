@@ -367,8 +367,9 @@ const PlanillaEntrenador = () => {
     if (confirmDelete) {
       try {
         // Obtenmos el ID del alumno que deseamos eliminar
-        const alumnoId = rows[rowIndex].id;
-        console.log(alumnoId);
+
+        const globalIndex = firstIndex + rowIndex; // Índice global basado en la página
+        const alumnoId = filteredAlumnos[globalIndex].id; // Obtener el ID correcto del alumno
 
         // Realiza la petición DELETE a la API
         const response = await fetch(`${URL}alumnos/${alumnoId}`, {
@@ -387,6 +388,7 @@ const PlanillaEntrenador = () => {
         setRows(updatedRows);
 
         alert('Registro eliminado correctamente');
+        fetchAlumnos();
       } catch (error) {
         console.error('Error al eliminar el registro:', error);
         alert('Error al eliminar el registro. Intenta nuevamente.');
@@ -620,10 +622,11 @@ const PlanillaEntrenador = () => {
                 updateData.message
               );
               alert(`Asistencia actualizada para el día ${day}`);
+              fetchAsistencias();
+              fetchAlumnos();
             }
           }
-          fetchAsistencias();
-          fetchAlumnos();
+
           continue; // Si ya existe pero no es necesario actualizar, continúa con el siguiente día
         } else {
           // Si no existe, crear un nuevo registro
