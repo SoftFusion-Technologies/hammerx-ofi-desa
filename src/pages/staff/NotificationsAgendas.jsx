@@ -25,12 +25,9 @@ const NotificationsAgendas = ({ user1, user2 }) => {
 
   const fetchNotificaciones = async () => {
     try {
-      // Usamos user1 si está disponible, sino usamos user2
-
-      console.log('id del usuario', user_id);
+      console.log('ID del usuario:', user_id);
 
       if (!user_id) {
-        // Si ninguno de los dos valores está presente, puedes manejar el error o mostrar un mensaje
         console.error('No se ha proporcionado un id de instructor');
         return;
       }
@@ -38,9 +35,15 @@ const NotificationsAgendas = ({ user1, user2 }) => {
       const response = await axios.get(
         `${URL}/notificaciones?user_id=${user_id}`
       );
-      setNotificaciones(response.data);
-      if (response.data.length > 0) {
-        setModalOpen(true); // Abrir modal si hay notificaciones
+
+      if (response.data) {
+        // Filtramos solo las agendas en estado PENDIENTE
+        const pendientes = response.data.filter(
+          (notificacion) => notificacion.estado_agenda === 'PENDIENTE'
+        );
+
+        setNotificaciones(pendientes);
+        setModalOpen(pendientes.length > 0); // Abrir modal si hay notificaciones pendientes
       }
     } catch (error) {
       console.error('Error al obtener notificaciones:', error);
@@ -77,7 +80,10 @@ const NotificationsAgendas = ({ user1, user2 }) => {
                           'Agenda Desconocida'}
                       </strong>{' '}
                       en estado
-                      <span className="text-red-600 font-bold"> PENDIENTE.</span>
+                      <span className="text-red-600 font-bold">
+                        {' '}
+                        PENDIENTE.
+                      </span>
                     </li>
                   ))}
                 </ul>

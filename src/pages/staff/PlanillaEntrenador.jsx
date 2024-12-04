@@ -59,6 +59,8 @@ const PlanillaEntrenador = () => {
   const [asistencias, setAsistencias] = useState([]);
   const [botonesDeshabilitados, setBotonesDeshabilitados] = useState({}); // Estado para controlar los botones
 
+  const [dayNumberG, setDayNumber] = useState(null); // Estado para el número del día
+
   useEffect(() => {
     // Obtener la fecha actual
     const today = new Date();
@@ -399,23 +401,37 @@ const PlanillaEntrenador = () => {
   const handleSaveAsistencias = async (rowIndex, asistencias) => {
     // const alumnoId = rows[rowIndex].id; // Obtener el ID del alumno correspondiente
 
+    const currentDate = new Date();
+    const mesActual = currentDate.getMonth() + 1; // getMonth() devuelve el mes en base a 0, por eso sumamos 1
+    const anioActual = currentDate.getFullYear(); // Devuelve el año completo
+
     const globalIndex = firstIndex + rowIndex; // Índice global basado en la página
     const alumnoId = filteredAlumnos[globalIndex].id; // Obtener el ID correcto del alumno
 
     console.log('id alumno', alumnoId);
 
+    if (dayNumberG !== null) {
+      if (dayNumberG < day - 1) {
+        alert('ACCIÓN NO PERMITIDA!!!');
+        return;
+      }
+      if (dayNumberG > day) {
+        alert('ACCIÓN NO PERMITIDA!!!');
+        return;
+      }
+    }
     try {
       // Iterar sobre las asistencias y enviar solo aquellas que cambian de 'P' a 'A' o de 'A' a 'P'
       for (let index = 0; index < asistencias.length; index++) {
         const nuevoEstado = asistencias[index]; // Obtener el nuevo estado para el día actual
-        const dia = index + 1; // Días empezando desde 1
+        const dayy = index + 1; // Días empezando desde 1
 
         // Solo enviar si el nuevo estado está definido (es decir, no vacío y no 'N')
 
         if (nuevoEstado && nuevoEstado !== 'N') {
           // Verifica si ya existe un registro de asistencia
           const checkResponse = await fetch(
-            `${URL}asistencias/${alumnoId}/${dia}`
+            `${URL}asistencias/${alumnoId}/${dayy}/${mesActual}/${anioActual}`
           );
           const checkData = await checkResponse.json();
 
@@ -425,7 +441,7 @@ const PlanillaEntrenador = () => {
 
             // Obtener el estado actual del registro existente
             const existingRecordResponse = await fetch(
-              `${URL}asistencias/${alumnoId}/${dia}`
+              `${URL}asistencias/${alumnoId}/${dayy}/${mesActual}/${anioActual}`
             );
             console.log(alumnoId);
 
@@ -474,7 +490,7 @@ const PlanillaEntrenador = () => {
               },
               body: JSON.stringify({
                 alumno_id: alumnoId,
-                dia: dia,
+                dia: day,
                 estado: nuevoEstado
               })
             });
@@ -1282,6 +1298,8 @@ const PlanillaEntrenador = () => {
                         maxLength={1}
                         value={asistencia}
                         onChange={(e) => {
+                          const dayNumber = asistenciaIndex + 1;
+                          setDayNumber(dayNumber);
                           const updatedAsistencias = [...row.asistencias];
                           updatedAsistencias[asistenciaIndex] =
                             e.target.value.toUpperCase();
@@ -1294,7 +1312,7 @@ const PlanillaEntrenador = () => {
                           );
 
                           // Llama a la función para guardar las asistencias
-                          // handleSaveAsistencias(rowIndex, updatedAsistencias);
+                          handleSaveAsistencias(rowIndex, updatedAsistencias);
                         }}
                       />
                     </td>
