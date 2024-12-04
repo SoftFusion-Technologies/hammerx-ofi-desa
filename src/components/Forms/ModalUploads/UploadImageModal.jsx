@@ -143,8 +143,6 @@ const UploadImageModal = ({
   if (!isOpen) return null;
 
   const handleCloseModal = () => {
-    setFile(null); // Limpiar archivo seleccionado
-    setArchivos([]); // Limpiar lista de archivos
     onClose(); // Llamar al cierre del modal
   };
 

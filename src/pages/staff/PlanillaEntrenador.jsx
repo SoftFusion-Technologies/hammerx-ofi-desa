@@ -61,6 +61,9 @@ const PlanillaEntrenador = () => {
 
   const [dayNumberG, setDayNumber] = useState(null); // Estado para el número del día
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   useEffect(() => {
     // Obtener la fecha actual
     const today = new Date();
@@ -247,6 +250,7 @@ const PlanillaEntrenador = () => {
   useEffect(() => {
     fetchAlumnos();
   }, [URL, userId]);
+
   // Filtrar alumnos cuando cambia el valor de búsqueda
   useEffect(() => {
     if (search.trim() === '') {
@@ -255,15 +259,25 @@ const PlanillaEntrenador = () => {
       const filtered = rows.filter((alumno) =>
         alumno.nombre?.toLowerCase().includes(search.toLowerCase())
       );
+
       setFilteredAlumnos(filtered);
+
+      // Validar que la página actual no exceda el número de páginas disponibles
+      const maxPage = Math.ceil(filtered.length / itemsPerPage);
+      if (currentPage > maxPage) {
+        setCurrentPage(maxPage > 0 ? maxPage : 1);
+      }
     }
-  }, [search, rows]);
+  }, [search, rows, currentPage, itemsPerPage]);
 
   // Manejar cambios en las celdas
   const handleInputChange = (rowIndex, field, value) => {
     setRows((prevRows) => {
+      // Calcular el índice absoluto basado en la página actual
+      const absoluteIndex = firstIndex + rowIndex;
+
       const newRows = [...prevRows];
-      const updatedRow = { ...newRows[rowIndex] }; // Clonar la fila específica
+      const updatedRow = { ...newRows[absoluteIndex] }; // Clonar la fila específica
 
       if (field === 'asistencias') {
         updatedRow.asistencias = value;
@@ -277,14 +291,16 @@ const PlanillaEntrenador = () => {
       } else if (field === 'c' && updatedRow.prospecto === 'prospecto') {
         // Solo permitir actualizar "c" si "prospecto" es "prospecto"
         updatedRow.c = value;
-        console.log(updatedRow.c);
       } else {
         updatedRow[field] = value;
       }
 
-      newRows[rowIndex] = updatedRow; // Actualizar la fila específica
+      newRows[absoluteIndex] = updatedRow; // Actualizar la fila específica
       return newRows; // Retornar el nuevo estado
     });
+
+    // Mantener la página actual
+    setCurrentPage(currentPage);
   };
 
   // Función para editar un alumno desde los campos de la planilla
@@ -469,17 +485,17 @@ const PlanillaEntrenador = () => {
 
               if (!response.ok) {
                 throw new Error(
-                  `Error al actualizar la asistencia del día ${dia}`
+                  `Error al actualizar la asistencia del día ${day}`
                 );
               }
 
               const data = await response.json();
               console.log(
-                `Asistencia para el día ${dia} actualizada:`,
+                `Asistencia para el día ${day} actualizada:`,
                 data.message
               );
             } else {
-              console.log(`No hay cambios necesarios para el día ${dia}.`);
+              console.log(`No hay cambios necesarios para el día ${day}.`);
             }
           } else {
             // Si no existe, crear un nuevo registro
@@ -490,18 +506,20 @@ const PlanillaEntrenador = () => {
               },
               body: JSON.stringify({
                 alumno_id: alumnoId,
-                dia: day,
-                estado: nuevoEstado
+                dia: dayy,
+                estado: nuevoEstado,
+                mes: mesActual,
+                anio: anioActual
               })
             });
 
             if (!response.ok) {
-              throw new Error(`Error al guardar la asistencia del día ${dia}`);
+              throw new Error(`Error al guardar la asistencia del día ${dayy}`);
             }
 
             const data = await response.json();
             console.log(
-              `Asistencia para el día ${dia} guardada:`,
+              `Asistencia para el día ${dayy} guardada:`,
               data.message
             );
           }
@@ -598,6 +616,9 @@ const PlanillaEntrenador = () => {
   //boton de PRESENTE para un alumno en particular - Baltazar Almiron - 11/11/2024
   const handleBotonAsistencia = async (idAlumno) => {
     const alumnoId = idAlumno; // Obtener el ID del alumno correspondiente
+    const currentDate = new Date();
+    const mesActual = currentDate.getMonth() + 1; // getMonth() devuelve el mes en base a 0, por eso sumamos 1
+    const anioActual = currentDate.getFullYear(); // Devuelve el año completo
 
     try {
       // Iterar sobre las asistencias y enviar solo aquellas que cambian de 'P' a 'A' o de 'A' a 'P'
@@ -606,7 +627,7 @@ const PlanillaEntrenador = () => {
 
         // Verifica si ya existe un registro de asistencia
         const checkResponse = await fetch(
-          `${URL}asistencias/${alumnoId}/${day}`
+          `${URL}asistencias/${alumnoId}/${day}/${mesActual}/${anioActual}`
         );
 
         const checkData = await checkResponse.json();
@@ -654,7 +675,9 @@ const PlanillaEntrenador = () => {
             body: JSON.stringify({
               alumno_id: alumnoId,
               dia: day,
-              estado: 'P'
+              estado: 'P',
+              mes: mesActual,
+              anio: anioActual
             })
           });
 
@@ -731,9 +754,6 @@ const PlanillaEntrenador = () => {
     // si presionamos editar, no mostramos los detalles del alumno
     setModalAlumnoDetails(false);
   };
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
 
   const lastIndex = currentPage * itemsPerPage;
   const firstIndex = lastIndex - itemsPerPage;
