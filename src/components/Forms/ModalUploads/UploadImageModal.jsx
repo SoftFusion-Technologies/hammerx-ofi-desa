@@ -155,6 +155,39 @@ const UploadImageModal = ({
     handleCloseModal();
   };
 
+  const eliminarAgenda = async (agendaId) => {
+    try {
+      // Confirmación antes de eliminar
+      const confirmDelete = window.confirm(
+        `¿Estás seguro de que deseas eliminar la agenda con ID ${agendaId}?`
+      );
+
+      if (!confirmDelete) {
+        console.log('El usuario canceló la eliminación.');
+        return; // Salir si el usuario cancela
+      }
+
+      // Hacer la solicitud DELETE a la API
+      const response = await axios.delete(
+        `http://localhost:8080/agendas/${agendaId}`
+      );
+
+      if (response.status === 200) {
+        alert('Agenda eliminada correctamente.');
+        fetchArchivos(); // Actualizar la lista de archivos
+        fetchAlumnos();
+        handleCloseModal();
+        console.log('Agenda eliminada:', agendaId);
+      } else {
+        console.error('No se pudo eliminar la agenda.');
+        alert('No se pudo eliminar la agenda. Por favor, intenta nuevamente.');
+      }
+    } catch (error) {
+      console.error('Error al eliminar la agenda:', error);
+      alert('Hubo un error al intentar eliminar la agenda.');
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded shadow-md">
@@ -224,6 +257,15 @@ const UploadImageModal = ({
               className=" mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 w-full"
             >
               Autorizar
+            </button>
+          )}
+          {userLevel === 'instructor' || (
+            <button
+              type="button"
+              onClick={() => eliminarAgenda(agendaId)} // Llamamos a eliminarAgenda
+              className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 w-full"
+            >
+              Eliminar
             </button>
           )}
         </form>

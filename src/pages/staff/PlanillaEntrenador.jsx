@@ -789,23 +789,51 @@ const PlanillaEntrenador = () => {
 
   const openModal = async (rowIndex, agendaIndex, agendaIdRec) => {
     try {
-      const alumnoId = rows[rowIndex].id;
+      const alumnoId = rows[rowIndex].id; // obtenemos el id
+      const alumnoNombre = rows[rowIndex].nombre || 'desconocido'; // obtenemos el nombre de rows
+
       // Hacemos un fetch a la API para obtener las agendas del alumno
       const response = await axios.get(`${URL}agendas?alumno_id=${alumnoId}`);
       const agendas = response.data; // Suponemos que la respuesta contiene un arreglo de agendas
 
       // Buscar la agenda correspondiente a esta celda
-      const selectedAgenda = agendas.find(
-        (agenda) => agenda.id === agendaIdRec
-      );
+      let selectedAgenda = agendas.find((agenda) => agenda.id === agendaIdRec);
 
-      console.log('Agenda ID:', selectedAgenda);
-      if (!selectedAgenda) {
-        console.error('Agenda no encontrada.');
-        return; // Salir si no hay una agenda válida
+      console.log('Agenda seleccionada:', selectedAgenda);
+
+      // Si no se encuentra una agenda y estamos en las agendas 5 o 6 debemos crear una para que se abra el modal
+      if (!selectedAgenda && (agendaIndex === 4 || agendaIndex === 5)) {
+        const agendaNum = agendaIndex === 4 ? 5 : 6; // Determinar el número de la agenda
+
+        // Confirmación del usuario con nombre del alumno
+        const confirmCreate = window.confirm(
+          `No se encontró una agenda ${agendaNum} para el alumno ${alumnoNombre} (ID: ${alumnoId}). ¿Desea crearla?`
+        );
+
+        if (!confirmCreate) {
+          console.log('El usuario canceló la creación de la agenda.');
+          return; // Salir de la función si el usuario cancela
+        }
+
+        console.log(
+          `Creando agenda ${agendaNum} para el alumno ${alumnoNombre}...`
+        );
+
+        // Crear la nueva agenda
+        const createResponse = await axios.post(`${URL}agendas`, {
+          alumno_id: alumnoId,
+          agenda_num: agendaNum,
+          contenido: '+' // Contenido predeterminado o inicial
+        });
+
+        // Obtener la agenda recién creada
+        selectedAgenda = createResponse.data.agenda;
+        console.log('Agenda creada:', selectedAgenda);
       }
+
+      // Si se encuentra o se acaba de crear una agenda válida
       if (selectedAgenda) {
-        const agendaId = agendaIdRec; // Obtener el ID de la agenda
+        const agendaId = selectedAgenda.id; // Obtener el ID de la agenda
         const agendaNum = selectedAgenda.agenda_num; // Obtener el número de la agenda
 
         // Establecer los estados para abrir el modal
@@ -813,17 +841,15 @@ const PlanillaEntrenador = () => {
         setSelectedAlumnoId(alumnoId);
         setSelectedAgendaId(agendaId); // Guardamos el ID de la agenda
         setSelectedAgendaNum(agendaNum); // Guardamos el número de la agenda
-
-        // Establecer las agendas en el estado
         setAgendas(agendas);
 
         // Abrir el modal
         setModalOpen(true);
       } else {
-        console.error('Agenda no encontrada.');
+        console.error('No se pudo crear ni obtener la agenda.');
       }
     } catch (error) {
-      console.error('Error al obtener las agendas:', error);
+      console.error('Error al manejar las agendas:', error);
     }
   };
 

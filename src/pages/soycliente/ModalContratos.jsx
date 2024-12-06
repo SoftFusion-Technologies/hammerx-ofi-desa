@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../../styles/clients/botones.css';
 import '../../styles/clients/cards.css';
 import flecha from '../../images/flecha.png';
 import { FaWhatsapp } from 'react-icons/fa'; // Importamos el ícono de WhatsApp
+import { useNavigate } from 'react-router-dom'; // Importa el hook de navegación
 
 function ModalContratos({ anterior, siguiente, bandera }) {
   //recibo las funciones que contienen la posición del modal siguiente y anterior
   const [isOpen, setIsOpen] = useState(true);
+
+  const navigate = useNavigate(); // Hook para redirigir
 
   const [mensajeMonteros, setMensajeMonteros] = useState(
     'Hola! Vengo de la página web, quiero consultar por Congelamiento de Contratos Monteros.'
@@ -27,6 +30,10 @@ function ModalContratos({ anterior, siguiente, bandera }) {
     return encodeURIComponent(message);
   };
 
+  const handleCloseModal = () => {
+    navigate('/clientes'); // Redirige cuando se cierra el modal
+  };
+
   const wspLinkMonteros = `https://wa.me/5493863564651?text=${encodeMessage(
     mensajeMonteros
   )}`; // Número de WhatsApp para Monteros
@@ -45,7 +52,6 @@ function ModalContratos({ anterior, siguiente, bandera }) {
             className="fixed top-0 left-0 bottom-0 right-0 md:-left-5 w-full h-full bg-black opacity-50 z-40"
             onClick={closeModal}
           ></div>
-
           {/* Modal */}
           <div
             id="default-modal"
@@ -62,7 +68,6 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                 alt="Flecha"
               />
             )}
-
             <div className="relative p-4 w-[80%] lg:w-full max-w-5xl max-h-full mt-10">
               {' '}
               {/* Se modificó en ancho del modal de full a 80% para que se visualicen las flechas en mobile, cambiado por Rafael Peralta */}
@@ -74,7 +79,7 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                     Congelamiento de Contratos
                   </h3>
                   <button
-                    onClick={closeModal}
+                    onClick={handleCloseModal}
                     type="button"
                     className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
                     data-modal-hide="default-modal"
@@ -189,7 +194,7 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                 {/* Modal footer */}
                 <div className="flex flex-col md:flex-row items-center justify-between p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600 space-y-4 md:space-y-0 md:space-x-4">
                   <button
-                    onClick={closeModal}
+                    onClick={handleCloseModal}
                     type="button"
                     className="w-full md:w-auto text-white bg-orange-500 hover:bg-[#fc4b08] focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-[#fc4b08] dark:focus:ring-orange-700"
                   >
