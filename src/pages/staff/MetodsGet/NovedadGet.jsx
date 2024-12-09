@@ -262,6 +262,7 @@ const NovedadGet = () => {
         }
       );
       alert('Archivo subido y guardado correctamente.');
+      fetchArchivos();
     } catch (error) {
       console.error('Error al subir el archivo:', error);
       alert('Error al subir el archivo.');

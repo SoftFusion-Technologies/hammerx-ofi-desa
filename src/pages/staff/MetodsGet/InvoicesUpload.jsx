@@ -108,6 +108,7 @@ const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
         // Add the newly uploaded image to the list
         setImagess([...imagess, response.data.imageUrl]);
         alert('Imagen subida con éxito.');
+        obtenerImages();
       }
     } catch (err) {
       console.error(err);
