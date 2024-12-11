@@ -1,9 +1,13 @@
-import React, { useState } from "react";
-import "../../styles/clients/botones.css";
-import flecha from '../../images/flecha.png'
-import { FaWhatsapp } from 'react-icons/fa';  // Importamos el ícono de WhatsApp
+import React, { useState } from 'react';
+import '../../styles/clients/botones.css';
+import flecha from '../../images/flecha.png';
+import { FaWhatsapp } from 'react-icons/fa'; // Importamos el ícono de WhatsApp
+import PromoBNA from './PromosBancarias/PromoBNA.jpeg';
+import PromoMacro from './PromosBancarias/PromoMacro.jpeg';
+import PromoSantander from './PromosBancarias/PromoSantander.jpeg';
+import WelcomeModal from './WelcomeModal'; // Asegúrate de tener el componente de modal importado
 
-function ModalPromociones({ anterior, siguiente}) {
+function ModalPromociones({ anterior, siguiente }) {
   //recibo las funciones que contienen la posición del modal siguiente y anterior
   const [isOpen, setIsOpen] = useState(true);
 
@@ -16,6 +20,9 @@ function ModalPromociones({ anterior, siguiente}) {
   };
 
   const [isSecondModalOpen, setIsSecondModalOpen] = useState(false); // Estado para el segundo modal
+  const [isThirdModalOpen, setIsThirdModalOpen] = useState(false); // Estado para el tercer modal
+  const [modalImage, setModalImage] = useState(null); // Para almacenar el identificador de la imagen
+  const [isModalOpen, setIsModalOpen] = useState(false); // Para controlar si el modal está abierto
 
   const openSecondModal = () => {
     setIsSecondModalOpen(true); // Abre el segundo modal
@@ -25,9 +32,26 @@ function ModalPromociones({ anterior, siguiente}) {
     setIsSecondModalOpen(false); // Cierra el segundo modal
   };
 
+  const openThirdModal = () => setIsThirdModalOpen(true); // Abre el tercer modal
+  const closeThirdModal = () => setIsThirdModalOpen(false); // Cierra el tercer modal
+
   const wspLinkMonteros = 'https://wa.me/5493863564651'; // Número de WhatsApp para Monteros
   const wspLinkConcepcion = 'https://wa.me/5493865855100'; // Número de WhatsApp para Concepción
 
+  const promoImages = [PromoBNA, PromoMacro, PromoSantander]; // Array dinámico
+
+  const handleButtonClick = (imageId) => {
+    if (isModalOpen) {
+      setIsModalOpen(false); // Cerrar el modal antes de abrir uno nuevo
+      setTimeout(() => {
+        setModalImage(imageId); // Establecer la imagen después de cerrar el modal
+        setIsModalOpen(true); // Abrir el nuevo modal
+      }, 100); // Le damos un tiempo para cerrar el modal antes de abrir uno nuevo
+    } else {
+      setModalImage(imageId); // Establecer la imagen directamente si el modal no está abierto
+      setIsModalOpen(true); // Abrir el modal
+    }
+  };
   return (
     <>
       {/* Se movió el botón al archivo Clients.js */}
@@ -61,7 +85,7 @@ function ModalPromociones({ anterior, siguiente}) {
                 {/* Modal header */}
                 <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
                   <h3 className="text-xl text-gray-900 dark:text-white font-bignoodle tracking-wide">
-                    Promociones
+                    ¡NUESTRAS PROMOS!
                   </h3>
                   <button
                     onClick={closeModal}
@@ -90,16 +114,42 @@ function ModalPromociones({ anterior, siguiente}) {
                 {/* Modal body */}
                 <div className="p-4 md:p-5 space-y-4">
                   <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
-                    En Hammer contamos con{' '}
-                    <strong className="text-black">
-                      Promociones Familiares, Promociones amigos referidos y
-                      Promociones contratando planes largos.{' '}
-                    </strong>
+                    Hace click en alguna de ellas y entérate.{' '}
                   </p>
-                  <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
-                    Para conocerlas hace click en más informacion y selecciona
-                    la SEDE.
-                  </p>
+
+                  <div className="space-y-2 mt-4 md:flex md:space-x-4 md:space-y-0">
+                    {/* Mapeamos un array de promociones para crear un botón por cada una */}
+                    {[
+                      {
+                        name: 'PROMOCIONES FAMILIARES',
+                        id: 1
+                      },
+                      {
+                        name: 'PROMOCIONES AMIGOS REFERIDOS',
+                        id: 2
+                      },
+                      {
+                        name: 'PROMOCIONES EN PLANES LARGOS',
+                        id: 3
+                      }
+                      // {
+                      //   name: 'PROMOCIONES BANCARIAS',
+                      //   id: 4
+                      // }
+                    ].map((promocion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleButtonClick(promocion.id)} // Al hacer click en el botón, se abrirá el modal correspondiente
+                        type="button"
+                        className="w-full md:flex-1 text-white bg-orange-500 hover:bg-[#fc4b08] focus:ring-4 focus:outline-none focus:ring-orange-300 font-bignoodle text-xl font-medium rounded-lg px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-[#fc4b08] dark:focus:ring-orange-700"
+                      >
+                        <div className="flex items-center justify-center space-x-2">
+                          <span>{promocion.name}</span>
+                        </div>
+                      </button>
+                    ))}
+                    {isModalOpen && <WelcomeModal imageId={modalImage} />}
+                  </div>
                 </div>
                 {/* Modal footer */}
                 <div className="flex flex-col md:flex-row items-center justify-between p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600 space-y-4 md:space-y-0 md:space-x-4">
@@ -110,6 +160,12 @@ function ModalPromociones({ anterior, siguiente}) {
                   >
                     Más información
                   </button>{' '}
+                  <button
+                    onClick={openThirdModal}
+                    className="w-full md:w-auto bg-orange-500 text-white rounded-lg px-5 py-2.5"
+                  >
+                    Promociones Bancarias
+                  </button>
                   <button
                     onClick={closeModal}
                     type="button"
@@ -227,6 +283,41 @@ function ModalPromociones({ anterior, siguiente}) {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </>
+      )}
+      {isThirdModalOpen && (
+        <>
+          <div
+            className="fixed top-0 left-0 w-full h-full bg-black opacity-50 z-40"
+            onClick={closeThirdModal}
+          ></div>
+          <div className="flex items-center justify-center fixed inset-0 z-50">
+            <div className="relative bg-white rounded-lg shadow dark:bg-gray-700 p-4 w-[80%] max-w-2xl">
+              <h3 className="text-xl font-bignoodle">Promociones Bancarias</h3>
+              <div className="p-4 space-y-4">
+                <p>
+                  ¡Aprovecha nuestras promociones bancarias con descuentos
+                  especiales!
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center">
+                  {promoImages.map((promo, index) => (
+                    <img
+                      key={index}
+                      src={promo}
+                      alt={`Flyer Promoción ${index + 1}`}
+                      className="max-w-full h-auto rounded-lg"
+                    />
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={closeThirdModal}
+                className="mt-4 bg-orange-500 text-white rounded-lg px-5 py-2.5"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </>

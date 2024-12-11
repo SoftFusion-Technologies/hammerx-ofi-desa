@@ -1,5 +1,5 @@
 /*
- * Programador: Lucas Albornoz
+ * Programador: Benjamin orellana
  * Fecha Cración: 01 / 04 / 2024
  * Versión: 2.0
  *
@@ -11,27 +11,32 @@
  *  Capa: Frontend
  */
 
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import Navbar from "../../components/header/Navbar";
+import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import Navbar from '../../components/header/Navbar';
 
-import ModalEntrenador from "./ModalEntrenador";
-import ModalPromociones from "./ModalPromociones";
-import ModalContratos from "./ModalContratos";
-import ModalConvenios from "./ModalConvenios";
-import ModalTransferencia from "./ModalTransferencia";
+import ModalEntrenador from './ModalEntrenador';
+import ModalPromociones from './ModalPromociones';
+import ModalContratos from './ModalContratos';
+import ModalConvenios from './ModalConvenios';
+import ModalTransferencia from './ModalTransferencia';
 
-import "../../styles/clients/volver.css";
-import "../../styles/clients/botones.css";
-import "../../styles/clients/background.css";
-import Footer from "../../components/footer/Footer";
-import NuevaVista from "./NuevaVista";
-import Promociones from "./Promociones";
+import ModalAccesorios from './ModalAccesorios';
+import ModalAprovecha from './ModalAprovecha';
+import ModalCabina from './ModalCabina';
+import ModalMaraton from './ModalMaraton';
+
+import '../../styles/clients/volver.css';
+import '../../styles/clients/botones.css';
+import '../../styles/clients/background.css';
+import Footer from '../../components/footer/Footer';
+import NuevaVista from './NuevaVista';
+import Promociones from './Promociones';
 
 const Clients = () => {
-  useEffect(() => {
-    document.title = 'Soy Cliente';
-  }, []);
+  // useEffect(() => {
+  //   document.title = 'Soy Cliente';
+  // }, []);
 
   //estados que se utilizarán para el renderizado de los modals
   const [showModal, setShowModal] = useState('');
@@ -42,75 +47,29 @@ const Clients = () => {
     'promociones',
     'contratos',
     'convenios',
-    'transferencia'
+    'transferencia',
+    'accesorios',
+    'aprovecha',
+    'cabina',
+    'maraton'
   ];
 
-  const isOpen = (type) => showModal === type;
-
-  const toggleModal = (type) => {
-    setShowModal((prev) => (prev === type ? '' : type));
+  const handleAnterior = () => {
+    // Obtiene el índice del modal actual
+    const currentIndex = modals.indexOf(showModal);
+    // Calcula el índice anterior (circular)
+    const previousIndex = (currentIndex - 1 + modals.length) % modals.length;
+    // Cambia al modal anterior solo si no es 'undefined'
+    setShowModal(modals[previousIndex]);
   };
 
-  //Estas funciones cambian el estado que renderiza el modal, usando el índice del array que corresponda
-  const entrenador = () => {
-    setShowModal(modals[0]);
-    setShowModal('');
-  };
-  const promociones = () => {
-    setShowModal(modals[1]);
-  };
-  const contratos = () => {
-    setShowModal(modals[2]);
-  };
-  const convenios = () => {
-    setShowModal(modals[3]);
-  };
-  const transferencia = () => {
-    setShowModal(modals[4]);
-  };
-
-  {
-    /* Cada modal recibe la funcion para mover al modal anterior y siguiente con la posición correspondiente */
-  }
-  const entrenadorAnt = () => {
-    {
-      /* Estando parado en el modalEntrenador que el índice es 0 el anterior será el índice 4 (el último) */
-    }
-    setShowModal(modals[4]);
-  };
-  const entrenadorSig = () => {
-    {
-      /* Estando parado en el modalEntrenador que el índice es 0 el siguiente será el índice 1 (el 2do). Lo mismo con cada función */
-    }
-    setShowModal(modals[1]);
-  };
-  const promocionesAnt = () => {
-    setShowModal(modals[0]);
-  };
-  const promocionesSig = () => {
-    setShowModal(modals[2]);
-    console.log(setShowModal);
-  };
-  const contratosAnt = () => {
-    setShowModal(modals[1]);
-  };
-  const contratosSig = () => {
-    setShowModal(modals[3]);
-    console.log(setShowModal);
-  };
-  const conveniosAnt = () => {
-    setShowModal(modals[2]);
-  };
-  const conveniosSig = () => {
-    setShowModal(modals[4]);
-    console.log(setShowModal);
-  };
-  const transfeAnt = () => {
-    setShowModal(modals[3]);
-  };
-  const transfeSig = () => {
-    setShowModal(modals[0]);
-    console.log(setShowModal);
+  const handleSiguiente = () => {
+    // Obtiene el índice del modal actual
+    const currentIndex = modals.indexOf(showModal);
+    // Calcula el índice siguiente (circular)
+    const nextIndex = (currentIndex + 1) % modals.length;
+    // Cambia al modal siguiente solo si no es 'undefined'
+    setShowModal(modals[nextIndex]);
   };
 
   const scrollToPromociones = () => {
@@ -158,14 +117,41 @@ const Clients = () => {
               {/* Se pasaron el jsx y los estilos de los botones a este archivo para poder controlar desde aquí el evento click para renderizar cada uno de los modals */}
               <div className="flex justify-center gap-4 max-sm:flex-col md:space-x-5">
                 <button
-                  onClick={() => toggleModal('entrenador')}
+                  onClick={() => setShowModal('accesorios')} // Aquí se establece el modal a 'accesorios'
+                  className="btnscli font-messina font-semibold max-sm:mb-5"
+                  type="button"
+                >
+                  Nuestros accesorios e Indumentaria
+                </button>
+                {showModal === 'accesorios' && (
+                  <ModalAccesorios
+                    anterior={handleAnterior}
+                    siguiente={handleSiguiente}
+                  />
+                )}
+                <button
+                  onClick={() => setShowModal('descuentos')}
+                  className="btnscli font-messina font-semibold max-sm:mb-5"
+                  type="button"
+                >
+                  ¡Aprovecha Todos Estos Descuentos!
+                </button>
+
+                {showModal === 'descuentos' && (
+                  <ModalAprovecha
+                    anterior={handleAnterior}
+                    siguiente={handleSiguiente}
+                  />
+                )}
+                <button
+                  onClick={() => setShowModal('entrenador')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
                   Contás con tu entrenador
                 </button>
                 <button
-                  onClick={() => toggleModal('promociones')} //este evento llama a la función para cambiar el estado que renderiza los modals y así mostrarlo y así con los demás botones
+                  onClick={() => setShowModal('promociones')} //este evento llama a la función para cambiar el estado que renderiza los modals y así mostrarlo y así con los demás botones
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
@@ -176,22 +162,22 @@ const Clients = () => {
                   showModal === 'entrenador' && (
                     //reciben las funciones que contienen la posición del modal que se mostrará en anterior y siguiente
                     <ModalEntrenador
-                      anterior={entrenadorAnt}
-                      siguiente={entrenadorSig}
+                      anterior={handleAnterior}
+                      siguiente={handleSiguiente}
                     />
                   )
                 }
                 {showModal === 'promociones' && (
                   <ModalPromociones
-                    anterior={promocionesAnt}
-                    siguiente={promocionesSig}
+                    anterior={handleAnterior}
+                    siguiente={handleSiguiente}
                   />
                 )}
               </div>
               {/* Segundo grupo de 3 botones */}
               <div className="flex justify-center gap-4 mt-4 max-sm:mt-0 sm:flex-wrap max-sm:flex-col md:space-x-5">
                 <button
-                  onClick={() => toggleModal('contratos')}
+                  onClick={() => setShowModal('contratos')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
@@ -199,13 +185,13 @@ const Clients = () => {
                 </button>
                 {showModal === 'contratos' && (
                   <ModalContratos
-                    anterior={contratosAnt}
-                    siguiente={contratosSig}
+                    anterior={handleAnterior}
+                    siguiente={handleSiguiente}
                     bandera={1}
                   />
                 )}
                 <button
-                  onClick={() => toggleModal('convenios')}
+                  onClick={() => setShowModal('convenios')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
@@ -213,12 +199,12 @@ const Clients = () => {
                 </button>
                 {showModal === 'convenios' && (
                   <ModalConvenios
-                    anterior={conveniosAnt}
-                    siguiente={conveniosSig}
+                    anterior={handleAnterior}
+                    siguiente={handleSiguiente}
                   />
                 )}
                 <button
-                  onClick={() => toggleModal('transferencia')}
+                  onClick={() => setShowModal('transferencia')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
@@ -226,8 +212,34 @@ const Clients = () => {
                 </button>
                 {showModal === 'transferencia' && (
                   <ModalTransferencia
-                    anterior={transfeAnt}
-                    siguiente={transfeSig}
+                    anterior={handleAnterior}
+                    siguiente={handleSiguiente}
+                  />
+                )}
+                <button
+                  onClick={() => setShowModal('cabina')}
+                  className="btnscli font-messina font-semibold max-sm:mb-5"
+                  type="button"
+                >
+                  Cabina Solar
+                </button>
+                {showModal === 'cabina' && (
+                  <ModalCabina
+                    anterior={handleAnterior}
+                    siguiente={handleSiguiente}
+                  />
+                )}
+                <button
+                  onClick={() => setShowModal('maraton')}
+                  className="btnscli font-messina font-semibold max-sm:mb-5"
+                  type="button"
+                >
+                  Maratón de Entrenamiento
+                </button>
+                {showModal === 'maraton' && (
+                  <ModalMaraton
+                    anterior={handleAnterior}
+                    siguiente={handleSiguiente}
                   />
                 )}
               </div>

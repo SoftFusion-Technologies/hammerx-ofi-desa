@@ -31,6 +31,7 @@ function ModalContratos({ anterior, siguiente, bandera }) {
   };
 
   const handleCloseModal = () => {
+    setIsOpen(false);
     navigate('/clientes'); // Redirige cuando se cierra el modal
   };
 
