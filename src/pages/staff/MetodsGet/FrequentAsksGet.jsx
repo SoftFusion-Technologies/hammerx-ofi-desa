@@ -12,23 +12,23 @@
  * Capa: Frontend
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  * Contacto: emirvalles90@gmail.com || 3865761910
- * 
+ *
  * ----------------------------------------------------------------
- * 
- * Modificación : Se modifico la renderizacion de descripcion, ahora la misma es con dangerouslySetInnerHTML 
- * 
+ *
+ * Modificación : Se modifico la renderizacion de descripcion, ahora la misma es con dangerouslySetInnerHTML
+ *
  */
 
-import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import NavbarStaff from "../NavbarStaff";
-import "../../../styles/MetodsGet/Tabla.css";
-import "../../../styles/staff/background.css";
-import Footer from "../../../components/footer/Footer";
-import FormAltaFrecAsk from "../../../components/Forms/FormAltaFrecAsk";
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import NavbarStaff from '../NavbarStaff';
+import '../../../styles/MetodsGet/Tabla.css';
+import '../../../styles/staff/background.css';
+import Footer from '../../../components/footer/Footer';
+import FormAltaFrecAsk from '../../../components/Forms/FormAltaFrecAsk';
 import { useAuth } from '../../../AuthContext';
-import FrequentDetails from "./FrequentAsksGetId";
+import FrequentDetails from './FrequentAsksGetId';
 
 const PreguntasFrecuentesGet = () => {
   const [modalNewFrecAsk, setModalNewAsk] = useState(false);
@@ -38,6 +38,10 @@ const PreguntasFrecuentesGet = () => {
 
   const [selectedUser, setSelectedUser] = useState(null); // Estado para el usuario seleccionado
   const [modalUserDetails, setModalUserDetails] = useState(false); // Estado para controlar el modal de detalles del usuario
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [preguntaId, setPreguntaId] = useState(null);
+  const [file, setFile] = useState(null);
 
   const abrirModal = () => {
     setModalNewAsk(true);
@@ -56,7 +60,7 @@ const PreguntasFrecuentesGet = () => {
   //------------------------------------------------------
   // 1.3 Relacion al Filtrado - Inicio - Benjamin Orellana
   //------------------------------------------------------
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   //Funcion de busqueda, en el cuadro
   const searcher = (e) => {
@@ -95,7 +99,7 @@ const PreguntasFrecuentesGet = () => {
       const response = await axios.get(URL);
       setFreAsk(response.data);
     } catch (error) {
-      console.log("Error al obtener las preguntas:", error);
+      console.log('Error al obtener las preguntas:', error);
     }
   };
 
@@ -105,7 +109,7 @@ const PreguntasFrecuentesGet = () => {
       try {
         const url = `${URL}${id}`;
         const respuesta = await fetch(url, {
-          method: "DELETE",
+          method: 'DELETE'
         });
         await respuesta.json();
         const arrayAsk = frecAsk.filter((frecAsk) => frecAsk.id !== id);
@@ -117,23 +121,8 @@ const PreguntasFrecuentesGet = () => {
     }
   };
 
-  const obtenerFrecAsk = async (id) => {
-    try {
-      const url = `${URL}${id}`;
-
-      console.log(url);
-
-      const respuesta = await fetch(url);
-
-      const resultado = await respuesta.json();
-
-      setFreAsk(resultado);
-    } catch (error) {
-      console.log(error);
-    }
-  };
   const ordernarFrecAsk = (frecAsk) => {
-    return [...frecAsk].sort  ((a, b) => a.orden - b.orden);
+    return [...frecAsk].sort((a, b) => a.orden - b.orden);
   };
 
   // Llamada a la función para obtener los postulantes ordenados de forma decreciente
@@ -163,7 +152,6 @@ const PreguntasFrecuentesGet = () => {
     }
   }
 
-
   const obtenerPregunta = async (id) => {
     try {
       const url = `${URL}${id}`;
@@ -176,11 +164,61 @@ const PreguntasFrecuentesGet = () => {
     }
   };
 
-  const handleEditarAsk = (ask) => { // (NUEVO)
+  const handleEditarAsk = (ask) => {
+    // (NUEVO)
     setSelectedAsk(ask);
     setModalNewAsk(true);
   };
 
+  // Función para manejar la apertura del modal
+  const handleSubirImagen = (id) => {
+    setPreguntaId(id); // Establece el ID de la pregunta
+    setIsModalOpen(true); // Abre el modal
+  };
+
+  // Función para cerrar el modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setFile(null); // Limpiar el archivo cargado
+  };
+
+  // Función para manejar el cambio de archivo
+  const handleFileChange = (event) => {
+    setFile(event.target.files[0]);
+  };
+
+  // Función para manejar el envío de la imagen
+  const handleSubmitImagen = async (event) => {
+    event.preventDefault();
+
+    if (!file) {
+      alert('Por favor, selecciona un archivo.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('pregunta_id', preguntaId); // Añade el pregunta_id
+
+    try {
+      const response = await fetch(
+        'http://localhost:8080/upload-imagen-pregunta',
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
+      if (response.ok) {
+        alert('Imagen subida correctamente');
+        closeModal();
+      } else {
+        alert('Error al subir la imagen');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Error en la solicitud');
+    }
+  };
   return (
     <>
       <NavbarStaff />
@@ -288,12 +326,64 @@ const PreguntasFrecuentesGet = () => {
                           >
                             Editar
                           </button>
+                          {/* Botón para abrir el modal de subir imagen */}
+                          <button
+                            onClick={() => handleSubirImagen(frecAsk.id)}
+                            type="button"
+                            className="py-2 px-2 my-1 ml-5 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                          >
+                            Subir Imagen
+                          </button>
                         </td>
                       )}
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {/* Modal para subir imagen */}
+              {isModalOpen && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                  <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 space-y-6">
+                    <h3 className="text-2xl font-semibold text-center text-gray-800">
+                      Subir Imagen
+                    </h3>
+
+                    <form onSubmit={handleSubmitImagen} className="space-y-4">
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="file"
+                          className="text-gray-700 font-medium"
+                        >
+                          Selecciona una imagen
+                        </label>
+                        <input
+                          type="file"
+                          id="file"
+                          onChange={handleFileChange}
+                          className="mt-2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div className="flex justify-between gap-4">
+                        <button
+                          type="submit"
+                          className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          Subir Imagen
+                        </button>
+                        <button
+                          type="button"
+                          onClick={closeModal}
+                          className="w-full py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
               <nav className="flex justify-center items-center my-10">
                 <ul className="pagination">
                   <li className="page-item">

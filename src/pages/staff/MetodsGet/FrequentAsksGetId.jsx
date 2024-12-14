@@ -1,11 +1,7 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../../../styles/MetodsGet/GetUserId.css';
-import FormAltaNota from '../../../components/Forms/FormAltaNota';
-import { Link } from 'react-router-dom';
-import FormAltaNotaFam from '../../../components/Forms/FormAltaNotaFam';
 import { useAuth } from '../../../AuthContext';
-
+import axios from 'axios';
 
 const FrequentDetails = ({ user, isOpen, onClose }) => {
   if (!isOpen) {
@@ -14,6 +10,28 @@ const FrequentDetails = ({ user, isOpen, onClose }) => {
   const [modalNewConve, setmodalNewConve] = useState(false);
   const { userLevel } = useAuth();
 
+  const [imagenn, setImagen] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [imagenes, setImagenes] = useState([]);
+
+  // Cargar las imágenes cuando el componente se monta
+  const cargarImagenes = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/imagenes_preguntas_frec/${user.id}`
+      );
+      setImagenes(response.data);
+    } catch (err) {
+      setError('Error al cargar las imágenes');
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    cargarImagenes();
+  }, [user.id]); // Se ejecuta cuando cambia `preguntaId`
+
   const abrirModal = () => {
     setmodalNewConve(true);
   };
@@ -21,7 +39,46 @@ const FrequentDetails = ({ user, isOpen, onClose }) => {
     setmodalNewConve(false);
   };
 
-  
+  useEffect(() => {
+    if (isOpen && user?.id) {
+      fetchImagen(user.id);
+    }
+  }, [isOpen, user]);
+
+  const fetchImagen = async (idPregunta) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/imagenes-preguntas/pregunta/${idPregunta}`
+      );
+      setImagen(response.data.imagen); // Asegúrate de que el backend devuelva un campo `imagen`
+    } catch (err) {
+      console.error('Error al obtener la imagen:', err);
+      // setError('No se pudo cargar la imagen.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const eliminarImagen = async (id) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:8080/imagenes_preguntas_frec/${id}`
+      );
+      setImagenes(imagenes.filter((imagen) => imagen.id !== id)); // Elimina la imagen del estado
+      // alert(response.data.mensajeExito); // Muestra un mensaje de éxito
+    } catch (err) {
+      console.error(err);
+      alert('Error al eliminar la imagen');
+    }
+  };
+
+  // Función para descargar una imagen
+  const descargarImagen = (id) => {
+    window.location.href = `http://localhost:8080/download-image-pregunta/${id}`;
+  };
   return (
     <div className="modal-overlay">
       <div className="modal-content">
@@ -65,6 +122,51 @@ const FrequentDetails = ({ user, isOpen, onClose }) => {
               className="text-gray-700"
               dangerouslySetInnerHTML={{ __html: user.descripcion }}
             />
+            {/* Mostrar imagen con carga o error */}
+            {imagenes.length > 0 ? (
+              imagenes.map((imagen) => (
+                <div key={imagen.id}>
+                  <img
+                    src={`http://localhost:8080/imagenes-preguntas/${imagenn}`}
+                    alt="Imagen de la pregunta"
+                    className="w-full h-auto rounded-lg"
+                  />
+
+                  <div className="relative">
+                    {/* Mostrar el nombre del archivo o cualquier otra información */}
+                    <p className="text-orange-500">
+                      Nombre Imagen:{' '}
+                      <span className="text-black">
+                        {imagen.nombre_archivo}
+                      </span>
+                    </p>
+
+                    {/* Contenedor para los botones */}
+                    <div className="absolute top-2 right-2 flex gap-2 mt-5">
+                      {/* Botón de eliminación */}
+                      <button
+                        onClick={() => eliminarImagen(imagen.id)}
+                        className="bg-red-500 text-white p-2 rounded-full"
+                      >
+                        X
+                      </button>
+
+                      {/* Botón de descarga */}
+                      <button
+                        onClick={() => descargarImagen(imagen.id)}
+                        className="bg-blue-500 text-white p-2 rounded-full"
+                      >
+                        Descargar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="mt-5 font-bold">
+                No hay imágenes para esta pregunta.
+              </p>
+            )}
           </div>
         </div>
         <p>
@@ -73,14 +175,11 @@ const FrequentDetails = ({ user, isOpen, onClose }) => {
 
         <hr className="my-4" />
         <div className="flex justify-center ">
-          {
-            /*
+          {/*
                       userLevel === 'gerente' ||
                       userLevel === 'vendedor' ||
                       userLevel === 'convenio' ||
-                      */
-           
-          }
+                      */}
         </div>
       </div>
     </div>
