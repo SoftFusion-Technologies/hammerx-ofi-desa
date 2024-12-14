@@ -26,18 +26,21 @@ const UploadImageModal = ({
     if (agendaId) {
       setArchivos([]); // Limpiar archivos al cambiar de agenda
       fetchArchivos(); // Cargar archivos para la nueva agenda
+      getMotivos();
     }
   }, [agendaId]);
 
   const getMotivos = async () => {
     try {
       setIsMotivosLoading(true); // Mostrar un indicador de carga
-      const response = await fetch('http://localhost:8080/agenda-motivos');
+      const response = await fetch(
+        `http://localhost:8080/agenda-motivos/${agendaId}`
+      );
       const data = await response.json();
       if (response.ok) {
         setMotivos(data);
       } else {
-        alert('Error al obtener los motivos');
+        console.log('Error al obtener los motivos');
       }
     } catch (error) {
       console.error('Error al obtener los motivos:', error);
