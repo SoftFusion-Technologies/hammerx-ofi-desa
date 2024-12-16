@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import '../../styles/clients/botones.css';
 import flecha from '../../images/flecha.png';
 import { FaWhatsapp } from 'react-icons/fa'; // Importamos el ícono de WhatsApp
@@ -12,8 +12,6 @@ import WelcomeModal from './WelcomeModal'; // Asegúrate de tener el componente 
 function ModalPromociones({ anterior, siguiente }) {
   //recibo las funciones que contienen la posición del modal siguiente y anterior
   const [isOpen, setIsOpen] = useState(true);
-  const scrollRef = useRef(null);
-  const [scrollingRight, setScrollingRight] = useState(true);
 
   const toggleModal = () => {
     setIsOpen(!isOpen);
@@ -62,45 +60,6 @@ function ModalPromociones({ anterior, siguiente }) {
       setIsModalOpen(true); // Abrir el modal
     }
   };
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (scrollRef.current) {
-        const maxScrollLeft =
-          scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
-
-        // Si estamos al inicio, cambiar dirección para mover hacia la derecha
-        if (scrollRef.current.scrollLeft <= 0 && !scrollingRight) {
-          setScrollingRight(true);
-        }
-        // Si estamos al final, cambiar dirección para mover hacia la izquierda
-        else if (
-          scrollRef.current.scrollLeft >= maxScrollLeft &&
-          scrollingRight
-        ) {
-          setScrollingRight(false);
-        }
-
-        // Mover el scroll según la dirección actual
-        if (scrollingRight) {
-          scrollRef.current.scrollBy({
-            left: 150,
-            behavior: 'smooth'
-          });
-        } else {
-          scrollRef.current.scrollBy({
-            left: -150,
-            behavior: 'smooth'
-          });
-        }
-      }
-    };
-
-    const interval = setInterval(handleScroll, 700);
-
-    // Limpiar el intervalo cuando el componente se desmonte
-    return () => clearInterval(interval);
-  }, [scrollingRight]);
 
   return (
     <>
@@ -351,8 +310,7 @@ function ModalPromociones({ anterior, siguiente }) {
                   especiales!
                 </p>
                 <div
-                  className="overflow-x-auto scroll-container"
-                  ref={scrollRef}
+                  className="overflow-x-auto"
                 >
                   <div className="flex gap-4">
                     {promoImages.map((promo, index) => (

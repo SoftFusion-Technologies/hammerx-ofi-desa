@@ -39,9 +39,3 @@
   padding: 0; /* Quita cualquier relleno para que el enlace ocupe todo el espacio */
   text-decoration: none; /* Opcional: quita la subrayado del enlace */
 }
-
-.scroll-container {
-  display: flex; /* Para asegurarte de que los elementos estén alineados horizontalmente */
-  overflow-x: auto; /* Permite el desplazamiento horizontal */
-  scroll-behavior: smooth; /* Agrega desplazamiento suave */
-}
