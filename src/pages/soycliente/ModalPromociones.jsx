@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import '../../styles/clients/botones.css';
 import flecha from '../../images/flecha.png';
 import { FaWhatsapp } from 'react-icons/fa'; // Importamos el ícono de WhatsApp
 import PromoBNA from './PromosBancarias/PromoBNA.jpeg';
 import PromoMacro from './PromosBancarias/PromoMacro.jpeg';
 import PromoSantander from './PromosBancarias/PromoSantander.jpeg';
+import NaranjaQR from './PromosBancarias/NaranjaQR.jpeg';
+import PromoNxVer from './PromosBancarias/PromoNxVer.jpeg';
 import WelcomeModal from './WelcomeModal'; // Asegúrate de tener el componente de modal importado
 
 function ModalPromociones({ anterior, siguiente }) {
   //recibo las funciones que contienen la posición del modal siguiente y anterior
   const [isOpen, setIsOpen] = useState(true);
+  const scrollRef = useRef(null);
+  const [scrollingRight, setScrollingRight] = useState(true);
 
   const toggleModal = () => {
     setIsOpen(!isOpen);
@@ -38,7 +42,13 @@ function ModalPromociones({ anterior, siguiente }) {
   const wspLinkMonteros = 'https://wa.me/5493863564651'; // Número de WhatsApp para Monteros
   const wspLinkConcepcion = 'https://wa.me/5493865855100'; // Número de WhatsApp para Concepción
 
-  const promoImages = [PromoBNA, PromoMacro, PromoSantander]; // Array dinámico
+  const promoImages = [
+    PromoBNA,
+    PromoMacro,
+    PromoSantander,
+    NaranjaQR,
+    PromoNxVer
+  ]; // Array dinámico
 
   const handleButtonClick = (imageId) => {
     if (isModalOpen) {
@@ -52,6 +62,46 @@ function ModalPromociones({ anterior, siguiente }) {
       setIsModalOpen(true); // Abrir el modal
     }
   };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollRef.current) {
+        const maxScrollLeft =
+          scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+
+        // Si estamos al inicio, cambiar dirección para mover hacia la derecha
+        if (scrollRef.current.scrollLeft <= 0 && !scrollingRight) {
+          setScrollingRight(true);
+        }
+        // Si estamos al final, cambiar dirección para mover hacia la izquierda
+        else if (
+          scrollRef.current.scrollLeft >= maxScrollLeft &&
+          scrollingRight
+        ) {
+          setScrollingRight(false);
+        }
+
+        // Mover el scroll según la dirección actual
+        if (scrollingRight) {
+          scrollRef.current.scrollBy({
+            left: 150,
+            behavior: 'smooth'
+          });
+        } else {
+          scrollRef.current.scrollBy({
+            left: -150,
+            behavior: 'smooth'
+          });
+        }
+      }
+    };
+
+    const interval = setInterval(handleScroll, 700);
+
+    // Limpiar el intervalo cuando el componente se desmonte
+    return () => clearInterval(interval);
+  }, [scrollingRight]);
+
   return (
     <>
       {/* Se movió el botón al archivo Clients.js */}
@@ -131,15 +181,20 @@ function ModalPromociones({ anterior, siguiente }) {
                       {
                         name: 'PROMOCIONES EN PLANES LARGOS',
                         id: 3
+                      },
+                      {
+                        name: 'PROMOCIONES BANCARIAS',
+                        id: 4,
+                        action: openThirdModal // Acción específica para este botón
                       }
-                      // {
-                      //   name: 'PROMOCIONES BANCARIAS',
-                      //   id: 4
-                      // }
                     ].map((promocion, index) => (
                       <button
                         key={index}
-                        onClick={() => handleButtonClick(promocion.id)} // Al hacer click en el botón, se abrirá el modal correspondiente
+                        onClick={() =>
+                          promocion.action
+                            ? promocion.action()
+                            : handleButtonClick(promocion.id)
+                        }
                         type="button"
                         className="w-full md:flex-1 text-white bg-orange-500 hover:bg-[#fc4b08] focus:ring-4 focus:outline-none focus:ring-orange-300 font-bignoodle text-xl font-medium rounded-lg px-5 py-2.5 text-center dark:bg-orange-600 dark:hover:bg-[#fc4b08] dark:focus:ring-orange-700"
                       >
@@ -160,12 +215,6 @@ function ModalPromociones({ anterior, siguiente }) {
                   >
                     Más información
                   </button>{' '}
-                  <button
-                    onClick={openThirdModal}
-                    className="w-full md:w-auto bg-orange-500 text-white rounded-lg px-5 py-2.5"
-                  >
-                    Promociones Bancarias
-                  </button>
                   <button
                     onClick={closeModal}
                     type="button"
@@ -301,15 +350,20 @@ function ModalPromociones({ anterior, siguiente }) {
                   ¡Aprovecha nuestras promociones bancarias con descuentos
                   especiales!
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center">
-                  {promoImages.map((promo, index) => (
-                    <img
-                      key={index}
-                      src={promo}
-                      alt={`Flyer Promoción ${index + 1}`}
-                      className="max-w-full h-auto rounded-lg"
-                    />
-                  ))}
+                <div
+                  className="overflow-x-auto scroll-container"
+                  ref={scrollRef}
+                >
+                  <div className="flex gap-4">
+                    {promoImages.map((promo, index) => (
+                      <img
+                        key={index}
+                        src={promo}
+                        alt={`Flyer Promoción ${index + 1}`}
+                        className="w-1/2 sm:w-1/3 lg:w-1/4 xl:w-1/5 h-auto rounded-lg"
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
               <button
