@@ -777,16 +777,6 @@ const PlanillaEntrenador = () => {
     }
   }
 
-  // Función para determinar el color del alumno usando JavaScript nativo
-  const determinarColorAlumno = (fechaCreacion) => {
-    const fechaCreacionDate = new Date(fechaCreacion);
-    const mesActual = new Date().getMonth();
-    const mesCreacion = fechaCreacionDate.getMonth();
-
-    // Retorna el color en función de si el alumno es "nuevo" o no
-    return mesCreacion === mesActual ? 'green' : 'black';
-  };
-
   const openModal = async (rowIndex, agendaIndex, agendaIdRec) => {
     try {
       const alumnoId = rows[rowIndex].id; // obtenemos el id
@@ -1014,6 +1004,31 @@ const PlanillaEntrenador = () => {
       `Planilla_Instructor_${nombreInstructor}_${formatearFecha(today)}.xlsx`
     );
   };
+
+  // Función para determinar si el alumno debe ser pintado de verde
+  function shouldHighlightGreen(fecha_creacion, prospecto) {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth(); // Mes actual (0-11)
+    const currentYear = currentDate.getFullYear(); // Año actual
+
+    // Obtener el mes y año de la fecha de creación del alumno
+    const creationDate = new Date(fecha_creacion);
+    const creationMonth = creationDate.getMonth();
+    const creationYear = creationDate.getFullYear();
+
+    // Verificar si el prospecto es 'nuevo' y si el mes de creación es el mes anterior
+    return (
+      prospecto === 'nuevo' &&
+      (currentMonth === creationMonth + 1 ||
+        (currentMonth === 0 && creationMonth === 11)) &&
+      currentYear === creationYear
+    );
+  }
+
+  // Crear un arreglo de colores
+  const colores = records.map((row) =>
+    shouldHighlightGreen(row.fecha_creacion, row.prospecto) ? 'green' : 'black'
+  );
 
   return (
     <>
@@ -1260,15 +1275,13 @@ const PlanillaEntrenador = () => {
                     <input
                       type="text"
                       className={`w-40 px-2 py-3 uppercase`}
-                      // ${
-                      //   determinarColorAlumno(row.fecha_creacion) === 'green'
-                      //     ? 'text-green-400'
-                      //     : 'text-black'
-                      // }`}
                       value={row.nombre}
                       onChange={(e) =>
                         handleInputChange(rowIndex, 'nombre', e.target.value)
                       }
+                      style={{
+                        color: colores[rowIndex] // Usamos el arreglo de colores
+                      }}
                     />
                   </td>
 
