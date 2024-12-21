@@ -132,7 +132,9 @@ const EstadisticasIns = () => {
 
   const fetchRetenidos = async () => {
     try {
-      const response = await axios.get(`${URL}/estadisticas/alumnos-retenidos`);
+      const response = await axios.get(
+        `${URL}/estadisticas/retenciones-del-mes`
+      );
       setRetenidos(response.data);
       setLoading(false);
     } catch (error) {
@@ -304,21 +306,20 @@ const EstadisticasIns = () => {
           Retenidos del mes
         </h2>
 
-        {/* {loading ? (
+        {loading ? (
           <p className="text-white text-xl">Cargando Retenidos del mes...</p>
         ) : (
           <div className="flex flex-wrap justify-center w-full gap-6">
             {/* Mostrar las estadísticas de retenidos */}
-        {/* {retenidos.map((stat) => (
+            {retenidos.map((stat) => (
               <EstadisticaCard
                 key={`retenidos-${stat.profesor_id}`}
                 titulo={`Retenidos de ${stat.profesor_nombre}`}
-                contenido={stat.totalConvertidos}
+                contenido={stat.retenidos}
               />
             ))}
-          </div> */}
-        {/* )}  */}
-        {/* */}
+          </div>
+        )}
 
         <h2 className="text-5xl font-bold text-white mt-16 mb-8 text-center uppercase font-bignoodle">
           Porcentaje retencion-nuevos
