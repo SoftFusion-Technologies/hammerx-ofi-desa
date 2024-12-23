@@ -1213,7 +1213,7 @@ const PlanillaEntrenador = () => {
 
             <div className="flex flex-col items-center space-y-4">
               <h1 className="text-3xl font-bold text-orange-600">
-                {selectedMonthName}
+                {selectedMonthName} {currentYear}
               </h1>
               <div className="flex space-x-4">
                 <button
@@ -1234,7 +1234,8 @@ const PlanillaEntrenador = () => {
                   Mes Siguiente{' '}
                 </button>
               </div>
-              {selectedMonth < currentMonth && (
+
+              {userLevel != 'instructor' && selectedMonth < currentMonth && (
                 <div className="flex flex-col items-center space-y-2">
                   <label className="text-gray-700 font-medium">
                     Ingrese el año a borrar (se BORRAN todas las asistencias y
