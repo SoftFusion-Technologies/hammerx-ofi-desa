@@ -64,6 +64,40 @@ const PlanillaEntrenador = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  const [currentYear] = useState(new Date().getFullYear()); // Año actual
+  const [currentMonth] = useState(new Date().getMonth() + 1); // Mes actual
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth); // Mes seleccionado
+  const [selectedMonthName, setSelectedMonthName] = useState(''); // Nombre del mes seleccionado
+  // Estados adicionales
+  const [deleteYear, setDeleteYear] = useState('');
+
+  useEffect(() => {
+    // Función para convertir el número del mes al nombre del mes
+    const getMonthName = (month) => {
+      const months = [
+        'ENERO',
+        'FEBRERO',
+        'MARZO',
+        'ABRIL',
+        'MAYO',
+        'JUNIO',
+        'JULIO',
+        'AGOSTO',
+        'SEPTIEMBRE',
+        'OCTUBRE',
+        'NOVIEMBRE',
+        'DICIEMBRE'
+      ];
+      return months[month - 1];
+    };
+
+    // Actualizar el nombre del mes seleccionado
+    setSelectedMonthName(getMonthName(selectedMonth));
+
+    // Cargar los datos para el mes seleccionado
+    fetchAlumnos(selectedMonth);
+  }, [selectedMonth]); // Solo se ejecuta cuando `selectedMonth` cambia
+
   useEffect(() => {
     // Obtener la fecha actual
     const today = new Date();
@@ -162,12 +196,18 @@ const PlanillaEntrenador = () => {
   }, [user_id]);
 
   // Cargar los registros de alumnos al iniciar el componente
-  const fetchAlumnos = async () => {
+  const fetchAlumnos = async (month) => {
     try {
       const responseAlumnos = await axios.get(`${URL}alumnos`);
-      const responseAsistencias = await axios.get(`${URL}asistencias`);
-      const responseAgendas = await axios.get(`${URL}agendas`);
+      // Enviar mes y año como parámetros
+      const responseAsistencias = await axios.get(`${URL}asistencias`, {
+        params: { mes: month, anio: currentYear }
+      });
 
+      // Enviar mes y año como parámetros
+      const responseAgendas = await axios.get(`${URL}agendas`, {
+        params: { mes: month, anio: currentYear }
+      });
       // Filtrar alumnos por user_id
       const alumnosFiltrados =
         userLevel === 'instructor'
@@ -1030,6 +1070,51 @@ const PlanillaEntrenador = () => {
     shouldHighlightGreen(row.fecha_creacion, row.prospecto) ? 'green' : 'black'
   );
 
+  // Función para retroceder al mes anterior
+  const handlePreviousMonth = () => {
+    if (selectedMonth > 1) {
+      setSelectedMonth((prev) => prev - 1);
+    } else {
+      setSelectedMonth(12); // Si es enero, retrocede a diciembre del año anterior (si lo necesitas)
+    }
+  };
+
+  // Función para avanzar al mes siguiente
+  const handleNextMonth = () => {
+    if (selectedMonth < currentMonth) {
+      setSelectedMonth((prev) => prev + 1);
+    }
+  };
+
+  const handleMassDelete = async () => {
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que deseas borrar todos los registros de asistencias y agendas del mes ${selectedMonth} del año ${deleteYear}?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      // Borrar asistencias
+      await axios.delete(`${URL}asistencias_masivo`, {
+        params: { mes: selectedMonth, anio: deleteYear }
+      });
+
+      // Borrar agendas
+      await axios.delete(`${URL}agendas_masivo`, {
+        params: { mes: selectedMonth, anio: deleteYear }
+      });
+
+      alert(
+        `Registros del mes ${selectedMonth} del año ${deleteYear} borrados exitosamente.`
+      );
+
+      fetchAlumnos(currentMonth);
+    } catch (error) {
+      console.error(error);
+      alert('Ocurrió un error al intentar borrar los registros.');
+    }
+  };
+
   return (
     <>
       <NavBar />
@@ -1124,6 +1209,59 @@ const PlanillaEntrenador = () => {
                   </li>
                 </ul>
               </nav>
+            </div>
+
+            <div className="flex flex-col items-center space-y-4">
+              <h1 className="text-3xl font-bold text-orange-600">
+                {selectedMonthName}
+              </h1>
+              <div className="flex space-x-4">
+                <button
+                  className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition duration-300"
+                  onClick={handlePreviousMonth}
+                >
+                  Mes Anterior
+                </button>
+                <button
+                  className={`px-4 py-2 rounded ${
+                    selectedMonth === currentMonth
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-orange-500 text-white hover:bg-orange-600 transition duration-300'
+                  }`}
+                  onClick={handleNextMonth}
+                  disabled={selectedMonth === currentMonth}
+                >
+                  Mes Siguiente{' '}
+                </button>
+              </div>
+              {selectedMonth < currentMonth && (
+                <div className="flex flex-col items-center space-y-2">
+                  <label className="text-gray-700 font-medium">
+                    Ingrese el año a borrar (se BORRAN todas las asistencias y
+                    agendas del mes de{' '}
+                    <span className="text-red-600">{selectedMonthName}</span> y
+                    el año que ingrese en el campo)
+                  </label>
+                  <input
+                    type="number"
+                    value={deleteYear}
+                    onChange={(e) => setDeleteYear(e.target.value)}
+                    className="border border-gray-300 px-3 py-2 rounded w-32 text-center"
+                    placeholder="Año"
+                  />
+                  <button
+                    className={`px-4 py-2 rounded ${
+                      deleteYear
+                        ? 'bg-red-500 text-white hover:bg-red-600 transition duration-300'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                    onClick={handleMassDelete}
+                    disabled={!deleteYear}
+                  >
+                    Borrado Masivo
+                  </button>
+                </div>
+              )}
             </div>
             <h1 className="ml-2 uppercase font-bold text-xl">
               Cantidad de páginas: {nPage}
