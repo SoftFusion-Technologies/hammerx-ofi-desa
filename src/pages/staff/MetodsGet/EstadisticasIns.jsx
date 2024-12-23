@@ -30,6 +30,37 @@ const EstadisticasIns = () => {
   const [mensajesEnviados, setMensajesEnviados] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [currentYear] = useState(new Date().getFullYear()); // Año actual
+  const [currentMonth] = useState(new Date().getMonth() + 1); // Mes actual
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth); // Mes seleccionado
+  const [selectedMonthName, setSelectedMonthName] = useState(''); // Nombre del mes seleccionado
+  // Estados adicionales
+  const [deleteYear, setDeleteYear] = useState('');
+
+  useEffect(() => {
+    // Función para convertir el número del mes al nombre del mes
+    const getMonthName = (month) => {
+      const months = [
+        'ENERO',
+        'FEBRERO',
+        'MARZO',
+        'ABRIL',
+        'MAYO',
+        'JUNIO',
+        'JULIO',
+        'AGOSTO',
+        'SEPTIEMBRE',
+        'OCTUBRE',
+        'NOVIEMBRE',
+        'DICIEMBRE'
+      ];
+      return months[month - 1];
+    };
+
+    // Actualizar el nombre del mes seleccionado
+    setSelectedMonthName(getMonthName(selectedMonth));
+  }, [selectedMonth]); // Solo se ejecuta cuando `selectedMonth` cambia
+
   const URL = 'http://localhost:8080';
   // Fetch de datos desde el backend
   useEffect(() => {
@@ -159,6 +190,10 @@ const EstadisticasIns = () => {
     <>
       <NavbarStaff />
       <div className="dashboardbg h-contain pt-10 pb-10">
+        <h1 className="text-5xl font-bold text-white mb-8 text-center mt-10 uppercase font-bignoodle">
+          {selectedMonthName} {currentYear}
+        </h1>
+        <hr className="border-t border-white w-full my-4" />
         {/* Título de "Total de Alumnos" */}
         <h1 className="text-5xl font-bold text-white mb-8 text-center mt-10 uppercase font-bignoodle">
           Total de Alumnos
@@ -178,6 +213,8 @@ const EstadisticasIns = () => {
             ))}
           </div>
         )}
+
+        <hr className="border-t border-white w-full my-4" />
 
         {/* Título de "Total de Asistencias" */}
         <h1 className="text-5xl font-bold text-white mb-8 text-center mt-10 uppercase font-bignoodle">
@@ -199,6 +236,8 @@ const EstadisticasIns = () => {
           </div>
         )}
 
+        <hr className="border-t border-white w-full my-4" />
+
         {/* Título para "Nuevos del Mes" */}
         <h2 className="text-5xl font-bold text-white mt-16 mb-8 text-center uppercase font-bignoodle">
           Nuevos del Mes
@@ -218,6 +257,8 @@ const EstadisticasIns = () => {
             ))}
           </div>
         )}
+
+        <hr className="border-t border-white w-full my-4" />
 
         {/* Título para "Prospectos" */}
         <h2 className="text-5xl font-bold text-white mt-16 mb-8 text-center uppercase font-bignoodle">
@@ -239,6 +280,8 @@ const EstadisticasIns = () => {
           </div>
         )}
 
+        <hr className="border-t border-white w-full my-4" />
+
         {/* Título para "Convertidos" */}
         <h2 className="text-5xl font-bold text-white mt-16 mb-8 text-center uppercase font-bignoodle">
           Convertidos
@@ -258,6 +301,8 @@ const EstadisticasIns = () => {
             ))}
           </div>
         )}
+
+        <hr className="border-t border-white w-full my-4" />
 
         {/* Título para "Porcentaje de Conversión" */}
         <h2 className="text-5xl font-bold text-white mt-16 mb-8 text-center uppercase font-bignoodle">
@@ -281,6 +326,8 @@ const EstadisticasIns = () => {
           </div>
         )}
 
+        <hr className="border-t border-white w-full my-4" />
+
         {/* Título para "Tasa de Asistencia" */}
         <h2 className="text-5xl font-bold text-white mt-16 mb-8 text-center uppercase font-bignoodle">
           Tasa de Asistencia
@@ -300,6 +347,8 @@ const EstadisticasIns = () => {
             </div>
           ))}
         </div>
+
+        <hr className="border-t border-white w-full my-4" />
 
         {/* Título para "Retenidos del mes" */}
         <h2 className="text-5xl font-bold text-white mt-16 mb-8 text-center uppercase font-bignoodle">
@@ -321,9 +370,13 @@ const EstadisticasIns = () => {
           </div>
         )}
 
+        <hr className="border-t border-white w-full my-4" />
+
         <h2 className="text-5xl font-bold text-white mt-16 mb-8 text-center uppercase font-bignoodle">
           Porcentaje retencion-nuevos
         </h2>
+
+        <hr className="border-t border-white w-full my-4" />
 
         <h2 className="text-5xl font-bold text-white mt-16 mb-8 text-center uppercase font-bignoodle">
           Mensajes Enviados
