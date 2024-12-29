@@ -4,11 +4,13 @@ import Footer from '../components/footer/Footer';
 import { motion } from 'framer-motion';
 import Mapa from '../components/footer/Mapa';
 import imgHammerOrange from '../images/logohammerorange.png';
+import imgRedInsta from '../images/redes/instagram.png';
+import imgRedFace from '../images/redes/facebook.png';
 const NewSede = () => {
   return (
     <>
-      <Navbar />
-      <div className="mt-20 bg-gray-100 min-h-screen">
+      {/* <Navbar /> */}
+      <div className="bg-gray-100 min-h-screen">
         <div className="container mx-auto px-4 py-8">
           {/* Section Title */}
           <motion.section
@@ -17,6 +19,9 @@ const NewSede = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
+            <h1 className="text-6xl font-bold text-gray-800 font-bignoodle">
+              ¡Conoce Nuestra Nueva Sede!
+            </h1>
             <img
               src={imgHammerOrange}
               alt="logo naranja hammer"
@@ -32,16 +37,16 @@ const NewSede = () => {
             {[
               {
                 title: '800 m² DE SUPERFICIE',
-                description: 'Para que nunca te falte espacio.'
+                description: 'Para que nunca te falte espacio'
               },
               {
                 title: 'Equipos de última generación',
-                description: '+70 Equipos de última generación'
+                description: '+70 Maquinas importadas con la ultima tecnología'
               },
               {
                 title: 'Múltiples Actividades Guiadas',
                 description:
-                  'Musculación, cardio, entrenamiento funcional y pilates.'
+                  'Musculación, cardio, entrenamiento funcional y pilates'
               }
             ].map((item, index) => (
               <motion.div
@@ -126,6 +131,15 @@ const NewSede = () => {
             </div>
           </section> */}
 
+          <section className="text-center bg-gray-100 p-6 rounded-lg shadow-md mt-12">
+            <h2 className="text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle">
+              AMBIENTE CLIMATIZADO
+            </h2>
+            <p className="text-gray-600 mt-2">
+              Todos nuestros salones cuentan con aire acondicionado y
+              calefacción{' '}
+            </p>
+          </section>
           {/* Special Offer Section */}
           <section className="text-center bg-gray-100 p-6 rounded-lg shadow-md mt-12">
             <h2 className="text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle">
@@ -135,7 +149,7 @@ const NewSede = () => {
               ¡Inscribite ahora y obtené hasta un 50% de descuento!
             </p>
             <button className="uppercase mt-4 px-6 py-3 bg-orange-600 text-white font-bold rounded-lg shadow-md hover:bg-orange-500 transition duration-300">
-              Aprovechar Promoción
+              Quiero conocer los planes
             </button>
           </section>
 
@@ -149,7 +163,7 @@ const NewSede = () => {
               <div className="w-full">
                 <input
                   type="text"
-                  placeholder="Nombre"
+                  placeholder="Nombre completo"
                   className="border border-gray-300 rounded-lg px-4 py-2 w-full"
                 />
               </div>
@@ -170,9 +184,41 @@ const NewSede = () => {
                 rel="noopener noreferrer"
                 className="w-full bg-orange-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-orange-500 transition duration-300 text-center block text-lg"
               >
-                OBTENER MI DESCUENTO
+                Solicitar Información
               </a>
             </form>
+          </section>
+
+          <section className="text-center bg-white p-6 rounded-lg shadow-md mt-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 font-bignoodle">
+              Síguenos en redes sociales
+            </h2>
+            <div className="flex justify-center gap-8 mt-6">
+              <a
+                href="https://www.instagram.com/hammerx.ok/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+              >
+                <img
+                  src={imgRedInsta}
+                  alt="Logo Instagram"
+                  className="w-16 h-16 hover:scale-110 transition-transform duration-300"
+                />
+              </a>
+              <a
+                href="https://www.facebook.com/hammerxgym?locale=es_LA"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+              >
+                <img
+                  src={imgRedFace}
+                  alt="Logo Facebook"
+                  className="w-16 h-16 hover:scale-110 transition-transform duration-300"
+                />
+              </a>
+            </div>
           </section>
         </div>
       </div>
