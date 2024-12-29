@@ -466,16 +466,16 @@ const PlanillaEntrenador = () => {
 
     console.log('id alumno', alumnoId);
 
-    if (dayNumberG !== null) {
-      if (dayNumberG < day - 1) {
-        alert('ACCIÓN NO PERMITIDA!!!');
-        return;
-      }
-      if (dayNumberG > day) {
-        alert('ACCIÓN NO PERMITIDA!!!');
-        return;
-      }
-    }
+    // if (dayNumberG !== null) {
+    //   if (dayNumberG < day - 1) {
+    //     alert('ACCIÓN NO PERMITIDA!!!');
+    //     return;
+    //   }
+    //   if (dayNumberG > day) {
+    //     alert('ACCIÓN NO PERMITIDA!!!');
+    //     return;
+    //   }
+    // }
     try {
       // Iterar sobre las asistencias y enviar solo aquellas que cambian de 'P' a 'A' o de 'A' a 'P'
       for (let index = 0; index < asistencias.length; index++) {

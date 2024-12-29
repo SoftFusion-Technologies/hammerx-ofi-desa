@@ -208,7 +208,7 @@ const EstadisticasIns = () => {
               <EstadisticaCard
                 key={stat.profesor_id}
                 titulo={`Total de alumnos ${stat.profesor_nombre}`}
-                contenido={stat.totalalumnos}
+                contenido={stat.total_alumnos}
               />
             ))}
           </div>
