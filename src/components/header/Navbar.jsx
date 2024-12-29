@@ -1,25 +1,25 @@
-import { useState } from "react";
-import { theme } from "../../images";
-import Menu from "./Menu";
-import Marcas from "./Marcas";
-import { Link } from "react-router-dom";
-import DropdownMenu from "./DropdownMenu";
-import "../../styles/header/animacionlinks.css";
-import FormTestClass from "../Forms/FormTestClass";
-import FormPostulante from "../Forms/FormPostulante";
+import { useState } from 'react';
+import { theme } from '../../images';
+import Menu from './Menu';
+import Marcas from './Marcas';
+import { Link } from 'react-router-dom';
+import DropdownMenu from './DropdownMenu';
+import '../../styles/header/animacionlinks.css';
+import FormTestClass from '../Forms/FormTestClass';
+import FormPostulante from '../Forms/FormPostulante';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [active, setActive] = useState("");
+  const [active, setActive] = useState('');
   const [modalClaseFree, setModalClaseFree] = useState(false);
   const [modalTrabajarConUstedes, setModalTrabajarConUstedes] = useState(false);
 
   //metodos para abrir y cerrar modal de clase gratis
   const abrirModal = () => {
-    setModalClaseFree(true)
+    setModalClaseFree(true);
   };
   const cerarModal = () => {
-    setModalClaseFree(false)
+    setModalClaseFree(false);
   };
 
   //metodos para abrir y cerrar modal de trabajar con ustedes
@@ -30,13 +30,12 @@ const Navbar = () => {
     setModalTrabajarConUstedes(false);
   };
 
-
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!isMobileMenuOpen);
   };
 
   const toggleDarkMode = () => {
-    document.documentElement.classList.toggle("dark");
+    document.documentElement.classList.toggle('dark');
   };
 
   return (
@@ -53,11 +52,22 @@ const Navbar = () => {
             to="/"
             className="link"
             onClick={() => {
-              setActive("");
+              setActive('');
               window.scrollTo(0, 0);
             }}
           >
             Home
+          </Link>
+
+          <Link
+            to="/nueva_sede_hammerx"
+            className="link"
+            onClick={() => {
+              setActive('');
+              window.scrollTo(0, 0);
+            }}
+          >
+            Nueva sede
           </Link>
 
           <Link to="/nosotros/quienessomos" className="link">
@@ -75,7 +85,10 @@ const Navbar = () => {
           <DropdownMenu />
 
           <Link to="#" className="">
-            <button onClick={abrirModal} className="bg-[#fc4b08] hover:bg-orange-500 text-white py-2 px-4 rounded transition-colors duration-100 z-10">
+            <button
+              onClick={abrirModal}
+              className="bg-[#fc4b08] hover:bg-orange-500 text-white py-2 px-4 rounded transition-colors duration-100 z-10"
+            >
               ¡Probar una clase!
             </button>
           </Link>
@@ -107,6 +120,14 @@ const Navbar = () => {
             onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
           >
             Home
+          </Link>
+
+          <Link
+            to="/nueva_sede_hammerx"
+            className="block py-2 px-4"
+            onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            Nueva sede
           </Link>
           <Link
             to="/nosotros/quienessomos"
@@ -147,7 +168,10 @@ const Navbar = () => {
       {/* Modal para abrir formulario de clase gratis */}
       <FormTestClass isOpen={modalClaseFree} onClose={cerarModal} />
       {/* Modal para abrir formulario de quiero trabajar con ustedes */}
-      <FormPostulante isOpen={modalTrabajarConUstedes} onClose={desactivarModalTrabajar} />
+      <FormPostulante
+        isOpen={modalTrabajarConUstedes}
+        onClose={desactivarModalTrabajar}
+      />
     </nav>
   );
 };

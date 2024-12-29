@@ -52,6 +52,7 @@ const Pautas = lazy(() => import('./pages/Pautas'));
 const Legales = lazy(() => import('./pages/Legales'));
 const Contacto = lazy(() => import('./pages/Contacto'));
 const AdminPage = lazy(() => import('./pages/staff/AdminPage'));
+const NewSede = lazy(() => import('./pages/NewSede'));
 // COMPONENTES PRINCIPALES DE LA PAGINA
 
 // const FormPostu = lazy(() => import('./components/Forms/FormPostulante')); se elimina
@@ -658,6 +659,7 @@ const App = memo(() => {
                   path="/comentarios/concepcion"
                   element={<ComentariosPageConcep />}
                 />
+                <Ruta path="/nueva_sede_hammerx" element={<NewSede />} />
                 <Ruta path="/*" element={<NotFound />} />
               </Rutas>
               <TaskReminder2 tasks={tasks} />
