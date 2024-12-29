@@ -3,6 +3,7 @@ import Navbar from '../components/header/Navbar';
 import Footer from '../components/footer/Footer';
 import { motion } from 'framer-motion';
 import Mapa from '../components/footer/Mapa';
+import imgHammerOrange from '../images/logohammerorange.png';
 const NewSede = () => {
   return (
     <>
@@ -16,32 +17,31 @@ const NewSede = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-6xl font-bold text-gray-800 font-bignoodle">
-              ¡Conoce Nuestra Nueva Sede!
-            </h1>
-            <p className="text-xl text-orange-500 mt-4 font-messina">
-              Estamos emocionados de presentarte nuestro nuevo espacio diseñado
-              especialmente para ti.
-            </p>
+            <img
+              src={imgHammerOrange}
+              alt="logo naranja hammer"
+              className="w-full h-auto"
+            />
+            <h2 className="mb-5 bg-gray-100 text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle text-center">
+              BARRIO SUR
+            </h2>
           </motion.section>
 
           {/* Highlights Section */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             {[
               {
-                title: 'Equipos Modernos',
-                description:
-                  'La última tecnología en equipos de entrenamiento para potenciar tus resultados.'
+                title: '800 m² DE SUPERFICIE',
+                description: 'Para que nunca te falte espacio.'
               },
               {
-                title: 'Clases Especializadas',
-                description:
-                  'Una amplia variedad de clases grupales adaptadas a todos los niveles.'
+                title: 'Equipos de última generación',
+                description: '+70 Equipos de última generación'
               },
               {
-                title: 'Espacios Amplios',
+                title: 'Múltiples Actividades Guiadas',
                 description:
-                  'Diseñados para ofrecer comodidad y seguridad en cada entrenamiento.'
+                  'Musculación, cardio, entrenamiento funcional y pilates.'
               }
             ].map((item, index) => (
               <motion.div
@@ -63,7 +63,7 @@ const NewSede = () => {
           </section>
 
           {/* Gallery Section */}
-          <section className="mb-12">
+          {/* <section className="mb-12">
             <h2 className="text-5xl font-bold text-gray-800 text-center mb-6 font-bignoodle">
               Galería de Imágenes
             </h2>
@@ -84,10 +84,10 @@ const NewSede = () => {
                 )
               )}
             </div>
-          </section>
+          </section> */}
 
           {/* Testimonials Section */}
-          <section className="text-center my-12">
+          {/* <section className="text-center my-12">
             <h2 className="text-5xl font-bold text-gray-800 font-bignoodle">
               Lo que Dicen Nuestros Clientes
             </h2>
@@ -124,54 +124,61 @@ const NewSede = () => {
                 </motion.div>
               ))}
             </div>
-          </section>
+          </section> */}
 
           {/* Special Offer Section */}
-          <section className="text-center bg-orange-100 p-6 rounded-lg shadow-md mt-12">
-            <h2 className="text-4xl font-bold text-gray-800">
-              Promoción de Apertura
+          <section className="text-center bg-gray-100 p-6 rounded-lg shadow-md mt-12">
+            <h2 className="text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle">
+              PREVENTA
             </h2>
             <p className="text-gray-600 mt-2">
-              ¡Inscríbete ahora y obtén 50% de descuento en tu primer mes!
+              ¡Inscribite ahora y obtené hasta un 50% de descuento!
             </p>
-            <button className="mt-4 px-6 py-3 bg-orange-600 text-white font-bold rounded-lg shadow-md hover:bg-orange-500 transition duration-300">
+            <button className="uppercase mt-4 px-6 py-3 bg-orange-600 text-white font-bold rounded-lg shadow-md hover:bg-orange-500 transition duration-300">
               Aprovechar Promoción
             </button>
           </section>
 
           {/* Contact Form */}
           <section className="text-center bg-white p-6 rounded-lg shadow-md mt-12">
-            <h2 className="text-3xl font-bold text-gray-800">
-              ¿Interesado en Conocernos?
+            <h2 className="text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle">
+              Contactanos
             </h2>
-            <p className="text-gray-600 mt-2">
-              Déjanos tus datos y nos pondremos en contacto contigo.
-            </p>
-            <form className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <input
-                type="text"
-                placeholder="Nombre"
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full"
-              />
-              <input
-                type="email"
-                placeholder="Correo Electrónico"
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full"
-              />
-              <textarea
-                placeholder="Tu mensaje"
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full col-span-2"
-              ></textarea>
-              <button
-                type="submit"
-                className="col-span-2 bg-orange-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-orange-500 transition duration-300"
+            <form className="mt-4 flex flex-col gap-4">
+              {/* Campo de Nombre */}
+              <div className="w-full">
+                <input
+                  type="text"
+                  placeholder="Nombre"
+                  className="border border-gray-300 rounded-lg px-4 py-2 w-full"
+                />
+              </div>
+
+              {/* Campo de Teléfono */}
+              <div className="w-full">
+                <input
+                  type="tel"
+                  placeholder="Teléfono"
+                  className="border border-gray-300 rounded-lg px-4 py-2 w-full"
+                />
+              </div>
+
+              {/* Botón de WhatsApp */}
+              <a
+                href="https://wa.me/543863564651?text=Hola!%20Quiero%20info%20de%20HAMMERX%20B%C2%B0%20Sur."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-orange-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-orange-500 transition duration-300 text-center block text-lg"
               >
-                Enviar
-              </button>
+                OBTENER MI DESCUENTO
+              </a>
             </form>
           </section>
         </div>
       </div>
+      <h2 className="mb-5 bg-gray-100 text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle text-center">
+        CONOCE NUESTRA UBICACIÓN
+      </h2>
       <Mapa></Mapa>
       <Footer />
     </>

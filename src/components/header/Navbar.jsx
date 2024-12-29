@@ -67,7 +67,7 @@ const Navbar = () => {
               window.scrollTo(0, 0);
             }}
           >
-            Nueva sede
+            Nueva sede Bº Sur 
           </Link>
 
           <Link to="/nosotros/quienessomos" className="link">
@@ -127,7 +127,7 @@ const Navbar = () => {
             className="block py-2 px-4"
             onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
           >
-            Nueva sede
+            Nueva sede Bº Sur
           </Link>
           <Link
             to="/nosotros/quienessomos"
