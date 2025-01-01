@@ -65,6 +65,8 @@ const PlanillaEntrenador = () => {
   const itemsPerPage = 20;
 
   const [currentYear] = useState(new Date().getFullYear()); // Año actual
+  const [selectedYear, setSelectedYear] = useState(currentYear); // Año seleccionado
+
   const [currentMonth] = useState(new Date().getMonth() + 1); // Mes actual
   const [selectedMonth, setSelectedMonth] = useState(currentMonth); // Mes seleccionado
   const [selectedMonthName, setSelectedMonthName] = useState(''); // Nombre del mes seleccionado
@@ -201,12 +203,12 @@ const PlanillaEntrenador = () => {
       const responseAlumnos = await axios.get(`${URL}alumnos`);
       // Enviar mes y año como parámetros
       const responseAsistencias = await axios.get(`${URL}asistencias`, {
-        params: { mes: month, anio: currentYear }
+        params: { mes: month, anio: selectedYear }
       });
 
       // Enviar mes y año como parámetros
       const responseAgendas = await axios.get(`${URL}agendas`, {
-        params: { mes: month, anio: currentYear }
+        params: { mes: month, anio: selectedYear }
       });
       // Filtrar alumnos por user_id
       const alumnosFiltrados =
@@ -1072,17 +1074,20 @@ const PlanillaEntrenador = () => {
 
   // Función para retroceder al mes anterior
   const handlePreviousMonth = () => {
-    if (selectedMonth > 1) {
-      setSelectedMonth((prev) => prev - 1);
+    if (selectedMonth === 1) {
+      setSelectedMonth(12);
+      setSelectedYear((prevYear) => prevYear - 1);
     } else {
-      setSelectedMonth(12); // Si es enero, retrocede a diciembre del año anterior (si lo necesitas)
+      setSelectedMonth((prevMonth) => prevMonth - 1);
     }
   };
 
-  // Función para avanzar al mes siguiente
   const handleNextMonth = () => {
-    if (selectedMonth < currentMonth) {
-      setSelectedMonth((prev) => prev + 1);
+    if (selectedMonth === 12) {
+      setSelectedMonth(1);
+      setSelectedYear((prevYear) => prevYear + 1);
+    } else {
+      setSelectedMonth((prevMonth) => prevMonth + 1);
     }
   };
 
@@ -1213,7 +1218,7 @@ const PlanillaEntrenador = () => {
 
             <div className="flex flex-col items-center space-y-4">
               <h1 className="text-3xl font-bold text-orange-600">
-                {selectedMonthName} {currentYear}
+                {selectedMonthName} {selectedYear}
               </h1>
               <div className="flex space-x-4">
                 <button
@@ -1224,18 +1229,16 @@ const PlanillaEntrenador = () => {
                 </button>
                 <button
                   className={`px-4 py-2 rounded ${
-                    selectedMonth === currentMonth
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    selectedMonth === selectedMonth
+                      ? 'bg-orange-500 text-white hover:bg-orange-600 '
                       : 'bg-orange-500 text-white hover:bg-orange-600 transition duration-300'
                   }`}
                   onClick={handleNextMonth}
-                  disabled={selectedMonth === currentMonth}
                 >
-                  Mes Siguiente{' '}
+                  Mes Siguiente
                 </button>
               </div>
-
-              {userLevel != 'instructor' && selectedMonth < currentMonth && (
+              {userLevel !== 'instructor' && selectedMonth < currentMonth && (
                 <div className="flex flex-col items-center space-y-2">
                   <label className="text-gray-700 font-medium">
                     Ingrese el año a borrar (se BORRAN todas las asistencias y
@@ -1264,6 +1267,7 @@ const PlanillaEntrenador = () => {
                 </div>
               )}
             </div>
+
             <h1 className="ml-2 uppercase font-bold text-xl">
               Cantidad de páginas: {nPage}
             </h1>
