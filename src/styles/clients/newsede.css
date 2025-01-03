@@ -1,6 +1,13 @@
 .bgvsps_v2 {
   background-image: url('../../images/svg/nueva-sede.svg');
-  background-repeat: no-repeat; /* Cambiado a no-repeat */
-  background-size: cover;
-  background-position: center; /* Centra el SVG */
+  background-repeat: no-repeat;
+  background-size: cover; /* Mantiene el diseño en mobile */
+  background-position: center;
+  height: 100%; /* Se ajusta al contenedor */
+
+  /* Estilos para pantallas más grandes */
+  @media (min-width: 1024px) {
+    background-size: contain; /* Muestra la imagen completa en pantallas grandes */
+    min-height: 30vh; /* Asegura que ocupe un espacio significativo en PC */
+  }
 }

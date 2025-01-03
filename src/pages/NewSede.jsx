@@ -4,10 +4,13 @@ import Footer from '../components/footer/Footer';
 import { motion } from 'framer-motion';
 import Mapa from '../components/footer/Mapa';
 import imgHammerOrange from '../images/logohammerorange.png';
-import imgRedInsta from '../images/redes/instagram.png';
-import imgRedFace from '../images/redes/facebook.png';
-import imgRedWsp from '../images/redes/whatsapp.png';
+import imgRedInsta from '../images/redes/instagram.webp';
+import imgRedFace from '../images/redes/facebook.webp';
+import imgRedWsp from '../images/redes/whatsapp.webp';
 import '../styles/clients/newsede.css';
+
+import { logo } from '../images/svg/index';
+
 const NewSede = () => {
   return (
     <>
@@ -19,21 +22,22 @@ const NewSede = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="bgvsps_v2 p-8">
+          <div className="bgvsps_v2 p-8 mt-10">
             <h1
-              className="text-6xl font-bold  font-bignoodle"
+              className="text-1xl font-bold font-messina uppercase  lg:mt-20 lg:text-3xl"
               style={{ color: '#fc4b08' }}
             >
               ¡Conoce Nuestra Nueva Sede!
             </h1>
-            <img
-              src={imgHammerOrange}
-              alt="logo naranja hammer"
-              className="w-full h-auto"
-            />
           </div>
+          <img
+            src={logo}
+            alt="logo"
+            className="block mx-auto  max-w-xs lg:max-w-md lg:-mt-16"
+          />
+
           <h2
-            className="inline-block p-2 text-4xl md:text-6xl font-bold text-white font-bignoodle text-center rounded-lg"
+            className="inline-block p-2 text-2xl md:text-3xl font-bold text-white font-bignoodle text-center rounded-lg"
             style={{ backgroundColor: '#fc4b08' }}
           >
             BARRIO SUR
@@ -65,7 +69,7 @@ const NewSede = () => {
               {
                 title: 'AMBIENTE CLIMATIZADO',
                 description:
-                  'Todos nuestros salones cuentan con aire acondicionado y calefacción'
+                  'Todos nuestros salones cuentan con aire acondicionado'
               }
             ].map((item, index) => (
               <motion.div
@@ -101,7 +105,7 @@ const NewSede = () => {
               href="https://wa.me/543863564651?text=Hola!%20Quiero%20info%20de%20HAMMERX%20B%C2%B0%20Sur."
               target="_blank"
               rel="noopener noreferrer"
-              className="uppercase px-6 py-3 bg-white font-bold rounded-lg shadow-md hover:bg-orange-500 transition duration-300"
+              className="font-bignoodle uppercase px-6 py-3 bg-white font-bold rounded-lg shadow-md hover:bg-orange-500 transition duration-300"
               style={{ color: '#fc4b08' }}
             >
               ¡Quiero reservar mi cupo!
@@ -115,7 +119,7 @@ const NewSede = () => {
             className="mt-5 flex flex-col items-center bg-white py-4 px-6 rounded-lg shadow-lg cursor-pointer"
           >
             <div
-              className="text-xl text-[#fc4b08] font-bignoodle mb-2"
+              className="text-3xl md:text-4xl font-bold font-bignoodle"
               style={{ color: '#fc4b08' }}
             >
               Contáctanos
@@ -127,8 +131,11 @@ const NewSede = () => {
             />
           </a>
 
-          <section className="text-center p-6 rounded-lg shadow-md mt-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white font-bignoodle">
+          <section className="bg-white text-center p-6 rounded-lg shadow-md mt-12">
+            <h2
+              className="text-3xl md:text-4xl font-bold font-bignoodle"
+              style={{ color: '#fc4b08' }}
+            >
               Síguenos en redes sociales
             </h2>
             <div className="flex justify-center gap-8 mt-6">
