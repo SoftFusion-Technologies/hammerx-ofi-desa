@@ -6,20 +6,24 @@ import Mapa from '../components/footer/Mapa';
 import imgHammerOrange from '../images/logohammerorange.png';
 import imgRedInsta from '../images/redes/instagram.png';
 import imgRedFace from '../images/redes/facebook.png';
+import imgRedWsp from '../images/redes/whatsapp.png';
+import '../styles/clients/newsede.css';
 const NewSede = () => {
   return (
     <>
       {/* <Navbar /> */}
-      <div className="bg-gray-100 min-h-screen">
-        <div className="container mx-auto px-4 py-8">
-          {/* Section Title */}
-          <motion.section
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h1 className="text-6xl font-bold text-gray-800 font-bignoodle">
+      <div className="min-h-screen">
+        <motion.section
+          className="text-center mb-12"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="bgvsps_v2 p-8">
+            <h1
+              className="text-6xl font-bold  font-bignoodle"
+              style={{ color: '#fc4b08' }}
+            >
               ¡Conoce Nuestra Nueva Sede!
             </h1>
             <img
@@ -27,13 +31,23 @@ const NewSede = () => {
               alt="logo naranja hammer"
               className="w-full h-auto"
             />
-            <h2 className="mb-5 bg-gray-100 text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle text-center">
-              BARRIO SUR
-            </h2>
-          </motion.section>
+          </div>
+          <h2
+            className="inline-block p-2 text-4xl md:text-6xl font-bold text-white font-bignoodle text-center rounded-lg"
+            style={{ backgroundColor: '#fc4b08' }}
+          >
+            BARRIO SUR
+          </h2>
+        </motion.section>
+
+        <div
+          className="mx-auto px-4 py-8"
+          style={{ backgroundColor: '#fc4b08' }}
+        >
+          {/* Section Title */}
 
           {/* Highlights Section */}
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
             {[
               {
                 title: '800 m² DE SUPERFICIE',
@@ -47,150 +61,74 @@ const NewSede = () => {
                 title: 'Múltiples Actividades Guiadas',
                 description:
                   'Musculación, cardio, entrenamiento funcional y pilates'
+              },
+              {
+                title: 'AMBIENTE CLIMATIZADO',
+                description:
+                  'Todos nuestros salones cuentan con aire acondicionado y calefacción'
               }
             ].map((item, index) => (
               <motion.div
                 key={index}
-                className="bg-white shadow-lg p-6 rounded-lg text-center"
+                className="bg-[#fc4b08] shadow-lg p-6 rounded-lg text-center border-2 border-white"
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.2 }}
               >
-                <h3 className="text-2xl font-bold text-gray-800 font-bignoodle">
+                <h3 className="text-2xl text-white font-bignoodle">
                   {item.title}
                 </h3>
-                <p className="text-gray-600 mt-2 font-messina">
+                <p className="text-white mt-2 font-messina">
                   {item.description}
                 </p>
               </motion.div>
             ))}
           </section>
 
-          {/* Gallery Section */}
-          {/* <section className="mb-12">
-            <h2 className="text-5xl font-bold text-gray-800 text-center mb-6 font-bignoodle">
-              Galería de Imágenes
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {['Nueva sede 1', 'Nueva sede 2', 'Nueva sede 3'].map(
-                (altText, index) => (
-                  <motion.div
-                    key={index}
-                    className="h-48 bg-gray-300 rounded-lg overflow-hidden"
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <img
-                      src={`https://via.placeholder.com/400?text=${altText}`}
-                      alt={altText}
-                      className="w-full h-full object-cover"
-                    />
-                  </motion.div>
-                )
-              )}
-            </div>
-          </section> */}
-
-          {/* Testimonials Section */}
-          {/* <section className="text-center my-12">
-            <h2 className="text-5xl font-bold text-gray-800 font-bignoodle">
-              Lo que Dicen Nuestros Clientes
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-              {[
-                {
-                  quote:
-                    'La nueva sede es espectacular. Los equipos son de primera calidad y los entrenadores son súper profesionales.',
-                  name: 'Juan Pérez'
-                },
-                {
-                  quote:
-                    'Me encanta el ambiente y las clases grupales. Definitivamente un lugar para motivarse a entrenar.',
-                  name: 'María García'
-                },
-                {
-                  quote:
-                    'Espacios amplios y modernos. El mejor gimnasio de la ciudad sin duda.',
-                  name: 'Luis Fernández'
-                }
-              ].map((testimonial, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-white shadow-lg p-6 rounded-lg"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.2 }}
-                >
-                  <p className="text-gray-600 italic">"{testimonial.quote}"</p>
-                  <h4 className="text-gray-800 font-bold mt-4">
-                    - {testimonial.name}
-                  </h4>
-                </motion.div>
-              ))}
-            </div>
-          </section> */}
-
-          <section className="text-center bg-gray-100 p-6 rounded-lg shadow-md mt-12">
-            <h2 className="text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle">
-              AMBIENTE CLIMATIZADO
-            </h2>
-            <p className="text-gray-600 mt-2">
-              Todos nuestros salones cuentan con aire acondicionado y
-              calefacción{' '}
-            </p>
-          </section>
           {/* Special Offer Section */}
-          <section className="text-center bg-gray-100 p-6 rounded-lg shadow-md mt-12">
-            <h2 className="text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle">
+          <section
+            className="text-center bg-gray-600 p-6 rounded-lg shadow-md mt-12 border-2 border-white"
+            style={{ backgroundColor: '#fc4b08' }}
+          >
+            <h2 className="text-4xl md:text-6xl font-bold text-white font-bignoodle">
               PREVENTA
             </h2>
-            <p className="text-gray-600 mt-2">
-              ¡Inscribite ahora y obtené hasta un 50% de descuento!
+            <p className="mb-5 text-white mt-2 uppercase font-bignoodle text-2xl">
+              ¡Inscribite ahora y obtené hasta un 50% OFF!
             </p>
-            <button className="uppercase mt-4 px-6 py-3 bg-orange-600 text-white font-bold rounded-lg shadow-md hover:bg-orange-500 transition duration-300">
-              Quiero conocer los planes
-            </button>
+            <a
+              href="https://wa.me/543863564651?text=Hola!%20Quiero%20info%20de%20HAMMERX%20B%C2%B0%20Sur."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="uppercase px-6 py-3 bg-white font-bold rounded-lg shadow-md hover:bg-orange-500 transition duration-300"
+              style={{ color: '#fc4b08' }}
+            >
+              ¡Quiero reservar mi cupo!
+            </a>
           </section>
 
-          {/* Contact Form */}
-          <section className="text-center bg-white p-6 rounded-lg shadow-md mt-12">
-            <h2 className="text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle">
-              Contactanos
-            </h2>
-            <form className="mt-4 flex flex-col gap-4">
-              {/* Campo de Nombre */}
-              <div className="w-full">
-                <input
-                  type="text"
-                  placeholder="Nombre completo"
-                  className="border border-gray-300 rounded-lg px-4 py-2 w-full"
-                />
-              </div>
+          <a
+            href="https://wa.me/543863564651?text=Hola!%20Quiero%20info%20de%20HAMMERX%20B%C2%B0%20Sur."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 flex flex-col items-center bg-white py-4 px-6 rounded-lg shadow-lg cursor-pointer"
+          >
+            <div
+              className="text-xl text-[#fc4b08] font-bignoodle mb-2"
+              style={{ color: '#fc4b08' }}
+            >
+              Contáctanos
+            </div>
+            <img
+              src={imgRedWsp}
+              alt="WhatsApp"
+              className="w-16 h-16 rounded-full"
+            />
+          </a>
 
-              {/* Campo de Teléfono */}
-              <div className="w-full">
-                <input
-                  type="tel"
-                  placeholder="Teléfono"
-                  className="border border-gray-300 rounded-lg px-4 py-2 w-full"
-                />
-              </div>
-
-              {/* Botón de WhatsApp */}
-              <a
-                href="https://wa.me/543863564651?text=Hola!%20Quiero%20info%20de%20HAMMERX%20B%C2%B0%20Sur."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full bg-orange-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-orange-500 transition duration-300 text-center block text-lg"
-              >
-                Solicitar Información
-              </a>
-            </form>
-          </section>
-
-          <section className="text-center bg-white p-6 rounded-lg shadow-md mt-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 font-bignoodle">
+          <section className="text-center p-6 rounded-lg shadow-md mt-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white font-bignoodle">
               Síguenos en redes sociales
             </h2>
             <div className="flex justify-center gap-8 mt-6">
@@ -222,7 +160,10 @@ const NewSede = () => {
           </section>
         </div>
       </div>
-      <h2 className="mb-5 bg-gray-100 text-4xl md:text-6xl font-bold text-gray-800 font-bignoodle text-center">
+      <h2
+        style={{ background: '#fc4b08' }}
+        className="mb-5 text-4xl md:text-6xl font-bold text-white font-bignoodle text-center"
+      >
         CONOCE NUESTRA UBICACIÓN
       </h2>
       <Mapa></Mapa>

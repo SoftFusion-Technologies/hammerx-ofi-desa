@@ -1,0 +1,6 @@
+.bgvsps_v2 {
+  background-image: url('../../images/svg/nueva-sede.svg');
+  background-repeat: no-repeat; /* Cambiado a no-repeat */
+  background-size: cover;
+  background-position: center; /* Centra el SVG */
+}
