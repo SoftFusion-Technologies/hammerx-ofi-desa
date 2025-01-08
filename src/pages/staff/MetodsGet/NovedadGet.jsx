@@ -827,6 +827,7 @@ const NovedadGet = () => {
         }}
         novedadId={novedadId}
         vencimientos={vencimientos} // Pasa los vencimientos al modal
+        obtenerFechasVec={obtenerFechasVec}
       />
     </>
   );

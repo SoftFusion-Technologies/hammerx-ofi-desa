@@ -7,7 +7,8 @@ const FechasNovedad = ({
   isOpen,
   onClose,
   novedadId,
-  vencimientos
+  vencimientos,
+  obtenerFechasVec
 }) => {
   const [fechas, setFechas] = useState(['']);
   const { userLevel } = useAuth(); // Obtener el nivel de usuario desde el contexto
@@ -44,21 +45,19 @@ const FechasNovedad = ({
       const uniqueFechas = [...new Set(fechas.filter((f) => f))];
 
       for (const fecha of uniqueFechas) {
-        await axios.post(
-          'http://localhost:8080/novedades-vencimientos',
-          {
-            novedad_id: novedadId,
-            vencimiento: fecha,
-            sede,
-            titulo,
-            mensaje,
-            users,
-            estado
-          }
-        );
+        await axios.post('http://localhost:8080/novedades-vencimientos', {
+          novedad_id: novedadId,
+          vencimiento: fecha,
+          sede,
+          titulo,
+          mensaje,
+          users,
+          estado
+        });
       }
 
       alert('Fechas agregadas con éxito');
+      obtenerFechasVec();
       onClose();
     } catch (error) {
       console.error('Error al agregar fechas', error);
@@ -112,6 +111,33 @@ const FechasNovedad = ({
     onClose(); // Cerrar el modal
   };
 
+  const handleDelete = async (id) => {
+    if (
+      window.confirm('¿Estás seguro de que deseas eliminar este vencimiento?')
+    ) {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/novedades-vencimientos/${id}`,
+          {
+            method: 'DELETE'
+          }
+        );
+
+        if (response.ok) {
+          alert('Vencimiento eliminado correctamente. RECARGAR LA WEB PARA VER EL CAMBIO');
+          // Actualizar la lista de vencimientos después de eliminar
+          obtenerFechasVec();
+          onClose();
+        } else {
+          alert('Error al eliminar el vencimiento.');
+        }
+      } catch (error) {
+        console.error('Error al eliminar vencimiento:', error);
+        alert('Ocurrió un error al intentar eliminar el vencimiento.');
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
       <div
@@ -122,14 +148,24 @@ const FechasNovedad = ({
       <div className="bg-white p-6 rounded shadow-lg z-10">
         <h3 className="text-lg mt-4 mb-2">Vencimientos Existentes:</h3>
         {vencimientos.length > 0 ? (
-          // Filtramos los vencimientos que coinciden con el novedad_id
           vencimientos
             .filter((vencimiento) => vencimiento.novedad_id === novedadId)
-            .sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento)) // Ordenar de forma ascendente (creciente)
+            .sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento)) // Ordenar de forma ascendente
             .map((vencimiento) => (
-              <p key={vencimiento.id} className="text-gray-600">
-                {new Date(vencimiento.vencimiento).toLocaleDateString()}
-              </p>
+              <div
+                key={vencimiento.id}
+                className="flex items-center justify-between text-gray-600"
+              >
+                <span>
+                  {new Date(vencimiento.vencimiento).toLocaleDateString()}
+                </span>
+                <button
+                  className="text-red-500 hover:text-red-700"
+                  onClick={() => handleDelete(vencimiento.id)} // Función para manejar la eliminación
+                >
+                  x
+                </button>
+              </div>
             ))
         ) : (
           <p className="text-red-500">No hay vencimientos agregados.</p>
