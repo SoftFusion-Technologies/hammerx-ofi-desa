@@ -65,27 +65,54 @@ const NotificationsAgendas = ({ user1, user2 }) => {
             ) : (
               <div className="max-h-96 overflow-y-auto">
                 <ul className="space-y-3">
-                  {notificaciones.map((notificacion, index) => (
-                    <li
-                      key={index}
-                      className="p-4 bg-gray-100 rounded-md shadow-sm text-gray-700"
-                    >
-                      {index + 1} - El alumno{' '}
-                      <span className="font-medium text-orange-600">
-                        {notificacion.alumno_nombre}
-                      </span>{' '}
-                      tiene la agenda{' '}
-                      <strong className="text-orange-600 uppercase">
-                        {agendaTitles[notificacion.agenda_num] ||
-                          'Agenda Desconocida'}
-                      </strong>{' '}
-                      en estado
-                      <span className="text-red-600 font-bold">
-                        {' '}
-                        PENDIENTE.
-                      </span>
-                    </li>
-                  ))}
+                  {notificaciones.map((notificacion, index) => {
+                    // Convertir mes numérico a nombre del mes
+                    const meses = [
+                      'enero',
+                      'febrero',
+                      'marzo',
+                      'abril',
+                      'mayo',
+                      'junio',
+                      'julio',
+                      'agosto',
+                      'septiembre',
+                      'octubre',
+                      'noviembre',
+                      'diciembre'
+                    ];
+                    const mesNombre =
+                      meses[parseInt(notificacion.mes, 10) - 1] ||
+                      'mes desconocido';
+
+                    return (
+                      <li
+                        key={index}
+                        className="p-4 bg-gray-100 rounded-md shadow-sm text-gray-700"
+                      >
+                        {index + 1} - El alumno{' '}
+                        <span className="font-medium text-orange-600">
+                          {notificacion.alumno_nombre}
+                        </span>{' '}
+                        tiene la agenda{' '}
+                        <strong className="text-orange-600 uppercase">
+                          {agendaTitles[notificacion.agenda_num] ||
+                            'Agenda Desconocida'}
+                        </strong>{' '}
+                        en estado
+                        <span className="text-red-600 font-bold">
+                          {' '}
+                          PENDIENTE
+                        </span>{' '}
+                        <span>
+                          PARA EL MES DE
+                          <span className="ml-2 text-green-600 font-bold uppercase">
+                            {mesNombre} - {notificacion.anio}
+                          </span>
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
