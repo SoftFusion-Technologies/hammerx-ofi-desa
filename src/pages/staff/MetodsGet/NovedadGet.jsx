@@ -811,6 +811,7 @@ const NovedadGet = () => {
         onClose={() => setModalNewNovedad(false)}
         novedad={selectednovedad}
         setSelectedNovedad={setSelectedNovedad}
+        obtenerNovedades={obtenerNovedades}
       />
       <ModalNovedad
         isOpen={modalData.isOpen}

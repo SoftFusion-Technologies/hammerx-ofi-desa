@@ -24,7 +24,13 @@ import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
 import Alerta from '../Error';
 
-const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
+const FormAltaNovedad = ({
+  isOpen,
+  onClose,
+  novedad,
+  setSelectedNovedad,
+  obtenerNovedades
+}) => {
   const [users, setUsers] = useState([]);
   const [selectedSede, setSelectedSede] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -130,6 +136,8 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
         throw new Error('Error en la solicitud ${method}: ' + respuesta.status);
       }
 
+      obtenerNovedades();
+
       const result = await respuesta.json();
       console.log('Registro insertado correctamente:', result);
 
@@ -218,7 +226,7 @@ const FormAltaNovedad = ({ isOpen, onClose, novedad, setSelectedNovedad }) => {
                     <Alerta>{errors.sede}</Alerta>
                   ) : null}
                 </div>
-                
+
                 <div className="mb-6 px-6 py-4 bg-white rounded-lg shadow-md">
                   {/* Checkbox para seleccionar todos los usuarios */}
                   <div className="mb-4 flex items-center">
