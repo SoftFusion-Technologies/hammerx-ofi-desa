@@ -116,7 +116,7 @@ const Clients = () => {
               {/* Primer grupo de 2 botones */}
               {/* Se pasaron el jsx y los estilos de los botones a este archivo para poder controlar desde aquí el evento click para renderizar cada uno de los modals */}
               <div className="flex justify-center gap-4 max-sm:flex-col md:space-x-5">
-                <button
+                {/* <button
                   onClick={() => setShowModal('accesorios')} // Aquí se establece el modal a 'accesorios'
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
@@ -128,7 +128,7 @@ const Clients = () => {
                     anterior={handleAnterior}
                     siguiente={handleSiguiente}
                   />
-                )}
+                )} */}
                 <button
                   onClick={() => setShowModal('descuentos')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
