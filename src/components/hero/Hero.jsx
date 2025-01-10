@@ -10,18 +10,18 @@
  *  Capa: Frontend
  */
 
-import Aos from "aos";
-import FixedNavbar from "./FixedNavbar";
-import { Link } from "react-router-dom";
-import { guionesnar } from "../../images";
-import { useEffect, useState } from "react";
-import { flecha1, flecha2, logo, hero2 } from "../../images/svg/index";
-import { video } from "../../Video";
+import Aos from 'aos';
+import FixedNavbar from './FixedNavbar';
+import { Link } from 'react-router-dom';
+import { guionesnar } from '../../images';
+import { useEffect, useState } from 'react';
+import { flecha1, flecha2, logo, hero2 } from '../../images/svg/index';
+import { video } from '../../Video';
 import { video2 } from '../../Video';
-import './hero.css'
+import './hero.css';
 const Hero = () => {
   useEffect(() => {
-    Aos.init({ duration: 1500, delay: "200" });
+    Aos.init({ duration: 1500, delay: '200' });
   }, []);
 
   const [mostrarBotonesSedes, setMostrarBotonesSedes] = useState(false);
@@ -36,7 +36,6 @@ const Hero = () => {
 
     return () => clearTimeout(timer); // Limpiar el temporizador al desmontar el componente
   }, []);
-
 
   const toggleSedes = () => {
     //mostrar botones de sedes
@@ -100,14 +99,12 @@ const Hero = () => {
                 <a href="#about">CONOCÉ TODA NUESTRA INFO</a>
               </li>
 
-              {/*
               <hr className="text-black w-5/6" />
-              
-               <li className="py-2 hover:text-orange-500 transition duration-200 ease-in-out">
-                <a href="#">QUIERO TRABAJAR CON USTEDES</a>
+
+              <li className="py-2 hover:text-orange-500 transition duration-200 ease-in-out">
+                <a href="/productos">¡CONOCÉ NUESTRO MERCHANDISING!</a>
               </li>
-                Cambios, pre ultima version, 12-04-24, benjamin orellana
-              */}
+              {/* Cambios, pre ultima version, 12-04-24, benjamin orellana */}
             </ul>
           </nav>
         </div>
@@ -223,6 +220,11 @@ const Hero = () => {
               <hr className="text-black w-5/6" />
               <li className="py-2 hover:text-orange-500 transition duration-200 ease-in-out">
                 <a href="#about">CONOCÉ TODA NUESTRA INFO</a>
+              </li>
+
+              <hr className="text-black w-5/6" />
+              <li className="py-2 hover:text-orange-500 transition duration-200 ease-in-out">
+                <a href="/productos">¡CONOCÉ NUESTRO MERCHANDISING!</a>
               </li>
             </ul>
           </nav>
