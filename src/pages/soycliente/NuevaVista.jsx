@@ -19,8 +19,7 @@ const NuevaVista = () => {
 
   return (
     <div className="-mb-10 relative w-full md:h-screen flex overflow-hidden">
-      
-       <div
+      <div
         className="hidden md:flex lg:w-1/2 md:w-2/3 w-full px-10 flex-col justify-center items-center bg-gradient-to-r"
         id="div1"
       >
@@ -30,11 +29,10 @@ const NuevaVista = () => {
           </h1>
           <p className="text-gray-700 text-base md:text-lg text-center font-messina">
             Si estás leyendo esto queremos felicitarte por tomar la decisión que
-            cambiará tu vida, la decisión de ponerte en movimiento y cuidarte.
-            Gracias por elegirnos para ser parte de este proceso. Estamos muy
-            ansiosos de ayudarte a lograr tus objetivos, pero sobre todo,
-            acompañarte para que disfrutemos el camino juntos. ¡Bienvenid@ al team
-            HAMMERX!
+            cambiará tu vida, la decisión de cuidarte y trabajar en vos. Gracias
+            por elegirnos para ser parte de este proceso. Estamos muy ansiosos
+            de ayudarte a lograr tus objetivos, pero sobre todo, acompañarte
+            para que disfrutemos el camino juntos. ¡Bienvenid@ al team HAMMERX!
           </p>
         </div>
       </div>
@@ -53,8 +51,7 @@ const NuevaVista = () => {
 
       {/* Mobile content */}
       <div className="md:hidden w-full px-10 max-sm:px-6 mt-5 flex flex-col py-10">
-        <div className="relative dark:bg-gradient-to-r from-gray-700 to-gray-900">
-        </div>
+        <div className="relative dark:bg-gradient-to-r from-gray-700 to-gray-900"></div>
         <div className="w-4/4 h-auto pb-5 rounded-xl mx-auto mt-5 max-sm:mt-8">
           <div>
             <div className="bg-white p-6 rounded-lg shadow-lg mb-8 md:mb-0 md:w-1/2 lg:w-1/3">
@@ -62,12 +59,12 @@ const NuevaVista = () => {
                 ¡BIENVENID@ A HAMMERX!
               </h1>
               <p className="text-gray-700 text-base md:text-lg text-center font-messina">
-                Si estás leyendo esto queremos felicitarte por tomar la decisión que
-                cambiará tu vida, la decisión de ponerte en movimiento y cuidarte.
-                Gracias por elegirnos para ser parte de este proceso. Estamos muy
-                ansiosos de ayudarte a lograr tus objetivos, pero sobre todo,
-                acompañarte para que disfrutemos el camino juntos. ¡Bienvenid@ al team
-                HAMMERX!
+                Si estás leyendo esto queremos felicitarte por tomar la decisión
+                que cambiará tu vida, la decisión de ponerte en movimiento y
+                cuidarte. Gracias por elegirnos para ser parte de este proceso.
+                Estamos muy ansiosos de ayudarte a lograr tus objetivos, pero
+                sobre todo, acompañarte para que disfrutemos el camino juntos.
+                ¡Bienvenid@ al team HAMMERX!
               </p>
             </div>
           </div>

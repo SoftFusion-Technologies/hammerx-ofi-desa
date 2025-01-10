@@ -7,6 +7,7 @@ import PromoMacro from './PromosBancarias/PromoMacro.jpeg';
 import PromoSantander from './PromosBancarias/PromoSantander.jpeg';
 import NaranjaQR from './PromosBancarias/NaranjaQR.jpeg';
 import PromoNxVer from './PromosBancarias/PromoNxVer.jpeg';
+import sucredito from './PromosBancarias/sucredito.jpeg';
 import WelcomeModal from './WelcomeModal'; // Asegúrate de tener el componente de modal importado
 
 function ModalPromociones({ anterior, siguiente }) {
@@ -45,7 +46,8 @@ function ModalPromociones({ anterior, siguiente }) {
     PromoMacro,
     PromoSantander,
     NaranjaQR,
-    PromoNxVer
+    PromoNxVer,
+    sucredito
   ]; // Array dinámico
 
   const handleButtonClick = (imageId) => {
@@ -302,23 +304,21 @@ function ModalPromociones({ anterior, siguiente }) {
             onClick={closeThirdModal}
           ></div>
           <div className="flex items-center justify-center fixed inset-0 z-50">
-            <div className="relative bg-white rounded-lg shadow dark:bg-gray-700 p-4 w-[80%] max-w-2xl">
+            <div className="relative bg-white rounded-lg shadow dark:bg-gray-700 p-4 w-[100%] max-w-4xl">
               <h3 className="text-xl font-bignoodle">Promociones Bancarias</h3>
               <div className="p-4 space-y-4">
                 <p>
                   ¡Aprovecha nuestras promociones bancarias con descuentos
                   especiales!
                 </p>
-                <div
-                  className="overflow-x-auto"
-                >
+                <div className="overflow-x-auto">
                   <div className="flex gap-4">
                     {promoImages.map((promo, index) => (
                       <img
                         key={index}
                         src={promo}
                         alt={`Flyer Promoción ${index + 1}`}
-                        className="w-1/2 sm:w-1/3 lg:w-1/4 xl:w-1/5 h-auto rounded-lg"
+                        className="w-2/2 sm:w-1/3 lg:w-1/4 xl:w-2/2 h-auto rounded-lg"
                       />
                     ))}
                   </div>
