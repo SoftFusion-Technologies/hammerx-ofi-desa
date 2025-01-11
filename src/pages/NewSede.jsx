@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '../components/header/Navbar';
 import Footer from '../components/footer/Footer';
 import { motion } from 'framer-motion';
@@ -8,10 +8,18 @@ import imgRedInsta from '../images/redes/instagram.webp';
 import imgRedFace from '../images/redes/facebook.webp';
 import imgRedWsp from '../images/redes/whatsapp.webp';
 import '../styles/clients/newsede.css';
-
+import FormPostulante from '../components/Forms/FormPostulante';
 import { logo } from '../images/svg/index';
 
 const NewSede = () => {
+  // Estado para controlar la visibilidad del modal
+  const [modal, setModal] = useState(false);
+
+  // Función para abrir el modal
+  const abrirModal = () => setModal(true);
+
+  // Función para cerrar el modal
+  const cerrarModal = () => setModal(false);
   return (
     <>
       {/* <Navbar /> */}
@@ -174,6 +182,30 @@ const NewSede = () => {
         CONOCE NUESTRA UBICACIÓN
       </h2>
       <Mapa></Mapa>
+      <div className="p-4">
+        {/* Mensaje destacado */}
+        <div
+          style={{ background: '#fc4b08' }}
+          className="flex flex-col items-center justify-center p-6 bg-gradient-to-r rounded-lg shadow-lg text-white text-center"
+        >
+          <h2 className="mb-5 text-4xl md:text-4xl font-bold text-white font-bignoodle text-center">
+            ¡Quiero trabajar con ustedes!
+          </h2>
+          <p className="text-sm">
+            Por favor, completa el formulario para que podamos conocerte mejor.
+          </p>
+          {/* Botón para abrir el modal */}
+          <button
+            onClick={abrirModal}
+            className="uppercase mt-4 px-6 py-2 bg-white text-orange-500 font-semibold rounded-lg shadow hover:bg-gray-100"
+          >
+            Completar formulario
+          </button>
+        </div>
+
+        {/* Formulario modal */}
+        <FormPostulante isOpen={modal} onClose={cerrarModal} />
+      </div>
       <Footer />
     </>
   );
