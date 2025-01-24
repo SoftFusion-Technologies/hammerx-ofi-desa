@@ -1120,6 +1120,75 @@ const PlanillaEntrenador = () => {
     }
   };
 
+  const handleBotonAsistencia_v2 = async (idAlumno) => {
+    const currentDate = new Date();
+    const dia = currentDate.getDate();
+    const mes = currentDate.getMonth() + 1; // Mes actual (base 0, sumar 1)
+    const anio = currentDate.getFullYear();
+
+    try {
+      // Verificar si ya existe un registro para el día actual
+      const checkResponse = await fetch(
+        `${URL}asistencias/${idAlumno}/${dia}/${mes}/${anio}`
+      );
+      const checkData = await checkResponse.json();
+
+      if (checkData.existe) {
+        // Si existe el registro, actualiza el estado
+        if (checkData.estado === 'A') {
+          const updateResponse = await fetch(
+            `${URL}asistencias/${checkData.id}`,
+            {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ estado: 'P' }) // Cambiar a presente
+            }
+          );
+
+          if (updateResponse.ok) {
+            const updateData = await updateResponse.json();
+            alert(`Asistencia actualizada: ${updateData.message}`);
+            // Actualizar UI sin recargar toda la página
+            fetchAlumnos();
+            fetchAsistencias();
+          } else {
+            alert.error(`Error al actualizar la asistencia.`);
+          }
+        } else {
+          alert(`El estado ya es 'P'.`);
+        }
+      } else {
+        // Si no existe, crea un nuevo registro
+        const createResponse = await fetch(`${URL}asistencias`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            alumno_id: idAlumno,
+            dia,
+            estado: 'P',
+            mes,
+            anio
+          })
+        });
+
+        if (createResponse.ok) {
+          const createData = await createResponse.json();
+          alert(`Asistencia creada: ${createData.message}`);
+          fetchAlumnos();
+          fetchAsistencias();
+        } else {
+          alert.error(`Error al crear la asistencia.`);
+        }
+      }
+    } catch (error) {
+      alert.error('Error al manejar la asistencia:', error);
+    }
+  };
+
   return (
     <>
       <NavBar />
@@ -1406,7 +1475,7 @@ const PlanillaEntrenador = () => {
                       }`}
                       onClick={() =>
                         !botonesDeshabilitados[row.id] &&
-                        handleBotonAsistencia(row.id)
+                        handleBotonAsistencia_v2(row.id)
                       }
                       disabled={botonesDeshabilitados[row.id]}
                     >
