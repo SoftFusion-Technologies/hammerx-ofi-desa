@@ -24,7 +24,7 @@ import Alerta from '../Error';
 import '../../styles/Forms/FormPostulante.css';
 
 // isOpen y onCLose son los metodos que recibe para abrir y cerrar el modal
-const FormTestClass = ({ isOpen, onClose }) => {
+const FormTestClass_v2 = ({ isOpen, onClose }) => {
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
 
@@ -39,23 +39,10 @@ const FormTestClass = ({ isOpen, onClose }) => {
       .min(3, 'El nombre es muy corto')
       .max(70, 'El nombre es muy largo')
       .required('El Nombre es obligatorio'),
-    last_name: Yup.string()
-      .min(3, 'El apellido es muy corto')
-      .max(70, 'El apellido es muy largo')
-      .required('El Apellido es Obligatorio'),
-    dni: Yup.string()
-      .min(6, 'El DNI es muy corto')
-      .max(13, 'El DNI es muy largo')
-      .required('El DNI es Obligatorio'),
     celular: Yup.string()
       .min(8, 'El número de celular es muy corto')
       .max(15, 'El número de celular es muy largo')
       .required('El Celular es obligatorio'),
-    sede: Yup.string().required('La Sede es obligatoria'),
-    objetivo: Yup.string().required('El Objetivo es obligatorio'),
-    user: Yup.string().max(255, 'Usuario demasiado largo'),
-    observaciones: Yup.string().max(255, 'Observaciones demasiado largas'),
-    state: Yup.boolean().required(),
     created_at: Yup.date().nullable(true),
     updated_at: Yup.date().nullable(true)
   });
@@ -63,11 +50,7 @@ const FormTestClass = ({ isOpen, onClose }) => {
   const handleSubmitTestClass = async (valores) => {
     try {
       // Verificamos si los campos obligatorios están vacíos
-      if (
-        valores.last_name === '' ||
-        valores.dni === '' ||
-        valores.celular === ''
-      ) {
+      if (valores.name === '' || valores.celular === '') {
         alert('Por favor, complete todos los campos obligatorios.');
       } else {
         // Realizamos la solicitud POST al servidor
@@ -137,10 +120,10 @@ const FormTestClass = ({ isOpen, onClose }) => {
           initialValues={{
             name: '',
             last_name: '',
-            dni: '',
+            dni: '-',
             celular: '',
             sede: '',
-            objetivo: '',
+            objetivo: '-',
             state: false,
             created_at: null,
             updated_at: null
@@ -210,19 +193,6 @@ const FormTestClass = ({ isOpen, onClose }) => {
 
                   <div className="mb-3 px-4">
                     <Field
-                      id="dni"
-                      type="dni"
-                      className="mt-2 block w-full p-3  text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      placeholder="DNI"
-                      name="dni"
-                      maxLength="14"
-                    />
-                    {errors.dni && touched.dni ? (
-                      <Alerta>{errors.dni}</Alerta>
-                    ) : null}
-                  </div>
-                  <div className="mb-3 px-4">
-                    <Field
                       id="celular"
                       type="tel"
                       className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
@@ -246,61 +216,14 @@ const FormTestClass = ({ isOpen, onClose }) => {
                       <option value="" disabled>
                         ¿En qué HAMMER querés entrenar?
                       </option>
+                      <option value="SanMiguel">SMT - BARRIO SUR</option>
                       <option value="Monteros">Monteros</option>
                       <option value="Concepción">Concepción</option>
-                      <option value="SanMiguel">SMT - BARRIO SUR</option> 
                     </Field>
                     {errors.sede && touched.sede ? (
                       <Alerta>{errors.sede}</Alerta>
                     ) : null}
                   </div>
-
-                  <div className="mb-3 px-4">
-                    <Field
-                      as="select"
-                      id="objetivo"
-                      name="objetivo"
-                      className="form-select mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      required
-                    >
-                      <option value="" disabled>
-                        Selecciona tu objetivo
-                      </option>
-                      <option value="Quiero ganar masa muscular">
-                        Quiero ganar masa muscular
-                      </option>
-                      <option value="Quiero bajar la panza y marcar el abdomen">
-                        Quiero bajar la panza y marcar el abdomen
-                      </option>
-                      <option value="Quiero bajar de peso y tonificar">
-                        Quiero bajar de peso y tonificar
-                      </option>
-                      <option value="Quiero combinar con mi deporte">
-                        Quiero combinar con mi deporte
-                      </option>
-                      <option value="Quiero ganar fuerza">
-                        Quiero ganar fuerza
-                      </option>
-                      <option value="Quiero bajar el estrés">
-                        Quiero bajar el estrés
-                      </option>
-                      <option value="Me aburro fácil">Me aburro fácil</option>
-                      <option value="Quiero entrenar sin impacto">
-                        Quiero entrenar sin impacto
-                      </option>
-                      <option value="Quiero quemar calorías">
-                        Quiero quemar calorías
-                      </option>
-                      <option value="Quiero una clase para mi niño">
-                        Quiero una clase para mi niño
-                      </option>
-                      <option value="Otros">Otros</option>
-                    </Field>
-                    {errors.objetivo && touched.objetivo ? (
-                      <Alerta>{errors.objetivo}</Alerta>
-                    ) : null}
-                  </div>
-
                   <div className="mx-auto flex justify-center my-5">
                     <input
                       type="submit"
@@ -326,9 +249,9 @@ const FormTestClass = ({ isOpen, onClose }) => {
 };
 
 //Se elimina los default prosp, quedo desactualizado
-// FormTestClass.defaultProps = {
+// FormTestClass_v2.defaultProps = {
 //   testclass: {},
 // };
 // defaultProps es una propiedad del componente React que le permite establecer valores predeterminados para el argumento props.
 // en este caso a nuestro objeto de cliente le asignamos por defecto que este vacio
-export default FormTestClass;
+export default FormTestClass_v2;

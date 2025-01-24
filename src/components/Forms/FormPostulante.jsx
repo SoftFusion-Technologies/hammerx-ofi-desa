@@ -310,6 +310,7 @@ const FormPostulante = ({ isOpen, onClose }) => {
                       <option value="" disabled>
                         Sede:
                       </option>
+                      <option value="SanMiguel">SMT - BARRIO SUR</option>
                       <option value="Monteros">Monteros</option>
                       <option value="Concepción">Concepción</option>
                     </Field>

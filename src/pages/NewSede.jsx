@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/header/Navbar';
 import Footer from '../components/footer/Footer';
 import { motion } from 'framer-motion';
@@ -9,17 +9,26 @@ import imgRedFace from '../images/redes/facebook.webp';
 import imgRedWsp from '../images/redes/whatsapp.webp';
 import '../styles/clients/newsede.css';
 import FormPostulante from '../components/Forms/FormPostulante';
+import FormTestClass_v2 from "../components/Forms/FormTestClass_v2";
 import { logo } from '../images/svg/index';
 
 const NewSede = () => {
   // Estado para controlar la visibilidad del modal
   const [modal, setModal] = useState(false);
+  const [modal2, setModal2] = useState(false);
 
   // Función para abrir el modal
   const abrirModal = () => setModal(true);
 
   // Función para cerrar el modal
   const cerrarModal = () => setModal(false);
+
+  // Función para abrir el modal
+  const abrirModal2 = () => setModal2(true);
+
+  // Función para cerrar el modal
+  const cerrarModal2 = () => setModal2(false);
+
   return (
     <>
       {/* <Navbar /> */}
@@ -109,15 +118,16 @@ const NewSede = () => {
             <p className="mb-5 text-white mt-2 uppercase font-bignoodle text-2xl">
               ¡Inscribite ahora y obtené hasta un 50% OFF!
             </p>
-            <a
-              href="https://wa.me/543863564651?text=Hola!%20Quiero%20info%20de%20HAMMERX%20B%C2%B0%20Sur."
+            <button
+              onClick={abrirModal2}
+              // href="https://wa.me/543863564651?text=Hola!%20Quiero%20info%20de%20HAMMERX%20B%C2%B0%20Sur."
               target="_blank"
               rel="noopener noreferrer"
               className="font-bignoodle uppercase px-6 py-3 bg-white font-bold rounded-lg shadow-md hover:bg-orange-500 transition duration-300"
               style={{ color: '#fc4b08' }}
             >
               ¡Quiero reservar mi cupo!
-            </a>
+            </button>
           </section>
 
           <a
@@ -205,6 +215,7 @@ const NewSede = () => {
 
         {/* Formulario modal */}
         <FormPostulante isOpen={modal} onClose={cerrarModal} />
+        <FormTestClass_v2 isOpen={modal2} onClose={cerrarModal2} />
       </div>
       <Footer />
     </>
