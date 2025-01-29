@@ -8,7 +8,7 @@ import PromoBNA_V2 from '../../pages/soycliente/PromosBancarias/PromoBNA_V2.jpeg
 import PromoSantander_V2 from '../../pages/soycliente/PromosBancarias/PromoSantander_V2.jpeg';
 import PromoNXJueves from '../../pages/soycliente/PromosBancarias/PromoNXJueves.jpeg';
 import PromoNXZ from '../../pages/soycliente/PromosBancarias/PromoNXZ.jpeg';
-import PromoMacro_V2 from '../../pages/soycliente/PromosBancarias/PromoMacro_V2.jpeg';
+import PromoMacro_V2 from '../../pages/soycliente/PromosBancarias/promo-macro.jpg';
 import PromoGalicia_V2 from '../../pages/soycliente/PromosBancarias/PromoGalicia_V2.jpeg';
 import PromoPlanes from '../../pages/soycliente/PromosBancarias/PromoPlanes.jpeg';
 
@@ -73,7 +73,7 @@ const Promociones = () => {
         <img
           src={PromoPlanes}
           alt="macro"
-          className="w-full sm:w-3/4 md:w-1/2 lg:w-1/3 h-auto object-cover"
+          className="w-3/4 h-auto mx-auto object-cover transform group-hover:scale-110 transition-transform duration-300"
         />
         {/* <img src={Macro} alt="macro" className="w-full h-auto object-cover" />
 

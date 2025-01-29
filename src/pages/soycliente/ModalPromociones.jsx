@@ -8,6 +8,7 @@ import PromoSantander from './PromosBancarias/PromoSantander.jpeg';
 import NaranjaQR from './PromosBancarias/NaranjaQR.jpeg';
 import PromoNxVer from './PromosBancarias/PromoNxVer.jpeg';
 import sucredito from './PromosBancarias/sucredito.jpeg';
+import promogalicia from './PromosBancarias/promo-galicia.jpg';
 import WelcomeModal from './WelcomeModal'; // Asegúrate de tener el componente de modal importado
 
 function ModalPromociones({ anterior, siguiente }) {
@@ -47,7 +48,8 @@ function ModalPromociones({ anterior, siguiente }) {
     PromoSantander,
     NaranjaQR,
     PromoNxVer,
-    sucredito
+    sucredito,
+    promogalicia
   ]; // Array dinámico
 
   const handleButtonClick = (imageId) => {

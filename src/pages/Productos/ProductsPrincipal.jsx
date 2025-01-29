@@ -3,10 +3,10 @@ import Navbar from '../../components/header/Navbar';
 import Footer from '../../components/footer/Footer';
 import { Link } from 'react-router-dom'; // Importar Link
 import './Styles/Productos.css';
-import ImgBuzoNaranjaGuille from './Img/BuzoNaranjaGuille.jpeg';
-import ImgBuzoNegroGuille from './Img/BuzoNegroGille.jpeg';
-import ImgBuzoNegroGime from './Img/BuzoNegroGime.jpeg';
-import ImgBuzoNaranjaGime from './Img/BuzoNaranjaBlancoGime.jpeg';
+import ImgBuzoNaranjaGuille from './Img/1.jpg';
+import ImgBuzoNegroGuille from './Img/2.jpg';
+import ImgBuzoNegroGime from './Img/3.jpg';
+import ImgBuzoNaranjaGime from './Img/4.jpg';
 import ImgGorro from './Img/Gorros.jpeg';
 import ImgBotellas from './Img/Botellas.jpeg';
 import ImgLlavero from './Img/Llaveros.jpeg';

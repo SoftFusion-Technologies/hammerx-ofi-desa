@@ -81,14 +81,14 @@ const Marcas = () => {
         <div>
           <a
             className="cursor-pointer"
-            href="https://confiterialaestrella.com"
+            href="https://softfusion.com.ar"
             target="_blank"
             rel="noreferrer"
           >
             <img
               className="h-6 mt-2  mx-auto"
-              src={comercio3}
-              alt="Laestrella"
+              src={comercio9}
+              alt="Softfusion"
             />
           </a>
         </div>
