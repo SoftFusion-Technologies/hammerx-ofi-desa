@@ -73,6 +73,8 @@ const PlanillaEntrenador = () => {
   // Estados adicionales
   const [deleteYear, setDeleteYear] = useState('');
 
+  const [alumnosNuevos, setAlumnosNuevos] = useState([]); // Estado para los alumnos nuevos
+
   useEffect(() => {
     // Función para convertir el número del mes al nombre del mes
     const getMonthName = (month) => {
@@ -1189,6 +1191,27 @@ const PlanillaEntrenador = () => {
     }
   };
 
+  useEffect(() => {
+    const obtenerAlumnosNuevos = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/alumnos_nuevos');
+        const data = await response.json();
+        setAlumnosNuevos(data);
+      } catch (error) {
+        console.error('Error al obtener alumnos nuevos:', error);
+      }
+    };
+    obtenerAlumnosNuevos();
+  }, []);
+
+  // Función para verificar si el alumno está en alumnos_nuevos y tiene marca = 1
+  const obtenerColorFondo = (idAlumno) => {
+    const alumnoEncontrado = alumnosNuevos.find(
+      (alumno) => alumno.idAlumno === idAlumno && alumno.marca === 1
+    );
+    return alumnoEncontrado ? 'yellow' : '';
+  };
+
   return (
     <>
       <NavBar />
@@ -1492,7 +1515,7 @@ const PlanillaEntrenador = () => {
                         handleInputChange(rowIndex, 'nombre', e.target.value)
                       }
                       style={{
-                        color: colores[rowIndex] // Usamos el arreglo de colores
+                        backgroundColor: obtenerColorFondo(row.id) // Aplicar el color de fondo
                       }}
                     />
                   </td>
