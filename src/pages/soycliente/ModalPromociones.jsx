@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import '../../styles/clients/botones.css';
 import flecha from '../../images/flecha.png';
 import { FaWhatsapp } from 'react-icons/fa'; // Importamos el ícono de WhatsApp
-import PromoBNA from './PromosBancarias/PromoBNA.jpeg';
-import PromoMacro from './PromosBancarias/PromoMacro.jpeg';
-import PromoSantander from './PromosBancarias/PromoSantander.jpeg';
+import PromoBNA from './PromosBancarias/4 (1).jpg';
+import PromoMacro from './PromosBancarias/3 (3).jpg';
+import PromoSantander from './PromosBancarias/8.jpg';
 import NaranjaQR from './PromosBancarias/NaranjaQR.jpeg';
 import PromoNxVer from './PromosBancarias/PromoNxVer.jpeg';
-import sucredito from './PromosBancarias/sucredito.jpeg';
-import promogalicia from './PromosBancarias/promo-galicia.jpg';
+import sucredito from './PromosBancarias/5 (1).jpg';
+import promogalicia from './PromosBancarias/7.jpg';
+import promoPatagonia from './PromosBancarias/6 (1).jpg';
+import promoBBVA from './PromosBancarias/9.jpg';
 import WelcomeModal from './WelcomeModal'; // Asegúrate de tener el componente de modal importado
 
 function ModalPromociones({ anterior, siguiente }) {
@@ -46,10 +48,12 @@ function ModalPromociones({ anterior, siguiente }) {
     PromoBNA,
     PromoMacro,
     PromoSantander,
-    NaranjaQR,
-    PromoNxVer,
+    // NaranjaQR,
+    // PromoNxVer,
     sucredito,
-    promogalicia
+    promogalicia,
+    promoPatagonia,
+    promoBBVA
   ]; // Array dinámico
 
   const handleButtonClick = (imageId) => {

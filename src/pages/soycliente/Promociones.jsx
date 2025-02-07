@@ -4,13 +4,14 @@ import React from 'react';
 // import Semestral from '../../images/Promociones/semestral.png';
 // import Anual from '../../images/Promociones/anual.png';
 import LogoSoftFusion from '../../images/marcas/comercio9.png'; // Asegúrate de que la ruta sea correcta
-import PromoBNA_V2 from '../../pages/soycliente/PromosBancarias/PromoBNA_V2.jpeg';
-import PromoSantander_V2 from '../../pages/soycliente/PromosBancarias/PromoSantander_V2.jpeg';
+import PromoBNA_V2 from '../../pages/soycliente/PromosBancarias/PromoBNA_V3.jpg';
+import PromoSantander_V2 from '../../pages/soycliente/PromosBancarias/PromoSantander_V3.jpeg';
 import PromoNXJueves from '../../pages/soycliente/PromosBancarias/PromoNXJueves.jpeg';
 import PromoNXZ from '../../pages/soycliente/PromosBancarias/PromoNXZ.jpeg';
-import PromoMacro_V2 from '../../pages/soycliente/PromosBancarias/promo-macro.jpg';
-import PromoGalicia_V2 from '../../pages/soycliente/PromosBancarias/PromoGalicia_V2.jpeg';
+import PromoMacro_V3 from '../../pages/soycliente/PromosBancarias/PromoMacro_V3.jpeg';
+import PromoGalicia_V2 from '../../pages/soycliente/PromosBancarias/promo-galicia_V2.jpg';
 import PromoPlanes from '../../pages/soycliente/PromosBancarias/PromoPlanes.jpeg';
+import promosucredito from '../../pages/soycliente/PromosBancarias/promo-sucredito.jpg';
 
 const Promociones = () => {
   return (
@@ -40,6 +41,20 @@ const Promociones = () => {
         </div>
         <div className="relative group">
           <img
+            src={promosucredito}
+            alt="PromoSantander_V2"
+            className="mb-10 w-3/4 h-auto mx-auto object-cover transform group-hover:scale-110 transition-transform duration-300"
+          />
+        </div>
+        <div className="relative group">
+          <img
+            src={PromoPlanes}
+            alt="PromoSantander_V2"
+            className="mb-10 w-3/4 h-auto mx-auto object-cover transform group-hover:scale-110 transition-transform duration-300"
+          />
+        </div>
+        {/* <div className="relative group">
+          <img
             src={PromoNXJueves}
             alt="PromoNXJueves"
             className="mb-10 w-3/4 h-auto mx-auto object-cover transform group-hover:scale-110 transition-transform duration-300"
@@ -51,11 +66,11 @@ const Promociones = () => {
             alt="PromoNXJueves"
             className="mb-10 w-3/4 h-auto mx-auto object-cover transform group-hover:scale-110 transition-transform duration-300"
           />
-        </div>
+        </div> */}
         <div className="relative group">
           <img
-            src={PromoMacro_V2}
-            alt="PromoMacro_V2"
+            src={PromoMacro_V3}
+            alt="PromoMacro_V3"
             className="mb-10 w-3/4 h-auto mx-auto object-cover transform group-hover:scale-110 transition-transform duration-300"
           />
         </div>
@@ -71,7 +86,7 @@ const Promociones = () => {
       {/* Imagen promo planes  */}
       <div className="grid place-items-center mb-8">
         <img
-          src={PromoPlanes}
+          // src={PromoPlanes}
           alt="macro"
           className="w-3/4 h-auto mx-auto object-cover transform group-hover:scale-110 transition-transform duration-300"
         />

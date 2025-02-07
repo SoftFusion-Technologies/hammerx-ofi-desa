@@ -13,6 +13,8 @@ import comercio8 from '../../images/marcas/comercio8.png';
 import comercio9 from '../../images/marcas/comercio9.png'; //Imagen importada por Lucas ALbornoz - mar. 2 abr. 2024
 import comercio10 from '../../images/marcas/comercio10.png';
 import comercio11 from '../../images/marcas/comercio11.png';
+import comercio12 from '../../images/marcas/comercio12.png';
+import comercio13 from '../../images/marcas/comercio13.png';
 
 
 const Marcas = () => {
@@ -57,13 +59,28 @@ const Marcas = () => {
     <div className="h-12 mt-2 w-5/6 md:w-2/3 lg:w-1/3 flex flex-col justif-between dark:bg-transparent overflow-hidden">
       <Slider className=" " {...settings}>
         <div title="sin página">
-          <img className="h-12 mx-auto" src={comercio11} alt="Look fit" />
+          <img className="h-16 mx-auto" src={comercio11} alt="Look fit" />
         </div>
 
         <div title="sin página" className="mx-auto">
           <img
             className="h-6 mt-2 mx-auto"
             src={comercio1}
+            alt="Arquitectura"
+          />
+        </div>
+
+        <div title="sin página" className="mx-auto">
+          <img
+            className="h-16 mx-auto"
+            src={comercio12}
+            alt="Arquitectura"
+          />
+        </div>
+        <div title="sin página" className="mx-auto">
+          <img
+            className="h-10 mt-2 mx-auto"
+            src={comercio13}
             alt="Arquitectura"
           />
         </div>
@@ -123,11 +140,10 @@ const Marcas = () => {
           <img className="h-10 mx-auto" src={comercio8} alt="bear fit" />
           {/* se agrega el comercio faltante - cambio aplicado por Benjamin Orellana - 27/03/24*/}
         </div>
-        
+
         <div title="sin página">
           <img className="h-10 mx-auto" src={comercio10} alt="Extasis" />
         </div>
-  
       </Slider>
     </div>
   );
