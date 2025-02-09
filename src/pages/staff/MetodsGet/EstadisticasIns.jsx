@@ -31,9 +31,12 @@ const EstadisticasIns = () => {
   const [loading, setLoading] = useState(true);
 
   const [currentYear] = useState(new Date().getFullYear()); // Año actual
+
+  const [selectedMonthName, setSelectedMonthName] = useState(''); // Nombre del mes seleccionado
+  const [selectedYear, setSelectedYear] = useState(currentYear); // Año seleccionado
+
   const [currentMonth] = useState(new Date().getMonth() + 1); // Mes actual
   const [selectedMonth, setSelectedMonth] = useState(currentMonth); // Mes seleccionado
-  const [selectedMonthName, setSelectedMonthName] = useState(''); // Nombre del mes seleccionado
   // Estados adicionales
   const [deleteYear, setDeleteYear] = useState('');
 
@@ -64,63 +67,124 @@ const EstadisticasIns = () => {
   const URL = 'http://localhost:8080';
   // Fetch de datos desde el backend
   useEffect(() => {
-    fetchTotalAlumnosP();
-    fetchEstadisticas();
-    fetchNuevosDelMes();
-    fetchProspectos();
+    // fetchTotalAlumnosP(selectedMonth, selectedYear);
+    // fetchEstadisticas();
+    // fetchNuevosDelMes();
+    // fetchProspectos();
     fetchConvertidos();
-    fetchPorcentajes();
-    fetchTasaAsistencia();
-    fetchRetenidos();
+    // fetchPorcentajes();
+    // fetchTasaAsistencia();
+    // fetchRetenidos();
     fetchMensajes();
     setLoading(false);
   }, []);
 
-  const fetchTotalAlumnosP = async () => {
+  useEffect(() => {
+    console.log('Mes:', selectedMonth);
+    console.log('Año:', selectedYear);
+    if (selectedMonth && selectedYear) {
+      fetchTotalAlumnosP(selectedMonth, selectedYear);
+      fetchEstadisticas(selectedMonth, selectedYear);
+      fetchNuevosDelMes(selectedMonth, selectedYear);
+      fetchProspectos(selectedMonth, selectedYear);
+      fetchPorcentajes(selectedMonth, selectedYear);
+      fetchTasaAsistencia(selectedMonth, selectedYear);
+      fetchRetenidos(selectedMonth, selectedYear);
+    }
+  }, [selectedMonth, selectedYear]);
+
+  const fetchTotalAlumnosP = async (mes, anio) => {
     try {
-      const response = await axios.get(
-        `${URL}/estadisticas/profesores-con-alumnos-mas-de-seis-p`
-      );
-      setTotalAlumnosP(response.data);
-      setLoading(false);
+      const url = `${URL}/estadisticas/profesores-con-alumnos-mas-de-seis-p?mes=${mes}&anio=${anio}`;
+      // console.log('URL de la petición:', url); // Verifica qué URL se está enviando
+      const response = await axios.get(url);
+
+      // Verifica si la respuesta contiene un mensaje de "sin resultados"
+      if (response.data.message && response.data.data.length === 0) {
+        console.log('No se encontraron datos para el mes y año especificados');
+        setTotalAlumnosP([]); // Establece un array vacío si no hay datos
+      } else {
+        setTotalAlumnosP(response.data); // De lo contrario, muestra los datos
+      }
     } catch (error) {
       console.error('Error al obtener estadísticas:', error);
-      setLoading(false);
     }
   };
 
-  const fetchEstadisticas = async () => {
+  const fetchEstadisticas = async (mes, anio) => {
     try {
-      const response = await axios.get(
-        `${URL}/estadisticas/asistencias-por-profe`
-      );
-      setEstadisticas(response.data);
-      setLoading(false);
+      // Construir la URL con los parámetros mes y anio
+      const url = `${URL}/estadisticas/asistencias-por-profe?mes=${mes}&anio=${anio}`;
+      console.log('URL de la petición:', url); // Puedes descomentar esta línea para depuración
+
+      const response = await axios.get(url);
+
+      // Verificar si la respuesta tiene datos
+      if (response.data && response.data.length === 0) {
+        console.log(
+          'No se encontraron estadísticas para el mes y año especificados'
+        );
+        setEstadisticas([]); // Establecer un array vacío si no hay datos
+      } else {
+        // Si hay datos, los establecemos
+        setEstadisticas(response.data); // Establecer los datos obtenidos
+      }
+
+      setLoading(false); // Finalmente, se actualiza el estado de loading
     } catch (error) {
       console.error('Error al obtener estadísticas:', error);
-      setLoading(false);
+      setLoading(false); // Si ocurre un error, también se detiene el estado de loading
     }
   };
 
-  const fetchNuevosDelMes = async () => {
+  const fetchNuevosDelMes = async (mes, anio) => {
     try {
-      const response = await axios.get(`${URL}/estadisticas/nuevos-del-mes`);
-      setNuevosDelMes(response.data);
+      // Generar la URL con los parámetros mes y año
+      const url = `${URL}/estadisticas/nuevos-del-mes?mes=${mes}&anio=${anio}`;
+
+      // Realizar la solicitud GET
+      const response = await axios.get(url);
+
+      // Verificar si la respuesta contiene datos
+      if (response.data.message && response.data.length === 0) {
+        console.log(
+          'No se encontraron nuevos alumnos para el mes y año especificados'
+        );
+        setNuevosDelMes([]); // Establece un array vacío si no hay resultados
+      } else {
+        // Asegúrate de que response.data sea un array antes de asignarlo
+        const nuevos = Array.isArray(response.data) ? response.data : [];
+        setNuevosDelMes(nuevos); // Si es un array, establece los datos
+      }
     } catch (error) {
       console.error('Error obteniendo nuevos del mes:', error);
     }
   };
 
-  const fetchProspectos = async () => {
+  const fetchProspectos = async (mes, anio) => {
     try {
-      const response = await axios.get(
-        `${URL}/estadisticas/prospectos-del-mes`
-      );
-      setProspectos(response.data);
-      setLoading(false);
+      // Generar la URL con los parámetros mes y año
+      const url = `${URL}/estadisticas/prospectos-del-mes?mes=${mes}&anio=${anio}`;
+
+      // Realizar la solicitud GET
+      const response = await axios.get(url);
+
+      // Verificar si la respuesta contiene datos
+      if (response.data.message && response.data.length === 0) {
+        console.log(
+          'No se encontraron prospectos para el mes y año especificados'
+        );
+        setProspectos([]); // Establecer un array vacío si no hay resultados
+      } else {
+        // Asegurarse de que la respuesta sea un array antes de asignarlo
+        const prospectos = Array.isArray(response.data) ? response.data : [];
+        setProspectos(prospectos); // Si es un array, asignar los datos
+      }
+
+      setLoading(false); // Finalizar la carga
     } catch (error) {
-      console.error('Error al obtener estadísticas:', error);
-      setLoading(false);
+      console.error('Error obteniendo prospectos del mes:', error);
+      setLoading(false); // Si hay error, también finalizar la carga
     }
   };
 
@@ -135,42 +199,84 @@ const EstadisticasIns = () => {
     }
   };
 
-  const fetchPorcentajes = async () => {
+  const fetchPorcentajes = async (mes, anio) => {
     try {
-      const response = await axios.get(
-        `${URL}/estadisticas/porcentaje-conversion`
-      );
-      setPorcentajesC(response.data);
+      // Validar que los parámetros mes y anio existan
+      if (!mes || !anio) {
+        console.log('Mes y año son requeridos');
+        return;
+      }
+
+      // Generar la URL con los parámetros mes y anio
+      const url = `${URL}/estadisticas/porcentaje-conversion?mes=${mes}&anio=${anio}`;
+
+      // Realizar la solicitud GET con los parámetros
+      const response = await axios.get(url);
+
+      // Verificar si la respuesta contiene datos
+      if (response.data.message && response.data.length === 0) {
+        console.log('No se encontraron datos para el mes y año especificados');
+        setPorcentajesC([]); // Establece un array vacío si no hay resultados
+      } else {
+        // Asegúrate de que response.data sea un array antes de asignarlo
+        const porcentajes = Array.isArray(response.data) ? response.data : [];
+        setPorcentajesC(porcentajes); // Si es un array, establece los datos
+      }
+
       setLoading(false);
     } catch (error) {
-      console.error('Error al obtener estadísticas:', error);
+      console.error('Error obteniendo porcentajes de conversión:', error);
       setLoading(false);
     }
   };
 
-  const fetchTasaAsistencia = async () => {
+  const fetchTasaAsistencia = async (mes, anio) => {
     try {
-      const response = await axios.get(
-        `${URL}/estadisticas/tasa-asistencia-por-profe`
-      );
-      setTasaAsistencia(response.data);
-      setLoading(false);
+      // Construir la URL con los parámetros mes y anio
+      const url = `${URL}/estadisticas/tasa-asistencia-por-profe?mes=${mes}&anio=${anio}`;
+      console.log('URL de la petición:', url); // Puedes descomentar esta línea para depuración
+
+      const response = await axios.get(url);
+
+      // Verificar si la respuesta tiene datos
+      if (response.data && response.data.length === 0) {
+        console.log(
+          'No se encontraron estadísticas para el mes y año especificados'
+        );
+        setTasaAsistencia([]); // Establecer un array vacío si no hay datos
+      } else {
+        // Si hay datos, los establecemos
+        setTasaAsistencia(response.data); // Establecer los datos obtenidos
+      }
+
+      setLoading(false); // Finalmente, se actualiza el estado de loading
     } catch (error) {
       console.error('Error al obtener estadísticas:', error);
-      setLoading(false);
+      setLoading(false); // Si ocurre un error, también se detiene el estado de loading
     }
   };
 
-  const fetchRetenidos = async () => {
+  const fetchRetenidos = async (mes, anio) => {
     try {
-      const response = await axios.get(
-        `${URL}/estadisticas/retenciones-del-mes`
-      );
-      setRetenidos(response.data);
-      setLoading(false);
+      // Construir la URL con los parámetros mes y anio
+      const url = `${URL}/estadisticas/retenciones-del-mes?mes=${mes}&anio=${anio}`;
+      console.log('URL de la petición:', url); // Puedes descomentar esta línea para depuración
+
+      const response = await axios.get(url);
+
+      // Verificar si la respuesta tiene datos
+      if (response.data && response.data.length === 0) {
+        console.log('No se encontraron estadísticas de retenciones');
+        setRetenidos([]); // Establecer un array vacío si no hay datos
+      } else {
+        // Si hay datos, los establecemos
+        setRetenidos(response.data); // Establecer los datos obtenidos
+      }
+
+      setLoading(false); // Finalmente, se actualiza el estado de loading
     } catch (error) {
       console.error('Error al obtener estadísticas:', error);
-      setLoading(false);
+      setLoading(false); // Si ocurre un error, también se detiene el estado de loading
     }
   };
 
@@ -186,13 +292,49 @@ const EstadisticasIns = () => {
       setLoading(false);
     }
   };
+
+  // Función para retroceder al mes anterior
+  const handlePreviousMonth = () => {
+    if (selectedMonth === 1) {
+      setSelectedMonth(12);
+      setSelectedYear((prevYear) => prevYear - 1);
+    } else {
+      setSelectedMonth((prevMonth) => prevMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 12) {
+      setSelectedMonth(1);
+      setSelectedYear((prevYear) => prevYear + 1);
+    } else {
+      setSelectedMonth((prevMonth) => prevMonth + 1);
+    }
+  };
+
   return (
     <>
       <NavbarStaff />
       <div className="dashboardbg h-contain pt-10 pb-10">
         <h1 className="text-5xl font-bold text-white mb-8 text-center mt-10 uppercase font-bignoodle">
-          {selectedMonthName} {currentYear}
+          {selectedMonthName} {selectedYear}
         </h1>
+
+        <div className="flex justify-center space-x-4">
+          <button
+            className="px-4 py-2 bg-transparent text-white rounded border-2 border-white hover:bg-orange-600 transition duration-300"
+            onClick={handlePreviousMonth}
+          >
+            Mes Anterior
+          </button>
+          <button
+            className="px-4 py-2 bg-transparent text-white rounded border-2 border-white hover:bg-orange-600 transition duration-300"
+            onClick={handleNextMonth}
+          >
+            Mes Siguiente
+          </button>
+        </div>
+
         <hr className="border-t border-white w-full my-4" />
         {/* Título de "Total de Alumnos" */}
         <h1 className="text-5xl font-bold text-white mb-8 text-center mt-10 uppercase font-bignoodle">
@@ -203,7 +345,6 @@ const EstadisticasIns = () => {
           <p className="text-white text-xl">Cargando estadísticas...</p>
         ) : (
           <div className="flex flex-wrap justify-center w-full gap-6">
-            {/* Mostrar las estadísticas de Total alumnos*/}
             {totalAlumnosP.map((stat) => (
               <EstadisticaCard
                 key={stat.profesor_id}
@@ -225,14 +366,20 @@ const EstadisticasIns = () => {
           <p className="text-white text-xl">Cargando estadísticas...</p>
         ) : (
           <div className="flex flex-wrap justify-center w-full gap-6">
-            {/* Mostrar las estadísticas de asistencias */}
-            {estadisticas.map((stat) => (
-              <EstadisticaCard
-                key={stat.profesor_id}
-                titulo={`Asistencias de ${stat.profesor_nombre}`}
-                contenido={stat.total_asistencias}
-              />
-            ))}
+            {/* Verificar si 'estadisticas' es un array y tiene datos antes de usar .map() */}
+            {Array.isArray(estadisticas) && estadisticas.length > 0 ? (
+              estadisticas.map((stat) => (
+                <EstadisticaCard
+                  key={stat.profesor_id}
+                  titulo={`Asistencias de ${stat.profesor_nombre}`}
+                  contenido={stat.total_asistencias}
+                />
+              ))
+            ) : (
+              <p>
+                No se encontraron estadísticas para el mes y año especificados
+              </p> // Mensaje alternativo si no hay datos
+            )}
           </div>
         )}
 
