@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/header/Navbar';
 import Footer from '../components/footer/Footer';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Mapa from '../components/footer/Mapa';
 import imgHammerOrange from '../images/logohammerorange.png';
 import imgRedInsta from '../images/redes/instagram.webp';
@@ -9,8 +9,10 @@ import imgRedFace from '../images/redes/facebook.webp';
 import imgRedWsp from '../images/redes/whatsapp.webp';
 import '../styles/clients/newsede.css';
 import FormPostulante from '../components/Forms/FormPostulante';
-import FormTestClass_v2 from "../components/Forms/FormTestClass_v2";
+import FormTestClass_v2 from '../components/Forms/FormTestClass_v2';
 import { logo } from '../images/svg/index';
+import Carousel from '../components/Carousel';
+
 
 const NewSede = () => {
   // Estado para controlar la visibilidad del modal
@@ -29,12 +31,14 @@ const NewSede = () => {
   // Función para cerrar el modal
   const cerrarModal2 = () => setModal2(false);
 
+
+
   return (
     <>
       {/* <Navbar /> */}
-      <div className="min-h-screen">
+      <div className="relative min-h-screen">
         <motion.section
-          className="text-center mb-12"
+          className="text-center mb-12 z-10"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -130,6 +134,9 @@ const NewSede = () => {
             </button>
           </section>
 
+          <div className="mt-8">
+            <Carousel />
+          </div>
           <a
             href="https://wa.me/543863564651?text=Hola!%20Quiero%20info%20de%20HAMMERX%20B%C2%B0%20Sur."
             target="_blank"
