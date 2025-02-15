@@ -11,17 +11,17 @@
  * Capa: Frontend
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
-import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { formatearFecha } from "../../../Helpers";
-import { Link } from "react-router-dom";
-import NavbarStaff from "../NavbarStaff";
-import "../../../styles/MetodsGet/Tabla.css";
-import "../../../styles/staff/background.css";
-import Footer from "../../../components/footer/Footer";
-import PostulanteDetails from "./PostulanteGetId";
-import { useAuth } from "../../../AuthContext";
-import { FaWhatsapp } from 'react-icons/fa'; 
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { formatearFecha } from '../../../Helpers';
+import { Link } from 'react-router-dom';
+import NavbarStaff from '../NavbarStaff';
+import '../../../styles/MetodsGet/Tabla.css';
+import '../../../styles/staff/background.css';
+import Footer from '../../../components/footer/Footer';
+import PostulanteDetails from './PostulanteGetId';
+import { useAuth } from '../../../AuthContext';
+import { FaWhatsapp } from 'react-icons/fa';
 // Componente funcional que maneja la lógica relacionada con los postulantes
 const PostulanteGet = () => {
   const [selectedUser, setSelectedUser] = useState(null); // Estado para el usuario seleccionado
@@ -40,7 +40,7 @@ const PostulanteGet = () => {
   //------------------------------------------------------
   // 1.3 Relacion al Filtrado - Inicio - Benjamin Orellana
   //------------------------------------------------------
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [sexoFilter, setSexoFilter] = useState(null);
   const [edadFilter, setEdadFilter] = useState(null);
   const [valoracionFilter, setValoracionFilter] = useState('');
@@ -76,12 +76,11 @@ const PostulanteGet = () => {
     setValoracionFilter('');
   };
 
-
   const calcularRangoEdad = (edad) => {
-    if (edad >= 18 && edad <= 21) return "18-21";
-    if (edad >= 21 && edad <= 23) return "21-23";
-    if (edad >= 23 && edad <= 25) return "23-25";
-    if (edad > 25) return ">25";
+    if (edad >= 18 && edad <= 21) return '18-21';
+    if (edad >= 21 && edad <= 23) return '21-23';
+    if (edad >= 23 && edad <= 25) return '23-25';
+    if (edad > 25) return '>25';
   };
 
   //Funcion de busqueda, en el cuadro
@@ -91,31 +90,32 @@ const PostulanteGet = () => {
 
   let results = [];
 
- if (!search && !sexoFilter && !edadFilter && !valoracionFilter) {
-   results = postulantes;
- } else {
-   results = postulantes.filter((dato) => {
-     const nameMatch = dato.name.toLowerCase().includes(search.toLowerCase());
-     const emailMatch = dato.email.toLowerCase().includes(search.toLowerCase());
-     const puestoMatch = dato.puesto
-       .toLowerCase()
-       .includes(search.toLowerCase());
-     const sedeMatch = dato.sede.toLowerCase().includes(search.toLowerCase());
-     const sexoMatch = !sexoFilter || dato.sexo === sexoFilter;
-     const edadMatch =
-       !edadFilter || calcularRangoEdad(dato.edad) === edadFilter;
-     const valoracionMatch =
-       !valoracionFilter || dato.valoracion === parseInt(valoracionFilter);
+  if (!search && !sexoFilter && !edadFilter && !valoracionFilter) {
+    results = postulantes;
+  } else {
+    results = postulantes.filter((dato) => {
+      const nameMatch = dato.name.toLowerCase().includes(search.toLowerCase());
+      const emailMatch = dato.email
+        .toLowerCase()
+        .includes(search.toLowerCase());
+      const puestoMatch = dato.puesto
+        .toLowerCase()
+        .includes(search.toLowerCase());
+      const sedeMatch = dato.sede.toLowerCase().includes(search.toLowerCase());
+      const sexoMatch = !sexoFilter || dato.sexo === sexoFilter;
+      const edadMatch =
+        !edadFilter || calcularRangoEdad(dato.edad) === edadFilter;
+      const valoracionMatch =
+        !valoracionFilter || dato.valoracion === parseInt(valoracionFilter);
 
-     return (
-       (nameMatch || emailMatch || puestoMatch || sedeMatch) &&
-       sexoMatch &&
-       edadMatch &&
-       valoracionMatch
-     );
-   });
- }
-
+      return (
+        (nameMatch || emailMatch || puestoMatch || sedeMatch) &&
+        sexoMatch &&
+        edadMatch &&
+        valoracionMatch
+      );
+    });
+  }
 
   //------------------------------------------------------
   // 1.3 Relacion al Filtrado - Final - Benjamin Orellana
@@ -143,17 +143,17 @@ const PostulanteGet = () => {
       });
       setContactados(contactadosData);
     } catch (error) {
-      console.log("Error al obtener los postulantes:", error);
+      console.log('Error al obtener los postulantes:', error);
     }
   };
 
   const handleEliminarPostulante = async (id) => {
-    const confirmacion = window.confirm("¿Seguro que desea eliminar?");
+    const confirmacion = window.confirm('¿Seguro que desea eliminar?');
     if (confirmacion) {
       try {
         const url = `${URL}${id}`;
         const respuesta = await fetch(url, {
-          method: "DELETE",
+          method: 'DELETE'
         });
         await respuesta.json();
         const arrayPostulantes = postulantes.filter(
@@ -175,7 +175,7 @@ const PostulanteGet = () => {
       setSelectedUser(resultado);
       setModalUserDetails(true); // Abre el modal de detalles del usuario
     } catch (error) {
-      console.log("Error al obtener el usuario:", error);
+      console.log('Error al obtener el usuario:', error);
     }
   };
 
@@ -184,25 +184,25 @@ const PostulanteGet = () => {
     try {
       await axios.put(`${URL}${id}`, { state }); // Cambiado a PUT en la URL correcta
     } catch (error) {
-      console.log("Error al actualizar el estado de contacto:", error);
+      console.log('Error al actualizar el estado de contacto:', error);
     }
   };
 
-const contactarPostulante = (celular, id) => {
-  const isContactado = contactados[id]; // Verifica si ya ha sido contactado
+  const contactarPostulante = (celular, id) => {
+    const isContactado = contactados[id]; // Verifica si ya ha sido contactado
 
-  const interval = setInterval(async () => {
-    clearInterval(interval);
+    const interval = setInterval(async () => {
+      clearInterval(interval);
 
-    // Cambiar el estado al contrario del actual
-    await updateContactState(id, !isContactado);
+      // Cambiar el estado al contrario del actual
+      await updateContactState(id, !isContactado);
 
-    setContactados((prevState) => ({
-      ...prevState,
-      [id]: !isContactado // Cambiar el estado visualmente
-    }));
-  }, 150);
-};
+      setContactados((prevState) => ({
+        ...prevState,
+        [id]: !isContactado // Cambiar el estado visualmente
+      }));
+    }, 150);
+  };
 
   // Función para ordenar los postulantes de forma decreciente basado en el id
   const ordenarPostulantesDecreciente = (postulantes) => {
@@ -235,23 +235,23 @@ const contactarPostulante = (celular, id) => {
       setCurrentPage(currentPage + 1);
     }
   }
-   const handleContact = (celular, id) => {
-     // Aquí actualiza el estado de contactedTestClass para reflejar que la persona ha sido contactada
-     setContactedTestClass((prevState) => ({
-       ...prevState,
-       [id]: true
-     }));
+  const handleContact = (celular, id) => {
+    // Aquí actualiza el estado de contactedTestClass para reflejar que la persona ha sido contactada
+    setContactedTestClass((prevState) => ({
+      ...prevState,
+      [id]: true
+    }));
 
-     // Si necesitas hacer algo más cuando se contacta, agrégalo aquí
-   };
+    // Si necesitas hacer algo más cuando se contacta, agrégalo aquí
+  };
 
-   const handleWhatsAppRedirect = (celular) => {
-     // Redirecciona al chat de WhatsApp usando el número de celular
-     window.open(
-       `https://api.whatsapp.com/send/?phone=%2B549${celular}&text&type=phone_number&app_absent=0`,
-       '_blank'
-     );
-   };
+  const handleWhatsAppRedirect = (celular) => {
+    // Redirecciona al chat de WhatsApp usando el número de celular
+    window.open(
+      `https://api.whatsapp.com/send/?phone=%2B549${celular}&text&type=phone_number&app_absent=0`,
+      '_blank'
+    );
+  };
   return (
     <>
       <NavbarStaff />
@@ -286,179 +286,75 @@ const contactarPostulante = (celular, id) => {
           {/* formulario de busqueda */}
 
           {/* filtros*/}
-          <div className="flex justify-evenly mt-4 mb-8 w-[700px] mx-auto border rounded-lg">
-            {/* filtros por sexo */}
-            <div className="py-4 px-5">
+          <div className="flex flex-wrap justify-center gap-4 mt-4 mb-8 w-full max-w-3xl mx-auto border rounded-lg p-4">
+            {/* Filtro por sexo */}
+            <div className="flex-1 min-w-[250px] py-4 px-5">
               <h1 className="mb-2 font-medium">Filtrar por sexo</h1>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value="masculino"
-                    checked={sexoFilter === 'masculino'}
-                    onChange={handleSexoChange}
-                  />
-                  &nbsp; Masculino
-                </label>
-              </div>
-
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value="femenino"
-                    checked={sexoFilter === 'femenino'}
-                    onChange={handleSexoChange}
-                  />
-                  &nbsp; Femenino
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value=""
-                    checked={!sexoFilter}
-                    onChange={handleResetSexoFilter}
-                  />
-                  &nbsp; Limpiar sexo
-                </label>
-              </div>
+              {['masculino', 'femenino', ''].map((sexo) => (
+                <div key={sexo}>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value={sexo}
+                      checked={sexoFilter === sexo}
+                      onChange={sexo ? handleSexoChange : handleResetSexoFilter}
+                    />
+                    {sexo
+                      ? sexo.charAt(0).toUpperCase() + sexo.slice(1)
+                      : 'Limpiar sexo'}
+                  </label>
+                </div>
+              ))}
             </div>
-            {/* filtros por sexo */}
 
             {/* Filtro de edad */}
-            <div className="py-4 px-5">
+            <div className="flex-1 min-w-[250px] py-4 px-5">
               <h1 className="mb-2 font-medium">Filtrar por edad</h1>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value="18-21"
-                    checked={edadFilter === '18-21'}
-                    onChange={handleEdadChange}
-                  />
-                  &nbsp; 18 a 21
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value="21-23"
-                    checked={edadFilter === '21-23'}
-                    onChange={handleEdadChange}
-                  />
-                  &nbsp; 21 a 23
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value="23-25"
-                    checked={edadFilter === '23-25'}
-                    onChange={handleEdadChange}
-                  />
-                  &nbsp; 23 a 25
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value=">25"
-                    checked={edadFilter === '>25'}
-                    onChange={handleEdadChange}
-                  />
-                  &nbsp; Mayores a 25
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value=""
-                    checked={!edadFilter}
-                    onChange={handleResetEdadFilter}
-                  />
-                  &nbsp; Limpiar edad
-                </label>
-              </div>
+              {['18-21', '21-23', '23-25', '>25', ''].map((edad) => (
+                <div key={edad}>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value={edad}
+                      checked={edadFilter === edad}
+                      onChange={edad ? handleEdadChange : handleResetEdadFilter}
+                    />
+                    {edad
+                      ? edad === '>25'
+                        ? 'Mayores a 25'
+                        : `${edad.replace('-', ' a ')}`
+                      : 'Limpiar edad'}
+                  </label>
+                </div>
+              ))}
             </div>
-            {/* Filtro de edad */}
+
             {/* Filtro por valoración */}
-            <div className="py-4 px-5">
+            <div className="flex-1 min-w-[250px] py-4 px-5">
               <h1 className="mb-2 font-medium">Filtrar por valoración</h1>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value="1"
-                    checked={valoracionFilter === '1'}
-                    onChange={handleValoracionChange}
-                  />
-                  &nbsp; Muy Mala
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value="2"
-                    checked={valoracionFilter === '2'}
-                    onChange={handleValoracionChange}
-                  />
-                  &nbsp; Mala
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value="3"
-                    checked={valoracionFilter === '3'}
-                    onChange={handleValoracionChange}
-                  />
-                  &nbsp; Normal
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value="4"
-                    checked={valoracionFilter === '4'}
-                    onChange={handleValoracionChange}
-                  />
-                  &nbsp; Buena
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value="5"
-                    checked={valoracionFilter === '5'}
-                    onChange={handleValoracionChange}
-                  />
-                  &nbsp; Muy Buena
-                </label>
-              </div>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    value=""
-                    checked={!valoracionFilter}
-                    onChange={handleResetValoracionFilter}
-                  />
-                  &nbsp; Limpiar valoración
-                </label>
-              </div>
+              {['1', '2', '3', '4', '5', ''].map((valor) => (
+                <div key={valor}>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value={valor}
+                      checked={valoracionFilter === valor}
+                      onChange={
+                        valor
+                          ? handleValoracionChange
+                          : handleResetValoracionFilter
+                      }
+                    />
+                    {valor
+                      ? ['Muy Mala', 'Mala', 'Normal', 'Buena', 'Muy Buena'][
+                          valor - 1
+                        ]
+                      : 'Limpiar valoración'}
+                  </label>
+                </div>
+              ))}
             </div>
           </div>
-
           {Object.keys(results).length === 0 ? (
             <p className="text-center pb-10">
               El Postulante NO Existe ||{' '}
@@ -466,112 +362,116 @@ const contactarPostulante = (celular, id) => {
             </p>
           ) : (
             <>
-              <table className="w-11/12 mx-auto">
-                <thead className=" bg-[#fc4b08]  text-white">
-                  <tr key={postulantes.id}>
-                    <th>ID</th>
-                    <th>NOMBRE</th>
-                    <th>EDAD</th>
-                    <th>SEXO</th>
-                    <th>ROL</th>
-                    <th>INSTA</th>
-                    <th>WHATSAPP</th>
-                    <th>SEDE</th>
-                    <th>VALORACIÓN</th>
-                    <th>FEC. POSTULACIÓN</th>
-                    <th>ACCIONES</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {records.map((postulante) => (
-                    <tr key={postulante.id}>
-                      <td onClick={() => obtenerPostulante(postulante.id)}>
-                        {postulante.id}
-                      </td>
-                      <td onClick={() => obtenerPostulante(postulante.id)}>
-                        {postulante.name}
-                      </td>
-                      <td onClick={() => obtenerPostulante(postulante.id)}>
-                        {postulante.edad}
-                      </td>
-                      <td onClick={() => obtenerPostulante(postulante.id)}>
-                        {postulante.sexo ? postulante.sexo : 'No especificado'}
-                      </td>
+              <div className="w-full overflow-x-auto">
+                <table className="w-11/12 mx-auto">
+                  <thead className=" bg-[#fc4b08]  text-white">
+                    <tr key={postulantes.id}>
+                      <th>ID</th>
+                      <th>NOMBRE</th>
+                      <th>EDAD</th>
+                      <th>SEXO</th>
+                      <th>ROL</th>
+                      <th>INSTA</th>
+                      <th>WHATSAPP</th>
+                      <th>SEDE</th>
+                      <th>VALORACIÓN</th>
+                      <th>FEC. POSTULACIÓN</th>
+                      <th>ACCIONES</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {records.map((postulante) => (
+                      <tr key={postulante.id}>
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {postulante.id}
+                        </td>
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {postulante.name}
+                        </td>
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {postulante.edad}
+                        </td>
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {postulante.sexo
+                            ? postulante.sexo
+                            : 'No especificado'}
+                        </td>
 
-                      <td onClick={() => obtenerPostulante(postulante.id)}>
-                        {postulante.puesto}
-                      </td>
-                      <td onClick={() => obtenerPostulante(postulante.id)}>
-                        {postulante.redes}
-                      </td>
-                      <td onClick={() => obtenerPostulante(postulante.id)}>
-                        {postulante.celular}
-                      </td>
-                      <td onClick={() => obtenerPostulante(postulante.id)}>
-                        {postulante.sede}
-                      </td>
-                      <td onClick={() => obtenerPostulante(postulante.id)}>
-                        {postulante.valoracion === 0 ||
-                        postulante.valoracion === null
-                          ? 'No tiene Valoración'
-                          : postulante.valoracion}
-                      </td>
-                      <td onClick={() => obtenerPostulante(postulante.id)}>
-                        {formatearFecha(postulante.created_at)}
-                      </td>
-                      {/* ACCIONES */}
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {postulante.puesto}
+                        </td>
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {postulante.redes}
+                        </td>
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {postulante.celular}
+                        </td>
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {postulante.sede}
+                        </td>
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {postulante.valoracion === 0 ||
+                          postulante.valoracion === null
+                            ? 'No tiene Valoración'
+                            : postulante.valoracion}
+                        </td>
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {formatearFecha(postulante.created_at)}
+                        </td>
+                        {/* ACCIONES */}
 
-                      {(userLevel === 'admin' ||
-                        userLevel === 'administrador') && (
-                        <td className="flex space-x-3 px-2">
+                        {(userLevel === 'admin' ||
+                          userLevel === 'administrador') && (
+                          <td className="flex space-x-3 px-2">
+                            <button
+                              onClick={() =>
+                                handleEliminarPostulante(postulante.id)
+                              }
+                              type="button"
+                              className="py-2 px-4 my-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+                            >
+                              Eliminar
+                            </button>
+                          </td>
+                        )}
+                        <td className="flex items-center">
                           <button
                             onClick={() =>
-                              handleEliminarPostulante(postulante.id)
+                              contactarPostulante(
+                                postulante.celular,
+                                postulante.id
+                              )
                             }
                             type="button"
-                            className="py-2 px-4 my-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+                            className={`py-2 px-4 my-1 rounded-md text-white ${
+                              contactados[postulante.id]
+                                ? 'bg-green-500 hover:bg-green-600'
+                                : 'bg-blue-500 hover:bg-blue-600'
+                            }`}
                           >
-                            Eliminar
+                            {contactados[postulante.id]
+                              ? 'Contactado'
+                              : 'Contactar'}
+                          </button>
+
+                          {/* Botón de WhatsApp */}
+                          <button
+                            onClick={() =>
+                              handleWhatsAppRedirect(postulante.celular)
+                            }
+                            type="button"
+                            className="ml-2 py-2 px-4 my-1 rounded-md text-white bg-green-600 hover:bg-green-700 flex items-center"
+                          >
+                            <FaWhatsapp className="mr-2" />{' '}
+                            {/* Icono de WhatsApp */}
+                            WhatsApp
                           </button>
                         </td>
-                      )}
-                      <td className="flex items-center">
-                        <button
-                          onClick={() =>
-                            contactarPostulante(
-                              postulante.celular,
-                              postulante.id
-                            )
-                          }
-                          type="button"
-                          className={`py-2 px-4 my-1 rounded-md text-white ${
-                            contactados[postulante.id]
-                              ? 'bg-green-500 hover:bg-green-600'
-                              : 'bg-blue-500 hover:bg-blue-600'
-                          }`}
-                        >
-                          {contactados[postulante.id]
-                            ? 'Contactado'
-                            : 'Contactar'}
-                        </button>
-
-                        {/* Botón de WhatsApp */}
-                        <button
-                          onClick={() =>
-                            handleWhatsAppRedirect(postulante.celular)
-                          }
-                          type="button"
-                          className="ml-2 py-2 px-4 my-1 rounded-md text-white bg-green-600 hover:bg-green-700 flex items-center"
-                        >
-                          <FaWhatsapp className="mr-2" />{' '}
-                          {/* Icono de WhatsApp */}
-                          WhatsApp
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               <nav className="flex justify-center items-center my-10">
                 <ul className="pagination">
                   <li className="page-item">

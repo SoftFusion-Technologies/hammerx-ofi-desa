@@ -181,8 +181,8 @@ const FormAltaNovedad = ({
           validationSchema={nuevoNovedadSchema}
         >
           {({ errors, touched, setFieldValue, values }) => (
-            <div className="-mt-10 py-0 max-h-[900px] max-w-[500px] w-[400px] overflow-y-auto bg-white rounded-xl">
-              <Form className="formulario max-sm:w-[300px] bg-white">
+            <div className="-mt-20 max-h-screen w-full max-w-md overflow-y-auto bg-white rounded-xl p-5">
+              <Form className="formulario w-full bg-white">
                 <div className="flex justify-between">
                   <div className="tools">
                     <div className="circle">
@@ -202,12 +202,13 @@ const FormAltaNovedad = ({
                     x
                   </div>
                 </div>
+
                 <div className="mb-4 px-4">
                   <Field
                     as="select"
                     id="sede"
                     name="sede"
-                    className="form-select mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                    className="form-select mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
                     onChange={(e) => {
                       const selected = e.target.value;
                       setFieldValue('sede', selected);
@@ -228,7 +229,6 @@ const FormAltaNovedad = ({
                 </div>
 
                 <div className="mb-6 px-6 py-4 bg-white rounded-lg shadow-md">
-                  {/* Checkbox para seleccionar todos los usuarios */}
                   <div className="mb-4 flex items-center">
                     <input
                       type="checkbox"
@@ -245,7 +245,6 @@ const FormAltaNovedad = ({
                     </label>
                   </div>
 
-                  {/* Contenedor con scroll para la lista de usuarios */}
                   <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
                     {Array.isArray(users) && users.length > 0 ? (
                       <div className="space-y-3">
@@ -285,20 +284,21 @@ const FormAltaNovedad = ({
                     className="block font-medium left-0"
                   >
                     <span className="text-black text-base pl-1">
-                      Fecha de publicacion de la tarea
+                      Fecha de publicación
                     </span>
                   </label>
                   <Field
                     name="vencimiento"
                     type="date"
-                    className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                    className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
                   />
                 </div>
+
                 <div className="mb-3 px-4">
                   <Field
                     id="titulo"
                     type="text"
-                    className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                    className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
                     placeholder="Titulo de la tarea"
                     name="titulo"
                     maxLength="70"
@@ -307,24 +307,25 @@ const FormAltaNovedad = ({
                     <Alerta>{errors.titulo}</Alerta>
                   ) : null}
                 </div>
+
                 <div className="mb-3 px-4">
                   <ReactQuill
                     theme="snow"
                     value={values.mensaje}
                     onChange={(content) => setFieldValue('mensaje', content)}
                     placeholder="Ingrese el mensaje"
-                    className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                    className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
                   />
                   {errors.mensaje && touched.mensaje ? (
                     <Alerta>{errors.mensaje}</Alerta>
                   ) : null}
                 </div>
 
-                <div className="mx-auto flex justify-center my-5">
+                <div className="sticky bottom-0 bg-white py-3 px-4">
                   <input
                     type="submit"
                     value={novedad ? 'Actualizar' : 'Crear Novedad'}
-                    className="bg-orange-500 py-2 px-5 rounded-xl text-white font-bold hover:cursor-pointer hover:bg-[#fc4b08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-100"
+                    className="w-full bg-orange-500 py-2 px-5 rounded-xl text-white font-bold hover:bg-[#fc4b08] focus:outline-orange-100"
                   />
                 </div>
               </Form>
