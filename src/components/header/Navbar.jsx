@@ -41,10 +41,9 @@ const Navbar = () => {
   return (
     <nav
       data-aos="" //Se reemplazo fade-down por el realentizamiento que aplicaba a la web, cambio aplicado por Benjamin Orellana - 27/03/24
-      className="justify-between w-full dark:bg-gradient-to-r from-gray-600 to-gray-900 fixed z-50"
+      className="justify-center w-full dark:bg-gradient-to-r from-gray-600 to-gray-900 fixed z-50"
     >
-      <div className="h-12 flex w-full bg-white justify-between items-center py-8 px-10 z-10 dark:bg-transparent ">
-        <Marcas />
+      <div className="h-12 flex w-full bg-white justify-center items-center py-8 px-10 z-10 dark:bg-transparent ">
 
         <div className="hidden items-center font-tilt-neon text-black gap-10 lg:flex space-x-4 dark:text-white">
           {/* Se agregó el scrollTo para que al hacer click vuelva al inicio de la pag - Cambio realizado por Lucas Albornoz 12-04-24 */}
