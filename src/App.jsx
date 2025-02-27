@@ -64,6 +64,10 @@ const ProductosPrincipal = lazy(() =>
 const PostulanteGet = lazy(() =>
   import('./pages/staff/MetodsGet/PostulanteGet')
 );
+
+const PostulanteGetV2 = lazy(() =>
+  import('./pages/staff/MetodsGet/PostulanteGetV2')
+);
 const NovedadGet = lazy(() => import('./pages/staff/MetodsGet/NovedadGet'));
 const TaskGet = lazy(() => import('./pages/staff/MetodsGet/TaskGet'));
 const ClasesGet = lazy(() => import('./pages/staff/MetodsGet/FreeClassGet'));
@@ -298,6 +302,15 @@ const App = memo(() => {
                     </ProtectedRoute>
                   }
                 />{' '}
+                <Ruta
+                  path="/dashboard/postulantes_v2"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <PostulanteGetV2 />
+                    </ProtectedRoute>
+                  }
+                />
                 {/* Rutas de prueba para testear funcionamiento */}
                 <Ruta
                   path="/dashboard/testclass"

@@ -83,6 +83,16 @@ const AdminPage = () => {
 
             {(userLevel === 'gerente' ||
               userLevel === 'admin' ||
+              userLevel === 'administrador') && (
+              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
+                <Link to="/dashboard/postulantes_v2">
+                  <button className="btnstaff">CV's Recibidos Nueva Versión</button>
+                </Link>
+              </div>
+            )}
+
+            {(userLevel === 'gerente' ||
+              userLevel === 'admin' ||
               userLevel === 'vendedor' ||
               userLevel === '' ||
               userLevel === 'administrador') && (

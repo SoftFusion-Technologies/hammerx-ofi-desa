@@ -56,56 +56,54 @@ const FormPostulante = ({ isOpen, onClose }) => {
     sexo: Yup.string().required('El sexo es obligatorio')
   });
 
-  const handleSubmitPostu = async (valores) => {
-    try {
-      // Verificar si los campos obligatorios están vacíos
-      if (
-        valores.email === '' ||
-        valores.celular === '' ||
-        valores.edad === '' ||
-        valores.puesto === '' ||
-        valores.redes === ''
-      ) {
-        alert('Por favor, complete todos los campos obligatorios.');
-      } else {
-        // Realizar la solicitud POST al servidor
-        const respuesta = await fetch('http://localhost:8080/postulantes/', {
-          method: 'POST',
-          body: JSON.stringify(valores),
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
+const handleSubmitPostu = async (valores, { setFieldError }) => {
+  try {
+    const formData = new FormData();
+    formData.append('name', valores.name);
+    formData.append('email', valores.email);
+    formData.append('celular', valores.celular);
+    formData.append('edad', valores.edad);
+    formData.append('puesto', valores.puesto);
+    formData.append('sede', valores.sede);
+    formData.append('info', valores.info || '');
+    formData.append('redes', valores.redes || '');
+    formData.append('observaciones', valores.observaciones || '');
+    formData.append('valoracion', valores.valoracion || '');
+    formData.append('state', valores.state);
+    formData.append('sexo', valores.sexo);
 
-        // Verificar si la solicitud fue exitosa
-        if (!respuesta.ok) {
-          throw new Error('Error en la solicitud POST: ' + respuesta.status);
-        }
-
-        // Convertir la respuesta a JSON
-        const data = await respuesta.json();
-        // console.log("Registro insertado correctamente:", data);
-
-        // Mostrar la ventana modal de éxito
-        setShowModal(true);
-
-        // Ocultar la ventana modal de éxito después de 3 segundos
-        setTimeout(() => {
-          setShowModal(false);
-        }, 3000);
-      }
-    } catch (error) {
-      // console.error("Error al insertar el registro:", error.message);
-
-      // Mostrar la ventana modal de error
-      setErrorModal(true);
-
-      // Ocultar la ventana modal de éxito después de 3 segundos
-      setTimeout(() => {
-        setErrorModal(false);
-      }, 3000);
+    // Asegúrate de que el archivo 'cv' se esté adjuntando correctamente
+    if (valores.cv) {
+      formData.append('cv', valores.cv);
+    } else {
+      setFieldError('cv', 'El archivo CV es obligatorio');
+      return;
     }
-  };
+
+    // Realizar la solicitud POST al servidor
+    const respuesta = await fetch('http://localhost:8080/postulantes_v2', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!respuesta.ok) {
+      throw new Error('Error en la solicitud POST: ' + respuesta.status);
+    }
+
+    const data = await respuesta.json();
+
+    // Mostrar modal de éxito
+    setShowModal(true);
+    setTimeout(() => setShowModal(false), 3000);
+  } catch (error) {
+    console.error('Error al insertar el registro:', error.message);
+
+    // Mostrar modal de error
+    setErrorModal(true);
+    setTimeout(() => setErrorModal(false), 3000);
+  }
+};
+
 
   const handleClose = () => {
     if (formikRef.current) {
@@ -139,23 +137,24 @@ const FormPostulante = ({ isOpen, onClose }) => {
             sede: '',
             info: '',
             redes: '',
-            observaciones: '',
-            valoracion: null,
+            observaciones: 'Sin Observación',
+            valoracion: 0,
             state: false,
             created_at: null,
             updated_at: null,
-            sexo: ''
+            sexo: '',
+            cv_url: null
           }}
           enableReinitialize={!isOpen}
           // cuando hacemos el submit esperamos a que cargen los valores y esos valores tomados se lo pasamos a la funcion handlesubmit que es la que los espera
-          onSubmit={async (values, { resetForm }) => {
-            await handleSubmitPostu(values);
+          onSubmit={async (values, { resetForm, setFieldError }) => {
+            await handleSubmitPostu(values, { setFieldError });
 
             resetForm();
           }}
           validationSchema={nuevoPostulanteSchema}
         >
-          {({ errors, touched }) => {
+          {({ setFieldValue, errors, touched }) => {
             return (
               <div className="-mt-10 py-0 max-h-[800px] overflow-y-auto bg-white rounded-xl">
                 {' '}
@@ -320,6 +319,21 @@ const FormPostulante = ({ isOpen, onClose }) => {
                   </div>
 
                   <div className="mb-4 px-4">
+                    <label className="text-gray-600 text-sm block mb-2">
+                      ADJUNTA TU CV (PDF, JPG)
+                    </label>
+                    <input
+                      type="file"
+                      name="cv" // Esto debe coincidir con lo que Multer espera en el backend
+                      onChange={(e) => setFieldValue('cv', e.target.files[0])}
+                      accept=".pdf,.jpg,.jpeg" // Esto limita los tipos de archivo que se pueden seleccionar
+                    />
+                    {errors.cv_url && touched.cv_url && (
+                      <Alerta>{errors.cv_url}</Alerta>
+                    )}
+                  </div>
+
+                  <div className="mb-4 px-4">
                     <Field
                       as="textarea"
                       id="info"
@@ -333,13 +347,13 @@ const FormPostulante = ({ isOpen, onClose }) => {
                       <Alerta>{errors.info}</Alerta>
                     ) : null}
                   </div>
-                  <div className="mx-auto flex justify-center my-5">
-                    <input
+                  <div className="mb-4 px-4">
+                    <button
                       type="submit"
-                      value="ENVIAR"
-                      className="bg-orange-500 py-2 px-5 rounded-xl text-white  font-bold hover:cursor-pointer hover:bg-[#fc4b08] "
-                      id="click2"
-                    />
+                      className="mt-2 block w-full p-3 text-white bg-green-500 rounded-xl"
+                    >
+                      Enviar Postulación
+                    </button>
                   </div>
                   {/* input para el checkBox */}
 
