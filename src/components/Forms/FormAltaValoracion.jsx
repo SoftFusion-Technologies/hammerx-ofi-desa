@@ -56,7 +56,7 @@ const FormAltaValoracion = ({ isOpen, onClose, user }) => {
           onSubmit={async (values, { resetForm }) => {
             try {
               const response = await fetch(
-                `http://localhost:8080/postulantes/${user.id}`,
+                `http://localhost:8080/postulantes_v2/${user.id}`,
                 {
                   method: 'PUT',
                   body: JSON.stringify(values),
