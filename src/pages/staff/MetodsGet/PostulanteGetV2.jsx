@@ -29,7 +29,7 @@ const PostulanteGetV2 = () => {
   const [contactedTestClass, setContactedTestClass] = useState({});
 
   //URL estatica, luego cambiar por variable de entorno
-  const URL = 'https://vps-4294061-x.dattaweb.com/postulantes_v2/';
+  const URL = 'http://localhost:8080/postulantes_v2/';
 
   const { userLevel } = useAuth();
 
@@ -381,6 +381,7 @@ const PostulanteGetV2 = () => {
                       <th>INSTA</th>
                       <th>WHATSAPP</th>
                       <th>SEDE</th>
+                      <th>ESTUDIOS</th>
                       <th>VALORACIÓN</th>
                       <th>FEC. POSTULACIÓN</th>
                       <th>ACCIONES</th>
@@ -415,6 +416,9 @@ const PostulanteGetV2 = () => {
                         </td>
                         <td onClick={() => obtenerPostulante(postulante.id)}>
                           {postulante.sede}
+                        </td>
+                        <td onClick={() => obtenerPostulante(postulante.id)}>
+                          {postulante.estudios}
                         </td>
                         <td onClick={() => obtenerPostulante(postulante.id)}>
                           {postulante.valoracion === 0 ||

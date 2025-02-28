@@ -28,6 +28,8 @@ import '../../styles/Forms/FormPostulante.css';
 const FormPostulante = ({ isOpen, onClose }) => {
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const formikRef = useRef(null);
 
   const textoModal =
@@ -56,54 +58,104 @@ const FormPostulante = ({ isOpen, onClose }) => {
     sexo: Yup.string().required('El sexo es obligatorio')
   });
 
-const handleSubmitPostu = async (valores, { setFieldError }) => {
-  try {
-    const formData = new FormData();
-    formData.append('name', valores.name);
-    formData.append('email', valores.email);
-    formData.append('celular', valores.celular);
-    formData.append('edad', valores.edad);
-    formData.append('puesto', valores.puesto);
-    formData.append('sede', valores.sede);
-    formData.append('info', valores.info || '');
-    formData.append('redes', valores.redes || '');
-    formData.append('observaciones', valores.observaciones || '');
-    formData.append('valoracion', valores.valoracion || '');
-    formData.append('state', valores.state);
-    formData.append('sexo', valores.sexo);
+  // const handleSubmitPostu = async (valores, { setFieldError }) => {
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append('name', valores.name);
+  //     formData.append('email', valores.email);
+  //     formData.append('celular', valores.celular);
+  //     formData.append('edad', valores.edad);
+  //     formData.append('puesto', valores.puesto);
+  //     formData.append('sede', valores.sede);
+  //     formData.append('info', valores.info || '');
+  //     formData.append('redes', valores.redes || '');
+  //     formData.append('observaciones', valores.observaciones || '');
+  //     formData.append('valoracion', valores.valoracion || '');
+  //     formData.append('state', valores.state);
+  //     formData.append('sexo', valores.sexo);
 
-    // Asegúrate de que el archivo 'cv' se esté adjuntando correctamente
-    if (valores.cv) {
-      formData.append('cv', valores.cv);
-    } else {
-      setFieldError('cv', 'El archivo CV es obligatorio');
-      return;
+  //     // Asegúrate de que el archivo 'cv' se esté adjuntando correctamente
+  //     if (valores.cv) {
+  //       formData.append('cv', valores.cv);
+  //     } else {
+  //       setFieldError('cv', 'El archivo CV es obligatorio');
+  //       return;
+  //     }
+
+  //     // Realizar la solicitud POST al servidor
+  //     const respuesta = await fetch('http://localhost:8080/postulantes_v2', {
+  //       method: 'POST',
+  //       body: formData
+  //     });
+
+  //     if (!respuesta.ok) {
+  //       throw new Error('Error en la solicitud POST: ' + respuesta.status);
+  //     }
+
+  //     const data = await respuesta.json();
+
+  //     // Mostrar modal de éxito
+  //     setShowModal(true);
+  //     setTimeout(() => setShowModal(false), 3000);
+  //   } catch (error) {
+  //     console.error('Error al insertar el registro:', error.message);
+
+  //     // Mostrar modal de error
+  //     setErrorModal(true);
+  //     setTimeout(() => setErrorModal(false), 3000);
+  //   }
+  // };
+
+  const handleSubmitPostu = async (valores, { setFieldError }) => {
+    if (isSubmitting) return; // Evita múltiples envíos
+
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('name', valores.name);
+      formData.append('email', valores.email);
+      formData.append('celular', valores.celular);
+      formData.append('edad', valores.edad);
+      formData.append('puesto', valores.puesto);
+      formData.append('sede', valores.sede);
+      formData.append('info', valores.info || '');
+      formData.append('redes', valores.redes || '');
+      formData.append('observaciones', valores.observaciones || '');
+      formData.append('valoracion', valores.valoracion || '');
+      formData.append('state', valores.state);
+      formData.append('sexo', valores.sexo);
+      formData.append('estudios', valores.estudios);
+
+      if (valores.cv) {
+        formData.append('cv', valores.cv);
+      } else {
+        setFieldError('cv', 'El archivo CV es obligatorio');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const respuesta = await fetch('http://localhost:8080/postulantes_v2', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!respuesta.ok) {
+        throw new Error('Error en la solicitud POST: ' + respuesta.status);
+      }
+
+      await respuesta.json();
+
+      setShowModal(true);
+      setTimeout(() => setShowModal(false), 3000);
+    } catch (error) {
+      console.error('Error al insertar el registro:', error.message);
+      setErrorModal(true);
+      setTimeout(() => setErrorModal(false), 3000);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Realizar la solicitud POST al servidor
-    const respuesta = await fetch('http://localhost:8080/postulantes_v2', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!respuesta.ok) {
-      throw new Error('Error en la solicitud POST: ' + respuesta.status);
-    }
-
-    const data = await respuesta.json();
-
-    // Mostrar modal de éxito
-    setShowModal(true);
-    setTimeout(() => setShowModal(false), 3000);
-  } catch (error) {
-    console.error('Error al insertar el registro:', error.message);
-
-    // Mostrar modal de error
-    setErrorModal(true);
-    setTimeout(() => setErrorModal(false), 3000);
-  }
-};
-
+  };
 
   const handleClose = () => {
     if (formikRef.current) {
@@ -143,6 +195,7 @@ const handleSubmitPostu = async (valores, { setFieldError }) => {
             created_at: null,
             updated_at: null,
             sexo: '',
+            estudios: '', // 🔹 Nuevo campo
             cv_url: null
           }}
           enableReinitialize={!isOpen}
@@ -319,6 +372,20 @@ const handleSubmitPostu = async (valores, { setFieldError }) => {
                   </div>
 
                   <div className="mb-4 px-4">
+                    <Field
+                      id="estudios"
+                      type="text"
+                      className="mt-2 block w-full p-3  text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                      placeholder="Estudios/Capacitaciones"
+                      name="estudios"
+                      maxLength="14"
+                    />
+                    {errors.estudios && touched.estudios ? (
+                      <Alerta>{errors.estudios}</Alerta>
+                    ) : null}
+                  </div>
+
+                  <div className="mb-4 px-4">
                     <label className="text-gray-600 text-sm block mb-2">
                       ADJUNTA TU CV (PDF, JPG)
                     </label>
@@ -347,34 +414,15 @@ const handleSubmitPostu = async (valores, { setFieldError }) => {
                       <Alerta>{errors.info}</Alerta>
                     ) : null}
                   </div>
-                  <div className="mb-4 px-4">
-                    <button
-                      type="submit"
-                      className="mt-2 block w-full p-3 text-white bg-green-500 rounded-xl"
-                    >
-                      Enviar Postulación
-                    </button>
-                  </div>
-                  {/* input para el checkBox */}
-
-                  {/* <label className="labelCheckbox">
-                <input
-                  type="checkbox"
-                  id="chekboxInput"
-                  // onChange={(e) => setCheckbox(!checkbox)}
-                />
-                <span
-                // className={checkbox === true ? 'chekSpan' : 'chekSpanFalse'}
-                ></span>
-              </label> */}
-
-                  {/* {checkbox === true ? <p>Gracias por confirmar!😌</p> : <p>CONFIRMAR😜</p>} */}
-
-                  {/* REALIZAR MODAL */}
-                  {/* {modal === true ? <ModalEnviado
-                              modal={modal}
-                              setModal={setModal}
-                          /> : ""} */}
+                  <button
+                    type="submit"
+                    className={`mt-2 block w-full p-3 text-white ${
+                      isSubmitting ? 'bg-gray-400' : 'bg-green-500'
+                    } rounded-xl`}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Enviando...' : 'Enviar'}
+                  </button>
                 </Form>
               </div>
             );

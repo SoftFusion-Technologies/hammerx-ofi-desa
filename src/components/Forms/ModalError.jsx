@@ -13,7 +13,7 @@ const ModalError = ({ isVisible, onClose }) => {
             <img src={logohammer} alt="logo" width={150} className='pt-4 mx-auto' />
           </div>
           <hr className='mt-2 w-5/6 mx-auto' />
-          <p className='p-2 text-center font-messina text-slate-600'>Lamentamos que haya ocurrido un error. Por favor intentalo de nuevo mas tarde.</p>
+          <p className='p-2 text-center font-messina text-slate-600'>Lamentablemente no se pudo recibir tu información, por favor, intenta nuevamente recargando la página, y si el problema persiste, comunicate a nuestro WhatsApp.</p>
         </div>
       </div>
     </div>
