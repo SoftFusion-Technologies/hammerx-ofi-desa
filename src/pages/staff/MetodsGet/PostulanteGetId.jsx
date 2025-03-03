@@ -49,6 +49,9 @@ const PostulanteDetails = ({ user, isOpen, onClose, obtenerPostulantes }) => {
           <span className="font-semibold ">WhatsApp:</span> {user.celular}
         </p>
         <p>
+          <span className="font-semibold ">Estudios:</span> {user.estudios}
+        </p>
+        <p>
           <span className="font-semibold ">Sede:</span> {user.sede}
         </p>
         <p>

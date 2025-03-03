@@ -157,6 +157,7 @@ const InstructoresGet = () => {
                 className="border rounded-sm ml-3"
               >
                 <option value="">Todas las sedes</option>
+                <option value="SMT">SMT</option>
                 <option value="Monteros">Monteros</option>
                 <option value="Concepción">Concepción</option>
               </select>

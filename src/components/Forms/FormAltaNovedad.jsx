@@ -220,6 +220,7 @@ const FormAltaNovedad = ({
                       Selecciona tu sucursal
                     </option>
                     <option value="todas">Sucursal: Todas</option>
+                    <option value="SMT">SMT</option>
                     <option value="monteros">Monteros</option>
                     <option value="concepcion">Concepción</option>
                   </Field>

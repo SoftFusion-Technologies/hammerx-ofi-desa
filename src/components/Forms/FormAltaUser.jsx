@@ -21,6 +21,7 @@ import * as Yup from "yup";
 import ModalSuccess from "./ModalSuccess";
 import ModalError from "./ModalError";
 import Alerta from "../Error";
+import SelectSede from '../SelectSede';
 
 // isOpen y onCLose son los metodos que recibe para abrir y cerrar el modal
 const FormAltaUser = ({ isOpen, onClose, user, setSelectedUser }) => {
@@ -155,7 +156,7 @@ const FormAltaUser = ({ isOpen, onClose, user, setSelectedUser }) => {
           }}
           validationSchema={nuevoUsersSchema}
         >
-          {({ errors, touched }) => {
+          {({ errors, touched, setFieldValue }) => {
             return (
               <div className="py-0 max-h-[500px] max-w-[400px] w-[400px] overflow-y-auto bg-white rounded-xl">
                 {' '}
@@ -237,25 +238,12 @@ const FormAltaUser = ({ isOpen, onClose, user, setSelectedUser }) => {
                     ) : null}
                   </div>
 
-                  <div className="mb-4 px-4">
-                    <Field
-                      as="select"
-                      id="sede"
-                      name="sede"
-                      className="form-select mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      required
-                    >
-                      <option value="" disabled>
-                        Sede:
-                      </option>
+                  <SelectSede
+                    setFieldValue={setFieldValue}
+                    errors={errors}
+                    touched={touched}
+                  />
 
-                      <option value="Monteros">Monteros</option>
-                      <option value="Concepción">Concepción</option>
-                    </Field>
-                    {errors.sede && touched.sede ? (
-                      <Alerta>{errors.sede}</Alerta>
-                    ) : null}
-                  </div>
                   <div className="mb-3 px-4">
                     <Field
                       id="password"

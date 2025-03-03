@@ -209,16 +209,17 @@ const AdmConveGet = () => {
                 placeholder="Buscar convenio"
                 className="border rounded-sm"
               />
-                <select
-                  value={filterSede}
-                  onChange={handleFilterSedeChange}
-                  className="border rounded-sm ml-3"
-                >
-                  <option value="">Todas las sedes</option>
-                  <option value="Multisede">Multi Sede</option>
-                  <option value="Monteros">Monteros</option>
-                  <option value="Concepción">Concepción</option>
-                  </select>
+              <select
+                value={filterSede}
+                onChange={handleFilterSedeChange}
+                className="border rounded-sm ml-3"
+              >
+                <option value="">Todas las sedes</option>
+                <option value="Multisede">Multi Sede</option>
+                <option value="SMT">SMT</option>
+                <option value="Monteros">Monteros</option>
+                <option value="Concepción">Concepción</option>
+              </select>
             </form>
             {/* formulario de busqueda */}
 
