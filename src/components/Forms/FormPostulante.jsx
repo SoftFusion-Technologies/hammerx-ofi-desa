@@ -51,60 +51,19 @@ const FormPostulante = ({ isOpen, onClose }) => {
     edad: Yup.string().required('La Edad es obligatoria'),
     puesto: Yup.string().required('El Puesto es obligatorio'),
     sede: Yup.string().required('La Sede es obligatoria'),
-    redes: Yup.string().max(100, 'Redes sociales demasiado largas'),
-    state: Yup.boolean().required(),
+    info: Yup.string().required('La info es obligatoria'),
+    redes: Yup.string()
+      .min(3, 'Redes es muy corto')
+      .max(120, 'Redes es muy largo')
+      .required('Redes es obligatorio'),
+    estudios: Yup.string()
+      .min(3, 'El campo Estudios es muy corto')
+      .max(120, 'El campo Estudios es muy largo')
+      .required('El campo Estudios es obligatorio'),
     created_at: Yup.date().nullable(true),
     updated_at: Yup.date().nullable(true),
     sexo: Yup.string().required('El sexo es obligatorio')
   });
-
-  // const handleSubmitPostu = async (valores, { setFieldError }) => {
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append('name', valores.name);
-  //     formData.append('email', valores.email);
-  //     formData.append('celular', valores.celular);
-  //     formData.append('edad', valores.edad);
-  //     formData.append('puesto', valores.puesto);
-  //     formData.append('sede', valores.sede);
-  //     formData.append('info', valores.info || '');
-  //     formData.append('redes', valores.redes || '');
-  //     formData.append('observaciones', valores.observaciones || '');
-  //     formData.append('valoracion', valores.valoracion || '');
-  //     formData.append('state', valores.state);
-  //     formData.append('sexo', valores.sexo);
-
-  //     // Asegúrate de que el archivo 'cv' se esté adjuntando correctamente
-  //     if (valores.cv) {
-  //       formData.append('cv', valores.cv);
-  //     } else {
-  //       setFieldError('cv', 'El archivo CV es obligatorio');
-  //       return;
-  //     }
-
-  //     // Realizar la solicitud POST al servidor
-  //     const respuesta = await fetch('http://localhost:8080/postulantes_v2', {
-  //       method: 'POST',
-  //       body: formData
-  //     });
-
-  //     if (!respuesta.ok) {
-  //       throw new Error('Error en la solicitud POST: ' + respuesta.status);
-  //     }
-
-  //     const data = await respuesta.json();
-
-  //     // Mostrar modal de éxito
-  //     setShowModal(true);
-  //     setTimeout(() => setShowModal(false), 3000);
-  //   } catch (error) {
-  //     console.error('Error al insertar el registro:', error.message);
-
-  //     // Mostrar modal de error
-  //     setErrorModal(true);
-  //     setTimeout(() => setErrorModal(false), 3000);
-  //   }
-  // };
 
   const handleSubmitPostu = async (valores, { setFieldError }) => {
     if (isSubmitting) return; // Evita múltiples envíos
@@ -112,46 +71,73 @@ const FormPostulante = ({ isOpen, onClose }) => {
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData();
-      formData.append('name', valores.name);
-      formData.append('email', valores.email);
-      formData.append('celular', valores.celular);
-      formData.append('edad', valores.edad);
-      formData.append('puesto', valores.puesto);
-      formData.append('sede', valores.sede);
-      formData.append('info', valores.info || '');
-      formData.append('redes', valores.redes || '');
-      formData.append('observaciones', valores.observaciones || '');
-      formData.append('valoracion', valores.valoracion || '');
-      formData.append('state', valores.state);
-      formData.append('sexo', valores.sexo);
-      formData.append('estudios', valores.estudios);
+      // Lista de campos obligatorios
+      const camposRequeridos = [
+        'name',
+        'email',
+        'celular',
+        'edad',
+        'puesto',
+        'sede',
+        'sexo',
+        'estudios'
+      ];
 
-      if (valores.cv) {
-        formData.append('cv', valores.cv);
-      } else {
+      // Validar campos vacíos y marcar errores
+      const tieneErrores = camposRequeridos.some((campo) => {
+        if (!valores[campo]) {
+          setFieldError(campo, `El campo ${campo} es obligatorio`);
+          return true;
+        }
+        return false;
+      });
+
+      if (!valores.cv) {
         setFieldError('cv', 'El archivo CV es obligatorio');
+        alert('El archivo CV es obligatorio');
         setIsSubmitting(false);
         return;
       }
 
-      const respuesta = await fetch('http://localhost:8080/postulantes_v2', {
-        method: 'POST',
-        body: formData
-      });
+      if (tieneErrores) {
+        setIsSubmitting(false);
+        alert('Complete todos los campos antes de enviar.');
+        return;
+      }
+
+      // Crear FormData con los valores del formulario
+      const formData = new FormData();
+      camposRequeridos.forEach((campo) =>
+        formData.append(campo, valores[campo])
+      );
+      formData.append('info', valores.info || '');
+      formData.append('redes', valores.redes || '');
+      formData.append('observaciones', valores.observaciones || '');
+      formData.append('valoracion', valores.valoracion || '');
+      formData.append('cv', valores.cv);
+
+      // Enviar solicitud POST
+      const respuesta = await fetch(
+        'https://vps-4294061-x.dattaweb.com/postulantes_v2',
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
 
       if (!respuesta.ok) {
         throw new Error('Error en la solicitud POST: ' + respuesta.status);
       }
 
       await respuesta.json();
-
       setShowModal(true);
       setTimeout(() => setShowModal(false), 3000);
     } catch (error) {
       console.error('Error al insertar el registro:', error.message);
-      setErrorModal(true);
-      setTimeout(() => setErrorModal(false), 3000);
+      // setErrorModal(true);
+      // setTimeout(() => setErrorModal(false), 3000);
+      setShowModal(true);
+      setTimeout(() => setShowModal(false), 3000);
     } finally {
       setIsSubmitting(false);
     }
