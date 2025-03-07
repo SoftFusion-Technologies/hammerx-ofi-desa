@@ -92,13 +92,6 @@ const FormPostulante = ({ isOpen, onClose }) => {
         return false;
       });
 
-      if (!valores.cv) {
-        setFieldError('cv', 'El archivo CV es obligatorio');
-        alert('El archivo CV es obligatorio');
-        setIsSubmitting(false);
-        return;
-      }
-
       if (tieneErrores) {
         setIsSubmitting(false);
         alert('Complete todos los campos antes de enviar.');
@@ -117,13 +110,10 @@ const FormPostulante = ({ isOpen, onClose }) => {
       formData.append('cv', valores.cv);
 
       // Enviar solicitud POST
-      const respuesta = await fetch(
-        'https://vps-4294061-x.dattaweb.com/postulantes_v2',
-        {
-          method: 'POST',
-          body: formData
-        }
-      );
+      const respuesta = await fetch('http://localhost:8080/postulantes_v2', {
+        method: 'POST',
+        body: formData
+      });
 
       if (!respuesta.ok) {
         throw new Error('Error en la solicitud POST: ' + respuesta.status);

@@ -29,7 +29,7 @@ const PostulanteGetV2 = () => {
   const [contactedTestClass, setContactedTestClass] = useState({});
 
   //URL estatica, luego cambiar por variable de entorno
-  const URL = 'http://localhost:8080/postulantes_v2/';
+  const URL = 'http://localhost:8080/postulantes_v2';
 
   const { userLevel } = useAuth();
 
@@ -44,6 +44,28 @@ const PostulanteGetV2 = () => {
   const [sexoFilter, setSexoFilter] = useState(null);
   const [edadFilter, setEdadFilter] = useState(null);
   const [valoracionFilter, setValoracionFilter] = useState('');
+  // Estado para filtrar por sede
+  const [filterSede, setFilterSede] = useState('');
+
+  // Manejar cambios en el filtro de sede
+  const handleFilterSedeChange = (e) => {
+    setFilterSede(e.target.value);
+  };
+
+  // Restablecer filtro de sede
+  const handleResetSedeFilter = () => {
+    setFilterSede('');
+  };
+
+  const [filterPuesto, setFilterPuesto] = useState('');
+
+  const handleFilterPuestoChange = (e) => {
+    setFilterPuesto(e.target.value);
+  };
+
+  const handleResetPuestoFilter = () => {
+    setFilterPuesto('');
+  };
 
   const handleEdadChange = (e) => {
     setEdadFilter(e.target.value);
@@ -89,33 +111,46 @@ const PostulanteGetV2 = () => {
   };
 
   let results = [];
+  results = postulantes.filter((dato) => {
+    const nameMatch = search
+      ? dato.name.toLowerCase().includes(search.toLowerCase())
+      : true;
+    const emailMatch = search
+      ? dato.email.toLowerCase().includes(search.toLowerCase())
+      : true;
+    const puestoMatch = search
+      ? dato.puesto.toLowerCase().includes(search.toLowerCase())
+      : true;
 
-  if (!search && !sexoFilter && !edadFilter && !valoracionFilter) {
-    results = postulantes;
-  } else {
-    results = postulantes.filter((dato) => {
-      const nameMatch = dato.name.toLowerCase().includes(search.toLowerCase());
-      const emailMatch = dato.email
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const puestoMatch = dato.puesto
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const sedeMatch = dato.sede.toLowerCase().includes(search.toLowerCase());
-      const sexoMatch = !sexoFilter || dato.sexo === sexoFilter;
-      const edadMatch =
-        !edadFilter || calcularRangoEdad(dato.edad) === edadFilter;
-      const valoracionMatch =
-        !valoracionFilter || dato.valoracion === parseInt(valoracionFilter);
+    const sedeMatch =
+      filterSede && filterSede !== ''
+        ? dato.sede.toLowerCase() === filterSede.toLowerCase()
+        : true;
 
-      return (
-        (nameMatch || emailMatch || puestoMatch || sedeMatch) &&
-        sexoMatch &&
-        edadMatch &&
-        valoracionMatch
-      );
-    });
-  }
+    const sexoMatch = sexoFilter ? dato.sexo === sexoFilter : true;
+    const edadMatch = edadFilter
+      ? calcularRangoEdad(dato.edad) === edadFilter
+      : true;
+    const valoracionMatch = valoracionFilter
+      ? dato.valoracion === parseInt(valoracionFilter)
+      : true;
+
+    const puestoFilterMatch =
+      filterPuesto && filterPuesto !== ''
+        ? dato.puesto.toLowerCase() === filterPuesto.toLowerCase()
+        : true;
+
+    return (
+      nameMatch &&
+      emailMatch &&
+      puestoMatch &&
+      sedeMatch &&
+      sexoMatch &&
+      edadMatch &&
+      valoracionMatch &&
+      puestoFilterMatch
+    );
+  });
 
   //------------------------------------------------------
   // 1.3 Relacion al Filtrado - Final - Benjamin Orellana
@@ -360,6 +395,47 @@ const PostulanteGetV2 = () => {
                   </label>
                 </div>
               ))}
+              {/* Filtro por sede */}
+              <div className="flex gap-4 items-center">
+                {/* Filtro de Sede */}
+                <div className="flex items-center gap-2">
+                  <label className="font-semibold text-gray-700">Sede:</label>
+                  <select
+                    value={filterSede || ''}
+                    onChange={handleFilterSedeChange}
+                    className="border border-gray-300 rounded-md p-2 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="">Todas</option>
+                    <option value="SanMiguel">SMT</option>
+                    <option value="Monteros">Monteros</option>
+                    <option value="Concepción">Concepción</option>
+                  </select>
+                </div>
+
+                {/* Filtro de Puesto */}
+                <div className="flex items-center gap-2">
+                  <label className="font-semibold text-gray-700">Puesto:</label>
+                  <select
+                    value={filterPuesto}
+                    onChange={handleFilterPuestoChange}
+                    className="border border-gray-300 rounded-md p-2 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="">Todos los puestos</option>
+                    <option value="recepcionista">Recepcionista</option>
+                    <option value="vendedor">Vendedor</option>
+                    <option value="instructormusculacion">
+                      Instructor de musculación
+                    </option>
+                    <option value="coachclasesgrupales">
+                      Coach de clases grupales
+                    </option>
+                    <option value="limpieza">Limpieza</option>
+                    <option value="mantenimiento">Mantenimiento</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
           {Object.keys(results).length === 0 ? (
@@ -382,6 +458,7 @@ const PostulanteGetV2 = () => {
                       <th>WHATSAPP</th>
                       <th>SEDE</th>
                       <th>ESTUDIOS</th>
+
                       <th>VALORACIÓN</th>
                       <th>FEC. POSTULACIÓN</th>
                       <th>ACCIONES</th>
