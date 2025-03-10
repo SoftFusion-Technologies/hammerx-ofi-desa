@@ -29,7 +29,7 @@ const PostulanteGetV2 = () => {
   const [contactedTestClass, setContactedTestClass] = useState({});
 
   //URL estatica, luego cambiar por variable de entorno
-  const URL = 'http://localhost:8080/postulantes_v2';
+  const URL = 'http://localhost:8080/postulantes_v2/';
 
   const { userLevel } = useAuth();
 
@@ -289,9 +289,32 @@ const PostulanteGetV2 = () => {
   };
 
   // Función para descargar el CV
-  const downloadCV = (id) => {
-    const url = `${URL}${id}/cv`; // Cambia la URL por la correcta
-    window.open(url, '_blank'); // Abrir el archivo en una nueva ventana
+  const downloadCV = async (id) => {
+    try {
+      const response = await fetch(`${URL}${id}/cv`);
+
+      // Si no se encuentra el CV, mostramos un mensaje
+      if (response.status === 404) {
+        const data = await response.json();
+        alert(data.error || 'No se encontró el CV.');
+      } else if (response.status === 200) {
+        // Si el archivo existe, descargamos el CV
+        const blob = await response.blob();
+
+        // Aseguramos que el código se ejecute solo en el navegador
+        if (window.URL && window.URL.createObjectURL) {
+          const fileUrl = window.URL.createObjectURL(blob);
+          window.open(fileUrl, '_blank');
+        } else {
+          alert('No se puede descargar el archivo en este entorno.');
+        }
+      } else {
+        alert('Hubo un error al intentar descargar el CV.');
+      }
+    } catch (error) {
+      console.error('Error al descargar el CV:', error);
+      alert('Hubo un error al intentar descargar el CV.');
+    }
   };
 
   return (

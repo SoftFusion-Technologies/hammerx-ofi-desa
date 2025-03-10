@@ -110,9 +110,9 @@ const FormPostulante = ({ isOpen, onClose }) => {
       formData.append("cv", valores.cv);
 
       // Enviar solicitud POST
-      const respuesta = await fetch("https://vps-4294061-x.dattaweb.com/postulantes_v2", {
-        method: "POST",
-        body: formData,
+      const respuesta = await fetch('http://localhost:8080/postulantes_v2', {
+        method: 'POST',
+        body: formData
       });
 
       if (!respuesta.ok) {
