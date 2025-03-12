@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import '../../styles/clients/WelcomeModal.css';
-import img1 from './Images/PlanLarg.jpeg';
+import img1 from './Images/planlargo_v2.jpeg';
 import img2 from './Images/PromoAmig.jpeg';
 import img3 from './Images/PromoFam.jpeg';
+import img4 from './Images/convivencia.jpeg';
+import img5 from './Images/app.jpg';
 
 const WelcomeModal = ({ imageId }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -11,7 +13,9 @@ const WelcomeModal = ({ imageId }) => {
   const images = {
     1: img3, // Promociones Familiares
     2: img2, // Promociones Amigos Referidos
-    3: img1 // Promociones Contratando Planes Largos
+    3: img1, // Promociones Contratando Planes Largos
+    4: img4, // convivencia
+    5: img5 // DESCARGA TU APP
   };
 
   const handleClose = () => {
@@ -31,7 +35,11 @@ const WelcomeModal = ({ imageId }) => {
         <button className="close-button_V2" onClick={handleClose}>
           &times;
         </button>
-        <img src={imageUrl} alt="Promo" className="welcome-image_V2" />
+        <img
+          src={imageUrl}
+          alt="Promo"
+          className={`welcome-image_V2 ${imageId === 5 ? 'large-image' : ''}`}
+        />
       </div>
     </div>
   );

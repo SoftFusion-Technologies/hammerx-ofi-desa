@@ -32,6 +32,7 @@ import '../../styles/clients/background.css';
 import Footer from '../../components/footer/Footer';
 import NuevaVista from './NuevaVista';
 import Promociones from './Promociones';
+import WelcomeModal from './WelcomeModal'; // Asegúrate de tener el componente de modal importado
 
 const Clients = () => {
   // useEffect(() => {
@@ -46,12 +47,14 @@ const Clients = () => {
     'entrenador',
     'promociones',
     'contratos',
-    'convenios',
-    'transferencia',
-    'accesorios',
-    'aprovecha',
-    'cabina',
-    'maraton'
+    'convivencia',
+    'app'
+    // 'convenios',
+    // 'transferencia',
+    // 'accesorios',
+    // 'aprovecha',
+    // 'cabina',
+    // 'maraton'
   ];
 
   const handleAnterior = () => {
@@ -129,7 +132,7 @@ const Clients = () => {
                     siguiente={handleSiguiente}
                   />
                 )} */}
-                <button
+                {/* <button
                   onClick={() => setShowModal('descuentos')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
@@ -142,7 +145,7 @@ const Clients = () => {
                     anterior={handleAnterior}
                     siguiente={handleSiguiente}
                   />
-                )}
+                )} */}
                 <button
                   onClick={() => setShowModal('entrenador')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
@@ -155,7 +158,7 @@ const Clients = () => {
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
-                  Promociones
+                  Promociones y Convenios
                 </button>
                 {
                   //verificación del estado para renderizar los componentes
@@ -175,13 +178,13 @@ const Clients = () => {
                 )}
               </div>
               {/* Segundo grupo de 3 botones */}
-              <div className="flex justify-center gap-4 mt-4 max-sm:mt-0 sm:flex-wrap max-sm:flex-col md:space-x-5">
+              <div className="flex justify-center gap-4 mt-4 max-sm:mt-0 sm:flex-wrap max-sm:flex-col md:space-x-6">
                 <button
                   onClick={() => setShowModal('contratos')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
                 >
-                  Congelamiento de Contratos
+                  Congelar y Transferir Planes
                 </button>
                 {showModal === 'contratos' && (
                   <ModalContratos
@@ -190,7 +193,7 @@ const Clients = () => {
                     bandera={1}
                   />
                 )}
-                <button
+                {/* <button
                   onClick={() => setShowModal('convenios')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
@@ -202,8 +205,8 @@ const Clients = () => {
                     anterior={handleAnterior}
                     siguiente={handleSiguiente}
                   />
-                )}
-                <button
+                )} */}
+                {/* <button
                   onClick={() => setShowModal('transferencia')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
@@ -215,8 +218,8 @@ const Clients = () => {
                     anterior={handleAnterior}
                     siguiente={handleSiguiente}
                   />
-                )}
-                <button
+                )} */}
+                {/* <button
                   onClick={() => setShowModal('cabina')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
@@ -228,8 +231,8 @@ const Clients = () => {
                     anterior={handleAnterior}
                     siguiente={handleSiguiente}
                   />
-                )}
-                <button
+                )} */}
+                {/* <button
                   onClick={() => setShowModal('maraton')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
@@ -241,7 +244,24 @@ const Clients = () => {
                     anterior={handleAnterior}
                     siguiente={handleSiguiente}
                   />
-                )}
+                )} */}
+                <button
+                  onClick={() => setShowModal('convivencia')}
+                  className="btnscli font-messina font-semibold max-sm:mb-5"
+                  type="button"
+                >
+                  Normas de Convivencia
+                </button>
+                {showModal === 'convivencia' && <WelcomeModal imageId={4} />}
+
+                <button
+                  onClick={() => setShowModal('app')}
+                  className="btnscli font-messina font-semibold max-sm:mb-5"
+                  type="button"
+                >
+                  Descarga tu App
+                </button>
+                {showModal === 'app' && <WelcomeModal imageId={5} />}
               </div>
             </div>
           </div>

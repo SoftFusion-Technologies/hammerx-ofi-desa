@@ -94,7 +94,7 @@ function ModalPromociones({ anterior, siguiente }) {
               src={flecha}
               alt="Flecha"
             />
-            <div className="relative p-4 w-[80%] sm:w-full max-w-2xl max-h-full">
+            <div className="max-h-[80vh] overflow-y-auto p-5 space-y-3 text-gray-700 dark:text-gray-400">
               {' '}
               {/* Se modificó en ancho del modal de full a 80% para que se visualicen las flechas en mobile, cambiado por Rafael Peralta */}
               {/* Modal content */}
@@ -146,14 +146,14 @@ function ModalPromociones({ anterior, siguiente }) {
                         id: 2
                       },
                       {
-                        name: 'PROMOCIONES EN PLANES LARGOS',
+                        name: 'PROMOCIONES PLANES LARGOS',
                         id: 3
-                      },
-                      {
-                        name: 'PROMOCIONES BANCARIAS',
-                        id: 4,
-                        action: openThirdModal // Acción específica para este botón
                       }
+                      // {
+                      //   name: 'PROMOCIONES BANCARIAS',
+                      //   id: 4,
+                      //   action: openThirdModal // Acción específica para este botón
+                      // }
                     ].map((promocion, index) => (
                       <button
                         key={index}
@@ -170,8 +170,63 @@ function ModalPromociones({ anterior, siguiente }) {
                         </div>
                       </button>
                     ))}
+
                     {isModalOpen && <WelcomeModal imageId={modalImage} />}
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                  <h3 className="text-xl text-gray-900 dark:text-white font-bignoodle tracking-wide">
+                    Convenios
+                  </h3>
+                  <button
+                    onClick={closeModal}
+                    type="button"
+                    className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    data-modal-hide="default-modal"
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 14 14"
+                    >
+                      <path
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                      />
+                    </svg>
+                    <span className="sr-only">Close modal</span>
+                  </button>
+                </div>
+                {/* Modal body */}
+                <div className="p-4 md:p-5 space-y-4">
+                  <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
+                    •GYMPASS: Gestionalo desde tu App GymPass.
+                    <br />
+                    •SIPROSA: 10% OFF.
+                    <br />
+                    •GREMIO UEJN (PODER JUDICIAL): SOCIOS DIRECTOS 10% OFF -
+                    FAMILIARES 5% OFF.
+                    <br />
+                    •CENTRO DE FUNCIONARIOS JUDICIALES: 10% OFF.
+                    <br />
+                    •AFIP: 15% OFF - HASTA 2 FAMILIARES ADICIONALES.
+                    <br />
+                    •GRUPO ARCOR.
+                    <br />
+                    •CITROMAX.
+                    <br />
+                    •GREMIO DOCENTES UDT 10% OFF
+                    <br />
+                    •CIRCULO MEDICO DEL SUR: 10% OFF
+                    <br />
+                    •CLUB SAN BERNARDO 10% OFF
+                  </p>
                 </div>
                 {/* Modal footer */}
                 <div className="flex flex-col md:flex-row items-center justify-between p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600 space-y-4 md:space-y-0 md:space-x-4">

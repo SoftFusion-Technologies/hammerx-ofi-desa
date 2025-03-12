@@ -85,11 +85,11 @@ const Promociones = () => {
 
       {/* Imagen promo planes  */}
       <div className="grid place-items-center mb-8">
-        <img
+        {/* <img
           // src={PromoPlanes}
-          alt="macro"
+          // alt="macro"
           className="w-3/4 h-auto mx-auto object-cover transform group-hover:scale-110 transition-transform duration-300"
-        />
+        /> */}
         {/* <img src={Macro} alt="macro" className="w-full h-auto object-cover" />
 
         <img

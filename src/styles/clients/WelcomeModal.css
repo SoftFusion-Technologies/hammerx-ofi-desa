@@ -9,6 +9,7 @@
   justify-content: center;
   align-items: center;
   z-index: 9999; /* Asegura que el modal esté encima de otros elementos */
+  object-fit: contain; /* Asegura que la imagen se mantenga proporcional */
 }
 
 .modal-content_V2 {
@@ -49,4 +50,20 @@
 
 .welcome-image_V2:hover {
   transform: scale(1.05); /* Zoom suave al pasar el cursor por encima */
+}
+
+.large-image {
+  max-width: 100%; /* Ajustamos al 100% del contenedor */
+  height: auto; /* Asegura que se ajuste proporcionalmente */
+  object-fit: contain; /* Ajuste proporcional de la imagen */
+  transition: transform 0.3s ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .large-image {
+    max-width: 180%; /* Aumentamos el tamaño para dispositivos móviles */
+    margin-left: -40%; /* Ajustamos la posición para centrar la imagen */
+    max-height: 90vh; /* Aumentamos la altura máxima para que ocupe más espacio */
+    object-fit: cover; /* La imagen cubre el área sin perder proporción */
+  }
 }
