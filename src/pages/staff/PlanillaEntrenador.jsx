@@ -99,7 +99,7 @@ const PlanillaEntrenador = () => {
     setSelectedMonthName(getMonthName(selectedMonth));
 
     // Cargar los datos para el mes seleccionado
-    fetchAlumnos(selectedMonth);
+    fetchAlumnos(selectedMonth, selectedYear);
   }, [selectedMonth]); // Solo se ejecuta cuando `selectedMonth` cambia
 
   useEffect(() => {
@@ -200,18 +200,24 @@ const PlanillaEntrenador = () => {
   }, [user_id]);
 
   // Cargar los registros de alumnos al iniciar el componente
-  const fetchAlumnos = async (month) => {
+  const fetchAlumnos = async (month, selectedYear) => {
     try {
-      const responseAlumnos = await axios.get(`${URL}alumnos`);
-      // Enviar mes y año como parámetros
+      console.log(month);
+      console.log(selectedYear);
+      // Obtener los alumnos con los filtros de mes y año
+      const responseAlumnos = await axios.get(`${URL}alumnos`, {
+        params: { mes: month, anio: selectedYear }
+      });
+      // Enviar mes y año como parámetros para las asistencias
       const responseAsistencias = await axios.get(`${URL}asistencias`, {
         params: { mes: month, anio: selectedYear }
       });
 
-      // Enviar mes y año como parámetros
+      // Enviar mes y año como parámetros para las agendas
       const responseAgendas = await axios.get(`${URL}agendas`, {
         params: { mes: month, anio: selectedYear }
       });
+
       // Filtrar alumnos por user_id
       const alumnosFiltrados =
         userLevel === 'instructor'
@@ -268,7 +274,7 @@ const PlanillaEntrenador = () => {
         })
         .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-      // Llenar las filas restantes hasta 100 \\ aumentar ese numero en caso de que se necesiten mas filas
+      // Llenar las filas restantes hasta 100 (aumentar ese número si se necesitan más filas)
       const filasRestantes = 20 - alumnosConAsistencias.length;
       const filasVacias = Array.from({ length: filasRestantes }, () => ({
         id: null,
@@ -280,8 +286,9 @@ const PlanillaEntrenador = () => {
         totalAsistencias: 0
       }));
 
-      // De esta forma mostramos en la planilla los datos
+      // Mostrar los datos en la planilla
       const allRows = [...alumnosConAsistencias, ...filasVacias];
+      console.log(allRows); // Verifica que `allRows` tenga los datos correctos
       setRows(allRows);
       setFilteredAlumnos(allRows);
     } catch (error) {
@@ -292,8 +299,8 @@ const PlanillaEntrenador = () => {
   };
 
   useEffect(() => {
-    fetchAlumnos();
-  }, [URL, userId]);
+    fetchAlumnos(currentMonth, selectedYear);
+  }, [URL, userId, currentMonth, currentYear]);
 
   // Filtrar alumnos cuando cambia el valor de búsqueda
   useEffect(() => {
@@ -450,7 +457,7 @@ const PlanillaEntrenador = () => {
         setRows(updatedRows);
 
         alert('Registro eliminado correctamente');
-        fetchAlumnos();
+        fetchAlumnos(currentMonth, currentYear);
       } catch (error) {
         console.error('Error al eliminar el registro:', error);
         alert('Error al eliminar el registro. Intenta nuevamente.');
@@ -640,7 +647,7 @@ const PlanillaEntrenador = () => {
 
   const cerarModal = () => {
     setModalNewAlumn(false);
-    fetchAlumnos();
+    fetchAlumnos(currentMonth, currentYear);
   };
 
   // Obtenemos el id del alumno que se filtro - Baltazar Almiron - 11/11/2024
@@ -704,7 +711,7 @@ const PlanillaEntrenador = () => {
               );
               alert(`Asistencia actualizada para el día ${day}`);
               fetchAsistencias();
-              fetchAlumnos();
+              fetchAlumnos(currentMonth, currentYear);
             }
           }
 
@@ -726,7 +733,7 @@ const PlanillaEntrenador = () => {
           });
 
           fetchAsistencias();
-          fetchAlumnos();
+          fetchAlumnos(currentMonth, currentYear);
 
           if (!response.ok) {
             throw new Error(`Error al guardar la asistencia del día ${day}`);
@@ -761,7 +768,7 @@ const PlanillaEntrenador = () => {
           throw new Error('Error al eliminar el registro');
         }
 
-        fetchAlumnos();
+        fetchAlumnos(currentMonth, currentYear);
         setSearch('');
 
         alert('Registro eliminado correctamente');
@@ -1115,7 +1122,7 @@ const PlanillaEntrenador = () => {
         `Registros del mes ${selectedMonth} del año ${deleteYear} borrados exitosamente.`
       );
 
-      fetchAlumnos(currentMonth);
+      fetchAlumnos(currentMonth, currentYear);
     } catch (error) {
       console.error(error);
       alert('Ocurrió un error al intentar borrar los registros.');
@@ -1153,7 +1160,7 @@ const PlanillaEntrenador = () => {
             const updateData = await updateResponse.json();
             alert(`Asistencia actualizada: ${updateData.message}`);
             // Actualizar UI sin recargar toda la página
-            fetchAlumnos();
+            fetchAlumnos(currentMonth, currentYear);
             fetchAsistencias();
           } else {
             alert.error(`Error al actualizar la asistencia.`);
@@ -1180,7 +1187,7 @@ const PlanillaEntrenador = () => {
         if (createResponse.ok) {
           const createData = await createResponse.json();
           alert(`Asistencia creada: ${createData.message}`);
-          fetchAlumnos();
+          fetchAlumnos(currentMonth, currentYear);
           fetchAsistencias();
         } else {
           alert.error(`Error al crear la asistencia.`);
@@ -1230,7 +1237,7 @@ const PlanillaEntrenador = () => {
 
         <div className="pl-5 mb-10">
           <button
-            onClick={() => fetchAlumnos()}
+            onClick={() => fetchAlumnos(currentMonth, currentYear)}
             className="py-2 px-5 bg-[#fc4b08] rounded-lg text-sm text-white hover:bg-orange-500"
           >
             Cargar Alumnos
@@ -1359,7 +1366,6 @@ const PlanillaEntrenador = () => {
                 </div>
               )}
             </div>
-
             <h1 className="ml-2 uppercase font-bold text-xl">
               Cantidad de páginas: {nPage}
             </h1>
@@ -1423,6 +1429,57 @@ const PlanillaEntrenador = () => {
               >
                 Ver Detalles
               </button>
+            </div>
+            <div className="flex flex-col items-center space-y-4">
+              <h1 className="text-3xl font-bold text-orange-600">
+                {selectedMonthName} {selectedYear}
+              </h1>
+              <div className="flex space-x-4">
+                <button
+                  className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition duration-300"
+                  onClick={handlePreviousMonth}
+                >
+                  Mes Anterior
+                </button>
+                <button
+                  className={`px-4 py-2 rounded ${
+                    selectedMonth === selectedMonth
+                      ? 'bg-orange-500 text-white hover:bg-orange-600 '
+                      : 'bg-orange-500 text-white hover:bg-orange-600 transition duration-300'
+                  }`}
+                  onClick={handleNextMonth}
+                >
+                  Mes Siguiente
+                </button>
+              </div>
+              {userLevel !== 'instructor' && selectedMonth < currentMonth && (
+                <div className="flex flex-col items-center space-y-2">
+                  <label className="text-gray-700 font-medium">
+                    Ingrese el año a borrar (se BORRAN todas las asistencias y
+                    agendas del mes de{' '}
+                    <span className="text-red-600">{selectedMonthName}</span> y
+                    el año que ingrese en el campo)
+                  </label>
+                  <input
+                    type="number"
+                    value={deleteYear}
+                    onChange={(e) => setDeleteYear(e.target.value)}
+                    className="border border-gray-300 px-3 py-2 rounded w-32 text-center"
+                    placeholder="Año"
+                  />
+                  <button
+                    className={`px-4 py-2 rounded ${
+                      deleteYear
+                        ? 'bg-red-500 text-white hover:bg-red-600 transition duration-300'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                    onClick={handleMassDelete}
+                    disabled={!deleteYear}
+                  >
+                    Borrado Masivo
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

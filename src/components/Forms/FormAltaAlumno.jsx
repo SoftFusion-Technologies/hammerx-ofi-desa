@@ -38,6 +38,10 @@ const FormAltaAlumno = ({
   const [errorModal, setErrorModal] = useState(false);
   const [textoModal, setTextoModal] = useState('');
 
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1; // Los meses en JavaScript van de 0 a 11, por eso sumamos 1
+  const currentYear = currentDate.getFullYear(); // Obtiene el año actual
+
   // nueva variable para administrar el contenido de formulario para saber cuando limpiarlo
   const formikRef = useRef(null);
   // yup sirve para validar formulario este ya trae sus propias sentencias
@@ -145,7 +149,9 @@ const FormAltaAlumno = ({
             celular: alumno ? alumno.celular : '',
             punto_d: alumno ? alumno.punto_d : '',
             motivo: alumno ? alumno.motivo : '',
-            user_id: user2 || user1
+            user_id: user2 || user1,
+            mes: currentMonth, // Asignar el mes actual
+            anio: currentYear // Asignar el año actual
           }}
           enableReinitialize
           // cuando hacemos el submit esperamos a que cargen los valores y esos valores tomados se lo pasamos a la funcion handlesubmit que es la que los espera
