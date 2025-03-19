@@ -46,7 +46,8 @@ const Sedeconcepcion = lazy(() => import('./pages/sedes/Concepcion'));
 const Sedemonteros = lazy(() => import('./pages/sedes/Monteros'));
 const Loading = lazy(() => import('./components/Loading')); // Importa el componente de carga
 const Miclasefree = lazy(() => import('./pages/Mi-clase-free'));
-const MiCV = lazy(() => import('./pages/Mi-CV'));
+// const MiCV = lazy(() => import('./pages/Mi-CV'));
+const MiCV = lazy(() => import('./components/ModalEnvioCV.jsx'));
 const CongelamientosCont = lazy(() => import('./pages/CongelamientosCont.jsx'));
 const Pautas = lazy(() => import('./pages/Pautas'));
 const Legales = lazy(() => import('./pages/Legales'));
@@ -264,7 +265,7 @@ const App = memo(() => {
                 <Ruta path="/Sedes/Monteros" element={<Sedemonteros />} />{' '}
                 {/* Página de la sede de Monteros */}
                 <Ruta path="/mi-clase-free" element={<Miclasefree />} />{' '}
-                <Ruta path="/mi-cv" element={<MiCV />} />{' '}
+                <Ruta path="/mi-cv" element={<MiCV isOpen={true} onClose={false}/>} />{' '}
                 <Ruta path="/congelamientos" element={<CongelamientosCont />} />{' '}
                 <Ruta path="/pautas" element={<Pautas />} />{' '}
                 {/* Página de Pautas */}

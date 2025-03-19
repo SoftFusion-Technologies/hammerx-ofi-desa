@@ -10,11 +10,12 @@
  *  Capa: Frontend
  */
 
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 
-import React, { useState } from "react";
-import FormTestClass from "../Forms/FormTestClass";
-import FormPostulante from "../Forms/FormPostulante";
+import React, { useState } from 'react';
+import FormTestClass from '../Forms/FormTestClass';
+import FormPostulante from '../Forms/FormPostulante';
+import ModalEnvioCV from '../ModalEnvioCV';
 
 const DropdownMenu = () => {
   const [toggle, setToggle] = useState(false);
@@ -47,8 +48,9 @@ const DropdownMenu = () => {
       </h1>
       <div
         id="dropdown"
-        className={`${!toggle ? "hidden" : "flex"
-          } bg-white px-2 absolute top-16 min-w-[100px] z-10 rounded-b-lg`}
+        className={`${
+          !toggle ? 'hidden' : 'flex'
+        } bg-white px-2 absolute top-16 min-w-[100px] z-10 rounded-b-lg`}
       >
         <ul
           className="py-2 text-sm text-gray-700 dark:text-gray-200"
@@ -86,10 +88,16 @@ const DropdownMenu = () => {
 
       {/* Modal para abrir formulario de clase gratis */}
       <FormTestClass isOpen={isOpenClass} onClose={desactivarModalClase} />
-      
+
       {/* Modal para abrir formulario de quiero trabajar con ustedes */}
-      <FormPostulante isOpen={modalTrabajarConUstedes} onClose={desactivarModalTrabajar} />
-      
+      {/* <FormPostulante
+        isOpen={modalTrabajarConUstedes}
+        onClose={desactivarModalTrabajar}
+      /> */}
+      <ModalEnvioCV
+        isOpen={modalTrabajarConUstedes}
+        onClose={desactivarModalTrabajar}
+      />
     </div>
   );
 };
