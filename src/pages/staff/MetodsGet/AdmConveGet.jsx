@@ -11,17 +11,17 @@
  * Capa: Frontend
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
-import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { formatearFecha } from "../../../Helpers";
-import { Link } from "react-router-dom";
-import NavbarStaff from "../NavbarStaff";
-import "../../../styles/MetodsGet/Tabla.css";
-import "../../../styles/staff/background.css";
-import Footer from "../../../components/footer/Footer";
-import FormAltaConve from "../../../components/Forms/FormAltaConve";
-import IntegranteConveGet from "./IntegranteConveGet";
-import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+import React, { useEffect, useState, useMemo } from 'react';
+import { formatearFecha } from '../../../Helpers';
+import { Link } from 'react-router-dom';
+import NavbarStaff from '../NavbarStaff';
+import '../../../styles/MetodsGet/Tabla.css';
+import '../../../styles/staff/background.css';
+import Footer from '../../../components/footer/Footer';
+import FormAltaConve from '../../../components/Forms/FormAltaConve';
+import IntegranteConveGet from './IntegranteConveGet';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../AuthContext';
 
 const AdmConveGet = () => {
@@ -32,10 +32,55 @@ const AdmConveGet = () => {
 
   const [selectedConve, setSelectedConve] = useState(null);
   const [selectedConve2, setSelectedConve2] = useState(null);
+  // estado para obtener el nombre y el email del instructor
+  const [nombreInstructor, setNombreInstructor] = useState('');
+  const [sede, setSede] = useState('');
 
   const navigate = useNavigate(); // Hook para navegación
 
-  const { userLevel } = useAuth();
+  const { userName, userLevel } = useAuth();
+
+  useEffect(() => {
+    const getUserIdByEmail = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/users/`);
+
+        if (!response.ok) {
+          throw new Error(
+            `Error al obtener los usuarios: ${response.statusText}`
+          );
+        }
+
+        const users = await response.json();
+
+        // Buscar el usuario por email
+        const user = users.find((u) => u.email === userName);
+        // console.log(user.sede);
+
+        if (user) {
+          // setUserId(user.id);
+          setNombreInstructor(user.name);
+          setSede(user.sede); // Guardar la sede en el estado
+          console.log(`ID del usuario ${userName}:`, user.id);
+          console.log(`Sede del usuario ${userName}:`, user.sede);
+          obtenerConves(user.sede);
+        } else {
+          console.log(`Usuario con email ${userName} no encontrado`);
+        }
+      } catch (err) {
+        console.log(`Error al obtener el usuario: ${err.message}`);
+      }
+    };
+
+    getUserIdByEmail();
+  }, [userName, userLevel]); // Se ejecuta cuando cambian userName o userLevel
+
+  const normalizeSede = (sede) => {
+    if (sede === 'monteros') return 'Monteros';
+    if (sede === 'concepción') return 'Concepción';
+    if (sede === 'smt') return 'SMT';
+    return sede; // Si ya está bien escrito, lo dejamos igual
+  };
 
   const abrirModal = () => {
     setmodalNewConve(true);
@@ -43,7 +88,7 @@ const AdmConveGet = () => {
   };
   const cerarModal = () => {
     setmodalNewConve(false);
-    obtenerConves();
+    obtenerConves('');
   };
   // Estado para almacenar el término de búsqueda
   const [search, setSearch] = useState('');
@@ -56,21 +101,32 @@ const AdmConveGet = () => {
     setSelectedConve(id);
     navigate(`/dashboard/integrantes?id_conv=${id}`);
   };
-  useEffect(() => {
-    // utilizamos get para obtenerPersonas los datos contenidos en la url
-    axios.get(URL).then((res) => {
-      setConve(res.data);
-      obtenerConves();
-    });
-  }, []);
 
-  // Función para obtener todos los personClass desde la API
-  const obtenerConves = async () => {
+  const obtenerConves = async (sede) => {
     try {
       const response = await axios.get(URL);
-      setConve(response.data);
+      const convenios = response.data;
+
+      if (userLevel == 'admin' || userLevel == 'administrador') {
+        setFilterSede(''); // Establece el valor '' para mostrar todas las sedes
+        console.log('entraaa por admin');
+      } else {
+        const normalizedValue = normalizeSede(sede); // Normaliza el valor
+        setFilterSede(normalizedValue); // Establece el valor normalizado en el estado
+        console.log('entraaa por otro user');
+      }
+
+      // Verificamos si el usuario es admin
+      const conveniosFiltrados =
+        userLevel === 'admin' // Si es admin, mostrar todos los convenios
+          ? convenios
+          : filterSede === '' || filterSede === 'Multisede' // Si 'filterSede' es vacío o 'Multisede', mostrar todos
+          ? convenios
+          : convenios.filter((c) => c.sede === filterSede); // Filtrar por sede
+
+      setConve(conveniosFiltrados);
     } catch (error) {
-      console.log('Error al obtener las personas :', error);
+      console.log('Error al obtener los convenios:', error);
     }
   };
 
@@ -166,23 +222,62 @@ const AdmConveGet = () => {
   };
 
   // Función para manejar el cambio en el filtro de sede
-  const handleFilterSedeChange = (event) => {
-    setFilterSede(event.target.value);
+  const handleFilterSedeChange = (e) => {
+    const newValue = e.target.value;
+    const sedeNormalizada = normalizeSede(newValue); // Aplicamos la normalización
+    setFilterSede(sedeNormalizada);
+    console.log('Filtro cambiado a:', sedeNormalizada); // Debugging
   };
 
-  const applySedeFilter = (conve) => {
-    if (!filterSede) {
-      return true; // Si no hay filtro de sede seleccionado, mostrar todo
+  const filteredResults = useMemo(() => {
+    if (!filterSede || filterSede === 'Todas las sedes') {
+      return results;
     }
-    const sede = conve.sede || ''; // Asignar una cadena vacía si `conve2.sede` es `null` o `undefined`
-    return sede.toLowerCase().includes(filterSede.toLowerCase());
+
+    // Si el filtro es 'Multisede', filtrar solo los convenios que sean de 'Multisede'
+    if (filterSede === 'Multisede') {
+      return results.filter((conve) => conve.sede === 'Multisede');
+    }
+
+    // Si se selecciona cualquier otra sede, filtrar por esa sede
+    return results.filter((conve) => {
+      const sedeNormalizada = normalizeSede(
+        conve.sede?.trim().toLowerCase() || ''
+      );
+      return sedeNormalizada === filterSede;
+    });
+  }, [results, filterSede]); // Se recalcula solo cuando cambian estos valores
+
+  // Se recalcula solo cuando cambian estos valores
+
+  const getFilteredSedes = () => {
+    const normalizedSede = sede?.toLowerCase(); // Normaliza la sede a minúsculas
+
+    // Si el usuario es admin, mostrar todas las sedes
+    if (userLevel === 'admin' || userLevel === 'administrador') {
+      return ['Todas las sedes', 'Multisede', 'Monteros', 'Concepción', 'SMT']; // Todas las sedes
+    }
+
+    // Si el usuario tiene una sede específica, mostrar solo su sede y "Multisede"
+    if (normalizedSede === 'monteros') {
+      return ['Monteros', 'Multisede'];
+    } else if (normalizedSede === 'concepción') {
+      return ['Concepción', 'Multisede'];
+    } else if (normalizedSede === 'smt') {
+      return ['SMT', 'Multisede'];
+    }
+
+    // Si no se encuentra una sede específica, devolver solo "Multisede"
+    return ['Multisede'];
   };
+
+  const filteredSedes = getFilteredSedes(); // Obtener las sedes filtradas según el rol del usuario
 
   return (
     <>
       <NavbarStaff />
       <div className="dashboardbg h-contain pt-10 pb-10">
-        <div className=" rounded-lg w-11/12 mx-auto pb-2">
+        <div className=" rounded-lg w-12/12 mx-auto pb-2">
           <div className="bg-white mb-5">
             <div className="pl-5 pt-5">
               <Link to="/dashboard">
@@ -195,7 +290,7 @@ const AdmConveGet = () => {
               <h1 className="pb-5">
                 Listado de Convenios: &nbsp;
                 <span className="text-center">
-                  Cantidad de registros: {results.length}
+                  Cantidad de registros: {filteredResults.length}
                 </span>
               </h1>
             </div>
@@ -214,11 +309,11 @@ const AdmConveGet = () => {
                 onChange={handleFilterSedeChange}
                 className="border rounded-sm ml-3"
               >
-                <option value="">Todas las sedes</option>
-                <option value="Multisede">Multi Sede</option>
-                <option value="SMT">SMT</option>
-                <option value="Monteros">Monteros</option>
-                <option value="Concepción">Concepción</option>
+                {filteredSedes.map((opcion) => (
+                  <option key={opcion} value={opcion}>
+                    {opcion}
+                  </option>
+                ))}
               </select>
             </form>
             {/* formulario de busqueda */}
@@ -249,77 +344,22 @@ const AdmConveGet = () => {
             </p>
           ) : (
             <div>
-              <div className="grid grid-cols-3 gap-10 mx-auto pb-10 lg:grid-cols-3 max-sm:grid-cols-1 md:grid-cols-2">
-                {results.filter(applySedeFilter).map((conve) => (
-                  <div key={conve.id} className="bg-white p-6 rounded-md">
+              <div className="grid grid-cols-3 gap-8 mx-auto pb-10 lg:grid-cols-5 max-sm:grid-cols-2 md:grid-cols-3">
+                {filteredResults.map((conve) => (
+                  <div
+                    key={conve.id}
+                    className="bg-white p-4 rounded-md max-w-xs mx-auto"
+                  >
                     <h2 className="btnstaff">
                       {/* CONVENIO:{' '} */}
-                      <span className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
+                      <span className="bg-white font-bignoodle w-[200px] h-[80px] text-[16px] lg:w-[250px] lg:h-[100px] lg:text-[22px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
                         {conve.nameConve}
                       </span>
                     </h2>
 
-                    {/* <p>
-                      DESCRIPCIÓN:{' '}
-                      <span className="font-semibold">{conve.descConve}</span>
-                    </p>
-                     */}
-
-                    {/* {(userLevel === 'admin' ||
-                      userLevel === 'administrador') && (
-                      <p>
-                        PRECIO:{' '}
-                        <span className="font-semibold">
-                          {conve.precio
-                            ? Number(conve.precio).toLocaleString('es-AR', {
-                                style: 'currency',
-                                currency: 'ARS'
-                              })
-                            : 'Sin precio'}
-                        </span>
-                      </p>
-                    )} */}
-                    {/* {(userLevel === 'admin' ||
-                      userLevel === 'administrador') && (
-                      <p>
-                        DESCUENTO:{' '}
-                        <span className="font-semibold">
-                          {conve.descuento
-                            ? `%${conve.descuento}`
-                            : 'Sin descuento'}
-                        </span>
-                      </p>
-                    )} */}
-                    {/* {(userLevel === 'admin' ||
-                      userLevel === 'administrador') && (
-                      <p>
-                        PRECIO FINAL:{' '}
-                        <span className="font-semibold">
-                          {conve.preciofinal
-                            ? Number(conve.preciofinal).toLocaleString(
-                                'es-AR',
-                                {
-                                  style: 'currency',
-                                  currency: 'ARS'
-                                }
-                              )
-                            : 'Sin precio final'}
-                        </span>
-                      </p>
-                    )} */}
-
-                    {/* <p>
-                      <span className="font-semibold">
-                        {Number(conve.permiteFam) === 1
-                          ? `Permite familiar: ${conve.cantFamiliares}`
-                          : 'No permite familiar'}
-                      </span>
-                    </p>
-                     */}
-
                     {(userLevel === 'admin' ||
                       userLevel === 'administrador') && (
-                      <p className="btnstaff mt-2">
+                      <p className="btnstaff mt-1 text-sm">
                         SEDE:{' '}
                         <span className="font-semibold uppercase">
                           {conve.sede}
@@ -332,6 +372,7 @@ const AdmConveGet = () => {
                     >
                       <button
                         style={{ ...styles.button, backgroundColor: '#fc4b08' }}
+                        className="py-1 px-3 text-sm"
                       >
                         Ver Integrantes
                       </button>
@@ -339,16 +380,17 @@ const AdmConveGet = () => {
 
                     {(userLevel === 'admin' ||
                       userLevel === 'administrador') && (
-                      <div>
+                      <div className="mt-2 flex space-x-2">
                         <button
                           onClick={() => handleEliminarConve(conve.id)}
                           style={{ ...styles.button, backgroundColor: 'red' }}
+                          className="py-1 px-3 text-sm"
                         >
                           Eliminar
                         </button>
                         <button
                           onClick={() => handleEditarConve(conve)}
-                          className="py-2 px-4 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
+                          className="py-1 px-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm"
                         >
                           Editar
                         </button>
@@ -378,41 +420,41 @@ const AdmConveGet = () => {
 
 const styles = {
   container: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: "10px",
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: '10px'
   },
   conveBox: {
-    border: "1px solid #ccc",
-    padding: "16px",
-    borderRadius: "8px",
-    boxSizing: "border-box",
-    flex: "1 1 calc(33% - 20px)", // Ajusta el ancho para permitir más espacio entre cuadros
-    margin: "10px",
-    minWidth: "250px", // Ajusta el tamaño mínimo para que los cuadros no sean demasiado pequeños
+    border: '1px solid #ccc',
+    padding: '16px',
+    borderRadius: '8px',
+    boxSizing: 'border-box',
+    flex: '1 1 calc(33% - 20px)', // Ajusta el ancho para permitir más espacio entre cuadros
+    margin: '10px',
+    minWidth: '250px' // Ajusta el tamaño mínimo para que los cuadros no sean demasiado pequeños
   },
   button: {
-    margin: "10px 10px 0px 0px",
-    padding: "10px 20px",
-    borderRadius: "5px",
-    cursor: "pointer",
-    backgroundColor: "#007BFF",
-    color: "white",
-    border: "none",
-    fontSize: "14px",
+    margin: '10px 10px 0px 0px',
+    padding: '10px 20px',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    backgroundColor: '#007BFF',
+    color: 'white',
+    border: 'none',
+    fontSize: '14px'
   },
   // Media queries
-  "@media (max-width: 1200px)": {
+  '@media (max-width: 1200px)': {
     conveBox: {
-      flex: "1 1 calc(50% - 20px)", // Dos columnas para pantallas medianas
-    },
+      flex: '1 1 calc(50% - 20px)' // Dos columnas para pantallas medianas
+    }
   },
-  "@media (max-width: 768px)": {
+  '@media (max-width: 768px)': {
     conveBox: {
-      flex: "1 1 calc(100% - 20px)", // Una columna para pantallas pequeñas
-    },
-  },
+      flex: '1 1 calc(100% - 20px)' // Una columna para pantallas pequeñas
+    }
+  }
 };
 
 export default AdmConveGet;
