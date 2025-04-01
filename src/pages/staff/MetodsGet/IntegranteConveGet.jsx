@@ -372,6 +372,19 @@ const IntegranteConveGet = ({ integrantes }) => {
 
   const disabledFileUpload = estado === 1 || isMonthFrozen(selectedMonth); // Desactivar si estado es 1 o mes congelado
 
+  const autorizarConvenio = async () => {
+    try {
+      await axios.put(
+        `https://vps-4294061-x.dattaweb.com/integrantes/autorizar-convenio/${id_conv}`
+      );
+      alert(`Integrantes del convenio ${id_conv} autorizados con éxito`);
+      obtenerIntegrantes2(); // Refrescar la lista de integrantes
+    } catch (error) {
+      console.error('Error al autorizar el convenio', error);
+      alert('Ocurrió un error al autorizar los integrantes');
+    }
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -497,10 +510,21 @@ const IntegranteConveGet = ({ integrantes }) => {
           {/* Importar Clientes Excel - FINAL */}
 
           {/* Nuevo requerimiento para congelar listados R9 - INICIO  */}
-          <CongelarIntegrantes
-            id_conv={id_conv}
-            selectedMonth={selectedMonth}
-          />
+          {(userLevel === 'admin' || userLevel === 'administrador') && (
+            <div className="ml-20 flex items-center space-x-4">
+              <button
+                onClick={autorizarConvenio}
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all"
+              >
+                Autorizar Masivo
+              </button>
+              <CongelarIntegrantes
+                id_conv={id_conv}
+                selectedMonth={selectedMonth}
+              />
+            </div>
+          )}
+
           {/* Nuevo requerimiento para congelar listados R9 - INICIO  */}
 
           {/* R8 - SE AGREGAN FECHAS PARA TRABAJAR EN CONVENIOS INICIO - BENJAMIN ORELLANA */}
