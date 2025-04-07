@@ -40,6 +40,8 @@ const AdmConveGet = () => {
 
   const { userName, userLevel } = useAuth();
 
+  const [conveArchivados, setConveArchivados] = useState([]); // nuevo estado para convenios archivados
+
   useEffect(() => {
     const getUserIdByEmail = async () => {
       try {
@@ -63,7 +65,7 @@ const AdmConveGet = () => {
           setSede(user.sede); // Guardar la sede en el estado
           console.log(`ID del usuario ${userName}:`, user.id);
           console.log(`Sede del usuario ${userName}:`, user.sede);
-          obtenerConves(user.sede);
+          obtenerConves(user.sede, false);
         } else {
           console.log(`Usuario con email ${userName} no encontrado`);
         }
@@ -101,32 +103,52 @@ const AdmConveGet = () => {
     setSelectedConve(id);
     navigate(`/dashboard/integrantes?id_conv=${id}`);
   };
-
-  const obtenerConves = async (sede) => {
+  const obtenerConves = async (sede, mantenerFiltro = false) => {
     try {
       const response = await axios.get(URL);
       const convenios = response.data;
 
-      if (userLevel == 'admin' || userLevel == 'administrador') {
-        setFilterSede(''); // Establece el valor '' para mostrar todas las sedes
-        console.log('entraaa por admin');
-      } else {
-        const normalizedValue = normalizeSede(sede); // Normaliza el valor
-        setFilterSede(normalizedValue); // Establece el valor normalizado en el estado
-        console.log('entraaa por otro user');
+      // 🔥 Filtrar solo los convenios activos (archivado === 1)
+      const conveniosActivos = convenios.filter((c) => c.archivado === 1);
+
+      if (!mantenerFiltro) {
+        if (userLevel === 'admin' || userLevel === 'administrador') {
+          setFilterSede('');
+          console.log('entraaa por admin');
+        } else {
+          const normalizedValue = normalizeSede(sede);
+          setFilterSede(normalizedValue);
+          console.log('entraaa por otro user');
+        }
       }
 
-      // Verificamos si el usuario es admin
       const conveniosFiltrados =
-        userLevel === 'admin' // Si es admin, mostrar todos los convenios
-          ? convenios
-          : filterSede === '' || filterSede === 'Multisede' // Si 'filterSede' es vacío o 'Multisede', mostrar todos
-          ? convenios
-          : convenios.filter((c) => c.sede === filterSede); // Filtrar por sede
+        userLevel === 'admin'
+          ? conveniosActivos
+          : filterSede === '' || filterSede === 'Multisede'
+          ? conveniosActivos
+          : conveniosActivos.filter((c) => c.sede === filterSede);
 
       setConve(conveniosFiltrados);
     } catch (error) {
       console.log('Error al obtener los convenios:', error);
+    }
+  };
+
+  const obtenerConvesArchivados = async () => {
+    try {
+      const response = await axios.get(URL);
+      const convenios = response.data;
+
+      // Filtrar los convenios archivados (archivado = 0)
+      const conveniosArchivados = convenios.filter(
+        (c) => Number(c.archivado) === 0
+      );
+
+      console.log('Convenios archivados:', conveniosArchivados);
+      setConveArchivados(conveniosArchivados);
+    } catch (error) {
+      console.log('Error al obtener los convenios archivados:', error);
     }
   };
 
@@ -145,22 +167,6 @@ const AdmConveGet = () => {
       } catch (error) {
         console.log(error);
       }
-    }
-  };
-
-  const obtenerConve = async (id) => {
-    try {
-      const url = `${URL}${id}`;
-
-      console.log(url);
-
-      const respuesta = await fetch(url);
-
-      const resultado = await respuesta.json();
-
-      setConve(resultado);
-    } catch (error) {
-      console.log(error);
     }
   };
 
@@ -229,6 +235,12 @@ const AdmConveGet = () => {
     console.log('Filtro cambiado a:', sedeNormalizada); // Debugging
   };
 
+  useEffect(() => {
+    if (filterSede === 'Archivados') {
+      obtenerConvesArchivados(); // Carga solo si el filtro es 'archivados'
+    }
+  }, [filterSede]);
+
   const filteredResults = useMemo(() => {
     if (!filterSede || filterSede === 'Todas las sedes') {
       return results;
@@ -247,6 +259,15 @@ const AdmConveGet = () => {
       return sedeNormalizada === filterSede;
     });
   }, [results, filterSede]); // Se recalcula solo cuando cambian estos valores
+
+  const filteredArchivados = useMemo(() => {
+    return conveArchivados.filter((conve) =>
+      conve.nameConve.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [conveArchivados, search]);
+
+  const mostrarResultados =
+    filterSede === 'Archivados' ? filteredArchivados : filteredResults;
 
   // Se recalcula solo cuando cambian estos valores
 
@@ -273,6 +294,30 @@ const AdmConveGet = () => {
 
   const filteredSedes = getFilteredSedes(); // Obtener las sedes filtradas según el rol del usuario
 
+  const handleArchivarConve = async (id) => {
+    try {
+      await axios.put(`${URL}${id}`, { archivado: 0 }); // Cambia a 0 = archivado
+      alert('Convenio archivado correctamente');
+      // recargá los convenios
+      obtenerConves(null, true); // ✅ No resetea el filtro actual
+    } catch (error) {
+      console.error('Error al archivar el convenio:', error);
+      alert('Hubo un error al archivar el convenio');
+    }
+  };
+
+  const handleDesarchivarConve = async (id) => {
+    try {
+      await axios.put(`${URL}${id}`, { archivado: 1 }); // Cambia a 1 = activo
+      alert('Convenio desarchivado correctamente');
+      obtenerConvesArchivados(); // Recarga los archivados
+      obtenerConves(null, true); // ✅ No resetea el filtro actual
+    } catch (error) {
+      console.error('Error al desarchivar el convenio:', error);
+      alert('Hubo un error al desarchivar el convenio');
+    }
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -289,9 +334,12 @@ const AdmConveGet = () => {
             <div className="flex justify-center">
               <h1 className="pb-5">
                 Listado de Convenios: &nbsp;
-                <span className="text-center">
-                  Cantidad de registros: {filteredResults.length}
-                </span>
+                <p className="mb-2">
+                  Cantidad de registros:{' '}
+                  {filterSede === 'Archivados'
+                    ? conveArchivados.length
+                    : filteredResults.length}
+                </p>
               </h1>
             </div>
 
@@ -314,6 +362,8 @@ const AdmConveGet = () => {
                     {opcion}
                   </option>
                 ))}
+                <option value="Archivados">Archivados</option>{' '}
+                {/* <- Esta es nueva */}
               </select>
             </form>
             {/* formulario de busqueda */}
@@ -345,7 +395,7 @@ const AdmConveGet = () => {
           ) : (
             <div>
               <div className="grid grid-cols-3 gap-8 mx-auto pb-10 lg:grid-cols-5 max-sm:grid-cols-2 md:grid-cols-3">
-                {filteredResults.map((conve) => (
+                {mostrarResultados.map((conve) => (
                   <div
                     key={conve.id}
                     className="bg-white p-4 rounded-md max-w-xs mx-auto"
@@ -381,19 +431,45 @@ const AdmConveGet = () => {
                     {(userLevel === 'admin' ||
                       userLevel === 'administrador') && (
                       <div className="mt-2 flex space-x-2">
-                        <button
-                          onClick={() => handleEliminarConve(conve.id)}
-                          style={{ ...styles.button, backgroundColor: 'red' }}
-                          className="py-1 px-3 text-sm"
-                        >
-                          Eliminar
-                        </button>
-                        <button
-                          onClick={() => handleEditarConve(conve)}
-                          className="py-1 px-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm"
-                        >
-                          Editar
-                        </button>
+                        {/* Mostrar Eliminar y Editar solo si NO está archivado */}
+                        {conve.archivado === 1 && (
+                          <>
+                            <button
+                              onClick={() => handleEliminarConve(conve.id)}
+                              style={{
+                                ...styles.button,
+                                backgroundColor: 'red'
+                              }}
+                              className="py-1 px-3 text-sm"
+                            >
+                              Eliminar
+                            </button>
+
+                            <button
+                              onClick={() => handleEditarConve(conve)}
+                              className="py-1 px-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm"
+                            >
+                              Editar
+                            </button>
+                          </>
+                        )}
+
+                        {/* Mostrar botón de Archivar o Desarchivar según el filtro actual */}
+                        {filterSede === 'Archivados' ? (
+                          <button
+                            onClick={() => handleDesarchivarConve(conve.id)}
+                            className="py-1 px-3 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                          >
+                            Desarchivar
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleArchivarConve(conve.id)}
+                            className="py-1 px-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm"
+                          >
+                            Archivar
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
