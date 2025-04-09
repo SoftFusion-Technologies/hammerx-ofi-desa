@@ -32,14 +32,9 @@ const NotificationsAgendas = ({ user1, user2 }) => {
         return;
       }
 
-      // Obtener mes y año actuales
-      const currentDate = new Date();
-      const mesActual = currentDate.getMonth() + 1; // getMonth() devuelve 0-11, sumamos 1 para obtener el rango 1-12
-      const anioActual = currentDate.getFullYear();
-
-      // Hacer la solicitud con los parámetros de mes y año
+      // Ya no se necesita calcular mes y año en el frontend
       const response = await axios.get(
-        `${URL}/notificaciones?user_id=${user_id}&mes=${mesActual}&anio=${anioActual}`
+        `${URL}/notificaciones?user_id=${user_id}`
       );
 
       if (response.data) {
