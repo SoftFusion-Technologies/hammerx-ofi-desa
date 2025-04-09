@@ -272,7 +272,12 @@ const PlanillaEntrenador = () => {
             totalAsistencias
           };
         })
-        .sort((a, b) => a.nombre.localeCompare(b.nombre));
+        .sort((a, b) => {
+          if (b.totalAsistencias !== a.totalAsistencias) {
+            return b.totalAsistencias - a.totalAsistencias; // más P arriba
+          }
+          return a.nombre.localeCompare(b.nombre); // si empatan, orden por nombre
+        });
 
       // Llenar las filas restantes hasta 100 (aumentar ese número si se necesitan más filas)
       const filasRestantes = 20 - alumnosConAsistencias.length;
