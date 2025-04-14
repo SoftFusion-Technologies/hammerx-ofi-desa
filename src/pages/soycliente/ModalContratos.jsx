@@ -151,10 +151,11 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                   <div>
                     <div className="p-4 md:p-5 space-y-4 overflow-y-auto max-h-96 overflow-hidden">
                       <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
-                        El gimnasio se compromete a brindar su servicio por el
-                        periodo de tiempo contratado, el congelamiento de
+                        Si contas con un plan trimestral o de mayor duración, el
+                        gimnasio se compromete a brindar su servicio por el
+                        periodo de tiempo contratado, el congelamiento de el
                         contrato es un beneficio con el que cuenta el cliente y
-                        solo podrá solicitarlo en situaciones particulares
+                        solo podrá solicitarlo en situaciones particulares y en
                         respetando las siguientes condiciones:
                       </p>
                       <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
@@ -164,21 +165,23 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                       <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
                         2_ Casos de solicitud: Lesiones o enfermedades que
                         imposibiliten al mismo asistir al gimnasio con
-                        certificado medico que lo avale Viajes en temporada o
+                        certificado médico que lo avale. Viajes en temporada o
                         vacaciones con comprobante de reserva (pasaje,
-                        hospedaje, etc).
+                        hospedaje, etc.).
                       </p>
                       <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
-                        3_ No se realizan devoluciones o recuperaciones de días
-                        perdidos, el congelamiento siempre se debe solicitar
+                        3_ No se realizan devoluciones o recuperaciones de días perdidos, el congelamiento siempre se debe solicitar
                         previo a la inasistencia.
+                      </p>
+                      <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
+                        4_ No puede ser aplicado en planes que incluyan pilates
+                        ya que las camas quedan reservadas para el cliente.
                       </p>
                       <div className="flex max-md:flex-col">
                         <div className="cardcontratos max-md:mx-auto">
                           <div className="content">
                             <p className="heading">
-                              Plan Mensual y Trimestral: 7 (mínimo) a 30
-                              (máximo) días
+                              Trimestral: 7 (mínimo) a 30 (máximo) días
                             </p>
                             {/* <p className="para">
                           Se podrá realizar dentro de toda la duración del
