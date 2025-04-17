@@ -42,6 +42,8 @@ const AdmConveGet = () => {
 
   const [conveArchivados, setConveArchivados] = useState([]); // nuevo estado para convenios archivados
 
+  const [sedes, setSedes] = useState([]);
+
   useEffect(() => {
     const getUserIdByEmail = async () => {
       try {
@@ -271,28 +273,67 @@ const AdmConveGet = () => {
 
   // Se recalcula solo cuando cambian estos valores
 
-  const getFilteredSedes = () => {
-    const normalizedSede = sede?.toLowerCase(); // Normaliza la sede a minúsculas
+  const obtenerSedes = async (mantenerFiltro = false) => {
+    try {
+      const response = await axios.get('http://localhost:8080/sedes'); // URL de la API para obtener las sedes
+      const sedes = response.data;
 
-    // Si el usuario es admin, mostrar todas las sedes
-    if (userLevel === 'admin' || userLevel === 'administrador') {
-      return ['Todas las sedes', 'Multisede', 'Monteros', 'Concepción', 'SMT']; // Todas las sedes
+      // 🔥 Filtrar solo las sedes activas (estado === 'activo')
+      const sedesActivas = sedes.filter((sede) => sede.estado === 'activo');
+
+      // Si no mantener filtro, se restablece el filtro
+      if (!mantenerFiltro) {
+        setFilterSede(''); // Restablecer el filtro de sede
+      }
+
+      setSedes(sedesActivas); // Establecer las sedes activas en el estado
+    } catch (error) {
+      console.log('Error al obtener las sedes:', error);
     }
-
-    // Si el usuario tiene una sede específica, mostrar solo su sede y "Multisede"
-    if (normalizedSede === 'monteros') {
-      return ['Monteros', 'Multisede'];
-    } else if (normalizedSede === 'concepción') {
-      return ['Concepción', 'Multisede'];
-    } else if (normalizedSede === 'smt') {
-      return ['SMT', 'Multisede'];
-    }
-
-    // Si no se encuentra una sede específica, devolver solo "Multisede"
-    return ['Multisede'];
   };
 
-  const filteredSedes = getFilteredSedes(); // Obtener las sedes filtradas según el rol del usuario
+  useEffect(() => {
+    obtenerSedes();
+  }, []);
+
+  // Función para obtener las sedes filtradas según el nivel de usuario
+  const getFilteredSedes = () => {
+    const normalizedSede = filterSede?.toLowerCase(); // Normaliza la sede a minúsculas
+
+    // Si el usuario es admin, mostrar todas las sedes activas
+    if (userLevel === 'admin' || userLevel === 'administrador') {
+      return ['Todas las sedes', ...sedes.map((sede) => sede.nombre)]; // Incluir 'Todas las sedes' junto con todas las sedes activas
+    }
+
+    // Filtrar las sedes activas según el filtro de sede
+    const filteredSedes = sedes
+      .filter((sede) => {
+        if (normalizedSede === 'monteros') {
+          return (
+            sede.nombre.toLowerCase() === 'monteros' ||
+            sede.nombre.toLowerCase() === 'multisede'
+          );
+        } else if (normalizedSede === 'concepción') {
+          return (
+            sede.nombre.toLowerCase() === 'concepción' ||
+            sede.nombre.toLowerCase() === 'multisede'
+          );
+        } else if (normalizedSede === 'smt') {
+          return (
+            sede.nombre.toLowerCase() === 'smt' ||
+            sede.nombre.toLowerCase() === 'multisede'
+          );
+        }
+        return sede.nombre.toLowerCase() === 'multisede'; // Filtrar por 'Multisede' si no es ninguna de las anteriores
+      })
+      .map((sede) => sede.nombre); // Extraer los nombres de las sedes filtradas
+
+    // Siempre mostrar "Todas las sedes" además de las sedes filtradas
+    return ['Todas las sedes', ...filteredSedes];
+  };
+
+  // Obtener las sedes filtradas de acuerdo con el nivel de usuario y el filtro
+  const filteredSedes = getFilteredSedes() || []; // Garantiza que siempre sea un array
 
   const handleArchivarConve = async (id) => {
     try {
@@ -354,16 +395,15 @@ const AdmConveGet = () => {
               />
               <select
                 value={filterSede}
-                onChange={handleFilterSedeChange}
+                onChange={handleFilterSedeChange} // Cambiar el filtro de sede
                 className="border rounded-sm ml-3"
               >
-                {filteredSedes.map((opcion) => (
-                  <option key={opcion} value={opcion}>
-                    {opcion}
+                {getFilteredSedes().map((sede) => (
+                  <option key={sede} value={sede}>
+                    {sede}
                   </option>
                 ))}
-                <option value="Archivados">Archivados</option>{' '}
-                {/* <- Esta es nueva */}
+                <option value="Archivados">Archivados</option>
               </select>
             </form>
             {/* formulario de busqueda */}
