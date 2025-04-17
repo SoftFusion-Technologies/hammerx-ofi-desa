@@ -73,6 +73,7 @@ const NovedadGet = lazy(() => import('./pages/staff/MetodsGet/NovedadGet'));
 const TaskGet = lazy(() => import('./pages/staff/MetodsGet/TaskGet'));
 const ClasesGet = lazy(() => import('./pages/staff/MetodsGet/FreeClassGet'));
 const UsersGet = lazy(() => import('./pages/staff/MetodsGet/UserGet'));
+const SedesGet = lazy(() => import('./pages/staff/MetodsGet/SedesGet'));
 const AdmConveGet = lazy(() => import('./pages/staff/MetodsGet/AdmConveGet'));
 // const AdmPrecioGet = lazy(() => import('./pages/staff/MetodsGet/AdmPrecioGet'));
 const IntegranteConveGet = lazy(() =>
@@ -265,7 +266,10 @@ const App = memo(() => {
                 <Ruta path="/Sedes/Monteros" element={<Sedemonteros />} />{' '}
                 {/* Página de la sede de Monteros */}
                 <Ruta path="/mi-clase-free" element={<Miclasefree />} />{' '}
-                <Ruta path="/mi-cv" element={<MiCV isOpen={true} onClose={false}/>} />{' '}
+                <Ruta
+                  path="/mi-cv"
+                  element={<MiCV isOpen={true} onClose={false} />}
+                />{' '}
                 <Ruta path="/congelamientos" element={<CongelamientosCont />} />{' '}
                 <Ruta path="/pautas" element={<Pautas />} />{' '}
                 {/* Página de Pautas */}
@@ -329,6 +333,15 @@ const App = memo(() => {
                     <ProtectedRoute>
                       {' '}
                       <UsersGet />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                <Ruta
+                  path="/dashboard/admagrupadores"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <SedesGet />{' '}
                     </ProtectedRoute>
                   }
                 />{' '}

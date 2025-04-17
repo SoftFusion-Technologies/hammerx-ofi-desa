@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { logohammer, menu, close } from "../../images";
-import { Link } from "react-router-dom";
-import { useAuth } from "../../AuthContext";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { logohammer, menu, close } from '../../images';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const NavbarStaff = () => {
-  const [active, setActive] = useState("");
+  const [active, setActive] = useState('');
   const [toggle, setToggle] = useState(false);
   const { logout, userName } = useAuth(); // utilizamos la funcion logout de authcontext
   const navigate = useNavigate(); // redirigimos a /login
 
   const { userLevel } = useAuth();
 
-  const [displayUserName, setDisplayUserName] = useState("");
+  const [displayUserName, setDisplayUserName] = useState('');
 
   useEffect(() => {
-    if (userName && userName.includes("@")) {
+    if (userName && userName.includes('@')) {
       const atIndex = userName.indexOf('@');
       const usernameWithoutDomain = userName.substring(0, atIndex);
       setDisplayUserName(usernameWithoutDomain);
@@ -26,41 +26,41 @@ const NavbarStaff = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate('/login');
   };
-  
-const Links = [
-  {
-    id: 1,
-    href: 'dashboard',
-    title: 'Dashboard',
-    roles: ['gerente', 'admin', 'vendedor', 'administrador'] // Benjamin Orellana INI / 12/06/2024 /nueva forma de gestionar los accesos
-  },
-  {
-    id: 2,
-    href: 'dashboard/users',
-    title: 'Usuarios',
-    roles: ['admin', 'administrador']
-  },
-  {
-    id: 3,
-    href: 'dashboard/ask',
-    title: 'Preguntas Frecuentes',
-    roles: ['vendedor', 'admin', 'administrador', 'gerente']
-  },
-  {
-    id: 4,
-    href: 'dashboard/task',
-    title: 'Programar Tarea',
-    roles: ['admin', 'administrador','vendedor','gerente']
-  }
-  // {
-  //   id: 5,
-  //   href: "admprecio",
-  //   title: "Administrar Precios",
-  //   roles: ['admin']
-  // },
-];
+
+  const Links = [
+    {
+      id: 1,
+      href: 'dashboard',
+      title: 'Dashboard',
+      roles: ['gerente', 'admin', 'vendedor', 'administrador'] // Benjamin Orellana INI / 12/06/2024 /nueva forma de gestionar los accesos
+    },
+    {
+      id: 2,
+      href: 'dashboard/users',
+      title: 'Usuarios',
+      roles: ['admin', 'administrador']
+    },
+    {
+      id: 3,
+      href: 'dashboard/ask',
+      title: 'Preguntas Frecuentes',
+      roles: ['vendedor', 'admin', 'administrador', 'gerente']
+    },
+    {
+      id: 4,
+      href: 'dashboard/task',
+      title: 'Programar Tarea',
+      roles: ['admin', 'administrador', 'vendedor', 'gerente']
+    },
+    {
+      id: 5,
+      href: 'dashboard/admagrupadores',
+      title: 'Adm. Agrupadores',
+      roles: ['admin']
+    }
+  ];
 
   const filteredLinks = Links.filter((link) => link.roles.includes(userLevel));
 
