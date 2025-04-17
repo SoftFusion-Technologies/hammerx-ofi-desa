@@ -105,14 +105,16 @@ const AdmConveGet = () => {
     setSelectedConve(id);
     navigate(`/dashboard/integrantes?id_conv=${id}`);
   };
+
   const obtenerConves = async (sede, mantenerFiltro = false) => {
     try {
       const response = await axios.get(URL);
       const convenios = response.data;
 
-      // 🔥 Filtrar solo los convenios activos (archivado === 1)
+      // 🔥 Filtrar solo convenios activos
       const conveniosActivos = convenios.filter((c) => c.archivado === 1);
 
+      // ✅ Determinar el filtro por sede si no se mantiene el filtro
       if (!mantenerFiltro) {
         if (userLevel === 'admin' || userLevel === 'administrador') {
           setFilterSede('');
@@ -124,12 +126,25 @@ const AdmConveGet = () => {
         }
       }
 
+      // ✅ Agrupar por agrupador (si existe), si no, por sede
+      const agrupados = {};
+
+      conveniosActivos.forEach((c) => {
+        const key =
+          c.agrupador && c.agrupador.trim() !== '' ? c.agrupador : c.sede;
+        if (!agrupados[key]) {
+          agrupados[key] = [];
+        }
+        agrupados[key].push(c);
+      });
+
+      console.log('Convenios agrupados', agrupados);
+
+      // ✅ Mostrar el grupo seleccionado si no es admin
       const conveniosFiltrados =
-        userLevel === 'admin'
+        filterSede === '' || userLevel === 'admin'
           ? conveniosActivos
-          : filterSede === '' || filterSede === 'Multisede'
-          ? conveniosActivos
-          : conveniosActivos.filter((c) => c.sede === filterSede);
+          : agrupados[filterSede] || [];
 
       setConve(conveniosFiltrados);
     } catch (error) {
@@ -248,18 +263,56 @@ const AdmConveGet = () => {
       return results;
     }
 
-    // Si el filtro es 'Multisede', filtrar solo los convenios que sean de 'Multisede'
+    // Si el filtro es 'Multisede', filtrar tanto por sede como por agrupador
     if (filterSede === 'Multisede') {
-      return results.filter((conve) => conve.sede === 'Multisede');
+      return results.filter(
+        (conve) =>
+          conve.sede?.toLowerCase() === 'multisede' ||
+          conve.agrupador?.toLowerCase() === 'multisede'
+      );
     }
 
-    // Si se selecciona cualquier otra sede, filtrar por esa sede
-    return results.filter((conve) => {
+    // Filtrar convenios por agrupador (si tienen agrupador)
+    const conveniosConAgrupador = results.filter(
+      (conve) => conve.agrupador?.trim() !== ''
+    );
+
+    // Filtrar convenios con agrupador por el filtro seleccionado
+    const conveniosFiltradosPorAgrupador = conveniosConAgrupador.filter(
+      (conve) => {
+        return (
+          conve.agrupador?.trim().toLowerCase() === filterSede.toLowerCase()
+        );
+      }
+    );
+
+    // Filtrar convenios sin agrupador (es decir, que tienen sede) por la sede seleccionada
+    const conveniosSinAgrupador = results.filter((conve) => {
+      return conve.agrupador?.trim() === '' || conve.agrupador === null;
+    });
+
+    const conveniosFiltradosPorSede = conveniosSinAgrupador.filter((conve) => {
       const sedeNormalizada = normalizeSede(
         conve.sede?.trim().toLowerCase() || ''
       );
-      return sedeNormalizada === filterSede;
+      return sedeNormalizada === filterSede.toLowerCase();
     });
+
+    // Ahora, si el filtro es por una sede específica, incluir convenios con esa sede
+    // incluso si tienen un agrupador diferente
+    const conveniosConSedeSinAgrupador = results.filter((conve) => {
+      return (
+        conve.sede?.toLowerCase() === filterSede.toLowerCase() &&
+        (conve.agrupador?.trim() === '' || conve.agrupador === null)
+      );
+    });
+
+    // Combinar los resultados filtrados por agrupador y sede (incluyendo convenios sin agrupador)
+    return [
+      ...conveniosFiltradosPorAgrupador,
+      ...conveniosFiltradosPorSede,
+      ...conveniosConSedeSinAgrupador
+    ];
   }, [results, filterSede]); // Se recalcula solo cuando cambian estos valores
 
   const filteredArchivados = useMemo(() => {
@@ -269,7 +322,13 @@ const AdmConveGet = () => {
   }, [conveArchivados, search]);
 
   const mostrarResultados =
-    filterSede === 'Archivados' ? filteredArchivados : filteredResults;
+    filterSede === 'Agrupadores'
+      ? results.filter(
+          (conve) => conve.agrupador && conve.agrupador.trim() !== ''
+        )
+      : filterSede === 'Archivados'
+      ? filteredArchivados
+      : filteredResults;
 
   // Se recalcula solo cuando cambian estos valores
 
@@ -300,9 +359,9 @@ const AdmConveGet = () => {
   const getFilteredSedes = () => {
     const normalizedSede = filterSede?.toLowerCase(); // Normaliza la sede a minúsculas
 
-    // Si el usuario es admin, mostrar todas las sedes activas
+    // Si el usuario es admin, mostrar todas las sedes activas (sin agregar "Agrupadores")
     if (userLevel === 'admin' || userLevel === 'administrador') {
-      return ['Todas las sedes', ...sedes.map((sede) => sede.nombre)]; // Incluir 'Todas las sedes' junto con todas las sedes activas
+      return ['Todas las sedes', ...sedes.map((sede) => sede.nombre)];
     }
 
     // Filtrar las sedes activas según el filtro de sede
@@ -449,12 +508,22 @@ const AdmConveGet = () => {
 
                     {(userLevel === 'admin' ||
                       userLevel === 'administrador') && (
-                      <p className="btnstaff mt-1 text-sm">
-                        SEDE:{' '}
-                        <span className="font-semibold uppercase">
-                          {conve.sede}
-                        </span>
-                      </p>
+                      <>
+                        <p className="btnstaff mt-1 text-sm">
+                          SEDE:{' '}
+                          <span className="font-semibold uppercase">
+                            {conve.sede}
+                          </span>
+                        </p>
+                        <p className="btnstaff mt-1 text-sm">
+                          AGRUPADOR:{' '}
+                          <span className="font-semibold uppercase">
+                            {conve.agrupador?.trim()
+                              ? conve.agrupador
+                              : 'Sin Agrupador'}
+                          </span>
+                        </p>
+                      </>
                     )}
 
                     <Link

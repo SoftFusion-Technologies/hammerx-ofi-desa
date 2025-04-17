@@ -24,6 +24,7 @@ import Alerta from '../Error';
 import ReactQuill from 'react-quill';
 import '../../styles/Forms/FormAltaConve.css';
 import SelectSede from '../../components/SelectSede';
+import SelectSedes from '../../pages/staff/Components/SelectSedes';
 
 const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
   // const [conve, setConve] = useState([]);
@@ -43,18 +44,16 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
   // nueva variable para administrar el contenido de formulario para saber cuando limpiarlo
   const formikRef = useRef(null);
 
-
   useEffect(() => {
     setVisible(false);
   }, []);
-  
+
   // yup sirve para validar formulario este ya trae sus propias sentencias
   // este esquema de cliente es para utilizar su validacion en los inputs
   const nuevoConveSchema = Yup.object().shape({
     nameConve: Yup.string().required('El Titulo es obligatorio'),
     descConve: Yup.string().required('La descripción es obligatoria')
   });
-
 
   const handleSubmitConve = async (valores) => {
     try {
@@ -166,6 +165,7 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
             permiteFam: conve2 ? conve2.permiteFam : false,
             cantFamiliares: conve2 ? conve2.cantFamiliares : 0,
             sede: conve2 ? conve2.sede : '',
+            agrupador: conve2 ? conve2.agrupador : '', // 👈 Agregado
             desc_usu: conve2 ? conve2.desc_usu : '',
             permiteFec: conve2 ? conve2.permiteFec : 0, // Ajustado para ser un valor numérico nuevo requerimiento R8 - BO
             // nuevos valores para precios en multisede
@@ -305,7 +305,7 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                     errors={errors}
                     touched={touched}
                   />
-                  
+
                   <div className="mb-3 px-4">
                     <ReactQuill
                       theme="snow"
@@ -400,6 +400,11 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                       />
                       Permite Familiar
                     </label>
+
+                    <SelectSedes
+                      value={values.agrupador}
+                      onChange={(value) => setFieldValue('agrupador', value)}
+                    />
                   </div>
 
                   {values.permiteFam && (
@@ -446,7 +451,6 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                       </label>
                     </div>
                   </div>
-
                   <div className="fixed-button-container flex justify-center">
                     <input
                       type="submit"
