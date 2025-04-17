@@ -23,6 +23,7 @@ import 'react-quill/dist/quill.snow.css';
 import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
 import Alerta from '../Error';
+import { useAuth } from '../../AuthContext';
 
 const FormAltaNovedad = ({
   isOpen,
@@ -36,6 +37,9 @@ const FormAltaNovedad = ({
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectAllUsers, setSelectAllUsers] = useState(false);
 
+  const { userName } = useAuth();
+
+  console.log(userName)
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
 
@@ -118,6 +122,7 @@ const FormAltaNovedad = ({
         mensaje: valores.mensaje,
         vencimiento: valores.vencimiento,
         estado: valores.estado,
+        userName: userName || '',
         user: selectedUsers
       };
       // Definir URL y método basados en la existencia de novedad
@@ -191,7 +196,9 @@ const FormAltaNovedad = ({
             titulo: novedad ? novedad.titulo : '',
             mensaje: novedad ? novedad.mensaje : '',
             vencimiento: novedad ? novedad.vencimiento : '',
-            estado: 1
+            estado: 1,
+            userName: userName || '',
+
           }}
           enableReinitialize
           onSubmit={async (values, { resetForm }) => {

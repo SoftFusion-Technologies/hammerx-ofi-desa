@@ -433,6 +433,15 @@ const NovedadGet = () => {
                             {novedad.titulo}
                           </p>
                         </b>
+
+                        <b>
+                          <p
+                            className="mt-3 text-black mb-4 uppercase"
+                            onClick={() => handleOpenModal(novedad.mensaje)}
+                          >
+                            Autor Novedad: {novedad.userName}
+                          </p>
+                        </b>
                         <p>Usuarios asignados a la novedad:</p>
                         <b>
                           <div onClick={() => handleOpenModal(novedad.mensaje)}>
@@ -579,6 +588,7 @@ const NovedadGet = () => {
                             </p>
                           </b>
                         </div>
+
                         {userLevel === 'vendedor' ||
                           userLevel === 'admin' ||
                           userLevel === 'administrador' ||
@@ -647,6 +657,14 @@ const NovedadGet = () => {
                         </b>
                       </div>
 
+                      <b>
+                        <p
+                          className="mt-3 ml-2 text-white mb-4 uppercase"
+                          onClick={() => handleOpenModal(novedad.mensaje)}
+                        >
+                          Autor Novedad: {novedad.userName}
+                        </p>
+                      </b>
                       {novedad &&
                         novedad.novedadUsers &&
                         filtrarUsuariosAsignados(
