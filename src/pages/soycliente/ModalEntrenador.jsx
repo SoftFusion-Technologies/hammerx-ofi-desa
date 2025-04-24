@@ -1,10 +1,9 @@
-import React, { useState } from "react";
-import "../../styles/clients/botones.css";
-import flecha from '../../images/flecha.png'
-import { FaWhatsapp } from 'react-icons/fa';  // Importamos el ícono de WhatsApp
+import React, { useState } from 'react';
+import '../../styles/clients/botones.css';
+import flecha from '../../images/flecha.png';
+import { FaWhatsapp } from 'react-icons/fa'; // Importamos el ícono de WhatsApp
 
-function ModalEntrenador({ anterior, siguiente}) {
-  //recibo las funciones que contienen la posición del modal siguiente y anterior
+function ModalEntrenador({ anterior, siguiente }) {
   const [isOpen, setIsOpen] = useState(true);
   const [mensajeMonteros, setMensajeMonteros] = useState(
     'Hola! Vengo de la página web, quiero consultar por Entrenadores Monteros.'
@@ -13,6 +12,11 @@ function ModalEntrenador({ anterior, siguiente}) {
   const [mensajeConcepcion, setMensajeConcepcion] = useState(
     'Hola! Vengo de la página web, quiero consultar por Entrenadores Concepción.'
   );
+
+  const [mensajeSanMiguel, setMensajeSanMiguel] = useState(
+    'Hola! Vengo de la página web, quiero consultar por Entrenadores San Miguel.'
+  );
+
   const toggleModal = () => {
     setIsOpen(!isOpen);
   };
@@ -31,26 +35,24 @@ function ModalEntrenador({ anterior, siguiente}) {
   const wspLinkConcepcion = `https://wa.me/5493865855100?text=${encodeMessage(
     mensajeConcepcion
   )}`; // Número de WhatsApp para Concepción
+  const wspLinkSanMiguel = `https://wa.me/5493854890999?text=${encodeMessage(
+    mensajeSanMiguel
+  )}`; // Número de WhatsApp para San Miguel
 
   return (
     <>
-      {/* Se movió el botón al archivo Clients.js */}
-      {/* Main modal */}
       {isOpen && (
         <>
-          {/* Fondo oscurecido */}
           <div
             className="fixed top-0 left-0 bottom-0 right-0 md:-left-5 w-full h-full bg-black opacity-50 z-40"
             onClick={closeModal}
           ></div>
-          {/* Modal */}
           <div
             id="default-modal"
             tabIndex="-1"
             aria-hidden="true"
             className="flex items-center justify-center fixed top-0 right-0 left-0 bottom-0 z-50"
           >
-            {/* En la flecha anterior el evento click muestra el modal de la posición recibida por parametro */}
             <img
               onClick={anterior}
               className="h-10 cursor-pointer transition hover:invert"
@@ -58,11 +60,7 @@ function ModalEntrenador({ anterior, siguiente}) {
               alt="Flecha"
             />
             <div className="relative p-4 w-[80%] sm:w-full max-w-2xl max-h-full">
-              {' '}
-              {/* Se modificó en ancho del modal de full a 80% para que se visualicen las flechas en mobile, cambiado por Rafael Peralta */}
-              {/* Modal content */}
               <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
-                {/* Modal header */}
                 <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
                   <h3 className="text-xl text-gray-900 dark:text-white font-bignoodle tracking-wide">
                     Instructores y Coachs
@@ -91,7 +89,6 @@ function ModalEntrenador({ anterior, siguiente}) {
                     <span className="sr-only">Close modal</span>
                   </button>
                 </div>
-                {/* Modal body */}
                 <div className="p-4 md:p-5 space-y-4">
                   <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
                     Todas nuestras actividades cuentan con instructores y Coachs
@@ -106,7 +103,6 @@ function ModalEntrenador({ anterior, siguiente}) {
                     no trabajen para nuestro gimnasio.
                   </p>
                 </div>
-                {/* Modal footer */}
                 <div className="flex flex-col md:flex-row items-center justify-between p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600 space-y-4 md:space-y-0 md:space-x-4">
                   <button
                     onClick={closeModal}
@@ -117,12 +113,12 @@ function ModalEntrenador({ anterior, siguiente}) {
                   </button>
 
                   {/* Iconos de WhatsApp */}
-                  <div className="flex w-full md:w-auto justify-between space-x-4">
+                  <div className="flex flex-col md:flex-row w-full md:w-auto space-y-4 md:space-y-0 md:space-x-4">
                     <a
                       href={wspLinkMonteros}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-2"
+                      className="flex items-center justify-center space-x-2"
                     >
                       <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
                       <span className="text-sm text-gray-900 dark:text-white">
@@ -133,11 +129,22 @@ function ModalEntrenador({ anterior, siguiente}) {
                       href={wspLinkConcepcion}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-2"
+                      className="flex items-center justify-center space-x-2"
                     >
                       <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
                       <span className="text-sm text-gray-900 dark:text-white">
                         Concepción
+                      </span>
+                    </a>
+                    <a
+                      href={wspLinkSanMiguel}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center space-x-2"
+                    >
+                      <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
+                      <span className="text-sm text-gray-900 dark:text-white">
+                        San Miguel
                       </span>
                     </a>
                   </div>
@@ -152,7 +159,6 @@ function ModalEntrenador({ anterior, siguiente}) {
                 </div>
               </div>
             </div>
-            {/* En la flecha siguiente el evento click muestra el modal de la posición recibida por parametro */}
             <img
               onClick={siguiente}
               className="h-10 transform rotate-180 cursor-pointer transition hover:invert"

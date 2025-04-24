@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { theme } from '../../images';
 import Menu from './Menu';
 import Marcas from './Marcas';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom'; // Importar useLocation
 import DropdownMenu from './DropdownMenu';
 import '../../styles/header/animacionlinks.css';
 import FormTestClass from '../Forms/FormTestClass';
@@ -14,7 +14,9 @@ const Navbar = () => {
   const [modalClaseFree, setModalClaseFree] = useState(false);
   const [modalTrabajarConUstedes, setModalTrabajarConUstedes] = useState(false);
 
-  //metodos para abrir y cerrar modal de clase gratis
+  const location = useLocation(); // Obtener la ubicación actual
+
+  // Métodos para abrir y cerrar modal de clase gratis
   const abrirModal = () => {
     setModalClaseFree(true);
   };
@@ -22,7 +24,7 @@ const Navbar = () => {
     setModalClaseFree(false);
   };
 
-  //metodos para abrir y cerrar modal de trabajar con ustedes
+  // Métodos para abrir y cerrar modal de trabajar con ustedes
   const activarModalTrabajar = () => {
     setModalTrabajarConUstedes(true);
   };
@@ -38,15 +40,13 @@ const Navbar = () => {
     document.documentElement.classList.toggle('dark');
   };
 
-  return (
-    <nav
-      data-aos="" //Se reemplazo fade-down por el realentizamiento que aplicaba a la web, cambio aplicado por Benjamin Orellana - 27/03/24
-      className="justify-center w-full dark:bg-gradient-to-r from-gray-600 to-gray-900 fixed z-50"
-    >
-      <div className="h-12 flex w-full bg-white justify-center items-center py-8 px-10 z-10 dark:bg-transparent ">
+  // Verificar si la ruta actual es "/clientes"
+  const isClientesPage = location.pathname === '/clientes';
 
+  return (
+    <nav className="justify-center w-full dark:bg-gradient-to-r from-gray-600 to-gray-900 fixed z-50">
+      <div className="h-12 flex w-full bg-white justify-center items-center py-8 px-10 z-10 dark:bg-transparent ">
         <div className="hidden items-center font-tilt-neon text-black gap-10 lg:flex space-x-4 dark:text-white">
-          {/* Se agregó el scrollTo para que al hacer click vuelva al inicio de la pag - Cambio realizado por Lucas Albornoz 12-04-24 */}
           <Link
             to="/"
             className="link"
@@ -66,21 +66,14 @@ const Navbar = () => {
               window.scrollTo(0, 0);
             }}
           >
-            Nueva sede Bº Sur 
+            Nueva sede Bº Sur
           </Link>
 
           <Link to="/nosotros/quienessomos" className="link">
             ¿Quiénes somos?
           </Link>
 
-          {/* <Link
-            to="/contacto"
-            className="link"
-          >
-            Contacto
-          </Link> */}
-
-          {/* Se agregó el dropdown de "Contacto" - Cambio realizado por Lucas Albornoz 12-04-24 */}
+          {/* Dropdown de "Contacto" */}
           <DropdownMenu />
 
           <Link to="#" className="">
@@ -103,10 +96,10 @@ const Navbar = () => {
         <div className="lg:hidden">
           <button
             id="menu-toggle"
-            className=" relative"
+            className="relative"
             onClick={toggleMobileMenu}
           >
-            <Menu /> {/* menú para mostrarse en dispositivos mobiles*/}
+            <Menu /> {/* menú para dispositivos móviles */}
           </button>
         </div>
       </div>
@@ -162,6 +155,21 @@ const Navbar = () => {
             />
           </div>
         </div>
+      )}
+
+      {/* Mostrar el texto solo si estamos en la página "/clientes" */}
+      {isClientesPage && (
+        <p className="text-center text-[0.6rem] lg:text-[0.8rem] text-gray-500 py-2 italic tracking-wide">
+          Página web desarrollada por{' '}
+          <a
+            href="https://www.instagram.com/softfusiontechnologies/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-orange-600 hover:text-orange-500 transition duration-300 animate-float"
+          >
+            SoftFusion
+          </a>
+        </p>
       )}
 
       {/* Modal para abrir formulario de clase gratis */}

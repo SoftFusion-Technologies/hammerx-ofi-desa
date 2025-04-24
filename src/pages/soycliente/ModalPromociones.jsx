@@ -43,6 +43,7 @@ function ModalPromociones({ anterior, siguiente }) {
 
   const wspLinkMonteros = 'https://wa.me/5493863564651'; // Número de WhatsApp para Monteros
   const wspLinkConcepcion = 'https://wa.me/5493865855100'; // Número de WhatsApp para Concepción
+  const wspLinkSanMiguel = 'https://wa.me/5493875678901';
 
   const promoImages = [
     PromoBNA,
@@ -318,6 +319,9 @@ function ModalPromociones({ anterior, siguiente }) {
                   <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
                     Concepción: <strong>Número : +54 9 3865 85-5100</strong>
                   </p>
+                  <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
+                    San Miguel: <strong>Número : +54 9 3813 98-8383</strong>
+                  </p>
                 </div>
                 {/* Modal footer */}
                 <div className="flex flex-col md:flex-row items-center justify-between p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600 space-y-4 md:space-y-0 md:space-x-4">
@@ -328,7 +332,7 @@ function ModalPromociones({ anterior, siguiente }) {
                   >
                     Aceptar
                   </button>
-                  <div className="flex w-full md:w-auto justify-between space-x-4">
+                  <div className="flex flex-col md:flex-row w-full justify-between space-y-4 md:space-y-0 md:space-x-4">
                     <a
                       href={wspLinkMonteros}
                       target="_blank"
@@ -349,6 +353,17 @@ function ModalPromociones({ anterior, siguiente }) {
                       <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
                       <span className="text-sm text-gray-900 dark:text-white">
                         Concepción
+                      </span>
+                    </a>
+                    <a
+                      href={wspLinkSanMiguel}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2"
+                    >
+                      <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
+                      <span className="text-sm text-gray-900 dark:text-white">
+                        San Miguel
                       </span>
                     </a>
                   </div>

@@ -5,28 +5,61 @@ import flecha from '../../images/flecha.png';
 import { FaWhatsapp } from 'react-icons/fa'; // Importamos el ícono de WhatsApp
 import { useNavigate } from 'react-router-dom'; // Importa el hook de navegación
 
-function ModalContratos({ anterior, siguiente, bandera }) {
-  //recibo las funciones que contienen la posición del modal siguiente y anterior
-  const [isOpen, setIsOpen] = useState(true);
+// Función para crear el enlace de WhatsApp
+const createWspLink = (number, message) => {
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+};
 
+function ModalContratos({ anterior, siguiente, bandera }) {
+  const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate(); // Hook para redirigir
 
+  // Mensajes por defecto
+  const defaultMessageMonteros =
+    'Hola! Vengo de la página web, quiero consultar por Congelamiento de Contratos Monteros.';
+  const defaultMessageConcepcion =
+    'Hola! Vengo de la página web, quiero consultar por Congelamiento de Contratos Concepción.';
+  const defaultMessageSanMiguel =
+    'Hola! Vengo de la página web, quiero consultar por Congelamiento de Contratos San Miguel.';
+  const defaultMessageMonterosT =
+    'Hola! Vengo de la página web, quiero consultar por Transferencias de Planes Monteros';
+  const defaultMessageConcepcionT =
+    'Hola! Vengo de la página web, quiero consultar por Transferencias de Planes Concepción';
+  const defaultMessageSanMiguelT =
+    'Hola! Vengo de la página web, quiero consultar por Transferencias de Planes San Miguel';
+
+  // Estados de los mensajes
   const [mensajeMonteros, setMensajeMonteros] = useState(
-    'Hola! Vengo de la página web, quiero consultar por Congelamiento de Contratos Monteros.'
+    defaultMessageMonteros
   );
+  const [mensajeConcepcion, setMensajeConcepcion] = useState(
+    defaultMessageConcepcion
+  );
+  const [mensajeSanMiguel, setMensajeSanMiguel] = useState(
+    defaultMessageSanMiguel
+  );
+  const [mensajeMonterosT, setMensajeMonterosT] = useState(
+    defaultMessageMonterosT
+  );
+  const [mensajeConcepcionT, setMensajeConcepcionT] = useState(
+    defaultMessageConcepcionT
+  );
+  const [mensajeSanMiguelT, setMensajeSanMiguelT] = useState(
+    defaultMessageSanMiguelT
+  );
+
+  // Enlaces de WhatsApp
+  const wspLinkMonteros = createWspLink('5493863564651', mensajeMonteros);
+  const wspLinkConcepcion = createWspLink('5493865855100', mensajeConcepcion);
+  const wspLinkSanMiguel = createWspLink('5493813988383', mensajeSanMiguel);
+  const wspLinkMonterosT = createWspLink('5493863564651', mensajeMonterosT);
+  const wspLinkConcepcionT = createWspLink('5493865855100', mensajeConcepcionT);
+  const wspLinkSanMiguelT = createWspLink('5493813988383', mensajeSanMiguelT);
 
   const [showModal, setShowModal] = useState('contratos');
 
-  const [mensajeConcepcion, setMensajeConcepcion] = useState(
-    'Hola! Vengo de la página web, quiero consultar por Congelamiento de Contratos Concepción.'
-  );
-
   const closeModal = () => {
     setIsOpen(false);
-  };
-
-  const encodeMessage = (message) => {
-    return encodeURIComponent(message);
   };
 
   const handleCloseModal = () => {
@@ -34,31 +67,10 @@ function ModalContratos({ anterior, siguiente, bandera }) {
     navigate('/clientes'); // Redirige cuando se cierra el modal
   };
 
-  const wspLinkMonteros = `https://wa.me/5493863564651?text=${encodeMessage(
-    mensajeMonteros
-  )}`; // Número de WhatsApp para Monteros
-  const wspLinkConcepcion = `https://wa.me/5493865855100?text=${encodeMessage(
-    mensajeConcepcion
-  )}`; // Número de WhatsApp para Concepción
-
-  const [mensajeMonterosT, setMensajeMonterosT] = useState(
-    'Hola! Vengo de la página web, quiero consultar por Transferencias de Planes Monteros'
-  );
-
-  const [mensajeConcepcionT, setMensajeConcepcionT] = useState(
-    'Hola! Vengo de la página web, quiero consultar por Transferencias de Planes Concepción'
-  );
-
-  const wspLinkMonterosT = `https://wa.me/5493863564651?text=${encodeMessage(
-    mensajeMonterosT
-  )}`; // Número de WhatsApp para Monteros
-  const wspLinkConcepcionT = `https://wa.me/5493865855100?text=${encodeMessage(
-    mensajeConcepcionT
-  )}`; // Número de WhatsApp para Concepción
-
   const handleCambiarContratos = () => {
     setShowModal('contratos');
   };
+
   const handleCambiarTransferencia = () => {
     setShowModal('transferencia');
   };
@@ -170,7 +182,8 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                         hospedaje, etc.).
                       </p>
                       <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
-                        3_ No se realizan devoluciones o recuperaciones de días perdidos, el congelamiento siempre se debe solicitar
+                        3_ No se realizan devoluciones o recuperaciones de días
+                        perdidos, el congelamiento siempre se debe solicitar
                         previo a la inasistencia.
                       </p>
                       <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400 font-messina">
@@ -217,7 +230,7 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                         <div className="cardcontratos  max-md:mx-auto">
                           <div className="content">
                             <p className="heading">
-                              Plan Anual: 7 (mínimo) a 60 (máximo) días.
+                              Plan Anual: 7 (mínimo) a 30 (máximo) días.
                             </p>
                             {/* <p className="para">
                           Se podrá congelar dentro de toda la duración del
@@ -251,12 +264,12 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                       </button>
 
                       {/* Iconos de WhatsApp */}
-                      <div className="flex w-full md:w-auto justify-between space-x-4">
+                      <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto justify-between md:space-x-4 space-y-2 md:space-y-0">
                         <a
                           href={wspLinkMonteros}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center space-x-2"
+                          className="flex items-center space-x-2 w-full md:w-auto"
                         >
                           <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
                           <span className="text-sm text-gray-900 dark:text-white">
@@ -267,11 +280,22 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                           href={wspLinkConcepcion}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center space-x-2"
+                          className="flex items-center space-x-2 w-full md:w-auto"
                         >
                           <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
                           <span className="text-sm text-gray-900 dark:text-white">
                             Concepción
+                          </span>
+                        </a>
+                        <a
+                          href={wspLinkSanMiguel}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center space-x-2 w-full md:w-auto"
+                        >
+                          <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
+                          <span className="text-sm text-gray-900 dark:text-white">
+                            San Miguel
                           </span>
                         </a>
                       </div>
@@ -340,12 +364,12 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                       </button>
 
                       {/* Iconos de WhatsApp */}
-                      <div className="flex w-full md:w-auto justify-between space-x-4">
+                      <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto justify-between md:space-x-4 space-y-2 md:space-y-0">
                         <a
                           href={wspLinkMonterosT}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center space-x-2"
+                          className="flex items-center space-x-2 w-full md:w-auto"
                         >
                           <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
                           <span className="text-sm text-gray-900 dark:text-white">
@@ -356,11 +380,22 @@ function ModalContratos({ anterior, siguiente, bandera }) {
                           href={wspLinkConcepcionT}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center space-x-2"
+                          className="flex items-center space-x-2 w-full md:w-auto"
                         >
                           <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
                           <span className="text-sm text-gray-900 dark:text-white">
                             Concepción
+                          </span>
+                        </a>
+                        <a
+                          href={wspLinkSanMiguelT}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center space-x-2 w-full md:w-auto"
+                        >
+                          <FaWhatsapp className="text-green-500 text-3xl hover:text-green-400" />
+                          <span className="text-sm text-gray-900 dark:text-white">
+                            San Miguel
                           </span>
                         </a>
                       </div>
