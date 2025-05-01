@@ -103,16 +103,6 @@ const AdminPage = () => {
               </div>
             )}
 
-            {/* {(userLevel === 'gerente' ||
-              userLevel === 'admin' ||
-              userLevel === 'administrador') && (
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
-                <Link to="/dashboard/postulantes">
-                  <button className="btnstaff">CV's Recibidos</button>
-                </Link>
-              </div>
-            )} */}
-
             {(userLevel === 'gerente' ||
               userLevel === 'admin' ||
               userLevel === 'instructor' ||
@@ -131,6 +121,16 @@ const AdminPage = () => {
               <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
                 <Link to="/dashboard/estadisticas">
                   <button className="btnstaff">Estadísticas</button>
+                </Link>
+              </div>
+            )}
+
+            {(userLevel === 'gerente' ||
+              userLevel === 'admin' ||
+              userLevel === 'administrador') && (
+              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
+                <Link to="/dashboard/quejas">
+                  <button className="btnstaff">Quejas</button>
                 </Link>
               </div>
             )}

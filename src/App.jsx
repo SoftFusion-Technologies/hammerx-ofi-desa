@@ -72,6 +72,7 @@ const PostulanteGetV2 = lazy(() =>
 const NovedadGet = lazy(() => import('./pages/staff/MetodsGet/NovedadGet'));
 const TaskGet = lazy(() => import('./pages/staff/MetodsGet/TaskGet'));
 const ClasesGet = lazy(() => import('./pages/staff/MetodsGet/FreeClassGet'));
+const QuejasInternasGet = lazy(() => import('./pages/staff/MetodsGet/QuejasInternasGet'));
 const UsersGet = lazy(() => import('./pages/staff/MetodsGet/UserGet'));
 const SedesGet = lazy(() => import('./pages/staff/MetodsGet/SedesGet'));
 const AdmConveGet = lazy(() => import('./pages/staff/MetodsGet/AdmConveGet'));
@@ -323,6 +324,15 @@ const App = memo(() => {
                     <ProtectedRoute>
                       {' '}
                       <ClasesGet />
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                <Ruta
+                  path="/dashboard/quejas"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <QuejasInternasGet />
                     </ProtectedRoute>
                   }
                 />{' '}
