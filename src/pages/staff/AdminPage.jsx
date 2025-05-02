@@ -125,15 +125,11 @@ const AdminPage = () => {
               </div>
             )}
 
-            {(userLevel === 'gerente' ||
-              userLevel === 'admin' ||
-              userLevel === 'administrador') && (
               <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
                 <Link to="/dashboard/quejas">
                   <button className="btnstaff">Quejas</button>
                 </Link>
               </div>
-            )}
           </div>
 
           <div className="flex justify-end p-5">
