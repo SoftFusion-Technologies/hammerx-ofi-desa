@@ -29,6 +29,7 @@ import Footer from '../../../components/footer/Footer';
 import FormAltaFrecAsk from '../../../components/Forms/FormAltaFrecAsk';
 import { useAuth } from '../../../AuthContext';
 import FrequentDetails from './FrequentAsksGetId';
+import { useParams } from 'react-router-dom';
 
 const PreguntasFrecuentesGet = () => {
   const [modalNewFrecAsk, setModalNewAsk] = useState(false);
@@ -219,6 +220,29 @@ const PreguntasFrecuentesGet = () => {
       alert('Error en la solicitud');
     }
   };
+
+  const { id } = useParams(); // Obtener el id de la URL
+
+  useEffect(() => {
+    const fetchAskDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/ask/${id}`);
+        const data = await response.json();
+
+        if (data) {
+          setSelectedUser(data); // Almacenar los detalles de la novedad
+          setModalUserDetails(true);
+        }
+      } catch (error) {
+        console.error('Error al obtener los detalles de la novedad:', error);
+      }
+    };
+
+    if (id) {
+      fetchAskDetails();
+    }
+  }, [id]); // Este efecto solo se ejecuta cuando el id cambia
+
   return (
     <>
       <NavbarStaff />

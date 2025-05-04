@@ -71,8 +71,8 @@ const FormAltaFrecAsk = ({ isOpen, onClose, ask }) => {
               //  ? `http://localhost:8080/ask/${ask.id}`
           // : 'http://localhost:8080/ask/';
         const url = ask
-          ? `https://vps-4294061-x.dattaweb.com/ask/${ask.id}`
-          : 'https://vps-4294061-x.dattaweb.com/ask/';
+          ? `http://localhost:8080/ask/${ask.id}`
+          : 'http://localhost:8080/ask/';
         const method = ask ? 'PUT' : 'POST';
 
         const respuesta = await fetch(url, {

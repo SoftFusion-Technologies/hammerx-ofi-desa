@@ -72,7 +72,9 @@ const PostulanteGetV2 = lazy(() =>
 const NovedadGet = lazy(() => import('./pages/staff/MetodsGet/NovedadGet'));
 const TaskGet = lazy(() => import('./pages/staff/MetodsGet/TaskGet'));
 const ClasesGet = lazy(() => import('./pages/staff/MetodsGet/FreeClassGet'));
-const QuejasInternasGet = lazy(() => import('./pages/staff/MetodsGet/QuejasInternasGet'));
+const QuejasInternasGet = lazy(() =>
+  import('./pages/staff/MetodsGet/QuejasInternasGet')
+);
 const UsersGet = lazy(() => import('./pages/staff/MetodsGet/UserGet'));
 const SedesGet = lazy(() => import('./pages/staff/MetodsGet/SedesGet'));
 const AdmConveGet = lazy(() => import('./pages/staff/MetodsGet/AdmConveGet'));
@@ -336,6 +338,15 @@ const App = memo(() => {
                     </ProtectedRoute>
                   }
                 />{' '}
+                <Ruta
+                  path="/dashboard/quejas/:id"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <QuejasInternasGet />
+                    </ProtectedRoute>
+                  }
+                />{' '}
                 {/* Rutas de prueba para testear funcionamiento */}
                 <Ruta
                   path="/dashboard/users"
@@ -365,9 +376,27 @@ const App = memo(() => {
                     </ProtectedRoute>
                   }
                 />{' '}
+                <Ruta
+                  path="/dashboard/novedades/:id"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <NovedadGet />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
                 {/* Rutas de prueba para testear funcionamiento */}
                 <Ruta
                   path="/dashboard/ask"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <PreguntasFrecuentesGet />{' '}
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                <Ruta
+                  path="/dashboard/ask/:id"
                   element={
                     <ProtectedRoute>
                       {' '}

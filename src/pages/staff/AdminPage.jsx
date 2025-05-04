@@ -153,7 +153,6 @@ const AdminPage = () => {
           </div>
         </div>
       </section>
-      <Footer />
       {/* Modals */}
       <TituloPreguntasModal
         isOpen={modalPreguntasOpen}

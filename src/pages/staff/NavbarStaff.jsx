@@ -3,7 +3,7 @@ import { logohammer, menu, close } from '../../images';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import { useNavigate } from 'react-router-dom';
-
+import NotificationBell from './NotificationBell';
 const NavbarStaff = () => {
   const [active, setActive] = useState('');
   const [toggle, setToggle] = useState(false);
@@ -89,8 +89,8 @@ const NavbarStaff = () => {
               ))}
             </ul>
           </div>
-
-          <div className="hidden lg:flex flex-col xl:flex-row xl:items-center justify-between">
+          <div className="hidden lg:flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <NotificationBell />
             <h1 className="hidden xl:flex">Bienvenido {displayUserName}!</h1>
             <button
               onClick={handleLogout}
@@ -98,6 +98,10 @@ const NavbarStaff = () => {
             >
               Cerrar Sesión
             </button>
+          </div>
+
+          <div className="lg:hidden ">
+            <NotificationBell />
           </div>
 
           {/* Mobile Navbar */}
@@ -108,6 +112,7 @@ const NavbarStaff = () => {
               className="w-[28px] h-[28px] object-contain cursor-pointer "
               onClick={() => setToggle(!toggle)}
             />
+
             <div
               className={`${
                 !toggle ? 'hidden' : 'flex'

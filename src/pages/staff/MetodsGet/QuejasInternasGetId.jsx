@@ -5,7 +5,6 @@ const QuejasDetails = ({ queja, isOpen, onClose, setSelectedQueja }) => {
   if (!isOpen || !queja) return null;
 
   const handleClose = () => {
-    setSelectedQueja(null);
     onClose();
   };
 

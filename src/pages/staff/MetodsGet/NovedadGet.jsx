@@ -11,6 +11,7 @@ import { useAuth } from '../../../AuthContext';
 import ModalNovedad from '../MetodsGet/ModalNovedad';
 import Switch from 'react-switch';
 import FechasNovedad from './Novedad/FechasNovedad'; //R7- nuevo componente para agregar mas fechas 22/09/2024 - Benjamin Orellana
+import { useParams } from 'react-router-dom';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -353,6 +354,28 @@ const NovedadGet = () => {
       }
     }, [novedadesOrdenadas]);
   }
+
+  const { id } = useParams(); // Obtener el id de la URL
+
+  useEffect(() => {
+    const fetchNovedadDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/novedades/${id}`);
+        const data = await response.json();
+
+        if (data) {
+          setSelectedNovedad(data); // Almacenar los detalles de la novedad
+          setModalData({ isOpen: true, mensaje: data.mensaje }); // Abrir el modal con los detalles
+        }
+      } catch (error) {
+        console.error('Error al obtener los detalles de la novedad:', error);
+      }
+    };
+
+    if (id) {
+      fetchNovedadDetails();
+    }
+  }, [id]); // Este efecto solo se ejecuta cuando el id cambia
 
   return (
     <>

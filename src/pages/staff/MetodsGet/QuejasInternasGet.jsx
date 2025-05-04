@@ -23,6 +23,7 @@ import { useAuth } from '../../../AuthContext';
 import { FaWhatsapp } from 'react-icons/fa';
 import FormAltaQueja from '../../../components/Forms/FormAltaQueja';
 import QuejasDetails from './QuejasInternasGetId';
+import { useParams } from 'react-router-dom';
 
 const QuejasInternasGet = () => {
   const { userLevel, userName } = useAuth();
@@ -216,6 +217,29 @@ const QuejasInternasGet = () => {
     obtenerQuejas();
     setSelectedQueja(null); // Limpiar la queja seleccionada al cerrar
   };
+
+  const { id } = useParams(); // Obtener el id de la URL
+
+  
+  useEffect(() => {
+    const fetchQuejaDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/quejas/${id}`);
+        const data = await response.json();
+
+        if (data) {
+          setSelectedQueja(data);
+          setModalUserDetails(true); // Abrimos el modal
+        }
+      } catch (error) {
+        console.error('Error al obtener los detalles de la queja:', error);
+      }
+    };
+
+    if (id) {
+      fetchQuejaDetails();
+    }
+  }, [id]); // Este efecto solo se ejecuta cuando el id cambia
 
   return (
     <>
@@ -447,7 +471,6 @@ const QuejasInternasGet = () => {
         setSelectedQueja={setSelectedQueja}
         obtenerQuejas={obtenerQuejas}
       />
-
       {selectedQueja && (
         <QuejasDetails
           queja={selectedQueja}
