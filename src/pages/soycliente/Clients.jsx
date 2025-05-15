@@ -11,28 +11,38 @@
  *  Capa: Frontend
  */
 
-import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import Navbar from '../../components/header/Navbar';
+import { Link } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import Navbar from "../../components/header/Navbar";
 
-import ModalEntrenador from './ModalEntrenador';
-import ModalPromociones from './ModalPromociones';
-import ModalContratos from './ModalContratos';
-import ModalConvenios from './ModalConvenios';
-import ModalTransferencia from './ModalTransferencia';
+import ModalEntrenador from "./ModalEntrenador";
+import ModalPromociones from "./ModalPromociones";
+import ModalContratos from "./ModalContratos";
+import ModalConvenios from "./ModalConvenios";
+import ModalTransferencia from "./ModalTransferencia";
 
-import ModalAccesorios from './ModalAccesorios';
-import ModalAprovecha from './ModalAprovecha';
-import ModalCabina from './ModalCabina';
-import ModalMaraton from './ModalMaraton';
+import ModalAccesorios from "./ModalAccesorios";
+import ModalAprovecha from "./ModalAprovecha";
+import ModalCabina from "./ModalCabina";
+import ModalMaraton from "./ModalMaraton";
 
-import '../../styles/clients/volver.css';
-import '../../styles/clients/botones.css';
-import '../../styles/clients/background.css';
-import Footer from '../../components/footer/Footer';
-import NuevaVista from './NuevaVista';
-import Promociones from './Promociones';
-import WelcomeModal from './WelcomeModal'; // Asegúrate de tener el componente de modal importado
+import "../../styles/clients/volver.css";
+import "../../styles/clients/botones.css";
+import "../../styles/clients/background.css";
+import Footer from "../../components/footer/Footer";
+import NuevaVista from "./NuevaVista";
+import Promociones from "./Promociones";
+import WelcomeModal from "./WelcomeModal"; // Asegúrate de tener el componente de modal importado
+import Promos from "./Promos";
+import Planes from "./Planes";
+import Aos from "aos";
+import "aos/dist/aos.css";
+import AppPromo from "./Images/app2.jpg";
+import Convernios from "./Images/convenios.jpg";
+import Separador from "../../components/Separador";
+import Bienvenido from "./Bienvenido";
+import Entrenador from "./Entrenador";
+import fondo_img from "./Images/chicos3.jpg";
 
 const Clients = () => {
   // useEffect(() => {
@@ -40,15 +50,18 @@ const Clients = () => {
   // }, []);
 
   //estados que se utilizarán para el renderizado de los modals
-  const [showModal, setShowModal] = useState('');
+  const [showModal, setShowModal] = useState("");
+  useEffect(() => {
+    Aos.init({ duration: 1000, once: true });
+  }, []);
 
   //array con los modals
   const modals = [
-    'entrenador',
-    'promociones',
-    'contratos',
-    'convivencia',
-    'app'
+    "entrenador",
+    "promociones",
+    "contratos",
+    "convivencia",
+    "app",
     // 'convenios',
     // 'transferencia',
     // 'accesorios',
@@ -76,15 +89,28 @@ const Clients = () => {
   };
 
   const scrollToPromociones = () => {
-    const element = document.getElementById('promociones');
+    const element = document.getElementById("promociones");
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  const scrollToRef = (ref) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  const refPromos = useRef(null);
+  const refPlanes = useRef(null);
+  const refEntrenador = useRef(null);
+  const refApp = useRef(null);
+
   return (
     <>
       <Navbar />
-      <NuevaVista></NuevaVista>
+      <Bienvenido></Bienvenido>
+      <Separador></Separador>
       <div className="w-full bg-gradient-to-b from-orange-500 to-[#fc4b08]">
         <div className="bglcli pb-5">
           <header className="w-full" id="promociones">
@@ -109,13 +135,16 @@ const Clients = () => {
                 </button>
               </Link>
             </div>
-            <h1 className="text-white max-md:text-[40px] text-[50px] text-center font-bignoodle ">
+            <h1
+              className="text-white max-md:text-[40px] text-[50px] text-center font-bignoodle "
+              data-aos="fade-down"
+            >
               Soy Cliente
             </h1>
           </header>
 
           <div className="h-contain w-5/6 mx-auto">
-            <div className="pt-20 max-sm:pt-16 flex justify-center gap-4 flex-wrap">
+            <div className="pt-20 max-sm:pt-16 flex justify-center gap-4 flex-wrap space-x-0  lg:space-x-5">
               {/* Primer grupo de 2 botones */}
               {/* Se pasaron el jsx y los estilos de los botones a este archivo para poder controlar desde aquí el evento click para renderizar cada uno de los modals */}
               <div className="flex justify-center gap-4 max-sm:flex-col md:space-x-5">
@@ -147,22 +176,24 @@ const Clients = () => {
                   />
                 )} */}
                 <button
-                  onClick={() => setShowModal('entrenador')}
+                  onClick={() => scrollToRef(refEntrenador)}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
+                  data-aos="fade-up"
                 >
                   Contás con tu entrenador
                 </button>
                 <button
-                  onClick={() => setShowModal('promociones')} //este evento llama a la función para cambiar el estado que renderiza los modals y así mostrarlo y así con los demás botones
+                  onClick={() => scrollToRef(refPromos)}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
+                  data-aos="fade-up"
                 >
                   Promociones y Convenios
                 </button>
                 {
                   //verificación del estado para renderizar los componentes
-                  showModal === 'entrenador' && (
+                  showModal === "entrenador" && (
                     //reciben las funciones que contienen la posición del modal que se mostrará en anterior y siguiente
                     <ModalEntrenador
                       anterior={handleAnterior}
@@ -170,29 +201,17 @@ const Clients = () => {
                     />
                   )
                 }
-                {showModal === 'promociones' && (
-                  <ModalPromociones
-                    anterior={handleAnterior}
-                    siguiente={handleSiguiente}
-                  />
-                )}
               </div>
               {/* Segundo grupo de 3 botones */}
-              <div className="flex justify-center gap-4 mt-4 max-sm:mt-0 sm:flex-wrap max-sm:flex-col md:space-x-6">
+              <div className="flex justify-center gap-4 mt-4 2xl:mt-0 max-sm:mt-0 sm:flex-wrap max-sm:flex-col md:space-x-6">
                 <button
-                  onClick={() => setShowModal('contratos')}
+                  onClick={() => scrollToRef(refPlanes)}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
+                  data-aos="fade-up"
                 >
                   Congelar y Transferir Planes
                 </button>
-                {showModal === 'contratos' && (
-                  <ModalContratos
-                    anterior={handleAnterior}
-                    siguiente={handleSiguiente}
-                    bandera={1}
-                  />
-                )}
                 {/* <button
                   onClick={() => setShowModal('convenios')}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
@@ -246,28 +265,41 @@ const Clients = () => {
                   />
                 )} */}
                 <button
-                  onClick={() => setShowModal('convivencia')}
+                  onClick={() => setShowModal("convivencia")}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
+                  data-aos="fade-up"
                 >
                   Normas de Convivencia
                 </button>
-                {showModal === 'convivencia' && <WelcomeModal imageId={4} />}
+                {showModal === "convivencia" && <WelcomeModal imageId={4} />}
 
                 <button
-                  onClick={() => setShowModal('app')}
+                  onClick={() => scrollToRef(refApp)}
                   className="btnscli font-messina font-semibold max-sm:mb-5"
                   type="button"
+                  data-aos="fade-up"
                 >
                   Descarga tu App
                 </button>
-                {showModal === 'app' && <WelcomeModal imageId={5} />}
               </div>
             </div>
           </div>
         </div>
       </div>
-      <Promociones />
+      <Separador />
+      <Promos ref={refPromos} />
+      <Separador />
+      <Planes ref={refPlanes} />
+      <Entrenador ref={refEntrenador} />
+      <Separador />
+      <div data-aos="fade-up" ref={refApp}>
+        <img src={AppPromo} alt="descarga nuestra app" />
+      </div>
+      <Separador />
+      <div data-aos="fade-up">
+        <img src={Convernios} alt="descarga nuestra app" />
+      </div>
       <Footer />
       <button
         className="btn btn-primary btn-floating"
