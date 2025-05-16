@@ -1,7 +1,8 @@
 /*
  * Programador: Manrique Sergio Gustavo
- * Fecha Cración: 14 / 04 / 2024
- * Versión: 1.0
+ * Fecha Cración: 14 / 05 / 2025
+ * Versión: 1.1.0
+ * Última modificacion: 16 / 05 / 2025
  *
  * Descripción: Componente de que se muestra en Clients.jsx para la sección de "Contás con tu entrenador"
  *
@@ -17,6 +18,7 @@ import "aos/dist/aos.css";
 
 const Entrenador = forwardRef((props, ref) => {
   const color = "bg-white";
+  const color_bg = "bg-gradient-to-b from-orange-500 to-[#fc4b08]";
 
   useEffect(() => {
     Aos.init({ duration: 1000, once: true });
@@ -38,17 +40,19 @@ const Entrenador = forwardRef((props, ref) => {
 
   return (
     <div
-      className={`relative w-full font-bignoodle tracking-wider ${color} min-h-fit py-20`}
+      className={`relative w-full font-bignoodle tracking-wider ${color} min-h-fit`}
       ref={ref}
     >
-      <div className="relative w-full min-h-fit">
-        {false && (
-          <img
-            src={imgFondo}
-            alt="Promoción Galicia"
-            className="w-full h-full object-cover absolute inset-0 z-0 opacity-50"
-            style={{ minHeight: "100%", height: "100%" }}
-          />
+      <div className="relative w-full min-h-fit p-0 md:py-20">
+        {true && (
+          <>
+            <img
+              src={imgFondo}
+              alt="Promoción Galicia"
+              className="w-full h-full object-cover object-[center_12%]  absolute inset-0 z-0"
+            />
+            <div className={`absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-orange-600/75 to-orange-500` }/>
+          </>
         )}
         <div className="relative z-10">
           <div
@@ -56,19 +60,19 @@ const Entrenador = forwardRef((props, ref) => {
             data-aos="fade-down"
           >
             <h1
-              className="absolute uppercase pointer-events-none select-none whitespace-nowrap"
+              className="absolute uppercase pointer-events-none select-none whitespace-nowrap "
               style={{
-                fontSize: "clamp(6.7rem, 20vw, 20rem)",
+                fontSize: "clamp(3rem, 22vw, 20rem)",
                 color: "transparent",
-                WebkitTextStroke: "3px #fc4b08",
-                textStroke: "3px #fc4b08",
+                WebkitTextStroke: "3px #fff",
+                textStroke: "3px #fff",
               }}
             >
               {infoEntrenador.back_text}
             </h1>
             <div className="relative z-10 col-span-1 mx-auto">
               <h1
-                className={`text-2xl md:text-5xl font-bold ${color} p-5 border-4 border-[#fc4b08] text-[#fc4b08] rounded-lg`}
+                className={`text-2xl md:text-5xl font-bold p-5 md:p-6 border-4 border-gray-50 text-white ${color_bg} rounded-lg`}
               >
                 {infoEntrenador.header}
               </h1>
@@ -76,14 +80,14 @@ const Entrenador = forwardRef((props, ref) => {
           </div>
 
           <div
-            className="col-span-1 flex justify-center items-center gap-2 p-2"
+            className="col-span-1 flex justify-center items-center gap-2 p-5 md:p-2"
             data-aos="zoom-in"
           >
-            <h1 className="text-lg md:text-3xl xl:text-3xl text-[#fc4b08] text-left max-w-3xl">
+            <h1 className="text-lg md:text-3xl xl:text-3xl text-white text-left max-w-3xl">
               {infoEntrenador.text}
             </h1>
             <img
-              className=" w-32 md:w-60 h-52 md:h-80 border-4 border-orange-600 rounded-md"
+              className="hidden lg:block w-32 md:w-60 h-52 md:h-80 border-4 border-gray-50 rounded-md"
               src={imgFondo}
               alt="entrenador"
             />

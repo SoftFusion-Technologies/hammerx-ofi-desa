@@ -1,7 +1,8 @@
 /*
  * Programador: Manrique Sergio Gustavo
- * Fecha Cración: 13 / 04 / 2024
- * Versión: 1.0
+ * Fecha Cración: 13 / 05 / 2025
+ * Versión: 1.1.0
+ * Última modificacion: 16 / 05 / 2025
  *
  * Descripción: Componente de que se muestra en Clients.jsx para la sección de "Promos para el cliente"
  *
@@ -10,10 +11,14 @@
  *  Capa: Frontend
  */
 
-
 import { useState, useEffect, useRef, forwardRef } from "react";
 import Promo1 from "./PromosBancarias/Promo1.png";
 import Promo2 from "./PromosBancarias/Promo2.png";
+import Convenios from "./Images/convenios.jpg";
+import Convenios_mobile_1 from "./Images/convenios_mobile_1.jpg";
+import Convenios_mobile_2 from "./Images/convenios_mobile_2.jpg";
+import Convenios_mobile_3 from "./Images/convenios_mobile_3.jpg";
+import Convenios_mobile_4 from "./Images/convenios_mobile_4.jpg";
 import Aos from "aos";
 import "aos/dist/aos.css";
 import fondo_img from "./Images/bienvenido.jpg";
@@ -122,6 +127,38 @@ const Promos = forwardRef((props, ref) => {
         },
       ],
     },
+    {
+      id: "convenios",
+      text: "Convenios",
+      convenios: true,
+      items: [
+        {
+          text: Convenios,
+          description: "Imagen de los convenios",
+          mobile: false,
+        },
+        {
+          text: Convenios_mobile_1,
+          description: "Imagen de los convenios_1",
+          mobile: true,
+        },
+        {
+          text: Convenios_mobile_2,
+          description: "Imagen de los convenios_2",
+          mobile: true,
+        },
+        {
+          text: Convenios_mobile_3,
+          description: "Imagen de los convenios_3",
+          mobile: true,
+        },
+        {
+          text: Convenios_mobile_4,
+          description: "Imagen de los convenios_4",
+          mobile: true,
+        },
+      ],
+    },
   ];
 
   const handlePromoClick = (promoId) => {
@@ -140,22 +177,26 @@ const Promos = forwardRef((props, ref) => {
       <div
         className={`${
           promo.bancario
-            ? "bg-[#FD6112] max-w-5xl "
+            ? "bg-[#FD6112] max-w-5xl"
+            : promo.convenios
+            ? "bg-white max-w-5xl"
             : "bg-white max-w-2xl border-orange-500"
-        }  rounded-lg border-4  shadow-lg p-4  mx-auto`}
+        } rounded-lg border-4 shadow-lg p-4 mx-auto`}
       >
-        <div
-          className={`${
-            promo.bancario && "border-2"
-          } ${color}  rounded-md p-4 text-white text-center mb-4 font-bignoodle`}
-        >
-          <h3 className="text-2xl font-bold  whitespace-pre-line ">
-            {promo.header}
-          </h3>
-          {promo.subheader && (
-            <p className="text-lg font-semibold mt-2">{promo.subheader}</p>
-          )}
-        </div>
+        {promo.header && (
+          <div
+            className={`${
+              promo.bancario && "border-2"
+            } ${color}  rounded-md p-4 text-white text-center mb-4 font-bignoodle`}
+          >
+            <h3 className="text-2xl font-bold  whitespace-pre-line ">
+              {promo.header}
+            </h3>
+            {promo.subheader && (
+              <p className="text-lg font-semibold mt-2">{promo.subheader}</p>
+            )}
+          </div>
+        )}
         {promo.bancario ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {promo.items.map((item, idx) => (
@@ -165,6 +206,25 @@ const Promos = forwardRef((props, ref) => {
                   alt={item.description}
                   className={`w-auto h-auto rounded-md border-2 ${color}`}
                 />
+              </div>
+            ))}
+          </div>
+        ) : promo.convenios ? (
+          <div className="flex flex-col items-center">
+            {promo.items.map((item, idx) => (
+              <div
+                key={idx}
+                className={item.mobile ? "block sm:hidden" : "hidden sm:block"}
+              >
+                <div className="flex flex-col items-center">
+                  <img
+                    src={item.text}
+                    alt={item.description}
+                    className={` w-auto ${
+                      item.mobile ? "h-40 " : "h-auto "
+                    } rounded-md ${color}`}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -242,13 +302,13 @@ const Promos = forwardRef((props, ref) => {
           </div>
 
           <div
-            className="grid grid-cols-1 md:grid-cols-4 items-center mx-auto gap-4 max-w-[1500px] px-4"
+            className="grid grid-cols-1 md:grid-cols-5 items-center mx-auto gap-4 max-w-[1500px] px-4"
             data-aos="fade-up"
           >
             {buttonsInfo.map((button, index) => (
               <button
                 key={index}
-                className={`w-full h-20 flex items-center justify-center font-bold text-[1.2rem] sm:text-xl 2xl:text-3xl rounded-md border-2 transition-all duration-300 hover:bg-[#f97316] hover:text-white hover:border-0 ${
+                className={`w-full h-20 flex items-center justify-center font-bold text-[1.2rem] sm:text-xl xl:text-2xl 3xl:text-3xl rounded-md border-2 transition-all duration-300 hover:bg-[#f97316] hover:text-white hover:border-0 ${
                   selectedPromo === button.id
                     ? `${color} text-white border-white`
                     : `bg-white text-orange-600 border-orange-500`

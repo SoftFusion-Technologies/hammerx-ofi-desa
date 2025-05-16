@@ -1,7 +1,8 @@
 /*
  * Programador: Manrique Sergio Gustavo
- * Fecha Cración: 13 / 04 / 2024
- * Versión: 1.0
+ * Fecha Cración: 13 / 05 / 2025
+ * Versión: 1.1.0
+ * Última modificacion: 16 / 05 / 2025
  *
  * Descripción: Componente de que se muestra en Clients.jsx para la sección de "Planes de Soy Cliente"
  *
@@ -150,18 +151,18 @@ const Planes = forwardRef((props, ref) => {
       className={`relative w-full font-bignoodle tracking-widest ${color} min-h-fit  py-10`}
       ref={ref}
     >
-      <div className="relative w-full min-h-fit" data-aos="fade-up">
-        {true && (
-          <>
-            <img
-              src={fondo_img}
-              alt="Promoción Galicia"
-              className="w-full h-full object-cover absolute inset-0 z-0"
-            />
-            <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-[#fc4b08]/80 to-orange-600" />
-          </>
-        )}
-        <div className="relative z-10">
+      {true && (
+        <>
+          <img
+            src={fondo_img}
+            alt="Promoción Galicia"
+            className="w-full h-full object-cover absolute inset-0 z-0"
+          />
+          <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-[#fc4b08]/80 to-orange-600" />
+        </>
+      )}
+      <div className="relative w-full min-h-fit">
+        <div className="relative z-10"  data-aos="fade-down">
           <div className="relative z-10 col-span-1 mx-auto">
             <h1 className="text-center text-2xl md:text-6xl font-bold bg-white p-8 border-4 border-white rounded-lg text-orange-600">
               CONGELAR Y TRANSFERIR PLANES

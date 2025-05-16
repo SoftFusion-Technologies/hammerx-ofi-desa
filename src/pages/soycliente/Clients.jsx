@@ -291,15 +291,13 @@ const Clients = () => {
       <Promos ref={refPromos} />
       <Separador />
       <Planes ref={refPlanes} />
+      <Separador />
       <Entrenador ref={refEntrenador} />
       <Separador />
       <div data-aos="fade-up" ref={refApp}>
         <img src={AppPromo} alt="descarga nuestra app" />
       </div>
       <Separador />
-      <div data-aos="fade-up">
-        <img src={Convernios} alt="descarga nuestra app" />
-      </div>
       <Footer />
       <button
         className="btn btn-primary btn-floating"

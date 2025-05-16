@@ -1,8 +1,8 @@
 /*
  * Programador: Manrique Sergio Gustavo
- * Fecha Cración: 14 / 04 / 2024
- * Versión: 1.0
- *
+ * Fecha Cración: 14 / 05 / 2025
+ * Versión: 1.1.0
+ * Última modificacion: 16 / 05 / 2025
  * Descripción: Componente de que se muestra en Clients.jsx para la sección de "Bienvenida a HammerX"
  *
  *
@@ -23,8 +23,8 @@ const bienvenidoData = {
     "cambiará tu vida, la decisión de cuidarte y trabajar en vos.",
     "Gracias por elegirnos para ser parte de este proceso.",
     "Estamos muy ansiosos de ayudarte a lograr tus objetivos, pero sobre todo, acompañarte para que disfrutemos el camino juntos.",
-    "¡Bienvenid@ al team HAMMERX!"
-  ]
+    "¡Bienvenid@ al team HAMMERX!",
+  ],
 };
 
 const Bienvenido = () => {
@@ -51,15 +51,6 @@ const Bienvenido = () => {
             className="hidden md:block absolute bottom-0 -right-32 2xl:-right-36 w-[180px] sm:w-[240px] md:w-[300px] rounded-bl-3xl translate-x-1/4 translate-y-1/4 z-20 drop-shadow-[0_0_0.5rem_white]"
             style={{ objectFit: "contain" }}
           />
-          {/* Imagen centrada solo en mobile */}
-          <div className="md:hidden w-full flex justify-center">
-            <img
-              src={bienvenidoData.imagen}
-              alt="Bienvenida"
-              className="w-44 xs:w-48 sm:w-56 drop-shadow-[0_0_0.3rem_#fc4b08]"
-              style={{ objectFit: "contain" }}
-            />
-          </div>
 
           {/* Título y texto */}
           <h1 className="text-[#fc4b08] text-3xl xs:text-4xl sm:text-5xl font-bold mb-6 text-center font-bignoodle drop-shadow-lg tracking-wide">
@@ -71,7 +62,9 @@ const Bienvenido = () => {
                 {idx === 2 ? (
                   <span className="font-bold text-[#fd6112]">{texto}</span>
                 ) : idx === 4 ? (
-                  <span className="block mt-4 text-2xl font-bignoodle text-[#fd6112]">{texto}</span>
+                  <span className="block mt-4 text-2xl font-bignoodle text-[#fd6112]">
+                    {texto}
+                  </span>
                 ) : (
                   <>
                     {texto}
@@ -81,6 +74,15 @@ const Bienvenido = () => {
               </span>
             ))}
           </p>
+          {/* Imagen centrada solo en mobile */}
+          <div className="md:hidden w-full flex justify-center">
+            <img
+              src={bienvenidoData.imagen}
+              alt="Bienvenida"
+              className="w-44 xs:w-48 sm:w-56 drop-shadow-[0_0_0.3rem_#fc4b08]"
+              style={{ objectFit: "contain" }}
+            />
+          </div>
         </div>
       </div>
 
