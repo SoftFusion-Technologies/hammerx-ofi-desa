@@ -1,8 +1,8 @@
 /*
  * Programador: Manrique Sergio Gustavo
  * Fecha Cración: 13 / 05 / 2025
- * Versión: 1.1.0
- * Última modificacion: 16 / 05 / 2025
+ * Versión: 1.1.1
+ * Última modificacion: 19 / 05 / 2025
  *
  * Descripción: Componente de que se muestra en Clients.jsx para la sección de "Promos para el cliente"
  *
@@ -14,14 +14,12 @@
 import { useState, useEffect, useRef, forwardRef } from "react";
 import Promo1 from "./PromosBancarias/Promo1.png";
 import Promo2 from "./PromosBancarias/Promo2.png";
-import Convenios from "./Images/convenios.jpg";
-import Convenios_mobile_1 from "./Images/convenios_mobile_1.jpg";
-import Convenios_mobile_2 from "./Images/convenios_mobile_2.jpg";
-import Convenios_mobile_3 from "./Images/convenios_mobile_3.jpg";
-import Convenios_mobile_4 from "./Images/convenios_mobile_4.jpg";
 import Aos from "aos";
 import "aos/dist/aos.css";
 import fondo_img from "./Images/bienvenido.jpg";
+const images = import.meta.glob("./Images/convenios/*.{png,jpg,jpeg,svg}", {
+  eager: true,
+});
 
 const Promos = forwardRef((props, ref) => {
   const [selectedPromo, setSelectedPromo] = useState(null);
@@ -42,6 +40,24 @@ const Promos = forwardRef((props, ref) => {
       buttonRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [selectedPromo, hasInteracted]);
+
+  const conveniosImages = Object.entries(images)
+    .map(([path, mod]) => ({
+      path: mod.default,
+      name: path.split("/").pop(),
+    }))
+    .sort((a, b) => {
+      const getNumber = (name) => {
+        const match = name.match(/convenios_(\d+)\./);
+        return match ? parseInt(match[1], 10) : 0;
+      };
+      return getNumber(a.name) - getNumber(b.name);
+    });
+
+  const conveniosItems = conveniosImages.map((img, idx) => ({
+    text: img.path,
+    description: `Convenio ${idx + 1}`,
+  }));
 
   const buttonsInfo = [
     {
@@ -131,33 +147,7 @@ const Promos = forwardRef((props, ref) => {
       id: "convenios",
       text: "Convenios",
       convenios: true,
-      items: [
-        {
-          text: Convenios,
-          description: "Imagen de los convenios",
-          mobile: false,
-        },
-        {
-          text: Convenios_mobile_1,
-          description: "Imagen de los convenios_1",
-          mobile: true,
-        },
-        {
-          text: Convenios_mobile_2,
-          description: "Imagen de los convenios_2",
-          mobile: true,
-        },
-        {
-          text: Convenios_mobile_3,
-          description: "Imagen de los convenios_3",
-          mobile: true,
-        },
-        {
-          text: Convenios_mobile_4,
-          description: "Imagen de los convenios_4",
-          mobile: true,
-        },
-      ],
+      items: conveniosItems,
     },
   ];
 
@@ -210,21 +200,14 @@ const Promos = forwardRef((props, ref) => {
             ))}
           </div>
         ) : promo.convenios ? (
-          <div className="flex flex-col items-center">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
             {promo.items.map((item, idx) => (
-              <div
-                key={idx}
-                className={item.mobile ? "block sm:hidden" : "hidden sm:block"}
-              >
-                <div className="flex flex-col items-center">
-                  <img
-                    src={item.text}
-                    alt={item.description}
-                    className={` w-auto ${
-                      item.mobile ? "h-40 " : "h-auto "
-                    } rounded-md ${color}`}
-                  />
-                </div>
+              <div key={idx} className="flex flex-col items-center ">
+                <img
+                  src={item.text}
+                  alt={item.description}
+                  className="w-40 h-32 sm:w-52 sm:h-44 object-fill shadow bg-[#fc4b08] rounded-md"
+                />
               </div>
             ))}
           </div>
