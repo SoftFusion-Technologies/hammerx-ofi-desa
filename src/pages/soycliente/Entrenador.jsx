@@ -1,8 +1,8 @@
 /*
  * Programador: Manrique Sergio Gustavo
  * Fecha Cración: 14 / 05 / 2025
- * Versión: 1.1.0
- * Última modificacion: 16 / 05 / 2025
+ * Versión: 1.1.1
+ * Última modificacion: 20 / 05 / 2025
  *
  * Descripción: Componente de que se muestra en Clients.jsx para la sección de "Contás con tu entrenador"
  *
@@ -56,13 +56,13 @@ const Entrenador = forwardRef((props, ref) => {
         )}
         <div className="relative z-10">
           <div
-            className="relative h-48 flex items-center justify-center overflow-hidden"
+            className="relative h-32 md:h-48 flex items-center justify-center overflow-hidden"
             data-aos="fade-down"
           >
             <h1
               className="absolute uppercase pointer-events-none select-none whitespace-nowrap "
               style={{
-                fontSize: "clamp(3rem, 22vw, 20rem)",
+                fontSize: "clamp(2rem, 22vw, 20rem)",
                 color: "transparent",
                 WebkitTextStroke: "3px #fff",
                 textStroke: "3px #fff",
@@ -80,7 +80,7 @@ const Entrenador = forwardRef((props, ref) => {
           </div>
 
           <div
-            className="col-span-1 flex justify-center items-center gap-2 p-5 md:p-2"
+            className="col-span-1 flex flex-col lg:flex-row justify-center items-center gap-4 px-4 pb-4 md:pb-0 md:p-2"
             data-aos="zoom-in"
           >
             <h1 className="text-lg md:text-3xl xl:text-3xl text-white text-left max-w-3xl">

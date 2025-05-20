@@ -114,7 +114,7 @@ const Clients = () => {
       <div className="w-full bg-gradient-to-b from-orange-500 to-[#fc4b08]">
         <div className="bglcli pb-5">
           <header className="w-full" id="promociones">
-            <div className="pl-10 pt-5 max-sm:pl-2">
+            <div className="pl-10 max-sm:pl-2">
               <Link to="/">
                 <button className="button">
                   <div className="button-box">
@@ -144,7 +144,7 @@ const Clients = () => {
           </header>
 
           <div className="h-contain w-5/6 mx-auto">
-            <div className="pt-20 max-sm:pt-16 flex justify-center gap-4 flex-wrap space-x-0  lg:space-x-5">
+            <div className="py-5 flex justify-center gap-4 flex-wrap space-x-0  lg:space-x-5">
               {/* Primer grupo de 2 botones */}
               {/* Se pasaron el jsx y los estilos de los botones a este archivo para poder controlar desde aquí el evento click para renderizar cada uno de los modals */}
               <div className="flex justify-center gap-4 max-sm:flex-col md:space-x-5">

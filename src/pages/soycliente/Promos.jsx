@@ -1,8 +1,8 @@
 /*
  * Programador: Manrique Sergio Gustavo
  * Fecha Cración: 13 / 05 / 2025
- * Versión: 1.1.1
- * Última modificacion: 19 / 05 / 2025
+ * Versión: 1.1.2
+ * Última modificacion: 20 / 05 / 2025
  *
  * Descripción: Componente de que se muestra en Clients.jsx para la sección de "Promos para el cliente"
  *
@@ -171,7 +171,7 @@ const Promos = forwardRef((props, ref) => {
             : promo.convenios
             ? "bg-white max-w-5xl"
             : "bg-white max-w-2xl border-orange-500"
-        } rounded-lg border-4 shadow-lg p-4 mx-auto`}
+        } rounded-lg border-4 shadow-lg p-4 mx-auto mt-8`}
       >
         {promo.header && (
           <div
@@ -179,7 +179,7 @@ const Promos = forwardRef((props, ref) => {
               promo.bancario && "border-2"
             } ${color}  rounded-md p-4 text-white text-center mb-4 font-bignoodle`}
           >
-            <h3 className="text-2xl font-bold  whitespace-pre-line ">
+            <h3 className="text-2xl font-bold whitespace-pre-line ">
               {promo.header}
             </h3>
             {promo.subheader && (
@@ -219,11 +219,11 @@ const Promos = forwardRef((props, ref) => {
                 className="flex items-center justify-between gap-2 "
               >
                 <div
-                  className={`${color} text-white p-2 rounded-md font-bold flex-1 text-center tracking-widest`}
+                  className={`${color} text-sm sm:text-lg text-white p-2 rounded-md font-bold flex-1 text-center tracking-widest`}
                 >
                   {item.text}
                 </div>
-                <div className="bg-white border-2 border-[#FD6112] text-[#FD6112] p-2 rounded-md font-bold flex-1 text-center">
+                <div className="bg-white text-sm sm:text-lg border-2 border-[#FD6112] text-[#FD6112] p-2 rounded-md font-bold flex-1 text-center">
                   {item.description}
                 </div>
               </div>
@@ -236,7 +236,7 @@ const Promos = forwardRef((props, ref) => {
 
   return (
     <div
-      className={`relative w-full font-bignoodle tracking-wider ${color} min-h-fit  py-20`}
+      className={`relative w-full font-bignoodle tracking-wider ${color} min-h-fit py-10`}
       ref={ref}
     >
       {true && (
@@ -285,7 +285,7 @@ const Promos = forwardRef((props, ref) => {
           </div>
 
           <div
-            className="grid grid-cols-1 md:grid-cols-5 items-center mx-auto gap-4 max-w-[1500px] px-4"
+            className="mt-8 grid grid-cols-1 md:grid-cols-5 items-center mx-auto gap-4 max-w-[1500px] px-4"
             data-aos="fade-up"
           >
             {buttonsInfo.map((button, index) => (
@@ -304,7 +304,7 @@ const Promos = forwardRef((props, ref) => {
           </div>
 
           {/* Contenedor para la card seleccionada */}
-          <div className="mt-1 px-4">
+          <div className="px-4">
             <div
               ref={cardRef}
               className={`transition-all duration-1000 ease-out transform ${

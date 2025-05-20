@@ -1,8 +1,8 @@
 /*
  * Programador: Manrique Sergio Gustavo
  * Fecha Cración: 13 / 05 / 2025
- * Versión: 1.1.0
- * Última modificacion: 16 / 05 / 2025
+ * Versión: 1.1.1
+ * Última modificacion: 20 / 05 / 2025
  *
  * Descripción: Componente de que se muestra en Clients.jsx para la sección de "Planes de Soy Cliente"
  *
@@ -98,7 +98,7 @@ const Planes = forwardRef((props, ref) => {
   const PromoCard = ({ promo }) => {
     return (
       <div
-        className={`bg-white max-w-6xl border-orange-500 rounded-lg border-4  shadow-lg p-4  mx-auto`}
+        className={`bg-white max-w-6xl border-orange-500 rounded-lg border-4  shadow-lg p-4  mx-auto mt-8`}
       >
         <div
           className={`${color} rounded-xl p-4 text-white text-center mb-4 font-bignoodle`}
@@ -125,7 +125,7 @@ const Planes = forwardRef((props, ref) => {
               {promo.buttons.map((button, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-center justify-center ${color}  text-white rounded-xl font-bold flex-1 text-center p-2  whitespace-pre-line text-xl tracking-widest`}
+                  className={`flex items-center justify-center ${color} text-white rounded-xl font-bold flex-1 text-center p-2  whitespace-pre-line text-xl tracking-widest`}
                 >
                   {button.text}
                 </div>

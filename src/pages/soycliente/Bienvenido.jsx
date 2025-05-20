@@ -1,8 +1,8 @@
 /*
  * Programador: Manrique Sergio Gustavo
  * Fecha Cración: 14 / 05 / 2025
- * Versión: 1.1.0
- * Última modificacion: 16 / 05 / 2025
+ * Versión: 1.1.1
+ * Última modificacion: 20 / 05 / 2025
  * Descripción: Componente de que se muestra en Clients.jsx para la sección de "Bienvenida a HammerX"
  *
  *
@@ -19,10 +19,10 @@ const bienvenidoData = {
   imagen: chicos_img,
   titulo: "¡BIENVENID@ A HAMMERX!",
   parrafos: [
-    "Si estás leyendo esto queremos felicitarte por tomar la decisión que",
+    "Si estás leyendo esto queremos felicitarte por tomar la decisión que ",
     "cambiará tu vida, la decisión de cuidarte y trabajar en vos.",
-    "Gracias por elegirnos para ser parte de este proceso.",
-    "Estamos muy ansiosos de ayudarte a lograr tus objetivos, pero sobre todo, acompañarte para que disfrutemos el camino juntos.",
+    "Gracias por elegirnos para ser parte de este proceso. ",
+    "Estamos muy ansiosos de ayudarte a lograr tus objetivos, pero sobre todo, acompañarte para que disfrutemos el camino juntos. ",
     "¡Bienvenid@ al team HAMMERX!",
   ],
 };
