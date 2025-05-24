@@ -186,6 +186,7 @@ import TransferenciaAC from './components/Pagos/Concepcion/PAnual/Transferencia.
 import CuotasAnualC from './components/Pagos/Concepcion/PAnual/CuotasAnual.jsx';
 import ComentariosPage from './pages/ComentariosPage.jsx';
 import ComentariosPageConcep from './pages/ComentariosPageConcep.jsx';
+import QuejasVist from './pages/Quejas/QuejasVist.jsx';
 
 import NotFound from './pages/NotFound.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
@@ -202,7 +203,8 @@ const App = memo(() => {
 
   // URL para obtener las tareas
   // const URL = 'http://localhost:8080/schedulertask/';
-  const URL = 'http://localhost:8080/schedulertask/';
+/*   const URL = 'http://localhost:8080/schedulertask/'; */
+  const URL = 'https://vps-4294061-x.dattaweb.com/schedulertask';
 
   // Función para obtener las tareas
   const obtenerTasks = async () => {
@@ -292,6 +294,7 @@ const App = memo(() => {
                 <Ruta path="/formask" element={<AltaFreAskForm />} />{' '}
                 {/* TABLA FRECASK Rutas de prueba para testear funcionamiento */}
                 {/* Ruta para la página del staff */}
+                <Ruta path="/quejas" element={<QuejasVist />} />{' '}
                 <Ruta
                   path="/dashboard"
                   element={
