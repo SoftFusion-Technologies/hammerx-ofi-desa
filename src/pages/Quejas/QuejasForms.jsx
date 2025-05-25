@@ -10,21 +10,29 @@
  *  Capa: Frontend
  */
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   FaUser,
   FaPhone,
   FaCommentDots,
   FaCheckCircle,
-  FaExclamationTriangle,
-} from "react-icons/fa";
+  FaExclamationTriangle
+} from 'react-icons/fa';
+
+// Benjamin Orellana - 25-05-2025, se agrega para saber de donde viene la URL
+import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 
 const QuejasForms = () => {
   const [formData, setFormData] = useState({
-    nombre: "",
-    telefono: "",
-    queja: "",
+    nombre: '',
+    telefono: '',
+    queja: ''
   });
+
+  // Benjamin Orellana - 25-05-2025 INICIO
+
+  // Benjamin Orellana - 25-05-2025 FINAL
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,21 +41,21 @@ const QuejasForms = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.nombre.trim()) {
-      newErrors.nombre = "El nombre es obligatorio";
+      newErrors.nombre = 'El nombre es obligatorio';
     } else if (formData.nombre.trim().length < 2) {
-      newErrors.nombre = "El nombre debe tener al menos 2 caracteres";
+      newErrors.nombre = 'El nombre debe tener al menos 2 caracteres';
     }
 
     if (!formData.telefono.trim()) {
-      newErrors.telefono = "El teléfono es obligatorio";
+      newErrors.telefono = 'El teléfono es obligatorio';
     } else if (!/^[0-9+\-\s()]+$/.test(formData.telefono)) {
-      newErrors.telefono = "Formato de teléfono inválido";
+      newErrors.telefono = 'Formato de teléfono inválido';
     }
 
     if (!formData.queja.trim()) {
-      newErrors.queja = "El comentario es obligatorio";
+      newErrors.queja = 'El comentario es obligatorio';
     } else if (formData.queja.trim().length < 10) {
-      newErrors.queja = "El comentario debe tener al menos 10 caracteres";
+      newErrors.queja = 'El comentario debe tener al menos 10 caracteres';
     }
 
     setErrors(newErrors);
@@ -59,61 +67,94 @@ const QuejasForms = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
-        [name]: "",
+        [name]: ''
       }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
+
     setIsSubmitting(true);
+
     try {
-      console.log("Datos del formulario:", formData);
-      setFormData({ nombre: "", telefono: "", queja: "" });
-      setSubmitStatus("success");
+      const path = window.location.pathname;
+      let sede = '';
+      let cargado_por = '';
+
+      if (path.includes('monteros')) {
+        sede = 'MONTEROS';
+        cargado_por = 'QR-MONTEROS';
+      } else if (path.includes('concepcion')) {
+        sede = 'CONCEPCION';
+        cargado_por = 'QR-CONCEPCION';
+      } else if (path.includes('barriosur')) {
+        sede = 'BARRIOSUR';
+        cargado_por = 'QR-BARRIOSUR';
+      } else if (path.includes('')) {
+        sede = 'PÁGINA';
+        cargado_por = 'QR-PÁGINA';
+      }
+
+      const payload = {
+        fecha: new Date().toISOString(),
+        cargado_por,
+        nombre: formData.nombre.trim(),
+        tipo_usuario: 'cliente',
+        contacto: formData.telefono.trim(),
+        motivo: formData.queja.trim(),
+        resuelto: 0,
+        sede
+      };
+
+      console.log('Payload a enviar:', payload);
+
+      await axios.post('http://localhost:8080/quejas/', payload);
+
+      setFormData({ nombre: '', telefono: '', queja: '' });
+      setSubmitStatus('success');
       setTimeout(() => setSubmitStatus(null), 5000);
     } catch (error) {
-      console.error("Error al enviar:", error);
-      setSubmitStatus("error");
+      console.error('Error al enviar:', error);
+      setSubmitStatus('error');
       setTimeout(() => setSubmitStatus(null), 5000);
     } finally {
       setIsSubmitting(false);
     }
   };
+
   const formFields = [
     {
-      name: "nombre",
-      label: "Nombre completo",
-      type: "text",
+      name: 'nombre',
+      label: 'Nombre completo',
+      type: 'text',
       icon: FaUser,
-      placeholder: "Ingresa tu nombre completo",
-      value: formData.nombre,
+      placeholder: 'Ingresa tu nombre completo',
+      value: formData.nombre
     },
     {
-      name: "telefono",
-      label: "Número de teléfono",
-      type: "tel",
+      name: 'telefono',
+      label: 'Número de teléfono',
+      type: 'tel',
       icon: FaPhone,
-      placeholder: "Ej: +54 9 386 123-4567",
-      value: formData.telefono,
+      placeholder: 'Ej: +54 9 3815 43-0503',
+      value: formData.telefono
     },
     {
-      name: "queja",
-      label: "Detalle de la queja o comentario",
-      type: "textarea",
+      name: 'queja',
+      label: 'Detalle de la queja o comentario',
+      type: 'textarea',
       icon: FaCommentDots,
       placeholder:
-        "Describe tu consulta, queja o sugerencia con el mayor detalle posible...",
-      value: formData.queja,
-    },
+        'Describe tu consulta, queja o sugerencia con el mayor detalle posible...',
+      value: formData.queja
+    }
   ];
 
   return (
@@ -128,7 +169,7 @@ const QuejasForms = () => {
         </p>
 
         {/* Mensaje de estado */}
-        {submitStatus === "success" && (
+        {submitStatus === 'success' && (
           <div className="mt-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center gap-3">
             <FaCheckCircle className="text-green-600" />
             <span className="font-messina">
@@ -137,7 +178,7 @@ const QuejasForms = () => {
           </div>
         )}
 
-        {submitStatus === "error" && (
+        {submitStatus === 'error' && (
           <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center gap-3">
             <FaExclamationTriangle className="text-red-600" />
             <span className="font-messina">
@@ -159,14 +200,14 @@ const QuejasForms = () => {
                   <span className="text-red-500">*</span>
                 </label>
 
-                {field.type === "textarea" ? (
+                {field.type === 'textarea' ? (
                   <textarea
                     id={field.name}
                     name={field.name}
                     className={`w-full p-4 border-2 rounded-lg resize-none transition-all duration-300 font-messina ${
                       errors[field.name]
-                        ? "border-red-400 focus:border-red-500 bg-red-50"
-                        : "border-gray-300 focus:border-orange-500 focus:bg-orange-50"
+                        ? 'border-red-400 focus:border-red-500 bg-red-50'
+                        : 'border-gray-300 focus:border-orange-500 focus:bg-orange-50'
                     } focus:outline-none focus:ring-2 focus:ring-orange-200`}
                     rows="5"
                     placeholder={field.placeholder}
@@ -180,8 +221,8 @@ const QuejasForms = () => {
                     name={field.name}
                     className={`w-full p-4 border-2 rounded-lg transition-all duration-300 font-messina ${
                       errors[field.name]
-                        ? "border-red-400 focus:border-red-500 bg-red-50"
-                        : "border-gray-300 focus:border-orange-500 focus:bg-orange-50"
+                        ? 'border-red-400 focus:border-red-500 bg-red-50'
+                        : 'border-gray-300 focus:border-orange-500 focus:bg-orange-50'
                     } focus:outline-none focus:ring-2 focus:ring-orange-200`}
                     placeholder={field.placeholder}
                     value={field.value}
@@ -205,11 +246,11 @@ const QuejasForms = () => {
               disabled={isSubmitting}
               className={`px-12 py-4 rounded-lg font-bignoodle text-2xl tracking-widest transition-all duration-300 ${
                 isSubmitting
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-orange-600 hover:bg-orange-700 hover:scale-105 focus:ring-4 focus:ring-orange-200"
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-orange-600 hover:bg-orange-700 hover:scale-105 focus:ring-4 focus:ring-orange-200'
               } text-white shadow-lg`}
             >
-              {isSubmitting ? "ENVIANDO..." : "ENVIAR FORMULARIO"}
+              {isSubmitting ? 'ENVIANDO...' : 'ENVIAR FORMULARIO'}
             </button>
           </div>
         </form>

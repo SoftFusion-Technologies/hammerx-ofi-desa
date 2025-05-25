@@ -203,8 +203,8 @@ const App = memo(() => {
 
   // URL para obtener las tareas
   // const URL = 'http://localhost:8080/schedulertask/';
-/*   const URL = 'http://localhost:8080/schedulertask/'; */
-  const URL = 'https://vps-4294061-x.dattaweb.com/schedulertask';
+  const URL = 'http://localhost:8080/schedulertask/';
+  //const URL = 'https://vps-4294061-x.dattaweb.com/schedulertask';
 
   // Función para obtener las tareas
   const obtenerTasks = async () => {
@@ -294,7 +294,10 @@ const App = memo(() => {
                 <Ruta path="/formask" element={<AltaFreAskForm />} />{' '}
                 {/* TABLA FRECASK Rutas de prueba para testear funcionamiento */}
                 {/* Ruta para la página del staff */}
-                <Ruta path="/quejas" element={<QuejasVist />} />{' '}
+                <Ruta path="/comentarios" element={<QuejasVist />} />{' '}
+                <Ruta path="/comentarios-monteros" element={<QuejasVist />} />{' '}
+                <Ruta path="/comentarios-concepcion" element={<QuejasVist />} />{' '}
+                <Ruta path="/comentarios-barriosur" element={<QuejasVist />} />{' '}
                 <Ruta
                   path="/dashboard"
                   element={

@@ -29,7 +29,7 @@ const AyudasForms = ({ isModal, closeModal }) => {
       {
         id: "3",
         label:
-          "Algún equipo que esté avertiado y quieras notificarnos tu opinión o experiencia positiva.",
+          "Algún equipo que esté averiado y quieras notificarnos tu opinión o experiencia positiva.",
       },
     ],
     info: [
