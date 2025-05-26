@@ -40,17 +40,18 @@ const QuejasForms = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.nombre.trim()) {
-      newErrors.nombre = 'El nombre es obligatorio';
-    } else if (formData.nombre.trim().length < 2) {
-      newErrors.nombre = 'El nombre debe tener al menos 2 caracteres';
-    }
+    // el cliente solicito que estos campos sean opcionales
+    // if (!formData.nombre.trim()) {
+    //   newErrors.nombre = 'El nombre es obligatorio';
+    // } else if (formData.nombre.trim().length < 2) {
+    //   newErrors.nombre = 'El nombre debe tener al menos 2 caracteres';
+    // }
 
-    if (!formData.telefono.trim()) {
-      newErrors.telefono = 'El teléfono es obligatorio';
-    } else if (!/^[0-9+\-\s()]+$/.test(formData.telefono)) {
-      newErrors.telefono = 'Formato de teléfono inválido';
-    }
+    // if (!formData.telefono.trim()) {
+    //   newErrors.telefono = 'El teléfono es obligatorio';
+    // } else if (!/^[0-9+\-\s()]+$/.test(formData.telefono)) {
+    //   newErrors.telefono = 'Formato de teléfono inválido';
+    // }
 
     if (!formData.queja.trim()) {
       newErrors.queja = 'El comentario es obligatorio';
@@ -132,7 +133,7 @@ const QuejasForms = () => {
   const formFields = [
     {
       name: 'nombre',
-      label: 'Nombre completo',
+      label: 'Nombre completo (Opcional)',
       type: 'text',
       icon: FaUser,
       placeholder: 'Ingresa tu nombre completo',
@@ -140,7 +141,7 @@ const QuejasForms = () => {
     },
     {
       name: 'telefono',
-      label: 'Número de teléfono',
+      label: 'Número de teléfono (Opcional)',
       type: 'tel',
       icon: FaPhone,
       placeholder: 'Ej: +54 9 3815 43-0503',
@@ -197,7 +198,10 @@ const QuejasForms = () => {
                 >
                   <field.icon className="text-orange-600" />
                   {field.label}
-                  <span className="text-red-500">*</span>
+
+                  {field.name === 'queja' && (
+                    <span className="text-red-500">*</span>
+                  )}
                 </label>
 
                 {field.type === 'textarea' ? (
