@@ -15,18 +15,19 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
-
 export const AuthProvider = ({ children }) => {
   // Definir estados locales para el token de autenticación y el nombre de usuario
   const [authToken, setAuthToken] = useState(null);
-  const [userName, setUserName] = useState("");
-  const [userLevel, setUserLevel] = useState("");
+  const [userName, setUserName] = useState('');
+  const [userLevel, setUserLevel] = useState('');
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     // Obtener el token y el nombre de usuario desde el localStorage
     const token = localStorage.getItem('authToken');
     const username = localStorage.getItem('userName');
     const level = localStorage.getItem('userLevel');
+    const id = localStorage.getItem('userId');
     // Si hay un token en el localStorage, establecerlo en el estado local
     if (token) {
       setAuthToken(token);
@@ -38,32 +39,44 @@ export const AuthProvider = ({ children }) => {
     if (level) {
       setUserLevel(level);
     }
+    if (id) {
+      setUserId(id);
+    }
   }, []); // El array vacío asegura que este efecto se ejecute solo una vez al montar el componente
 
-  const login = (token, username, level) => {
+  const login = (token, username, level, id) => {
     // Establecer el token y el nombre de usuario en el estado local
     setAuthToken(token);
     setUserName(username);
     setUserLevel(level);
+    setUserId(id);
+
     // Guardar el token y el nombre de usuario en el localStorage
     localStorage.setItem('authToken', token);
     localStorage.setItem('userName', username);
     localStorage.setItem('userLevel', level);
+    localStorage.setItem('userId', id);
   };
 
   const logout = () => {
     // Limpiar el token y el nombre de usuario del estado local
     setAuthToken(null);
-    setUserName("");
-    setUserLevel("");
+    setUserName('');
+    setUserLevel('');
+    setUserId(null);
+
     // Remover el token y el nombre de usuario del localStorage
     localStorage.removeItem('authToken');
     localStorage.removeItem('userName');
     localStorage.removeItem('userLevel');
+    localStorage.removeItem('userId');
+
   };
 
   return (
-    <AuthContext.Provider value={{ authToken, userName, userLevel, login, logout }}>
+    <AuthContext.Provider
+      value={{ authToken, userName, userLevel, userId, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

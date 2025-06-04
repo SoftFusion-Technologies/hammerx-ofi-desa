@@ -51,8 +51,8 @@ const NavbarStaff = () => {
     {
       id: 4,
       href: 'dashboard/task',
-      title: 'Programar Tarea',
-      roles: ['admin', 'administrador', 'vendedor', 'gerente']
+      title: 'Tareas Diarias',
+      roles: ['admin', 'administrador']
     },
     {
       id: 5,

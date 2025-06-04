@@ -39,7 +39,7 @@ const FormAltaNovedad = ({
 
   const { userName } = useAuth();
 
-  console.log(userName)
+  console.log(userName);
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
 
@@ -56,6 +56,18 @@ const FormAltaNovedad = ({
     mensaje: Yup.string().required('El Mensaje es obligatorio'),
     vencimiento: Yup.date().nullable(true)
   });
+
+  useEffect(() => {
+    if (novedad) {
+      // Si viene con usuarios asignados, mapear los IDs
+      const ids = novedad.novedadUsers?.map((tu) => tu.user.id) || [];
+
+      setSelectedUsers(ids);
+    } else {
+      setSelectedUsers([]);
+      setSelectedSede(['monteros']);
+    }
+  }, [novedad]);
 
   useEffect(() => {
     if (isOpen) {
@@ -197,8 +209,7 @@ const FormAltaNovedad = ({
             mensaje: novedad ? novedad.mensaje : '',
             vencimiento: novedad ? novedad.vencimiento : '',
             estado: 1,
-            userName: userName || '',
-
+            userName: userName || ''
           }}
           enableReinitialize
           onSubmit={async (values, { resetForm }) => {

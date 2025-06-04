@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import NavbarStaff from './NavbarStaff';
@@ -8,16 +8,23 @@ import Footer from '../../components/footer/Footer';
 import TituloPreguntasModal from './MetodsGet/TituloPreguntasModal';
 import PreguntaDetalleModal from './MetodsGet/PreguntaDetalleModal';
 import { useAuth } from '../../AuthContext';
+import ModalTareasDiarias from './ModalTareasDiarias';
 
 const AdminPage = () => {
   const [modalPreguntasOpen, setModalPreguntasOpen] = useState(false);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
+  const [modalTareasOpen, setModalTareasOpen] = useState(true);
+  const [tareasDiarias, setTareasDiarias] = useState([]); // <- acá guardamos las tareas
+
   const [preguntas, setPreguntas] = useState([]);
   const [preguntaSeleccionada, setPreguntaSeleccionada] = useState(null);
   const URL = 'http://localhost:8080/ask/';
 
-  const { userLevel } = useAuth();
+  const URL_TAREAS = 'http://localhost:8080/tareasdiarias'; // ejemplo, tu endpoint para tareas
 
+  const { userId, userLevel, userName } = useAuth();
+
+  console.log(userId);
   const abrirModalPreguntas = async () => {
     try {
       const response = await axios.get(URL);
@@ -41,6 +48,10 @@ const AdminPage = () => {
     setModalDetalleOpen(false);
   };
 
+  // Control apertura/cierre modal tareas
+  const cerrarModalTareas = () => {
+    setModalTareasOpen(false);
+  };
   const navigate = useNavigate();
 
   const handleButtonClick = () => {
@@ -50,6 +61,24 @@ const AdminPage = () => {
       navigate('/dashboard/instructores');
     }
   };
+
+  useEffect(() => {
+    const fetchTareasDiarias = async () => {
+      try {
+        const response = await axios.get(`${URL_TAREAS}?userId=${userId}`);
+        setTareasDiarias(response.data);
+        // Abrir modal solo si hay tareas asignadas
+        if (response.data.length > 0) {
+          setModalTareasOpen(true);
+        }
+      } catch (error) {
+        console.error('Error al obtener tareas diarias:', error);
+      }
+    };
+
+    fetchTareasDiarias();
+  }, [userId]);
+
   return (
     <>
       {/* Navbar section */}
@@ -125,11 +154,11 @@ const AdminPage = () => {
               </div>
             )}
 
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
-                <Link to="/dashboard/quejas">
-                  <button className="btnstaff">Quejas</button>
-                </Link>
-              </div>
+            <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
+              <Link to="/dashboard/quejas">
+                <button className="btnstaff">Quejas</button>
+              </Link>
+            </div>
           </div>
 
           <div className="flex justify-end p-5">
@@ -153,6 +182,16 @@ const AdminPage = () => {
           </div>
         </div>
       </section>
+
+      {modalTareasOpen && tareasDiarias.length > 0 && (
+        <ModalTareasDiarias
+          onClose={cerrarModalTareas}
+          tareas={tareasDiarias}
+          userId={userId}
+          userName={userName}
+        />
+      )}
+
       {/* Modals */}
       <TituloPreguntasModal
         isOpen={modalPreguntasOpen}

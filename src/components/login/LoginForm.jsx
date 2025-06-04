@@ -11,21 +11,21 @@
  * Contacto: emirvalles90f@gmail.com || 3865761910
  */
 
-import React, { useState } from "react";
-import Modal from "react-modal";
-import Alerta from "../Error";
-import { useNavigate } from "react-router-dom";
-import Validation from "./LoginValidation";
-import axios from "axios";
-import "../../styles/login.css";
-import { useAuth } from "../../AuthContext";
+import React, { useState } from 'react';
+import Modal from 'react-modal';
+import Alerta from '../Error';
+import { useNavigate } from 'react-router-dom';
+import Validation from './LoginValidation';
+import axios from 'axios';
+import '../../styles/login.css';
+import { useAuth } from '../../AuthContext';
 
-Modal.setAppElement("#root");
+Modal.setAppElement('#root');
 
 const LoginForm = () => {
   const [values, setValues] = useState({
-    email: "",
-    password: "",
+    email: '',
+    password: ''
   });
 
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ const LoginForm = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
+  const [modalMessage, setModalMessage] = useState('');
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
@@ -44,7 +44,7 @@ const LoginForm = () => {
   const handleInput = (event) => {
     setValues((prev) => ({
       ...prev,
-      [event.target.name]: event.target.value,
+      [event.target.name]: event.target.value
     }));
   };
 
@@ -60,7 +60,7 @@ const LoginForm = () => {
         .post('http://localhost:8080/login', values)
         .then((res) => {
           if (res.data.message === 'Success') {
-            login(res.data.token, values.email, res.data.level);
+            login(res.data.token, values.email, res.data.level, res.data.id);
             navigate('/dashboard');
           } else {
             setModalMessage('Usuario o Contraseña incorrectos');
@@ -104,7 +104,7 @@ const LoginForm = () => {
               <div className="relative flex items-center">
                 <input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
                   placeholder="Contraseña"
                   name="password"
@@ -115,9 +115,9 @@ const LoginForm = () => {
                   className="absolute right-0 mr-4 text-sm text-gray-500 hover:text-gray-700 focus:outline-none"
                   type="button"
                   onClick={toggleShowPassword}
-                  style={{ transform: "translateY(25%)" }}
+                  style={{ transform: 'translateY(25%)' }}
                 >
-                  {showPassword ? "Ocultar" : "Mostrar"}
+                  {showPassword ? 'Ocultar' : 'Mostrar'}
                 </button>
               </div>
             </div>
