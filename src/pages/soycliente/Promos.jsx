@@ -12,8 +12,8 @@
  */
 
 import { useState, useEffect, useRef, forwardRef } from "react";
-import Promo1 from "./PromosBancarias/Promo1.png";
-import Promo2 from "./PromosBancarias/Promo2.png";
+import Promo1 from "./PromosBancarias/1.jpg";
+import Promo2 from "./PromosBancarias/2.jpg";
 import Aos from "aos";
 import "aos/dist/aos.css";
 import fondo_img from "./Images/bienvenido.jpg";

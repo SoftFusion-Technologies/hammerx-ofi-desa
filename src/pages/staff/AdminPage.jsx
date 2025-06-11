@@ -182,7 +182,7 @@ const AdminPage = () => {
           </div>
         </div>
       </section>
-
+      <Footer></Footer>
       {modalTareasOpen && tareasDiarias.length > 0 && (
         <ModalTareasDiarias
           onClose={cerrarModalTareas}
