@@ -188,6 +188,8 @@ import ComentariosPage from './pages/ComentariosPage.jsx';
 import ComentariosPageConcep from './pages/ComentariosPageConcep.jsx';
 import QuejasVist from './pages/Quejas/QuejasVist.jsx';
 
+import RecaptacionGet from './pages/staff/MetodsGet/RecaptacionGet.jsx';
+
 import NotFound from './pages/NotFound.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
 /**
@@ -736,6 +738,15 @@ const App = memo(() => {
                 />
                 <Ruta path="/nueva_sede_hammerx" element={<NewSede />} />
                 <Ruta path="/productos" element={<ProductosPrincipal />} />
+                <Ruta
+                  path="/dashboard/recaptacion"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <RecaptacionGet />
+                    </ProtectedRoute>
+                  }
+                />{' '}
                 <Ruta path="/*" element={<NotFound />} />
               </Rutas>
               <TaskReminder2 tasks={tasks} />

@@ -4,22 +4,23 @@ import '../../styles/footer/footer.css';
 import Marcas_v2 from '../header/Marcas_v2';
 import img1 from './PLANESEFECTIVO-web.jpg';
 import img2 from './PROMOS-web.jpg';
-
+import { useAuth } from '../../AuthContext';
 const Footer = () => {
   const location = useLocation();
   const path = location.pathname;
   const isDashboard = path.startsWith('/dashboard');
 
+  const { userLevel } = useAuth();
   return (
     <>
       {!isDashboard && <Marcas_v2 />}
-      {isDashboard && (
-        <div className="flex flex-col items-center gap-4 my-4">
-          <img src={img1} alt="Imagen 1" className="w-auto max-w-full" />
-          <img src={img2} alt="Imagen 2" className="w-auto max-w-full" />
-        </div>
-      )}
-
+      {userLevel === 'instructor' ||
+        (isDashboard && (
+          <div className="flex flex-col items-center gap-4 my-4">
+            <img src={img1} alt="Imagen 1" className="w-auto max-w-full" />
+            <img src={img2} alt="Imagen 2" className="w-auto max-w-full" />
+          </div>
+        ))}
       <footer className="bg-gray-200  shadow dark:bg-gray-900 ">
         <div className="w-full max-w-screen-xl mx-auto p-4 md:py-8">
           <div className="sm:flex sm:items-center sm:justify-between">
