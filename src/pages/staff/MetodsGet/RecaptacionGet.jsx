@@ -17,6 +17,8 @@ const RecaptacionGet = () => {
   const [mes, setMes] = useState('');
   const [anio, setAnio] = useState('');
   const [usuarios, setUsuarios] = useState([]);
+  const [colaboradores, setColaboradores] = useState([]);
+  const [usuarioFiltro, setUsuarioFiltro] = useState('');
 
   const { userLevel, userId } = useAuth(); // suponiendo que tienes userId también
 
@@ -24,11 +26,12 @@ const RecaptacionGet = () => {
   const [selectedRec, setSelectedRecaptacion] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
 
-  const URL = 'https://vps-4294061-x.dattaweb.com/recaptacion/';
+  const URL = 'http://localhost:8080/recaptacion/';
 
   // Carga datos al inicio y cada vez que cambian filtros
   useEffect(() => {
     getRecaptacion();
+    fetchColaboradores();
   }, [mes, anio]);
 
   const getRecaptacion = async () => {
@@ -47,7 +50,7 @@ const RecaptacionGet = () => {
       if (anio) params.anio = anio;
 
       const res = await axios.get(URL, { params });
-      const resUsers = await axios.get('https://vps-4294061-x.dattaweb.com/users'); // o el endpoint que tengas
+      const resUsers = await axios.get('http://localhost:8080/users'); // o el endpoint que tengas
 
       setRecaptaciones(res.data);
       setUsuarios(resUsers.data);
@@ -69,35 +72,31 @@ const RecaptacionGet = () => {
 
   const handleSearch = (e) => setSearch(e.target.value);
 
-  const filtered = search
-    ? recaptaciones.filter((recap) =>
-        recap.nombre.toLowerCase().includes(search.toLowerCase())
-      )
-    : recaptaciones;
+  const filtered = recaptaciones.filter((recap) => {
+    const coincideNombre = recap.nombre
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const coincideUsuario = usuarioFiltro
+      ? recap.usuario_id === usuarioFiltro
+      : true;
+    return coincideNombre && coincideUsuario;
+  });
 
-  const sorted = [...filtered].sort((a, b) => b.id - a.id);
+  const sorted = [...filtered].sort((a, b) => {
+    // Primero los que NO están enviados
+    if (a.enviado !== b.enviado) {
+      return a.enviado ? 1 : -1;
+    }
+    // Si ambos tienen el mismo estado 'enviado', ordenar por ID descendente
+    return b.id - a.id;
+  });
+
   const itemsPerPage = 20;
   const lastIndex = currentPage * itemsPerPage;
   const firstIndex = lastIndex - itemsPerPage;
   const currentItems = sorted.slice(firstIndex, lastIndex);
   const totalPages = Math.ceil(sorted.length / itemsPerPage);
   const pageNumbers = [...Array(totalPages + 1).keys()].slice(1);
-
-  const markAsContacted = async (id) => {
-    try {
-      await axios.put(`${URL}${id}`, { enviado: true });
-      setContactado((prev) => ({ ...prev, [id]: true }));
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const redirectToWhatsApp = (numero) => {
-    window.open(
-      `https://api.whatsapp.com/send/?phone=%2B549${numero}&text&type=phone_number&app_absent=0`,
-      '_blank'
-    );
-  };
 
   const toggleCampo = async (id, campo, valorActual) => {
     try {
@@ -124,6 +123,7 @@ const RecaptacionGet = () => {
   const cerarModal = () => {
     setModalNewRecaptacion(false);
     getRecaptacion('');
+    fetchColaboradores();
   };
 
   const handleEliminarRec = async (id) => {
@@ -146,6 +146,11 @@ const RecaptacionGet = () => {
 
     // Se abre el modal para editar la recaptacion
     setModalNewRecaptacion(true);
+  };
+
+  const fetchColaboradores = async () => {
+    const res = await axios.get('http://localhost:8080/usuarios-con-registros');
+    setColaboradores(res.data);
   };
 
   return (
@@ -173,14 +178,28 @@ const RecaptacionGet = () => {
             setAnio={setAnio}
           />
 
-          <form className="flex justify-center py-5">
+          <form className="flex flex-col md:flex-row items-center justify-center gap-4 py-5 px-4">
             <input
               type="text"
               value={search}
               onChange={handleSearch}
               placeholder="Buscar por nombre"
-              className="border rounded-sm px-3 py-1"
+              className="w-full md:w-72 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
             />
+            {userLevel === 'admin' && (
+              <select
+                value={usuarioFiltro}
+                onChange={(e) => setUsuarioFiltro(Number(e.target.value))}
+                className="w-full md:w-64 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+              >
+                <option value="">Todos los colaboradores</option>
+                {colaboradores.map((colab) => (
+                  <option key={colab.id} value={colab.id}>
+                    {colab.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </form>
 
           {(userLevel === 'admin' || userLevel === 'administrador') && (
@@ -216,7 +235,7 @@ const RecaptacionGet = () => {
                 <th>Respondido</th>
                 <th>Agendado</th>
                 <th>Convertido</th>
-                <th>Acciones</th>
+                {userLevel === 'admin' && <th>Acciones</th>}
               </tr>
             </thead>
             <tbody>

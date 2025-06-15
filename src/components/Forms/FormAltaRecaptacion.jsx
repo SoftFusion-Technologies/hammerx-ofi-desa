@@ -168,7 +168,7 @@ const FormAltaRecaptacion = ({
       setTimeout(() => setErrorModal(false), 1500);
     }
   };
-  
+
   const handleClose = () => {
     if (formikRef.current) {
       formikRef.current.resetForm();
