@@ -189,6 +189,7 @@ import ComentariosPageConcep from './pages/ComentariosPageConcep.jsx';
 import QuejasVist from './pages/Quejas/QuejasVist.jsx';
 
 import RecaptacionGet from './pages/staff/MetodsGet/RecaptacionGet.jsx';
+import VentasProspectosGet from './pages/staff/MetodsGet/VentasProspectosGet.jsx';
 
 import NotFound from './pages/NotFound.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
@@ -744,6 +745,15 @@ const App = memo(() => {
                     <ProtectedRoute>
                       {' '}
                       <RecaptacionGet />
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                <Ruta
+                  path="/dashboard/ventas"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <VentasProspectosGet />
                     </ProtectedRoute>
                   }
                 />{' '}
