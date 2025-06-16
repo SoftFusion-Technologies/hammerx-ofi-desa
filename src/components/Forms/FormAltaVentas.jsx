@@ -25,7 +25,7 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectAllUsers, setSelectAllUsers] = useState(false);
 
-  const { userName } = useAuth();
+  const { userName, userId } = useAuth();
 
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
@@ -117,7 +117,7 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
 
       // Armar objeto completo para el backend
       const prospectoData = {
-        usuario_id: valores.usuario_id,
+        usuario_id: userId,
         nombre: valores.nombre,
         dni: valores.dni,
         tipo_prospecto: valores.tipo_prospecto,
@@ -203,7 +203,7 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
           innerRef={formikRef}
           initialValues={{
             id: Rec ? Rec.id : null,
-            usuario_id: Rec ? Rec.usuario_id : '', // asesor que registró
+            usuario_id: userId,
             nombre: Rec ? Rec.nombre : '',
             dni: Rec ? Rec.dni : '',
             tipo_prospecto: Rec ? Rec.tipo_prospecto : '',
@@ -231,7 +231,7 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
           validationSchema={null}
         >
           {({ errors, touched, setFieldValue, values }) => (
-            <div className="-mt-20 max-h-screen w-full max-w-xl overflow-y-auto bg-white rounded-xl p-5">
+            <div className="-mt-20 max-h-screen w-full max-w-xl overflow-y-auto bg-white rounded-xl p-10">
               <Form className="formulario w-full bg-white">
                 <div className="flex justify-between">
                   <div className="tools">
@@ -253,86 +253,9 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mx-2">
-                  <button
-                    type="button"
-                    className={`w-full py-2 px-5 rounded-xl text-white text-sm font-bold transition ${
-                      selectedSede.includes('monteros')
-                        ? 'bg-[#fc4b08]'
-                        : 'bg-orange-500 hover:bg-[#fc4b08]'
-                    } focus:outline-orange-100`}
-                    onClick={() => handleSedeSelection('monteros')}
-                  >
-                    {selectedSede.includes('monteros')
-                      ? 'Monteros✅'
-                      : 'Monteros'}
-                  </button>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mx-2"></div>
 
-                  <button
-                    type="button"
-                    className={`w-full py-2 px-5 rounded-xl text-white text-sm font-bold transition ${
-                      selectedSede.includes('concepcion')
-                        ? 'bg-[#fc4b08]'
-                        : 'bg-orange-500 hover:bg-[#fc4b08]'
-                    } focus:outline-orange-100`}
-                    onClick={() => handleSedeSelection('concepcion')}
-                  >
-                    {selectedSede.includes('concepcion')
-                      ? 'Concepción✅'
-                      : 'Concepción'}
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`w-full py-2 px-5 rounded-xl text-white text-sm font-bold transition ${
-                      selectedSede.includes('SMT')
-                        ? 'bg-[#fc4b08]'
-                        : 'bg-orange-500 hover:bg-[#fc4b08]'
-                    } focus:outline-orange-100`}
-                    onClick={() => handleSedeSelection('SMT')}
-                  >
-                    {selectedSede.includes('SMT') ? 'SMT✅' : 'SMT'}
-                  </button>
-                </div>
-
-                <div className="mb-6 px-6 py-4 bg-white rounded-lg shadow-md">
-                  <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
-                    {Array.isArray(users) && users.length > 0 ? (
-                      <>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {users.map((user) => (
-                            <div
-                              key={user.id}
-                              className="flex items-center rounded-lg border border-gray-200 px-4 py-2 hover:bg-gray-100"
-                            >
-                              <input
-                                type="radio"
-                                name="usuario_id"
-                                value={user.id}
-                                checked={values.usuario_id === user.id}
-                                onChange={() =>
-                                  setFieldValue('usuario_id', user.id)
-                                }
-                                className="form-radio"
-                              />
-                              <label
-                                htmlFor={`user-${user.id}`}
-                                className="ml-3 text- text-gray-800 cursor-pointer truncate"
-                                style={{ fontSize: '0.775rem' }}
-                              >
-                                {user.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <p className="text-sm text-gray-500">
-                        No hay usuarios disponibles
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <div className="mb-6 px-6 py-4 bg-white rounded-lg shadow-md"></div>
 
                 <div className="mb-3 px-4">
                   <label htmlFor="nombre" className="block font-medium mb-1">
@@ -453,11 +376,14 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
                     className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
                   >
                     <option value="">Seleccione actividad</option>
+                    <option value="No especifica">No especifica</option>{' '}
                     <option value="Musculacion">Musculación</option>
                     <option value="Pilates">Pilates</option>
                     <option value="Clases grupales">Clases grupales</option>
                     <option value="Pase full">Pase full</option>
+                    {/* <- NUEVO */}
                   </Field>
+
                   {errors.actividad && touched.actividad && (
                     <Alerta>{errors.actividad}</Alerta>
                   )}

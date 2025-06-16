@@ -142,6 +142,7 @@ const VentasProspectosGet = ({ currentUser }) => {
     if (!nuevaActividad) return;
 
     const valoresValidos = [
+      'No especifica',
       'Musculacion',
       'Pilates',
       'Clases grupales',
@@ -338,7 +339,7 @@ const VentasProspectosGet = ({ currentUser }) => {
 
           <div className="overflow-auto max-h-[70vh] mt-6 rounded-lg shadow-lg border border-gray-300 bg-white">
             <table className="min-w-[900px] text-sm border-collapse w-full">
-              <thead className="bg-orange-600 text-white font-bignoodle  sticky top-0 z-20">
+              <thead className="bg-orange-600 text-white  sticky top-0 z-20">
                 <tr>
                   <th className="border border-gray-200 px-3 py-2 text-left min-w-[140px]">
                     Fecha
@@ -594,6 +595,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                       "
                       >
                         <option value="">Seleccione actividad</option>
+                        <option value="No especifica">No especifica</option>
                         <option value="Musculacion">Musculación</option>
                         <option value="Pilates">Pilates</option>
                         <option value="Clases grupales">Clases grupales</option>
