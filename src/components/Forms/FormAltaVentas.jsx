@@ -19,7 +19,13 @@ const tiposContacto = [
   'Leads no convertidos'
 ];
 
-const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
+const FormAltaVentas = ({
+  isOpen,
+  onClose,
+  Rec,
+  setSelectedRecaptacion,
+  Sede
+}) => {
   const [users, setUsers] = useState([]);
   const [selectedSede, setSelectedSede] = useState(['monteros']);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -124,7 +130,7 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
         canal_contacto: valores.canal_contacto,
         contacto: valores.contacto,
         actividad: valores.actividad,
-        sede: valores.sede,
+        sede: Sede,
         asesor_nombre: valores.asesor_nombre,
         n_contacto_1: valores.n_contacto_1 || 0,
         n_contacto_2: valores.n_contacto_2 || 0,
@@ -135,7 +141,8 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
         clase_prueba_2_obs: valores.clase_prueba_2_obs,
         clase_prueba_3_fecha: valores.clase_prueba_3_fecha,
         clase_prueba_3_obs: valores.clase_prueba_3_obs,
-        convertido: valores.convertido || false
+        convertido: valores.convertido || false,
+        observacion: valores.observacion || ""
       };
 
       const url = valores.id
@@ -210,7 +217,7 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
             canal_contacto: Rec ? Rec.canal_contacto : '',
             contacto: Rec ? Rec.contacto : '',
             actividad: Rec ? Rec.actividad : '',
-            sede: Rec ? Rec.sede : '',
+            sede: Sede,
             asesor_nombre: Rec ? Rec.asesor_nombre : '', // nombre del asesor (opcional)
             n_contacto_1: Rec ? Rec.n_contacto_1 : 0,
             n_contacto_2: Rec ? Rec.n_contacto_2 : 0,
@@ -221,7 +228,8 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
             clase_prueba_2_obs: Rec ? Rec.clase_prueba_2_obs : '',
             clase_prueba_3_fecha: Rec ? Rec.clase_prueba_3_fecha : null,
             clase_prueba_3_obs: Rec ? Rec.clase_prueba_3_obs : '',
-            convertido: Rec ? Rec.convertido : false
+            convertido: Rec ? Rec.convertido : false,
+            observacion: Rec ? Rec.observacion : ''
           }}
           enableReinitialize
           onSubmit={async (values, { resetForm }) => {
@@ -257,156 +265,188 @@ const FormAltaVentas = ({ isOpen, onClose, Rec, setSelectedRecaptacion }) => {
 
                 <div className="mb-6 px-6 py-4 bg-white rounded-lg shadow-md"></div>
 
-                <div className="mb-3 px-4">
-                  <label htmlFor="nombre" className="block font-medium mb-1">
-                    <span className="text-black text-base pl-1">
-                      Nombre del prospecto
-                    </span>
-                  </label>
-                  <Field
-                    id="nombre"
-                    name="nombre"
-                    type="text"
-                    className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                    placeholder="Ingrese nombre del contacto"
-                    maxLength={100}
-                  />
-                  {errors.nombre && touched.nombre && (
-                    <Alerta>{errors.nombre}</Alerta>
-                  )}
-                </div>
+                {/* Contenedor común (opcional si ya estás dentro de un <Form> que centraliza todo) */}
+                <div className="space-y-4 px-6">
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="nombre"
+                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
+                    >
+                      Nom. del prospecto
+                    </label>
+                    <div className="w-2/3">
+                      <Field
+                        id="nombre"
+                        name="nombre"
+                        type="text"
+                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                        placeholder="Ingrese nombre del contacto"
+                        maxLength={100}
+                      />
+                      {errors.nombre && touched.nombre && (
+                        <div className="mt-1">
+                          <Alerta>{errors.nombre}</Alerta>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-                <div className="mb-3 px-4">
-                  <label htmlFor="dni" className="block font-medium mb-1">
-                    <span className="text-black text-base pl-1">DNI</span>
-                  </label>
-                  <Field
-                    id="dni"
-                    name="dni"
-                    type="text"
-                    className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                    placeholder="Ingrese DNI"
-                    maxLength={20}
-                  />
-                  {errors.dni && touched.dni && <Alerta>{errors.dni}</Alerta>}
-                </div>
-
-                <div className="mb-3 px-4">
-                  <label
-                    htmlFor="tipo_prospecto"
-                    className="block font-medium mb-1"
-                  >
-                    <span className="text-black text-base pl-1">
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="dni"
+                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
+                    >
+                      DNI
+                    </label>
+                    <div className="w-2/3">
+                      <Field
+                        id="dni"
+                        name="dni"
+                        type="text"
+                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                        placeholder="Ingrese DNI"
+                        maxLength={20}
+                      />
+                      {errors.dni && touched.dni && (
+                        <div className="mt-1">
+                          <Alerta>{errors.dni}</Alerta>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="tipo_prospecto"
+                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
+                    >
                       Tipo de prospecto
-                    </span>
-                  </label>
-                  <Field
-                    as="select"
-                    id="tipo_prospecto"
-                    name="tipo_prospecto"
-                    className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                  >
-                    <option value="">Seleccione tipo</option>
-                    <option value="Nuevo">Nuevo</option>
-                    <option value="ExSocio">ExSocio</option>
-                  </Field>
-                  {errors.tipo_prospecto && touched.tipo_prospecto && (
-                    <Alerta>{errors.tipo_prospecto}</Alerta>
-                  )}
-                </div>
+                    </label>
+                    <div className="w-2/3">
+                      <Field
+                        as="select"
+                        id="tipo_prospecto"
+                        name="tipo_prospecto"
+                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                      >
+                        <option value="">Seleccione tipo</option>
+                        <option value="Nuevo">Nuevo</option>
+                        <option value="ExSocio">ExSocio</option>
+                      </Field>
+                      {errors.tipo_prospecto && touched.tipo_prospecto && (
+                        <div className="mt-1">
+                          <Alerta>{errors.tipo_prospecto}</Alerta>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-                <div className="mb-3 px-4">
-                  <label
-                    htmlFor="canal_contacto"
-                    className="block font-medium mb-1"
-                  >
-                    <span className="text-black text-base pl-1">
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="canal_contacto"
+                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
+                    >
                       Canal de contacto
-                    </span>
-                  </label>
-                  <Field
-                    as="select"
-                    id="canal_contacto"
-                    name="canal_contacto"
-                    className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                  >
-                    <option value="">Seleccione canal</option>
-                    <option value="Mostrador">Mostrador</option>
-                    <option value="Whatsapp">Whatsapp</option>
-                    <option value="Instagram">Instagram</option>
-                    <option value="Facebook">Facebook</option>
-                    <option value="Pagina web">Pagina web</option>
-                    <option value="Campaña">Campaña</option>
-                    <option value="Comentarios/Stickers">
-                      Comentarios/Stickers
-                    </option>
-                  </Field>
-                  {errors.canal_contacto && touched.canal_contacto && (
-                    <Alerta>{errors.canal_contacto}</Alerta>
-                  )}
-                </div>
+                    </label>
+                    <div className="w-2/3">
+                      <Field
+                        as="select"
+                        id="canal_contacto"
+                        name="canal_contacto"
+                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                      >
+                        <option value="">Seleccione canal</option>
+                        <option value="Mostrador">Mostrador</option>
+                        <option value="Whatsapp">Whatsapp</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="Pagina web">Pagina web</option>
+                        <option value="Campaña">Campaña</option>
+                        <option value="Comentarios/Stickers">
+                          Comentarios/Stickers
+                        </option>
+                      </Field>
+                      {errors.canal_contacto && touched.canal_contacto && (
+                        <div className="mt-1">
+                          <Alerta>{errors.canal_contacto}</Alerta>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="contacto"
+                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
+                    >
+                      Contact usuario o tel
+                    </label>
+                    <div className="w-2/3">
+                      <Field
+                        id="contacto"
+                        name="contacto"
+                        type="text"
+                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                        placeholder="Ingrese contacto"
+                        maxLength={50}
+                      />
+                      {errors.contacto && touched.contacto && (
+                        <div className="mt-1">
+                          <Alerta>{errors.contacto}</Alerta>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="actividad"
+                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
+                    >
+                      Actividad
+                    </label>
+                    <div className="w-2/3">
+                      <Field
+                        as="select"
+                        id="actividad"
+                        name="actividad"
+                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                      >
+                        <option value="">Seleccione actividad</option>
+                        <option value="No especifica">No especifica</option>
+                        <option value="Musculacion">Musculación</option>
+                        <option value="Pilates">Pilates</option>
+                        <option value="Clases grupales">Clases grupales</option>
+                        <option value="Pase full">Pase full</option>
+                      </Field>
 
-                <div className="mb-3 px-4">
-                  <label htmlFor="contacto" className="block font-medium mb-1">
-                    <span className="text-black text-base pl-1">
-                      Contacto (usuario o celular)
-                    </span>
-                  </label>
-                  <Field
-                    id="contacto"
-                    name="contacto"
-                    type="text"
-                    className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                    placeholder="Ingrese contacto"
-                    maxLength={50}
-                  />
-                  {errors.contacto && touched.contacto && (
-                    <Alerta>{errors.contacto}</Alerta>
-                  )}
-                </div>
-
-                <div className="mb-3 px-4">
-                  <label htmlFor="actividad" className="block font-medium mb-1">
-                    <span className="text-black text-base pl-1">Actividad</span>
-                  </label>
-                  <Field
-                    as="select"
-                    id="actividad"
-                    name="actividad"
-                    className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                  >
-                    <option value="">Seleccione actividad</option>
-                    <option value="No especifica">No especifica</option>{' '}
-                    <option value="Musculacion">Musculación</option>
-                    <option value="Pilates">Pilates</option>
-                    <option value="Clases grupales">Clases grupales</option>
-                    <option value="Pase full">Pase full</option>
-                    {/* <- NUEVO */}
-                  </Field>
-
-                  {errors.actividad && touched.actividad && (
-                    <Alerta>{errors.actividad}</Alerta>
-                  )}
-                </div>
-
-                <div className="mb-3 px-4">
-                  <label htmlFor="sede" className="block font-medium mb-1">
-                    <span className="text-black text-base pl-1">Sede</span>
-                  </label>
-                  <Field
-                    as="select"
-                    id="sede"
-                    name="sede"
-                    className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                  >
-                    <option value="">Seleccione sede</option>
-                    <option value="monteros">Monteros</option>
-                    <option value="concepcion">Concepción</option>
-                    <option value="barrio sur">Barrio Sur</option>
-                  </Field>
-                  {errors.sede && touched.sede && (
-                    <Alerta>{errors.sede}</Alerta>
-                  )}
+                      {errors.actividad && touched.actividad && (
+                        <div className="mt-1">
+                          <Alerta>{errors.actividad}</Alerta>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="contacto"
+                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
+                    >
+                      Observación
+                    </label>
+                    <div className="w-2/3">
+                      <Field
+                        id="observacion"
+                        name="observacion"
+                        type="text"
+                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                        placeholder="Ingrese una Observación"
+                        maxLength={50}
+                      />
+                      {errors.observacion && touched.observacion && (
+                        <div className="mt-1">
+                          <Alerta>{errors.observacion}</Alerta>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="sticky bottom-0 bg-white py-3 px-4">

@@ -23,6 +23,11 @@ const VentasProspectosGet = ({ currentUser }) => {
   const [userSede, setUserSede] = useState(null);
   const [selectedSede, setSelectedSede] = useState(null); // null = todas o ninguna sede seleccionada
 
+  // relacion al filtrado
+  const [tipoFiltro, setTipoFiltro] = React.useState('');
+  const [canalFiltro, setCanalFiltro] = React.useState('');
+  const [actividadFiltro, setActividadFiltro] = React.useState('');
+
   const normalizeString = (str) => {
     return str
       .normalize('NFD')
@@ -35,6 +40,12 @@ const VentasProspectosGet = ({ currentUser }) => {
     if (!sede) return '';
     const normalized = sede.toLowerCase().replace(/\s/g, '');
     return normalized === 'barriosur' ? 'smt' : normalized;
+  };
+
+  const normalizeSede2 = (sede) => {
+    if (!sede) return '';
+    const normalized = sede.toLowerCase().replace(/\s/g, '');
+    return normalized === 'smt' ? 'barrio sur' : normalized;
   };
 
   const sedes = [
@@ -180,17 +191,32 @@ const VentasProspectosGet = ({ currentUser }) => {
           .toLowerCase()
           .includes(search.toLowerCase());
 
-        // Si no hay sede seleccionada, filtrar solo por nombre
-        if (!selectedSede) return nombreMatch;
+        if (!nombreMatch) return false;
 
-        // Filtrar por sede normalizada
-        const sedeProspecto = normalizeSede(p.sede);
-        return nombreMatch && sedeProspecto === selectedSede;
+        // Filtro sede si aplica
+        if (selectedSede) {
+          const sedeProspecto = normalizeSede(p.sede);
+          if (sedeProspecto !== selectedSede) return false;
+        }
+
+        // Filtros adicionales
+        if (tipoFiltro && p.tipo_prospecto !== tipoFiltro) return false;
+        if (canalFiltro && p.canal_contacto !== canalFiltro) return false;
+        if (actividadFiltro && p.actividad !== actividadFiltro) return false;
+
+        return true;
       })
     : [];
 
   // Ordenar por ID descendente
-  const sorted = [...filtered].sort((a, b) => b.id - a.id);
+  const sorted = [...filtered].sort((a, b) => {
+    // Si a.convertido es false y b.convertido es true, a debe ir primero (return -1)
+    if (!a.convertido && b.convertido) return -1;
+    // Si a.convertido es true y b.convertido es false, b debe ir primero (return 1)
+    if (a.convertido && !b.convertido) return 1;
+    // Si ambos tienen el mismo valor de convertido, ordenar por id descendente
+    return b.id - a.id;
+  });
 
   // Siempre tener al menos 1 página
   const totalPages = Math.max(Math.ceil(sorted.length / rowsPerPage), 1);
@@ -203,10 +229,10 @@ const VentasProspectosGet = ({ currentUser }) => {
   const endIndex = startIndex + rowsPerPage;
 
   // Items visibles
-  const visibleProspectos = sorted.slice(startIndex, endIndex);
+  const visibleProspectos = sorted.slice(0, prospectos.length);
 
   // Calcular cuántas filas vacías para llegar a 20
-  const emptyRowsCount = rowsPerPage - visibleProspectos.length;
+  const emptyRowsCount = 20 - visibleProspectos.length;
 
   // Input de búsqueda
   const handleSearch = (e) => {
@@ -280,15 +306,102 @@ const VentasProspectosGet = ({ currentUser }) => {
               Registros de Prospectos - Cantidad: {visibleProspectos.length}
             </h1>
           </div>
-          <form className="flex flex-col md:flex-row items-center justify-center gap-4 py-5 px-4">
-            <input
-              type="text"
-              value={search}
-              onChange={handleSearch}
-              placeholder="Buscar por nombre"
-              className="w-full md:w-72 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
-            />
+
+          <form className="mb-5 max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+            {/* Buscar por nombre */}
+            <div className="mb-5">
+              <label
+                htmlFor="search"
+                className="block text-gray-700 font-medium mb-2"
+              >
+                Buscar por nombre
+              </label>
+              <input
+                id="search"
+                type="text"
+                value={search}
+                onChange={handleSearch}
+                placeholder="Escribí un nombre para buscar"
+                className="w-full border border-gray-300 rounded-md px-4 py-2
+        focus:outline-none focus:ring-2 focus:ring-green-500 transition
+        placeholder-gray-400"
+              />
+            </div>
+
+            {/* Filtros */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label
+                  htmlFor="tipoFiltro"
+                  className="block text-gray-700 font-medium mb-2"
+                >
+                  Tipo Prospecto
+                </label>
+                <select
+                  id="tipoFiltro"
+                  value={tipoFiltro}
+                  onChange={(e) => setTipoFiltro(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-4 py-2
+          focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+                >
+                  <option value="">Todos</option>
+                  <option value="Nuevo">Nuevo</option>
+                  <option value="ExSocio">ExSocio</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="canalFiltro"
+                  className="block text-gray-700 font-medium mb-2"
+                >
+                  Canal Contacto
+                </label>
+                <select
+                  id="canalFiltro"
+                  value={canalFiltro}
+                  onChange={(e) => setCanalFiltro(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-4 py-2
+          focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+                >
+                  <option value="">Todos</option>
+                  <option value="Mostrador">Mostrador</option>
+                  <option value="Whatsapp">Whatsapp</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="Facebook">Facebook</option>
+                  <option value="Pagina web">Página web</option>
+                  <option value="Campaña">Campaña</option>
+                  <option value="Comentarios/Stickers">
+                    Comentarios/Stickers
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="actividadFiltro"
+                  className="block text-gray-700 font-medium mb-2"
+                >
+                  Actividad
+                </label>
+                <select
+                  id="actividadFiltro"
+                  value={actividadFiltro}
+                  onChange={(e) => setActividadFiltro(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-4 py-2
+          focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+                >
+                  <option value="">Todas</option>
+                  <option value="No especifica">No especifica</option>
+                  <option value="Musculacion">Musculación</option>
+                  <option value="Pilates">Pilates</option>
+                  <option value="Clases grupales">Clases grupales</option>
+                  <option value="Pase full">Pase full</option>
+                </select>
+              </div>
+            </div>
           </form>
+
           <div className="flex justify-center pb-10">
             <Link to="#">
               <button
@@ -384,6 +497,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                     Clase 3
                   </th>
                   <th className="border border-gray-200 px-2 py-2 text-center w-16">
+                    Observación
+                  </th>
+                  <th className="border border-gray-200 px-2 py-2 text-center w-16">
                     Convertido
                   </th>
                   <th className="border border-gray-200 px-3 py-2 text-center w-16 rounded-r-lg">
@@ -399,14 +515,26 @@ const VentasProspectosGet = ({ currentUser }) => {
                     className="hover:bg-orange-600 transition-colors duration-300 cursor-pointer text-gray-800"
                     style={{ minHeight: '48px' }}
                   >
-                    <td className="border border-gray-300 px-4 py-3 min-w-[160px]">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       {formatDate(p.fecha)}
                     </td>
-                    <td className="border border-gray-300 px-4 py-3 min-w-[100px]">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       {p.asesor_nombre}
                     </td>
 
-                    <td className="border border-gray-300 px-4 py-3 min-w-[160px]">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <input
                         type="text"
                         value={p.nombre}
@@ -434,7 +562,11 @@ const VentasProspectosGet = ({ currentUser }) => {
                       />
                     </td>
 
-                    <td className="border border-gray-300 px-4 py-3 w-48">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <input
                         type="text"
                         value={p.dni}
@@ -462,7 +594,11 @@ const VentasProspectosGet = ({ currentUser }) => {
                       />
                     </td>
 
-                    <td className="border border-gray-300 px-4 py-3 w-40">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <select
                         value={p.tipo_prospecto}
                         onChange={(e) =>
@@ -496,7 +632,11 @@ const VentasProspectosGet = ({ currentUser }) => {
                       </select>
                     </td>
 
-                    <td className="border border-gray-300 px-4 py-3 w-52">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[180px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <select
                         value={p.canal_contacto}
                         onChange={(e) =>
@@ -537,7 +677,11 @@ const VentasProspectosGet = ({ currentUser }) => {
                       </select>
                     </td>
 
-                    <td className="border border-gray-300 px-4 py-3 min-w-[160px]">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <input
                         type="text"
                         value={p.contacto}
@@ -565,7 +709,11 @@ const VentasProspectosGet = ({ currentUser }) => {
                       />
                     </td>
 
-                    <td className="border border-gray-300 px-4 py-3 min-w-[160px]">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[170px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <select
                         value={p.actividad || ''}
                         onChange={(e) =>
@@ -604,32 +752,45 @@ const VentasProspectosGet = ({ currentUser }) => {
                     </td>
 
                     {/* N° contacto */}
-                    <td className="border border-gray-300 px-2 py-3 text-center">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <input
                         type="checkbox"
                         checked
                         readOnly
-                        className="mx-auto cursor-default"
+                        className="mx-auto cursor-default transform scale-150"
                       />
                     </td>
-                    <td className="border border-gray-300 px-2 py-3 text-center">
+
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <input
                         type="checkbox"
                         checked={!!p.n_contacto_2}
                         onChange={() =>
                           handleCheckboxChange(p.id, 'n_contacto_2')
                         }
-                        className="mx-auto cursor-pointer"
+                        className="mx-auto cursor-default transform scale-150"
                       />
                     </td>
-                    <td className="border border-gray-300 px-2 py-3 text-center">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <input
                         type="checkbox"
                         checked={!!p.n_contacto_3}
                         onChange={() =>
                           handleCheckboxChange(p.id, 'n_contacto_3')
                         }
-                        className="mx-auto cursor-pointer"
+                        className="mx-auto cursor-default transform scale-150"
                       />
                     </td>
 
@@ -637,7 +798,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                     {[1, 2, 3].map((num) => (
                       <td
                         key={num}
-                        className="border border-gray-300 px-2 py-3 text-center cursor-pointer hover:bg-orange-100"
+                        className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
+                          p.convertido ? 'bg-green-500' : ''
+                        }`}
                         onClick={() => openClasePruebaModal(p.id, num)}
                         title="Click para editar fecha y observaciones"
                       >
@@ -647,20 +810,60 @@ const VentasProspectosGet = ({ currentUser }) => {
                       </td>
                     ))}
 
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
+                      <input
+                        type="text"
+                        value={p.observacion}
+                        onChange={(e) =>
+                          handleChange(p.id, 'observacion', e.target.value)
+                        }
+                        className="
+      w-full
+      border-b
+      border-gray-300
+      text-sm
+      px-2
+      py-1
+      text-gray-700
+      bg-white
+      transition-colors
+      duration-200
+      ease-in-out
+      hover:text-black
+      focus:border-orange-600
+      focus:outline-none
+      cursor-text
+    "
+                        placeholder="Observación"
+                      />
+                    </td>
+
                     {/* Convertido */}
-                    <td className="border border-gray-300 px-2 py-3 text-center">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <input
                         type="checkbox"
                         checked={!!p.convertido}
                         onChange={() =>
                           handleCheckboxChange(p.id, 'convertido')
                         }
-                        className="mx-auto cursor-pointer"
+                        className="mx-auto cursor-default transform scale-150"
                       />
                     </td>
 
                     {/* Editar y eliminar */}
-                    <td className="px-4 py-3 text-center">
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
+                        p.convertido ? 'bg-green-500' : ''
+                      }`}
+                    >
                       <div className="flex justify-center items-center gap-3">
                         <button
                           onClick={() => handleEditarRec(p)}
@@ -690,7 +893,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                   Array.from({ length: emptyRowsCount }).map((_, idx) => (
                     <tr key={`empty-${idx}`} className="h-12">
                       <td
-                        colSpan={16}
+                        colSpan={17}
                         className="border border-gray-300 bg-gray-50"
                       />
                     </tr>
@@ -698,31 +901,6 @@ const VentasProspectosGet = ({ currentUser }) => {
               </tbody>
             </table>
           </div>
-        </div>
-        <div className="flex justify-center gap-4 mt-4">
-          <button
-            disabled={safePage === 1}
-            onClick={() => setPage(safePage - 1)}
-            className={`px-4 py-2 rounded ${
-              safePage === 1
-                ? 'bg-gray-300 cursor-not-allowed'
-                : 'bg-orange-500 hover:bg-orange-600 text-white'
-            }`}
-          >
-            Anterior
-          </button>
-
-          <button
-            disabled={safePage === totalPages}
-            onClick={() => setPage(safePage + 1)}
-            className={`px-4 py-2 rounded ${
-              safePage === totalPages
-                ? 'bg-gray-300 cursor-not-allowed'
-                : 'bg-orange-500 hover:bg-orange-600 text-white'
-            }`}
-          >
-            Siguiente
-          </button>
         </div>
       </div>
       <ClasePruebaModal
@@ -740,6 +918,7 @@ const VentasProspectosGet = ({ currentUser }) => {
         onClose={cerarModal}
         Rec={claseSeleccionada}
         setSelectedRecaptacion={setClaseSeleccionada}
+        Sede={normalizeSede2(selectedSede)}
       />
     </>
   );
