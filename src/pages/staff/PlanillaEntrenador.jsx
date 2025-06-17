@@ -153,41 +153,41 @@ const PlanillaEntrenador = () => {
     }
   };
 
-  // useEffect(() => {
-  //   const getUserIdByEmail = async () => {
-  //     try {
-  //       if (userLevel === 'instructor') {
-  //         // Verificamos si el nivel es 'instructor'
-  //         const response = await fetch(`${URL}users/`);
+  useEffect(() => {
+    const getUserIdByEmail = async () => {
+      try {
+        if (userLevel === 'instructor') {
+          // Verificamos si el nivel es 'instructor'
+          const response = await fetch(`${URL}users/`);
 
-  //         if (!response.ok) {
-  //           throw new Error(
-  //             `Error al obtener los usuarios: ${response.statusText}`
-  //           );
-  //         }
+          if (!response.ok) {
+            throw new Error(
+              `Error al obtener los usuarios: ${response.statusText}`
+            );
+          }
 
-  //         const users = await response.json();
+          const users = await response.json();
 
-  //         // Buscar el usuario por email, ya que el nivel es 'instructor'
-  //         const user = users.find((u) => u.email === userName);
+          // Buscar el usuario por email, ya que el nivel es 'instructor'
+          const user = users.find((u) => u.email === userName);
 
-  //         if (user) {
-  //           setUserId(user.id); // Guardar el ID del usuario en el estado
-  //           console.log(`ID del usuario ${userName}:`, user.id);
-  //           setNombreInstructor(user.name);
-  //         } else {
-  //           console.log(`Usuario con email ${userName} no encontrado`);
-  //         }
-  //       }
-  //     } catch (err) {
-  //       setError(err.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+          if (user) {
+            // setUserId(user.id); // Guardar el ID del usuario en el estado
+            console.log(`ID del usuario ${userName}:`, user.id);
+            setNombreInstructor(user.name);
+          } else {
+            console.log(`Usuario con email ${userName} no encontrado`);
+          }
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //   getUserIdByEmail();
-  // }, [userName, userLevel]); // Aseguramos que el efecto se ejecute si cambia el userLevel o userName
+    getUserIdByEmail();
+  }, [userName, userLevel]); // Aseguramos que el efecto se ejecute si cambia el userLevel o userName
 
   useEffect(() => {
     if (!user_id) return; // Evita la petición si no hay user_id
@@ -280,6 +280,8 @@ const PlanillaEntrenador = () => {
             0
           );
 
+          setSelectedMonth(month);
+          setSelectedYear(selectedYear);
           return {
             ...alumno,
             asistencias: asistenciasDelAlumno,
@@ -1233,6 +1235,23 @@ const PlanillaEntrenador = () => {
     return alumnoEncontrado ? 'yellow' : '';
   };
 
+  const handleActualizarMes = async () => {
+    try {
+      const response = await axios.post(`${URL}actualizar-mes`, {
+        mesBusqueda: selectedMonth
+      });
+
+      if (response.data.msg) {
+        alert(response.data.msg); // O mostrás con toast u otro componente
+        fetchAlumnos(mesActual, anioActual);
+      }
+
+      // Opcional: recargar datos o actualizar UI según respuesta
+    } catch (error) {
+      console.error('Error al actualizar mes:', error);
+      alert('Error al actualizar mes. Reintente.');
+    }
+  };
   return (
     <>
       <NavBar />
@@ -1560,7 +1579,8 @@ const PlanillaEntrenador = () => {
                     {rowIndex + 1}
                   </td>
 
-                  <td className="border border-gray-400 text-center">
+                  <td className="border mt-3 text-center flex justify-center items-center gap-2">
+                    {/* Botón P: mantiene el diseño y validación */}
                     <button
                       className={`px-4 py-2 font-bold rounded focus:outline-none ${
                         botonesDeshabilitados[row.id]
@@ -1575,6 +1595,19 @@ const PlanillaEntrenador = () => {
                     >
                       P
                     </button>
+
+                    {/* Botón N solo si mes es anterior */}
+                    {(selectedYear < anioActual ||
+                      (selectedYear === anioActual &&
+                        selectedMonth < mesActual)) && (
+                      <button
+                        className="px-4 py-2 font-bold rounded bg-orange-600 text-white"
+                        type="button"
+                        onClick={handleActualizarMes}
+                      >
+                        N
+                      </button>
+                    )}
                   </td>
 
                   <td className="border border-gray-400 relative">
