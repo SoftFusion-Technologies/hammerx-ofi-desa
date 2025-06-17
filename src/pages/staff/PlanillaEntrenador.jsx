@@ -27,10 +27,10 @@ const PlanillaEntrenador = () => {
   const [loading, setLoading] = useState(true);
 
   // estado para obtener el id del usuario conectado
-  const [userId, setUserId] = useState(null);
+  // const [userId, setUserId] = useState(null);
 
   const [error, setError] = useState(null);
-  const { userName, userLevel } = useAuth();
+  const { userName, userLevel, userId } = useAuth();
 
   // estado para obtener el nombre y el email del instructor
   const [nombreInstructor, setNombreInstructor] = useState('');
@@ -60,6 +60,10 @@ const PlanillaEntrenador = () => {
   const [botonesDeshabilitados, setBotonesDeshabilitados] = useState({}); // Estado para controlar los botones
 
   const [dayNumberG, setDayNumber] = useState(null); // Estado para el número del día
+
+  const currentDate = new Date();
+  const mesActual = currentDate.getMonth() + 1; // getMonth() devuelve el mes en base a 0, por eso sumamos 1
+  const anioActual = currentDate.getFullYear(); // Devuelve el año completo
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
@@ -149,48 +153,55 @@ const PlanillaEntrenador = () => {
     }
   };
 
+  // useEffect(() => {
+  //   const getUserIdByEmail = async () => {
+  //     try {
+  //       if (userLevel === 'instructor') {
+  //         // Verificamos si el nivel es 'instructor'
+  //         const response = await fetch(`${URL}users/`);
+
+  //         if (!response.ok) {
+  //           throw new Error(
+  //             `Error al obtener los usuarios: ${response.statusText}`
+  //           );
+  //         }
+
+  //         const users = await response.json();
+
+  //         // Buscar el usuario por email, ya que el nivel es 'instructor'
+  //         const user = users.find((u) => u.email === userName);
+
+  //         if (user) {
+  //           setUserId(user.id); // Guardar el ID del usuario en el estado
+  //           console.log(`ID del usuario ${userName}:`, user.id);
+  //           setNombreInstructor(user.name);
+  //         } else {
+  //           console.log(`Usuario con email ${userName} no encontrado`);
+  //         }
+  //       }
+  //     } catch (err) {
+  //       setError(err.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   getUserIdByEmail();
+  // }, [userName, userLevel]); // Aseguramos que el efecto se ejecute si cambia el userLevel o userName
+
   useEffect(() => {
-    const getUserIdByEmail = async () => {
-      try {
-        if (userLevel === 'instructor') {
-          // Verificamos si el nivel es 'instructor'
-          const response = await fetch(`${URL}users/`);
+    if (!user_id) return; // Evita la petición si no hay user_id
 
-          if (!response.ok) {
-            throw new Error(
-              `Error al obtener los usuarios: ${response.statusText}`
-            );
-          }
-
-          const users = await response.json();
-
-          // Buscar el usuario por email, ya que el nivel es 'instructor'
-          const user = users.find((u) => u.email === userName);
-
-          if (user) {
-            setUserId(user.id); // Guardar el ID del usuario en el estado
-            console.log(`ID del usuario ${userName}:`, user.id);
-            setNombreInstructor(user.name);
-          } else {
-            console.log(`Usuario con email ${userName} no encontrado`);
-          }
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getUserIdByEmail();
-  }, [userName, userLevel]); // Aseguramos que el efecto se ejecute si cambia el userLevel o userName
-
-  useEffect(() => {
     const obtenerEmailInstructor = async () => {
       try {
         const response = await axios.get(`${URL}users/${user_id}`);
-        setNombreInstructor(response.data.name);
-        setEmailInstructor(response.data.email);
+
+        if (response.data) {
+          setNombreInstructor(response.data.name);
+          setEmailInstructor(response.data.email);
+        } else {
+          console.warn('Usuario no encontrado');
+        }
       } catch (error) {
         console.error('Error al obtener el instructor:', error);
       }
@@ -200,10 +211,8 @@ const PlanillaEntrenador = () => {
   }, [user_id]);
 
   // Cargar los registros de alumnos al iniciar el componente
-  const fetchAlumnos = async (month, selectedYear) => {
+  const fetchAlumnos = async (month, SelectedYear) => {
     try {
-      console.log(month);
-      console.log(selectedYear);
       // Obtener los alumnos con los filtros de mes y año
       const responseAlumnos = await axios.get(`${URL}alumnos`, {
         params: { mes: month, anio: selectedYear }
@@ -233,9 +242,11 @@ const PlanillaEntrenador = () => {
             .map((agenda) => ({
               id: agenda.id, // Agregar el id de la agenda
               agenda_num: agenda.agenda_num,
-              contenido: agenda.contenido || ''
+              contenido: agenda.contenido || '',
+              fecha_creacion: agenda.fecha_creacion
             }));
 
+          // console.log('agendas del alumnop', agendasDelAlumno);
           // Llenar asistencias basadas en las asistencias existentes
           responseAsistencias.data.forEach((asistencia) => {
             if (asistencia.alumno_id === alumno.id) {
@@ -247,7 +258,12 @@ const PlanillaEntrenador = () => {
           });
 
           // Creamos un array de 6 elementos, uno por cada agenda (1 a 6)
-          let agendasCompleta = Array(6).fill(null);
+          // let agendasCompleta = Array(6).fill(null);
+          let agendasCompleta = Array(6).fill({
+            id: null,
+            agenda_num: null,
+            contenido: ''
+          });
 
           // Llenar las agendas existentes según el `agenda_num`
           agendasDelAlumno.forEach((agenda) => {
@@ -293,7 +309,7 @@ const PlanillaEntrenador = () => {
 
       // Mostrar los datos en la planilla
       const allRows = [...alumnosConAsistencias, ...filasVacias];
-      console.log(allRows); // Verifica que `allRows` tenga los datos correctos
+      // console.log(allRows); // Verifica que `allRows` tenga los datos correctos
       setRows(allRows);
       setFilteredAlumnos(allRows);
     } catch (error) {
@@ -472,10 +488,6 @@ const PlanillaEntrenador = () => {
 
   const handleSaveAsistencias = async (rowIndex, asistencias) => {
     // const alumnoId = rows[rowIndex].id; // Obtener el ID del alumno correspondiente
-
-    const currentDate = new Date();
-    const mesActual = currentDate.getMonth() + 1; // getMonth() devuelve el mes en base a 0, por eso sumamos 1
-    const anioActual = currentDate.getFullYear(); // Devuelve el año completo
 
     const globalIndex = firstIndex + rowIndex; // Índice global basado en la página
     const alumnoId = filteredAlumnos[globalIndex].id; // Obtener el ID correcto del alumno
@@ -672,9 +684,6 @@ const PlanillaEntrenador = () => {
   //boton de PRESENTE para un alumno en particular - Baltazar Almiron - 11/11/2024
   const handleBotonAsistencia = async (idAlumno) => {
     const alumnoId = idAlumno; // Obtener el ID del alumno correspondiente
-    const currentDate = new Date();
-    const mesActual = currentDate.getMonth() + 1; // getMonth() devuelve el mes en base a 0, por eso sumamos 1
-    const anioActual = currentDate.getFullYear(); // Devuelve el año completo
 
     try {
       // Iterar sobre las asistencias y enviar solo aquellas que cambian de 'P' a 'A' o de 'A' a 'P'
@@ -1568,7 +1577,7 @@ const PlanillaEntrenador = () => {
                     </button>
                   </td>
 
-                  <td className="border border-gray-400">
+                  <td className="border border-gray-400 relative">
                     <input
                       type="text"
                       className={`w-40 px-2 py-3 uppercase`}
@@ -1577,9 +1586,76 @@ const PlanillaEntrenador = () => {
                         handleInputChange(rowIndex, 'nombre', e.target.value)
                       }
                       style={{
-                        backgroundColor: obtenerColorFondo(row.id) // Aplicar el color de fondo
+                        backgroundColor: obtenerColorFondo(row.id)
                       }}
                     />
+
+                    {(() => {
+                      const agendaPendiente = (row.agendas || []).find(
+                        (a) => a.agenda_num === 4 && a.contenido === 'PENDIENTE'
+                      );
+
+                      console.log(
+                        'AGENDAS DEL ALUMNO',
+                        row.nombre,
+                        row.agendas
+                      );
+
+                      if (!agendaPendiente) return null;
+
+                      console.log(
+                        'Fecha de creación:',
+                        agendaPendiente.fecha_creacion
+                      );
+
+                      const fechaCreacion = new Date(
+                        agendaPendiente.fecha_creacion
+                      );
+                      const hoy = new Date();
+
+                      const fechaCreacionUTC = new Date(
+                        fechaCreacion.getFullYear(),
+                        fechaCreacion.getMonth(),
+                        fechaCreacion.getDate()
+                      );
+                      const hoyUTC = new Date(
+                        hoy.getFullYear(),
+                        hoy.getMonth(),
+                        hoy.getDate()
+                      );
+
+                      const diffDias = Math.floor(
+                        (hoyUTC - fechaCreacionUTC) / (1000 * 60 * 60 * 24)
+                      );
+
+                      console.log('Días de diferencia:', diffDias);
+
+                      let bgColor = '';
+                      if (diffDias >= 10) bgColor = '#dc2626';
+                      else if (diffDias >= 5) bgColor = '#abad18';
+                      else return null;
+
+                      return (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: '2px',
+                            right: '2px',
+                            backgroundColor: bgColor,
+                            color: 'white',
+                            fontWeight: 'bold',
+                            fontSize: '0.75rem',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            pointerEvents: 'none',
+                            userSelect: 'none',
+                            zIndex: 10
+                          }}
+                        >
+                          ALERTA
+                        </div>
+                      );
+                    })()}
                   </td>
 
                   <td className="border border-gray-400 px-2">
@@ -1678,37 +1754,36 @@ const PlanillaEntrenador = () => {
                     {row.totalAsistencias}
                   </td>
 
-                  {row.agendas.map((agenda, agendaIndex) => (
+                  {(row.agendas || []).map((agenda, agendaIndex) => (
                     <td key={agendaIndex} className="border border-gray-400">
                       <input
                         type="text"
                         className={`w-24 px-2 py-1 text-center rounded-full ${
                           agenda?.contenido === 'REVISIÓN'
                             ? 'bg-yellow-600 text-white'
-                            : agenda?.contenido === 'PENDIENTE'
+                            : agenda?.contenido === 'PENDIENTE' &&
+                              agendaIndex !== 3
                             ? 'bg-red-600 text-white'
                             : agenda?.contenido === 'ENVIADO'
                             ? 'bg-green-600 text-white'
                             : ''
                         }`}
-                        value={agenda?.contenido || ''}
+                        value={
+                          agendaIndex === 3 && agenda?.contenido === 'PENDIENTE'
+                            ? ''
+                            : agenda?.contenido || ''
+                        }
                         onClick={() =>
                           openModal(rowIndex, agendaIndex, agenda?.id)
-                        } // Pasar el ID
+                        }
                         onChange={(e) => {
                           const updatedAgendas = [...row.agendas];
                           updatedAgendas[agendaIndex] = e.target.value;
-
                           handleInputChange(
                             rowIndex,
                             'agendas',
                             updatedAgendas
                           );
-                          // handleSaveAgenda(
-                          //   rowIndex,
-                          //   agendaIndex,
-                          //   e.target.value
-                          // );
                         }}
                       />
                     </td>
@@ -1767,6 +1842,8 @@ const PlanillaEntrenador = () => {
               agendaId={selectedAgendaId} // Pasamos el id de la agenda
               agendaNum={selectedAgendaNum} // Pasamos el número de la agenda
               fetchAlumnos={fetchAlumnos}
+              mes={mesActual}
+              anio={anioActual}
             />
           </tbody>
         </table>

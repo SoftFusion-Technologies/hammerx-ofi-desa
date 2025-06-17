@@ -32,15 +32,17 @@ const NotificationsAgendas = ({ user1, user2 }) => {
         return;
       }
 
-      // Ya no se necesita calcular mes y año en el frontend
+      // Obtener notificaciones desde el backend
       const response = await axios.get(
         `${URL}/notificaciones?user_id=${user_id}`
       );
 
       if (response.data) {
-        // Filtramos solo las agendas en estado PENDIENTE
+        // Filtrar solo las agendas en estado PENDIENTE y que no sean la agenda número 4
         const pendientes = response.data.filter(
-          (notificacion) => notificacion.estado_agenda === 'PENDIENTE'
+          (notificacion) =>
+            notificacion.estado_agenda === 'PENDIENTE' &&
+            notificacion.agenda_num !== 4
         );
 
         setNotificaciones(pendientes);
@@ -52,6 +54,7 @@ const NotificationsAgendas = ({ user1, user2 }) => {
       setLoading(false);
     }
   };
+  
 
   return (
     <>

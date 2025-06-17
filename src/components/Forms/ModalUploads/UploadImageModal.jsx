@@ -8,7 +8,9 @@ const UploadImageModal = ({
   alumnoId,
   agendaId,
   agendaNum,
-  fetchAlumnos
+  fetchAlumnos,
+  mes,
+  anio
 }) => {
   const [file, setFile] = useState(null); // Estado para el archivo
   const [archivos, setArchivos] = useState([]);
@@ -60,10 +62,15 @@ const UploadImageModal = ({
       const response = await axios.get(
         `http://localhost:8080/get-agenda-files/${agendaId}`
       );
-      console.log(response.data); // Verifica que la respuesta contenga los archivos esperados
+
       setArchivos(response.data);
     } catch (err) {
-      console.error('Error al obtener archivos:', err);
+      if (err.response && err.response.status === 404) {
+        // Silenciar 404: no hay archivos, pero no es error crítico
+        setArchivos([]);
+      } else {
+        console.error('Error REAL al obtener archivos:', err);
+      }
     }
   };
 
@@ -109,7 +116,7 @@ const UploadImageModal = ({
       }
 
       fetchArchivos(); // Actualizar la lista de archivos
-      fetchAlumnos();
+      fetchAlumnos(mes, anio);
       setMotivo(''); // Limpiar el campo motivo
       setMotivoModalOpen(false); // Cerrar el modal
       return;
@@ -118,18 +125,24 @@ const UploadImageModal = ({
     // Si hay archivo, continuar con la subida de la imagen
     if (file) {
       setIsUploading(true); // Iniciar el proceso de carga
+      const resizedFile = await resizeImage(file);
+
       const formData = new FormData();
-      formData.append('file', file);
+
+      formData.append('file', resizedFile);
       formData.append('agenda_id', agendaId);
       formData.append('agenda_num', agendaNum);
       formData.append('alumno_id', alumnoId);
 
       try {
         // Subir la imagen
-        const response = await fetch('http://localhost:8080/upload-image', {
-          method: 'POST',
-          body: formData
-        });
+        const response = await fetch(
+          'http://localhost:8080/upload-image',
+          {
+            method: 'POST',
+            body: formData
+          }
+        );
 
         const result = await response.json();
 
@@ -137,7 +150,7 @@ const UploadImageModal = ({
           alert('Imagen subida exitosamente.');
           await updateAgendaStatus(agendaId, 'REVISIÓN');
           fetchArchivos(); // Actualizar la lista de archivos
-          fetchAlumnos();
+          fetchAlumnos(mes, anio);
           handleCloseModal(); // Cerrar el modal
         } else {
           alert(result.message || 'Error al subir la imagen.');
@@ -159,19 +172,19 @@ const UploadImageModal = ({
     if (!confirmDelete) {
       return; // Si el usuario cancela, no hacer nada
     }
+
     try {
       // Realizar la solicitud para eliminar el archivo
+
       await axios.delete(
         `http://localhost:8080/delete-agenda-file/${archivoId}`
       );
 
       // Actualizar el estado de la agenda a "PENDIENTE"
       await updateAgendaStatus(agendaId, 'PENDIENTE');
-      fetchAlumnos();
-      fetchArchivos();
-      setArchivos([]); // Limpiar archivos al cambiar de agenda
-
       // handleCloseModal(); // Cerrar el modal o actualizar la interfaz
+      fetchAlumnos(mes, anio);
+      setArchivos([]); // Limpiar archivos al cambiar de agenda
     } catch (err) {
       console.error('Error al eliminar el archivo:', err);
     }
@@ -193,7 +206,7 @@ const UploadImageModal = ({
 
       if (response.status === 200) {
         console.log('Estado de la agenda actualizado a', nuevoEstado);
-        fetchAlumnos();
+        fetchAlumnos(mes, anio);
       } else {
         console.error('No se pudo actualizar el estado de la agenda');
       }
@@ -205,7 +218,32 @@ const UploadImageModal = ({
   // Manejar la selección del archivo
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    setFile(selectedFile); // Guardar el archivo seleccionado en el estado
+
+    if (!selectedFile) {
+      alert('Por favor selecciona un archivo.');
+      return;
+    }
+
+    // Validar formatos permitidos
+    const allowedFormats = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (!allowedFormats.includes(selectedFile.type)) {
+      alert(
+        'Formato de archivo no permitido. Solo se permiten PNG, JPG y JPEG.'
+      );
+      return;
+    }
+
+    // Validar tamaño máximo (por ejemplo, 5 MB)
+    const maxSizeInMB = 60; // Límite de tamaño
+    if (selectedFile.size > maxSizeInMB * 1024 * 1024) {
+      alert(
+        `El archivo es demasiado grande. Máximo permitido: ${maxSizeInMB} MB.`
+      );
+      return;
+    }
+
+    // Si todo es válido, guardar el archivo
+    setFile(selectedFile);
   };
 
   if (!isOpen) return null;
@@ -243,7 +281,7 @@ const UploadImageModal = ({
       if (response.status === 200) {
         alert('Agenda eliminada correctamente.');
         fetchArchivos(); // Actualizar la lista de archivos
-        fetchAlumnos();
+        fetchAlumnos(mes, anio);
         handleCloseModal();
         console.log('Agenda eliminada:', agendaId);
       } else {
@@ -254,6 +292,41 @@ const UploadImageModal = ({
       console.error('Error al eliminar la agenda:', error);
       alert('Hubo un error al intentar eliminar la agenda.');
     }
+  };
+
+  const resizeImage = (file) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          canvas.toBlob(
+            (blob) => {
+              const resizedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              });
+              resolve(resizedFile);
+            },
+            'image/jpeg',
+            0.8
+          );
+        };
+        img.src = e.target.result;
+      };
+
+      reader.readAsDataURL(file);
+    });
   };
 
   // Función para manejar el submit del formulario de edición
@@ -287,7 +360,7 @@ const UploadImageModal = ({
         alert('Motivo guardado exitosamente.');
         await updateAgendaStatus(agendaId, 'REVISIÓN');
         fetchArchivos();
-        fetchAlumnos();
+        fetchAlumnos(mes, anio);
         setMotivos((prevMotivos) =>
           editMotivoId
             ? prevMotivos.map((mot) =>
@@ -310,6 +383,7 @@ const UploadImageModal = ({
       setIsSubmitting(false);
     }
   };
+
   const handleEliminarMotivo = async (motivoId) => {
     try {
       // Llamar al backend para eliminar el motivo
@@ -341,7 +415,6 @@ const UploadImageModal = ({
     setMotivo(motivoText); // Establecer el texto actual en el campo de edición
     setMotivoModalOpen(true); // Abrir el modal
   };
-
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded shadow-md">
@@ -390,6 +463,13 @@ const UploadImageModal = ({
           <p className="mb-2">No hay archivos subidos aun para esta agenda.</p>
         )}
 
+        {isUploading && (
+          <div className="flex justify-center items-center space-x-2 mb-4 text-orange-700 font-semibold">
+            <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-700"></span>
+            <span>Subiendo imagen, por favor espera...</span>
+          </div>
+        )}
+
         {/* Formulario de carga de archivo */}
         <form onSubmit={handleSubmit}>
           <input
@@ -406,6 +486,7 @@ const UploadImageModal = ({
               {isUploading ? 'Subiendo...' : 'Subir Imagen'}{' '}
               {/* Mostrar texto de carga */}
             </button>
+
             <button
               type="button"
               onClick={() => handleCloseModal()}
@@ -462,6 +543,7 @@ const UploadImageModal = ({
           >
             Ingresar Motivo
           </button>
+
           {/* NUEVO BOTON PARA CAMBIAR EL ESTADO  */}
           {userLevel === 'instructor' || (
             <button
