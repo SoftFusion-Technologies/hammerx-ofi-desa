@@ -280,8 +280,6 @@ const PlanillaEntrenador = () => {
             0
           );
 
-          setSelectedMonth(month);
-          setSelectedYear(selectedYear);
           return {
             ...alumno,
             asistencias: asistenciasDelAlumno,
@@ -1235,23 +1233,25 @@ const PlanillaEntrenador = () => {
     return alumnoEncontrado ? 'yellow' : '';
   };
 
-  const handleActualizarMes = async () => {
+  const handleActualizarMes = async (alumnoId) => {
     try {
       const response = await axios.post(`${URL}actualizar-mes`, {
+        id: alumnoId,
         mesBusqueda: selectedMonth
       });
 
       if (response.data.msg) {
-        alert(response.data.msg); // O mostrás con toast u otro componente
-        fetchAlumnos(mesActual, anioActual);
+        alert(response.data.msg);
+        fetchAlumnos(selectedMonth, selectedYear); // Actualizás la tabla
+        setSelectedYear(anioActual);
+        setSelectedMonth(mesActual);
       }
-
-      // Opcional: recargar datos o actualizar UI según respuesta
     } catch (error) {
       console.error('Error al actualizar mes:', error);
       alert('Error al actualizar mes. Reintente.');
     }
   };
+
   return (
     <>
       <NavBar />
@@ -1603,7 +1603,7 @@ const PlanillaEntrenador = () => {
                       <button
                         className="px-4 py-2 font-bold rounded bg-orange-600 text-white"
                         type="button"
-                        onClick={handleActualizarMes}
+                        onClick={() => handleActualizarMes(row.id)}
                       >
                         N
                       </button>
