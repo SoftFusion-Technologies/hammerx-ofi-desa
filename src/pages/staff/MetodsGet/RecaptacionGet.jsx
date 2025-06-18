@@ -245,7 +245,11 @@ const RecaptacionGet = () => {
                   <td>{formatearFecha(recap.fecha)}</td>
                   <td>{obtenerNombreUsuario(recap.usuario_id)}</td>
                   <td>{recap.nombre}</td>
-                  <td>{recap.tipo_contacto}</td>
+                  <td>
+                    {recap.tipo_contacto === 'Otro'
+                      ? recap.detalle_contacto
+                      : recap.tipo_contacto}
+                  </td>
 
                   {/* Enviado */}
                   <td

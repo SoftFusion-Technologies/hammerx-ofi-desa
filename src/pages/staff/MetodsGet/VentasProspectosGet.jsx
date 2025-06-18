@@ -503,7 +503,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                     Convertido
                   </th>
                   <th className="border border-gray-200 px-3 py-2 text-center w-16 rounded-r-lg">
-                    Editar
+                    Acciones
                   </th>
                 </tr>
               </thead>
@@ -865,25 +865,23 @@ const VentasProspectosGet = ({ currentUser }) => {
                       }`}
                     >
                       <div className="flex justify-center items-center gap-3">
-                        <button
+                        {/* <button
                           onClick={() => handleEditarRec(p)}
                           className="text-orange-600 hover:text-orange-800 font-semibold"
                           title="Editar"
                           aria-label={`Editar prospecto ${p.nombre}`}
                         >
                           ✏️
-                        </button>
+                        </button> */}
 
-                        {userLevel === 'admin' && (
-                          <button
-                            onClick={() => handleEliminarProc(p.id)}
-                            className="text-red-500 hover:text-red-700 font-semibold"
-                            title="Eliminar"
-                            aria-label={`Eliminar prospecto ${p.nombre}`}
-                          >
-                            ❌
-                          </button>
-                        )}
+                        <button
+                          onClick={() => handleEliminarProc(p.id)}
+                          className="text-red-500 hover:text-red-700 font-semibold"
+                          title="Eliminar"
+                          aria-label={`Eliminar prospecto ${p.nombre}`}
+                        >
+                          ❌
+                        </button>
                       </div>
                     </td>
                   </tr>

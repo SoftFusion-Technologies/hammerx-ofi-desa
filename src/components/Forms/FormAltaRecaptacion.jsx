@@ -39,6 +39,8 @@ const FormAltaRecaptacion = ({
   // nuevo estado para gestionar dinámicamente según el método (PUT o POST)
   const [textoModal, setTextoModal] = useState('');
 
+  const [mostrarOtro, setMostrarOtro] = useState(false);
+
   // nueva variable para administrar el contenido de formulario para saber cuando limpiarlo
   const formikRef = useRef(null);
 
@@ -125,6 +127,7 @@ const FormAltaRecaptacion = ({
         usuario_id: valores.usuario_id,
         nombre: valores.nombre,
         tipo_contacto: valores.tipo_contacto,
+        detalle_contacto: valores.detalle_contacto,
         enviado: valores.enviado || false,
         respondido: valores.respondido || false,
         agendado: valores.agendado || false,
@@ -200,6 +203,7 @@ const FormAltaRecaptacion = ({
             usuario_id: Rec ? Rec.usuario_id : '', // ID del usuario relacionado
             nombre: Rec ? Rec.nombre : '',
             tipo_contacto: Rec ? Rec.tipo_contacto : '', // Debe ser uno de los valores ENUM
+            detalle_contacto: Rec ? Rec.detalle_contacto || '' : '', // nuevo campo
             enviado: Rec ? Rec.enviado : false,
             respondido: Rec ? Rec.respondido : false,
             agendado: Rec ? Rec.agendado : false,
@@ -351,6 +355,11 @@ const FormAltaRecaptacion = ({
                     id="tipo_contacto"
                     name="tipo_contacto"
                     className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFieldValue('tipo_contacto', value);
+                      setMostrarOtro(value === 'Otro');
+                    }}
                   >
                     <option value="">Seleccione un tipo</option>
                     <option value="Socios que no asisten">
@@ -368,9 +377,21 @@ const FormAltaRecaptacion = ({
                     <option value="Leads no convertidos">
                       Leads no convertidos
                     </option>
+                    <option value="Otro">Otro</option>
                   </Field>
+
                   {errors.tipo_contacto && touched.tipo_contacto && (
                     <Alerta>{errors.tipo_contacto}</Alerta>
+                  )}
+
+                  {mostrarOtro && (
+                    <div className="mt-3">
+                      <Field
+                        name="detalle_contacto"
+                        placeholder="Especifique el tipo de contacto"
+                        className="block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                      />
+                    </div>
                   )}
                 </div>
 
