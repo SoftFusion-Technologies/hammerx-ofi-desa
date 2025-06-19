@@ -9,11 +9,12 @@ import TituloPreguntasModal from './MetodsGet/TituloPreguntasModal';
 import PreguntaDetalleModal from './MetodsGet/PreguntaDetalleModal';
 import { useAuth } from '../../AuthContext';
 import ModalTareasDiarias from './ModalTareasDiarias';
+import { motion } from 'framer-motion';
 
 const AdminPage = () => {
   const [modalPreguntasOpen, setModalPreguntasOpen] = useState(false);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
-  const [modalTareasOpen, setModalTareasOpen] = useState(true);
+  const [modalTareasOpen, setModalTareasOpen] = useState(false);
   const [tareasDiarias, setTareasDiarias] = useState([]); // <- acá guardamos las tareas
 
   const [preguntas, setPreguntas] = useState([]);
@@ -65,11 +66,14 @@ const AdminPage = () => {
   useEffect(() => {
     const fetchTareasDiarias = async () => {
       try {
+        // Abrir modal solo si hay tareas asignadas
         const response = await axios.get(`${URL_TAREAS}?userId=${userId}`);
         setTareasDiarias(response.data);
-        // Abrir modal solo si hay tareas asignadas
+
         if (response.data.length > 0) {
-          setModalTareasOpen(true);
+          setTimeout(() => {
+            setModalTareasOpen(true);
+          }, 1700); // ⏱️ 1.5 segundos
         }
       } catch (error) {
         console.error('Error al obtener tareas diarias:', error);
@@ -92,22 +96,33 @@ const AdminPage = () => {
               userLevel === 'administrador' ||
               userLevel === 'gerente' ||
               userLevel === 'vendedor') && (
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+              >
                 <Link to="/dashboard/novedades">
                   <button className="btnstaff">Foro de Novedades</button>
                 </Link>
-              </div>
+              </motion.div>
             )}
 
             {(userLevel === 'gerente' ||
               userLevel === 'admin' ||
               userLevel === 'vendedor' ||
               userLevel === 'administrador') && (
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+              >
+                {' '}
                 <Link to="/dashboard/testclass">
                   <button className="btnstaff">Leads y Prospectos</button>
                 </Link>
-              </div>
+              </motion.div>
             )}
 
             {/* {(userLevel === 'gerente' ||
@@ -125,55 +140,91 @@ const AdminPage = () => {
               userLevel === 'vendedor' ||
               userLevel === '' ||
               userLevel === 'administrador') && (
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+              >
+                {' '}
                 <Link to="/dashboard/admconvenios">
                   <button className="btnstaff">Convenios</button>
                 </Link>
-              </div>
+              </motion.div>
             )}
 
             {(userLevel === 'gerente' ||
               userLevel === 'admin' ||
               userLevel === 'instructor' ||
               userLevel === 'administrador') && (
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+              >
+                {' '}
                 <button className="btnstaff" onClick={handleButtonClick}>
                   Instructores
                 </button>
-              </div>
+              </motion.div>
             )}
 
             {(userLevel === 'admin' ||
               userLevel === 'administrador' ||
               userLevel === 'instructor' ||
               userLevel === 'gerente') && (
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1 }}
+                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+              >
+                {' '}
                 <Link to="/dashboard/estadisticas">
                   <button className="btnstaff">Estadísticas</button>
                 </Link>
-              </div>
+              </motion.div>
             )}
 
-            <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1.2 }}
+              className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+            >
+              {' '}
               <Link to="/dashboard/quejas">
                 <button className="btnstaff">Quejas</button>
               </Link>
-            </div>
+            </motion.div>
 
             {userLevel !== 'instructor' && (
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.4 }}
+                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+              >
+                {' '}
                 <Link to="/dashboard/ventas">
                   <button className="btnstaff">Ventas </button>
                 </Link>
-              </div>
+              </motion.div>
             )}
 
             {userLevel !== 'instructor' && (
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.6 }}
+                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+              >
+                {' '}
                 <Link to="/dashboard/recaptacion">
                   <button className="btnstaff">Recaptación</button>
                 </Link>
-              </div>
+              </motion.div>
             )}
           </div>
 
