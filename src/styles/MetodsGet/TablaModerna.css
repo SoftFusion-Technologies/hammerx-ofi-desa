@@ -1,0 +1,92 @@
+/* Tabla Moderna */
+.table-modern {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  font-family: 'Montserrat', sans-serif;
+}
+
+.table-modern thead {
+  background: #fc4b08;
+  color: white;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.table-modern th,
+.table-modern td {
+  padding: 14px 20px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s ease;
+}
+
+.table-modern tbody tr:hover {
+  background-color: #fc4b08 !important;
+  cursor: pointer;
+}
+
+.table-modern tbody tr:hover td                                                             {
+  color: white !important;
+}
+
+.table-modern td button {
+  transition: all 0.3s ease;
+}
+
+/* Botones modernos */
+.table-action-btn {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.btn-eliminar {
+  background-color: #ef4444;
+  color: white;
+}
+
+.btn-eliminar:hover {
+  background-color: #dc2626;
+}
+
+.btn-contactar {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-contactar:hover {
+  background-color: #2563eb;
+}
+
+.btn-contactado {
+  background-color: #22c55e;
+}
+
+.btn-contactado:hover {
+  background-color: #16a34a;
+}
+
+.btn-wsp {
+  background-color: #10b981;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-wsp:hover {
+  background-color: #059669;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin: 1rem 0;
+}

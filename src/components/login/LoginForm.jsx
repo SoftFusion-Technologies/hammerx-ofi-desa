@@ -20,6 +20,8 @@ import axios from 'axios';
 import '../../styles/login.css';
 import { useAuth } from '../../AuthContext';
 
+import { motion } from 'framer-motion';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 Modal.setAppElement('#root');
 
 const LoginForm = () => {
@@ -75,65 +77,104 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="h-screen w-full">
-      <div className="loginbg h-screen w-full flex justify-between items-center mx-auto">
-        <div className="py-5 bg-white rounded-xl mx-auto">
-          <form
-            className="w-[400px] max-w-[400px] mx-auto max-sm:w-[300px] max-sm:max-w-[300px]"
-            onSubmit={handleSubmit}
-          >
-            <div className="m-5">
-              <h1 className="font-montserrat text-[25px] font-bold tracking-wide text-center">
-                BIENVENIDO
-              </h1>
-            </div>
+    <div className="h-screen w-full loginbg flex items-center justify-center bg-cover bg-center relative">
+      {/* Botón Dark Mode opcional */}
+      {/* <button className="absolute top-5 right-5 text-white">🌙</button> */}
 
-            <div className="mb-3 px-4">
-              <input
-                id="email"
-                type="email"
-                className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                placeholder="Correo Electrónico"
-                name="email"
+      {/* Tarjeta animada */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        whileHover={{
+          scale: 1.01,
+          boxShadow: '0 8px 30px rgba(252,75,8,0.3)'
+        }}
+        className="bg-white shadow-2xl rounded-2xl p-8 w-[95%] max-w-md mx-auto"
+      >
+        <h1 className="text-5xl font-bignoodle font-bold text-center text-orange-600 mb-2">
+          Bienvenido
+        </h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-center text-sm text-gray-500 mb-6"
+        >
+          Iniciá sesión para acceder al panel
+        </motion.p>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Email */}
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Correo Electrónico
+            </label>
+            <motion.input
+              whileFocus={{ scale: 1.02 }}
+              id="email"
+              type="email"
+              name="email"
+              placeholder="ejemplo@correo.com"
+              className="w-full mt-1 p-3 bg-orange-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all"
+              onChange={handleInput}
+            />
+            {errors.email && <Alerta>{errors.email}</Alerta>}
+          </div>
+
+          {/* Contraseña */}
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Contraseña
+            </label>
+            <div className="relative">
+              <motion.input
+                whileFocus={{ scale: 1.02 }}
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="••••••••"
+                className="w-full mt-1 p-3 bg-orange-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all pr-10"
                 onChange={handleInput}
               />
-              {errors.email && <Alerta>{errors.email}</Alerta>}
-            </div>
-
-            <div className="mb-3 px-4">
-              <div className="relative flex items-center">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                  placeholder="Contraseña"
-                  name="password"
-                  onChange={handleInput}
-                />
-                {errors.password && <Alerta>{errors.password}</Alerta>}
-                <button
-                  className="absolute right-0 mr-4 text-sm text-gray-500 hover:text-gray-700 focus:outline-none"
-                  type="button"
-                  onClick={toggleShowPassword}
-                  style={{ transform: 'translateY(25%)' }}
-                >
-                  {showPassword ? 'Ocultar' : 'Mostrar'}
-                </button>
-              </div>
-            </div>
-
-            <div className="mx-auto flex justify-center my-5">
               <button
-                type="submit"
-                className="bg-orange-500 py-2 px-5 rounded-xl text-white font-bold hover:cursor-pointer hover:bg-[#fc4b08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-100"
+                type="button"
+                onClick={toggleShowPassword}
+                className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500 hover:text-orange-500"
               >
-                Iniciar Sesión
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
-          </form>
-        </div>
-      </div>
+            {errors.password && <Alerta>{errors.password}</Alerta>}
+          </div>
 
+          {/* Botón de envío */}
+          <div className="text-center">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              type="submit"
+              className="bg-orange-500 text-white w-full py-3 rounded-lg font-semibold text-lg shadow-md hover:bg-[#fc4b08] transition-all"
+            >
+              Iniciar Sesión
+            </motion.button>
+          </div>
+        </form>
+
+        {/* Frase motivadora */}
+        <p className="mt-6 text-center text-xs text-gray-400 italic">
+          "La constancia supera al talento"
+        </p>
+      </motion.div>
+
+      {/* Modal de error */}
       <Modal
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
@@ -141,9 +182,9 @@ const LoginForm = () => {
         className="flex justify-center items-center h-screen"
         overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
       >
-        <div className="bg-white rounded-lg p-6 max-w-md mx-auto">
+        <div className="bg-white rounded-lg p-6 max-w-md mx-auto shadow-lg">
           <h2 className="text-lg font-semibold mb-4">Error</h2>
-          <div>{modalMessage}</div>
+          <p>{modalMessage}</p>
           <button
             onClick={() => setIsModalOpen(false)}
             className="mt-4 bg-orange-500 text-white py-2 px-4 rounded hover:bg-orange-600"

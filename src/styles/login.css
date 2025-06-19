@@ -1,6 +1,17 @@
-.loginbg{
+/* En tu CSS global o Tailwind config */
+.loginbg {
   background-image: url('/src/images/staff/hammerxsoft1.png');
-  background-repeat: no-repeat;
-  background-position: center;
   background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  animation: zoomBackground 20s ease-in-out infinite;
+}
+
+@keyframes zoomBackground {
+  0%, 100% {
+    background-size: 100%;
+  }
+  50% {
+    background-size: 105%;
+  }
 }

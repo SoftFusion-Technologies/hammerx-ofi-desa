@@ -439,7 +439,7 @@ const NovedadGet = () => {
                     {novedadesProgramadas.map((novedad) => (
                       <div
                         key={novedad.id}
-                        className="border m-5 border-gray-300 p-5 rounded-lg cursor-pointer mb-4"
+                        className="border bg-orange-400 m-5 border-gray-300 p-5 rounded-lg cursor-pointer mb-4"
                         // onClick={() => handleOpenModal(novedad.mensaje)} se elimina de este div, ya que al presionar en cualquier parte o en eliminar y editar se abre el modal
                       >
                         <h2
@@ -580,233 +580,177 @@ const NovedadGet = () => {
                   </div>
                 </div>
               )}
-              <div>
-                <h2 className="text-xl font-semibold ml-4">
-                  ÚLTIMAS NOVEDADES
+              <div className="w-full px-4 sm:px-8 space-y-6">
+                <h2 className="text-5xl mt-10 font-bold text-zinc-800 font-bignoodle">
+                  📢 Últimas Novedades
                 </h2>
-                <ToastContainer />
-                <div className="block space-y-4 ">
-                  {novedadesOrdenadas.map((novedad) => (
-                    <div
-                      key={novedad.id}
-                      id={`novedad-${novedad.id}`}
-                      className="border bg-orange-500 m-5 border-black p-4 rounded-lg cursor-pointer mb-4"
-                      // onClick={() => handleOpenModal(novedad.mensaje)}
-                    >
-                      {/* <h2 se elimina Sede
-                        className="text-xl text-gray-300 font-semibold mb-4"
-                        onClick={() => handleOpenModal(novedad.mensaje)}
-                      >
-                        Sede: {novedad.sede}
-                      </h2> */}
 
-                      <div className="flex items-center space-x-4">
-                        <div className="bg-white p-4 rounded shadow-lg inline-block max-w-full break-words">
-                          <b>
-                            <p
-                              className="text-black mb-4 uppercase"
-                              onClick={() => handleOpenModal(novedad.mensaje)}
-                            >
-                              {novedad.titulo}
-                            </p>
-                          </b>
-                        </div>
-
-                        {userLevel === 'vendedor' ||
-                          userLevel === 'admin' ||
-                          userLevel === 'administrador' ||
-                          userLevel === 'gerente' || (
-                            <p>Usuarios asignados a la novedad:</p>
-                          )}
-
-                        <div className="bg-white p-4 rounded shadow-lg inline-block max-w-full break-words">
-                          <p className="text-black">Fechas:</p>
-                          <b>
-                            <p
-                              className="text-gray-600"
-                              onClick={() => handleOpenModal(novedad.mensaje)}
-                            >
-                              {novedad.vencimiento}
-                            </p>
-                          </b>
-                        </div>
-
-                        <b>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {novedad &&
-                            novedad.novedadUsers &&
-                            novedad.novedadUsers.length > 0 ? (
-                              filtrarUsuariosAsignados(
-                                novedad.novedadUsers,
-                                userLevel,
-                                userId
-                              ).map((novedadUser) => (
-                                <div
-                                  key={novedadUser.id}
-                                  className="flex items-center justify-between mb-4 p-4 border border-gray-200 rounded-lg shadow-sm"
-                                >
-                                  <p
-                                    onClick={() =>
-                                      handleOpenModal(novedad.mensaje)
-                                    }
-                                    className="text-black cursor-pointer"
-                                  >
-                                    <span className="mr-5 mt-1">
-                                      {novedadUser.user.name}
-                                    </span>
-                                  </p>
-                                  <Switch
-                                    onChange={() => toggleLeido(novedadUser.id)}
-                                    checked={
-                                      switchStates[novedadUser.id] ||
-                                      novedadUser.leido
-                                    }
-                                    offColor="#e30505"
-                                    onColor="#4CAF50"
-                                    handleDiameter={28}
-                                    height={20}
-                                    width={48}
-                                    uncheckedIcon={false}
-                                    checkedIcon={false}
-                                  />
-                                </div>
-                              ))
-                            ) : (
-                              <p className="text-red-500 mb-4">
-                                Sin Usuarios asignados
-                              </p>
-                            )}
-                          </div>
-                        </b>
-                      </div>
-
-                      <b>
-                        <p
-                          className="mt-3 ml-2 text-white mb-4 uppercase"
-                          onClick={() => handleOpenModal(novedad.mensaje)}
-                        >
-                          Autor Novedad: {novedad.userName}
+                {novedadesOrdenadas.map((novedad) => (
+                  <div
+                    key={novedad.id}
+                    onClick={() => handleOpenModal(novedad.mensaje)}
+                    className="cursor-pointer w-full bg-white border border-orange-300 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 px-6 sm:px-8 py-6 space-y-5 group"
+                  >
+                    {/* Título + Autor + Fecha */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
+                      <div>
+                        <h3 className="text-xl font-semibold uppercase text-orange-600 group-hover:underline">
+                          {novedad.titulo}
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Autor: {novedad.userName}
                         </p>
-                      </b>
-                      {novedad &&
-                        novedad.novedadUsers &&
-                        filtrarUsuariosAsignados(
+                      </div>
+                      <div className="text-sm text-gray-600 mt-2 sm:mt-0">
+                        📅 {novedad.vencimiento}
+                      </div>
+                    </div>
+
+                    {/* Usuarios asignados */}
+                    {filtrarUsuariosAsignados(
+                      novedad.novedadUsers,
+                      userLevel,
+                      userId
+                    ).length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+                        {filtrarUsuariosAsignados(
                           novedad.novedadUsers,
                           userLevel,
                           userId
-                        ).some((user) => !user.leido) && (
-                          <p className="text-red-500 mb-4 bg-black rounded-lg p-2 text-center uppercase border border-black">
-                            No leíste esta novedad
-                          </p>
-                        )}
-
-                      {vencimientos
-                        .filter(
-                          (vencimiento) => vencimiento.novedad_id === novedad.id
-                        ) // Filtrar vencimientos por novedad_id
-                        .map((vencimiento) => (
+                        ).map((novedadUser) => (
                           <div
-                            key={vencimiento.id}
-                            className="m-1 border bg-orange-500 border-black p-4 rounded-lg cursor-pointer mb-4"
-                            style={{ display: 'inline-block' }} // Ajusta el ancho al contenido
-                            // onClick={() => handleOpenModal(novedad.mensaje)} // Puedes agregar un evento aquí si es necesario
+                            key={novedadUser.id}
+                            className="flex justify-between items-center bg-gray-100 px-4 py-2 rounded-lg"
+                            onClick={(e) => e.stopPropagation()} // Evita que el click dispare el modal
                           >
-                            <p className="text-white">
-                              Esta Novedad tiene NUEVA FECHA de publicación:{' '}
-                              {new Date(
-                                vencimiento.vencimiento
-                              ).toLocaleDateString()}
+                            <p className="text-sm font-medium text-zinc-800">
+                              👤 {novedadUser.user.name}
                             </p>
-                            {/* Opcional muestra el mensaje del vencimiento */}
+                            <Switch
+                              onChange={() => toggleLeido(novedadUser.id)}
+                              checked={
+                                switchStates[novedadUser.id] ||
+                                novedadUser.leido
+                              }
+                              offColor="#e30505"
+                              onColor="#4CAF50"
+                              handleDiameter={28}
+                              height={20}
+                              width={48}
+                              uncheckedIcon={false}
+                              checkedIcon={false}
+                            />
                           </div>
                         ))}
-
-                      {archivos.filter(
-                        (archivo) => archivo.novedad_id === novedad.id
-                      ).length > 0 && (
-                        <>
-                          <p className="text-white font-messina mt-4">
-                            ARCHIVOS SUBIDOS:{' '}
-                            {
-                              archivos.filter(
-                                (archivo) => archivo.novedad_id === novedad.id
-                              ).length
-                            }
-                          </p>
-                          <ul className="text-white font-messina ">
-                            {archivos
-                              .filter(
-                                (archivo) => archivo.novedad_id === novedad.id
-                              )
-                              .map((archivo) => (
-                                <li key={archivo.id}>
-                                  {archivo.nombre_archivo} -{' '}
-                                  <a
-                                    href={`http://localhost:8080/download/novedad/${archivo.id}`}
-                                    className="text-blue-600 underline uppercase"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    Descargar
-                                  </a>
-                                  {(userLevel === 'admin' ||
-                                    userLevel === 'administrador') && (
-                                    <button
-                                      onClick={() =>
-                                        handleDeleteArchivo(archivo.id)
-                                      }
-                                      className="ml-2 text-red-500 underline uppercase"
-                                    >
-                                      Eliminar
-                                    </button>
-                                  )}
-                                </li>
-                              ))}
-                          </ul>
-                        </>
-                      )}
-                      <div className="flex justify-end space-x-4">
-                        {(userLevel === 'admin' ||
-                          userLevel === 'administrador') && (
-                          <div>
-                            <button
-                              onClick={() => handleEliminarNovedad(novedad.id)}
-                              className="py-3 px-3 mr-3 bg-red-500 text-white rounded-md hover:bg-red-600"
-                            >
-                              Eliminar
-                            </button>
-                            <button
-                              onClick={() => handleEditarNovedad(novedad)}
-                              className="py-3 px-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
-                            >
-                              Editar
-                            </button>
-
-                            {/* Nuevo botón para subir archivos R5-Subir archivos a novedades */}
-                            <label
-                              htmlFor={`file-upload-${novedad.id}`}
-                              className="ml-2 py-3 px-3 bg-blue-500 text-white rounded-md cursor-pointer hover:bg-blue-600"
-                            >
-                              Subir Archivo
-                            </label>
-                            <input
-                              id={`file-upload-${novedad.id}`}
-                              type="file"
-                              className="hidden"
-                              onChange={(e) => handleFileUpload(e, novedad.id)}
-                            />
-                            <button
-                              onClick={() => abrirModalFechas(novedad.id)}
-                              className="ml-2 py-3 px-3 bg-green-500 text-white rounded-md hover:bg-yellow-600"
-                            >
-                              Ver Fechas
-                            </button>
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    )}
+
+                    {/* Aviso de no leído */}
+                    {filtrarUsuariosAsignados(
+                      novedad.novedadUsers,
+                      userLevel,
+                      userId
+                    ).some((u) => !u.leido) && (
+                      <p className="mt-4 text-sm font-semibold bg-red-100 text-red-700 p-3 rounded-md text-center uppercase">
+                        ⚠️ Tienes novedades no leídas
+                      </p>
+                    )}
+
+                    {/* Fechas de vencimiento */}
+                    {vencimientos
+                      .filter((v) => v.novedad_id === novedad.id)
+                      .map((v) => (
+                        <div
+                          key={v.id}
+                          className="mt-4 bg-orange-100 text-orange-900 px-4 py-2 rounded-md text-sm border-l-4 border-orange-500"
+                        >
+                          📆 Nueva fecha de publicación:{' '}
+                          {new Date(v.vencimiento).toLocaleDateString()}
+                        </div>
+                      ))}
+
+                    {/* Archivos subidos */}
+                    {archivos.filter((a) => a.novedad_id === novedad.id)
+                      .length > 0 && (
+                      <div
+                        className="mt-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <p className="font-medium text-sm text-zinc-800">
+                          📎 Archivos Subidos:
+                        </p>
+                        <ul className="list-disc pl-6 text-sm space-y-1 text-zinc-700">
+                          {archivos
+                            .filter((a) => a.novedad_id === novedad.id)
+                            .map((archivo) => (
+                              <li key={archivo.id}>
+                                {archivo.nombre_archivo} –{' '}
+                                <a
+                                  href={`http://localhost:8080/download/novedad/${archivo.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 underline"
+                                >
+                                  Descargar
+                                </a>
+                                {(userLevel === 'admin' ||
+                                  userLevel === 'administrador') && (
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteArchivo(archivo.id)
+                                    }
+                                    className="ml-2 text-red-500 text-xs underline"
+                                  >
+                                    Eliminar
+                                  </button>
+                                )}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Acciones admin */}
+                    {(userLevel === 'admin' ||
+                      userLevel === 'administrador') && (
+                      <div
+                        className="flex flex-wrap gap-3 justify-end mt-6"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => handleEliminarNovedad(novedad.id)}
+                          className="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-600"
+                        >
+                          🗑️ Eliminar
+                        </button>
+                        <button
+                          onClick={() => handleEditarNovedad(novedad)}
+                          className="px-4 py-2 rounded-md bg-yellow-500 text-white hover:bg-yellow-600"
+                        >
+                          ✏️ Editar
+                        </button>
+                        <label
+                          htmlFor={`file-upload-${novedad.id}`}
+                          className="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+                        >
+                          📤 Subir Archivo
+                        </label>
+                        <input
+                          id={`file-upload-${novedad.id}`}
+                          type="file"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, novedad.id)}
+                        />
+                        <button
+                          onClick={() => abrirModalFechas(novedad.id)}
+                          className="px-4 py-2 rounded-md bg-green-500 text-white hover:bg-green-600"
+                        >
+                          📅 Ver Fechas
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </>
           )}
