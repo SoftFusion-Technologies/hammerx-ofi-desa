@@ -118,7 +118,7 @@ const PlanillaEntrenador = () => {
   useEffect(() => {
     if (!day) return; // Si day no está definido, no hacer la consulta
 
-    console.log('Realizando consulta a la API para el día:', day); // Log antes del fetch
+    // console.log('Realizando consulta a la API para el día:', day); // Log antes del fetch
 
     fetchAsistencias();
   }, [day]); // Ejecutar cada vez que day cambie
@@ -211,105 +211,106 @@ const PlanillaEntrenador = () => {
   }, [user_id]);
 
   // Cargar los registros de alumnos al iniciar el componente
-  const fetchAlumnos = async (month, SelectedYear) => {
+  const fetchAlumnos = async (month, selectedYear) => {
     try {
-      // Obtener los alumnos con los filtros de mes y año
-      const responseAlumnos = await axios.get(`${URL}alumnos`, {
-        params: { mes: month, anio: selectedYear }
-      });
-      // Enviar mes y año como parámetros para las asistencias
-      const responseAsistencias = await axios.get(`${URL}asistencias`, {
-        params: { mes: month, anio: selectedYear }
+      setLoading(true);
+
+      // Hacer las tres requests en paralelo
+      const [responseAlumnos, responseAsistencias, responseAgendas] =
+        await Promise.all([
+          axios.get(`${URL}alumnos`, {
+            params: { mes: month, anio: selectedYear }
+          }),
+          axios.get(`${URL}asistencias`, {
+            params: { mes: month, anio: selectedYear }
+          }),
+          axios.get(`${URL}agendas`, {
+            params: { mes: month, anio: selectedYear }
+          })
+        ]);
+
+      // Filtrar alumnos por email (usuario actual)
+      const alumnosFiltrados = responseAlumnos.data.filter(
+        (alumno) => alumno.email === email
+      );
+
+      // Armar diccionarios para acceso rápido
+      const asistenciasPorAlumno = {};
+      responseAsistencias.data.forEach((asistencia) => {
+        if (!asistenciasPorAlumno[asistencia.alumno_id])
+          asistenciasPorAlumno[asistencia.alumno_id] = [];
+        asistenciasPorAlumno[asistencia.alumno_id].push(asistencia);
       });
 
-      // Enviar mes y año como parámetros para las agendas
-      const responseAgendas = await axios.get(`${URL}agendas`, {
-        params: { mes: month, anio: selectedYear }
+      const agendasPorAlumno = {};
+      responseAgendas.data.forEach((agenda) => {
+        if (!agendasPorAlumno[agenda.alumno_id])
+          agendasPorAlumno[agenda.alumno_id] = [];
+        agendasPorAlumno[agenda.alumno_id].push(agenda);
       });
 
-      // Filtrar alumnos por user_id
-      const alumnosFiltrados =
-        userLevel === 'instructor'
-          ? responseAlumnos.data.filter((alumno) => alumno.user_id === userId)
-          : responseAlumnos.data.filter((alumno) => alumno.email === email);
-
-      // Inicializar asistencias y agendas para cada alumno filtrado
+      // Procesar cada alumno
       const alumnosConAsistencias = alumnosFiltrados
         .map((alumno) => {
-          const asistenciasDelAlumno = Array(31).fill(''); // Inicializar asistencias
-          const agendasDelAlumno = responseAgendas.data
-            .filter((agenda) => agenda.alumno_id === alumno.id)
-            .map((agenda) => ({
-              id: agenda.id, // Agregar el id de la agenda
-              agenda_num: agenda.agenda_num,
-              contenido: agenda.contenido || '',
-              fecha_creacion: agenda.fecha_creacion
-            }));
-
-          // console.log('agendas del alumnop', agendasDelAlumno);
-          // Llenar asistencias basadas en las asistencias existentes
-          responseAsistencias.data.forEach((asistencia) => {
-            if (asistencia.alumno_id === alumno.id) {
-              const diaIndex = asistencia.dia - 1; // Convertir día a índice (0-30)
-              if (diaIndex >= 0 && diaIndex < 31) {
-                asistenciasDelAlumno[diaIndex] = asistencia.estado;
-              }
+          // Inicializar asistencias (31 días)
+          const asistencias = Array(31).fill('');
+          (asistenciasPorAlumno[alumno.id] || []).forEach((asistencia) => {
+            const diaIndex = asistencia.dia - 1;
+            if (diaIndex >= 0 && diaIndex < 31) {
+              asistencias[diaIndex] = asistencia.estado;
             }
           });
 
-          // Creamos un array de 6 elementos, uno por cada agenda (1 a 6)
-          // let agendasCompleta = Array(6).fill(null);
+          // Inicializar agendas (6)
           let agendasCompleta = Array(6).fill({
             id: null,
             agenda_num: null,
             contenido: ''
           });
-
-          // Llenar las agendas existentes según el `agenda_num`
-          agendasDelAlumno.forEach((agenda) => {
-            agendasCompleta[agenda.agenda_num - 1] = agenda; // Guardar el objeto completo en la posición correspondiente
+          (agendasPorAlumno[alumno.id] || []).forEach((agenda) => {
+            agendasCompleta[agenda.agenda_num - 1] = agenda;
           });
 
-          // Filtrar asistencias para el alumno y calcular total
-          const asistenciasDelAlumno2 = responseAsistencias.data.filter(
-            (asistencia) => asistencia.alumno_id === alumno.id
-          );
-
-          const totalAsistencias = asistenciasDelAlumno2.reduce(
+          // Calcular total de asistencias 'P'
+          const totalAsistencias = (
+            asistenciasPorAlumno[alumno.id] || []
+          ).reduce(
             (total, asistencia) => total + (asistencia.estado === 'P' ? 1 : 0),
             0
           );
 
           return {
             ...alumno,
-            asistencias: asistenciasDelAlumno,
-            agendas: agendasCompleta, // Agregar las agendas
+            asistencias,
+            agendas: agendasCompleta,
             punto_d: alumno.punto_d || '',
             totalAsistencias
           };
         })
         .sort((a, b) => {
           if (b.totalAsistencias !== a.totalAsistencias) {
-            return b.totalAsistencias - a.totalAsistencias; // más P arriba
+            return b.totalAsistencias - a.totalAsistencias;
           }
-          return a.nombre.localeCompare(b.nombre); // si empatan, orden por nombre
+          return a.nombre.localeCompare(b.nombre);
         });
 
-      // Llenar las filas restantes hasta 100 (aumentar ese número si se necesitan más filas)
+      // Llenar las filas restantes hasta 20 (o el número que quieras)
       const filasRestantes = 20 - alumnosConAsistencias.length;
-      const filasVacias = Array.from({ length: filasRestantes }, () => ({
-        id: null,
-        nombre: '',
-        punto_d: '',
-        motivo: '',
-        asistencias: Array(31).fill(''),
-        agendas: Array(6).fill(''),
-        totalAsistencias: 0
-      }));
+      const filasVacias = Array.from(
+        { length: Math.max(filasRestantes, 0) },
+        () => ({
+          id: null,
+          nombre: '',
+          punto_d: '',
+          motivo: '',
+          asistencias: Array(31).fill(''),
+          agendas: Array(6).fill(''),
+          totalAsistencias: 0
+        })
+      );
 
-      // Mostrar los datos en la planilla
+      // Juntar y setear rows
       const allRows = [...alumnosConAsistencias, ...filasVacias];
-      // console.log(allRows); // Verifica que `allRows` tenga los datos correctos
       setRows(allRows);
       setFilteredAlumnos(allRows);
     } catch (error) {
@@ -1252,6 +1253,18 @@ const PlanillaEntrenador = () => {
     }
   };
 
+  // ...dentro de tu componente principal
+  const [showNotification, setShowNotification] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowNotification(true);
+    }, 3000); // 3 segundos
+
+    // Limpia el timeout si el componente se desmonta antes
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <>
       <NavBar />
@@ -1267,18 +1280,30 @@ const PlanillaEntrenador = () => {
             </Link>
           </div>
         )}
+        {loading && (
+          <div className="flex items-center justify-center">
+            <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#fc4b08]"></span>
+            <span className="ml-3 text-[#fc4b08] font-semibold">
+              Cargando alumnos...
+            </span>
+          </div>
+        )}
 
         <div className="pl-5 mb-10">
           <button
             onClick={() => fetchAlumnos(currentMonth, currentYear)}
-            className="py-2 px-5 bg-[#fc4b08] rounded-lg text-sm text-white hover:bg-orange-500"
+            className={`py-2 px-5 bg-[#fc4b08] rounded-lg text-sm text-white hover:bg-orange-500 transition-colors ${
+              loading ? 'opacity-60 cursor-wait' : ''
+            }`}
+            disabled={loading}
           >
-            Cargar Alumnos
+            {loading ? 'Cargando...' : 'Cargar Alumnos'}
           </button>
         </div>
 
-        <NotificationsAgendas user1={user_id} user2={userId} />
-
+        {showNotification && (
+          <NotificationsAgendas user1={user_id} user2={userId} />
+        )}
         <div className="flex justify-center">
           <h2 className="pb-5 font-bignoodle text-[#fc4b08] text-5xl">
             {nombreInstructor}
@@ -1628,18 +1653,18 @@ const PlanillaEntrenador = () => {
                         (a) => a.agenda_num === 4 && a.contenido === 'PENDIENTE'
                       );
 
-                      console.log(
-                        'AGENDAS DEL ALUMNO',
-                        row.nombre,
-                        row.agendas
-                      );
+                      // console.log(
+                      //   'AGENDAS DEL ALUMNO',
+                      //   row.nombre,
+                      //   row.agendas
+                      // );
 
                       if (!agendaPendiente) return null;
 
-                      console.log(
-                        'Fecha de creación:',
-                        agendaPendiente.fecha_creacion
-                      );
+                      // console.log(
+                      //   'Fecha de creación:',
+                      //   agendaPendiente.fecha_creacion
+                      // );
 
                       const fechaCreacion = new Date(
                         agendaPendiente.fecha_creacion
@@ -1661,7 +1686,7 @@ const PlanillaEntrenador = () => {
                         (hoyUTC - fechaCreacionUTC) / (1000 * 60 * 60 * 24)
                       );
 
-                      console.log('Días de diferencia:', diffDias);
+                      // console.log('Días de diferencia:', diffDias);
 
                       let bgColor = '';
                       if (diffDias >= 10) bgColor = '#dc2626';
@@ -1844,13 +1869,13 @@ const PlanillaEntrenador = () => {
                     </button>
 
                     {/* Icono de Eliminar */}
-                    <button
+                    {/* <button
                       onClick={() => handleDelete(rowIndex)}
                       className="text-red-500 px-2"
                       title="Eliminar"
                     >
-                      &#10060; {/* Símbolo de cruz */}
-                    </button>
+                      &#10060;
+                    </button> */}
                   </td>
                 </tr>
               ))

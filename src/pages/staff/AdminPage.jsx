@@ -56,11 +56,7 @@ const AdminPage = () => {
   const navigate = useNavigate();
 
   const handleButtonClick = () => {
-    if (userLevel === 'instructor') {
-      navigate('/dashboard/instructores/planilla');
-    } else {
-      navigate('/dashboard/instructores');
-    }
+    navigate('/dashboard/instructores');
   };
 
   useEffect(() => {

@@ -21,11 +21,23 @@ import '../../../styles/staff/background.css';
 import Footer from '../../../components/footer/Footer';
 import { useAuth } from '../../../AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react'; // Icono para el botón, opcional
+
 const InstructoresGet = () => {
   // Estado para almacenar la lista de personas
   const [instructor, setInstructor] = useState([]);
 
-  const { userLevel } = useAuth();
+  const { userId, userLevel } = useAuth();
+
+  useEffect(() => {
+    // Si es instructor, buscá su sede por ID
+    if (userLevel === 'instructor' && userId && instructor.length > 0) {
+      const miInstructor = instructor.find(
+        (i) => i.id === parseInt(userId, 10)
+      );
+      if (miInstructor) setFilterSede(miInstructor.sede || '');
+    }
+  }, [userLevel, userId, instructor]);
 
   // Estado para almacenar el término de búsqueda
   const [search, setSearch] = useState('');
@@ -125,44 +137,54 @@ const InstructoresGet = () => {
       <NavbarStaff />
       <div className="dashboardbg h-contain pt-10 pb-10">
         <div className=" rounded-lg w-11/12 mx-auto pb-2">
-          <div className="bg-white mb-5">
-            <div className="pl-5 pt-5">
+          <div className="bg-white rounded-2xl shadow-md mb-8 p-4 sm:p-8">
+            {/* Botón volver */}
+            <div className="flex justify-start mb-4">
               <Link to="/dashboard">
-                <button className="py-2 px-5 bg-[#fc4b08] rounded-lg text-sm text-white hover:bg-orange-500">
+                <button className="flex items-center gap-2 py-2 px-4 bg-[#fc4b08] rounded-xl text-sm font-semibold text-white hover:bg-orange-500 transition-colors shadow-md">
+                  <ArrowLeft size={18} />
                   Volver
                 </button>
               </Link>
             </div>
-            <div className="flex justify-center">
-              <h1 className="pb-5">
-                Listado de Instructores: &nbsp;
-                <span className="text-center">
-                  Cantidad de registros: {results.length}
-                </span>
+
+            {/* Título y contador */}
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-2">
+              <h1 className="text-xl text-center font-bignoodle sm:text-2xl font-bold text-gray-900 ">
+                Listado de Instructores
               </h1>
+              <span className="bg-orange-50 text-[#fc4b08] font-semibold px-4 py-1 rounded-lg text-base shadow">
+                {`Cantidad de registros: ${results.length}`}
+              </span>
             </div>
 
-            {/* formulario de busqueda */}
-            <form className="flex justify-center pb-5">
+            {/* Formulario de búsqueda */}
+            <form className="flex flex-col sm:flex-row items-center justify-center gap-3 pb-1">
               <input
                 value={search}
                 onChange={searcher}
                 type="text"
-                placeholder="Buscar Instructor"
-                className="border rounded-sm"
+                placeholder="Buscar Instructor..."
+                className="border border-gray-300 rounded-xl px-4 py-2 w-full sm:w-60 focus:outline-none focus:ring-2 focus:ring-[#fc4b08] transition-all shadow-sm"
               />
-              <select
-                value={filterSede}
-                onChange={handleFilterSedeChange}
-                className="border rounded-sm ml-3"
-              >
-                <option value="">Todas las sedes</option>
-                <option value="SMT">SMT</option>
-                <option value="Monteros">Monteros</option>
-                <option value="Concepción">Concepción</option>
-              </select>
+              {userLevel !== 'instructor' && (
+                <select
+                  value={filterSede}
+                  onChange={handleFilterSedeChange}
+                  className="border border-gray-300 rounded-xl px-4 py-2 w-full sm:w-48 focus:outline-none focus:ring-2 focus:ring-[#fc4b08] transition-all shadow-sm"
+                >
+                  <option value="">Todas las sedes</option>
+                  <option value="SMT">SMT</option>
+                  <option value="Monteros">Monteros</option>
+                  <option value="Concepción">Concepción</option>
+                </select>
+              )}
+              {userLevel === 'instructor' && filterSede && (
+                <span className="ml-2 bg-orange-100 text-[#fc4b08] px-4 py-1 rounded-xl font-semibold">
+                  Sede: {filterSede}
+                </span>
+              )}
             </form>
-            {/* formulario de busqueda */}
           </div>
           {Object.keys(results).length === 0 ? (
             <p className="text-center pb-10 text-white uppercase ">
@@ -172,37 +194,52 @@ const InstructoresGet = () => {
           ) : (
             <div>
               <div className="grid grid-cols-3 gap-10 mx-auto pb-10 lg:grid-cols-3 max-sm:grid-cols-1 md:grid-cols-2">
-                {results.filter(applySedeFilter).map((instructor) => (
-                  <div key={instructor.id} className="bg-white p-6 rounded-md">
-                    <h2 className="btnstaff">
-                      {/* Instructor:{' '} */}
-                      <span className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
-                        {instructor.name}
-                      </span>
-                    </h2>
-
-                    {(userLevel === 'admin' ||
-                      userLevel === 'administrador') && (
-                      <p className="btnstaff mt-2">
-                        SEDE:{' '}
-                        <span className="font-semibold uppercase">
-                          {instructor.sede}
+                {results
+                  .filter(applySedeFilter)
+                  .filter(
+                    (instructor) =>
+                      userLevel === 'admin' ||
+                      userLevel === 'administrador' ||
+                      (userLevel === 'instructor' &&
+                        instructor.id === parseInt(userId, 10))
+                  )
+                  .map((instructor) => (
+                    <div
+                      key={instructor.id}
+                      className="bg-white p-6 rounded-md"
+                    >
+                      <h2 className="btnstaff">
+                        <span className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
+                          {instructor.name}
                         </span>
-                      </p>
-                    )}
+                      </h2>
 
-                    {(userLevel === 'admin' ||
-                      userLevel === 'gerente' ||
-                      userLevel === 'administrador') && (
-                      <button
-                        style={{ ...styles.button, backgroundColor: '#fc4b08' }}
-                        onClick={() => handleEnviarEmail(instructor)}
-                      >
-                        Ver Alumnos
-                      </button>
-                    )}
-                  </div>
-                ))}
+                      {(userLevel === 'admin' ||
+                        userLevel === 'administrador') && (
+                        <p className="btnstaff mt-2">
+                          SEDE:{' '}
+                          <span className="font-semibold uppercase">
+                            {instructor.sede}
+                          </span>
+                        </p>
+                      )}
+
+                      {(userLevel === 'admin' ||
+                        userLevel === 'administrador' ||
+                        (userLevel === 'instructor' &&
+                          instructor.id === parseInt(userId, 10))) && (
+                        <button
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#fc4b08'
+                          }}
+                          onClick={() => handleEnviarEmail(instructor)}
+                        >
+                          Ver Alumnos
+                        </button>
+                      )}
+                    </div>
+                  ))}
               </div>
             </div>
           )}
