@@ -5,20 +5,64 @@ import Marcas_v2 from '../header/Marcas_v2';
 import img1 from './PLANESEFECTIVO-web.jpg';
 import img2 from './PROMOS-web.jpg';
 import { useAuth } from '../../AuthContext';
+import DashboardImagesManager from './DashboardImagesManager';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 const Footer = () => {
   const location = useLocation();
   const path = location.pathname;
   const isDashboard = path.startsWith('/dashboard');
-
+  const URL = 'http://localhost:8080/';
   const { userLevel } = useAuth();
+
+  const [imagenes, setImagenes] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      setLoading(true);
+      try {
+        const { data } = await axios.get(`${URL}dashboard-images`);
+        setImagenes(data);
+      } catch {
+        setImagenes([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchImages();
+  }, []);
+
+  if (loading)
+    return (
+      <div className="flex justify-center py-8">
+        <span className="animate-spin h-7 w-7 border-2 border-orange-500 border-t-transparent rounded-full" />
+      </div>
+    );
+
+  if (imagenes.length === 0)
+    return (
+      <div className="text-center text-gray-400 py-8">
+        No hay imágenes cargadas aún.
+        {userLevel === 'admin' && <DashboardImagesManager />}
+      </div>
+    );
   return (
     <>
       {!isDashboard && <Marcas_v2 />}
+      {userLevel === 'admin' && <DashboardImagesManager />}
       {userLevel === 'instructor' ||
         (isDashboard && (
           <div className="flex flex-col items-center gap-4 my-4">
-            <img src={img1} alt="Imagen 1" className="w-auto max-w-full" />
-            <img src={img2} alt="Imagen 2" className="w-auto max-w-full" />
+            {imagenes.map((img) => (
+              <img
+                key={img.id}
+                src={`${URL}${img.url.replace(/^uploads\//, 'public/')}`}
+                alt={img.titulo || 'Imagen Dashboard'}
+                style={{ display: 'block', margin: '0 auto' }} // Solo centra, no cambia tamaño
+                loading="lazy"
+              />
+            ))}
           </div>
         ))}
       <footer className="bg-gray-200  shadow dark:bg-gray-900 ">
