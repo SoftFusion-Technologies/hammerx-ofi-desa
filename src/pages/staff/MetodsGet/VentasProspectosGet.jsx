@@ -7,7 +7,7 @@ import ClasePruebaModal from '../Components/ClasePruebaModal';
 import FormAltaVentas from '../../../components/Forms/FormAltaVentas';
 import Footer from '../../../components/footer/Footer';
 import { useAuth } from '../../../AuthContext';
-
+import StatsVentasModal from '../../../components/StatsVentasModal';
 const VentasProspectosGet = ({ currentUser }) => {
   const [prospectos, setProspectos] = useState([]);
   const [page, setPage] = useState(0);
@@ -27,6 +27,18 @@ const VentasProspectosGet = ({ currentUser }) => {
   const [tipoFiltro, setTipoFiltro] = React.useState('');
   const [canalFiltro, setCanalFiltro] = React.useState('');
   const [actividadFiltro, setActividadFiltro] = React.useState('');
+
+  const [showStats, setShowStats] = useState(false);
+
+  const [observaciones, setObservaciones] = useState({});
+
+  useEffect(() => {
+    const obs = {};
+    prospectos.forEach((p) => {
+      obs[p.id] = p.observacion || '';
+    });
+    setObservaciones(obs);
+  }, [prospectos]);
 
   const normalizeString = (str) => {
     return str
@@ -140,9 +152,7 @@ const VentasProspectosGet = ({ currentUser }) => {
 
   const handleChange = async (id, field, value) => {
     try {
-      await axios.put(`${URL}/${id}`, {
-        [field]: value
-      });
+      await axios.put(`${URL}/${id}`, { [field]: value });
       fetchProspectos(); // recarga la lista después de actualizar
     } catch (error) {
       console.error('Error al actualizar:', error);
@@ -402,7 +412,7 @@ const VentasProspectosGet = ({ currentUser }) => {
             </div>
           </form>
 
-          <div className="flex justify-center pb-10">
+          <div className="flex justify-center gap-3 pb-10 flex-wrap">
             <Link to="#">
               <button
                 onClick={abrirModal}
@@ -411,43 +421,69 @@ const VentasProspectosGet = ({ currentUser }) => {
                 Nuevo Registro
               </button>
             </Link>
+            <button
+              onClick={() => setShowStats(true)}
+              className="bg-[#fc4b08] hover:bg-orange-500 text-white py-2 px-4 rounded transition-colors duration-100 font-semibold"
+            >
+              Ver Estadísticas
+            </button>
           </div>
 
           {/* Botones de sedes con control de acceso */}
-          <div className="flex justify-center gap-4 mb-10 ml-10">
-            {sedes.map(({ key, label }) => {
-              const isAdmin = userLevel.toLowerCase() === 'admin';
-              const isEnabled = isAdmin || userSede === normalizeString(key);
-              const normalizedKey = normalizeString(key);
-
-              return (
-                <button
-                  key={key}
-                  className={`
-          py-2 px-6 rounded
-          ${
-            isEnabled
-              ? selectedSede === normalizedKey
-                ? 'bg-green-800 text-white cursor-pointer'
-                : 'bg-green-600 text-white cursor-pointer hover:bg-green-700'
-              : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-          }
-        `}
-                  disabled={!isEnabled}
-                  onClick={() => {
-                    if (isEnabled) {
-                      // Si clickeás el mismo, lo deselecciona (toggle)
-                      setSelectedSede(
-                        selectedSede === normalizedKey ? null : normalizedKey
-                      );
-                      setPage(1); // reset paginado al cambiar filtro
-                    }
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
+          <div className="w-full flex justify-center mb-10 px-2">
+            <div
+              className="flex gap-2 md:gap-4 flex-wrap md:flex-nowrap overflow-x-auto scrollbar-hide py-2"
+              style={{ WebkitOverflowScrolling: 'touch', maxWidth: '100vw' }}
+            >
+              {sedes.map(({ key, label }) => {
+                const isAdmin = userLevel.toLowerCase() === 'admin';
+                const isEnabled = isAdmin || userSede === normalizeString(key);
+                const normalizedKey = normalizeString(key);
+                const isSelected = selectedSede === normalizedKey;
+                return (
+                  <button
+                    key={key}
+                    className={`
+            flex-shrink-0
+            px-6 py-2
+            rounded-full
+            font-bold
+            text-sm md:text-base
+            focus:outline-none focus:ring-2 focus:ring-green-500
+            transition-all duration-150
+            ${
+              isEnabled
+                ? isSelected
+                  ? 'bg-green-800 text-white shadow-md scale-105 border border-green-900'
+                  : 'bg-green-600 text-white hover:bg-green-700 border border-green-700'
+                : 'bg-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed opacity-70'
+            }
+          `}
+                    style={{
+                      minWidth: 120,
+                      marginBottom: 4,
+                      marginTop: 4,
+                      letterSpacing: '.02em'
+                    }}
+                    disabled={!isEnabled}
+                    onClick={() => {
+                      if (isEnabled) {
+                        setSelectedSede(
+                          selectedSede === normalizedKey ? null : normalizedKey
+                        );
+                        setPage(1);
+                      }
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <style>{`
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  `}</style>
           </div>
 
           <div className="overflow-auto max-h-[70vh] mt-6 rounded-lg shadow-lg border border-gray-300 bg-white">
@@ -817,27 +853,23 @@ const VentasProspectosGet = ({ currentUser }) => {
                     >
                       <input
                         type="text"
-                        value={p.observacion}
+                        value={observaciones[p.id] ?? ''}
                         onChange={(e) =>
-                          handleChange(p.id, 'observacion', e.target.value)
+                          setObservaciones((prev) => ({
+                            ...prev,
+                            [p.id]: e.target.value
+                          }))
                         }
-                        className="
-      w-full
-      border-b
-      border-gray-300
-      text-sm
-      px-2
-      py-1
-      text-gray-700
-      bg-white
-      transition-colors
-      duration-200
-      ease-in-out
-      hover:text-black
-      focus:border-orange-600
-      focus:outline-none
-      cursor-text
-    "
+                        onBlur={async (e) => {
+                          if (e.target.value !== p.observacion) {
+                            await handleChange(
+                              p.id,
+                              'observacion',
+                              e.target.value
+                            );
+                          }
+                        }}
+                        className="w-full border-b border-gray-300 text-sm px-2 py-1 text-gray-700 bg-white transition-colors duration-200 ease-in-out hover:text-black focus:border-orange-600 focus:outline-none cursor-text"
                         placeholder="Observación"
                       />
                     </td>
@@ -918,6 +950,7 @@ const VentasProspectosGet = ({ currentUser }) => {
         setSelectedRecaptacion={setClaseSeleccionada}
         Sede={normalizeSede2(selectedSede)}
       />
+      <StatsVentasModal open={showStats} onClose={() => setShowStats(false)} />
     </>
   );
 };
