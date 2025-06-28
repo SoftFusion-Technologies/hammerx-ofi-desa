@@ -1271,6 +1271,7 @@ const PlanillaEntrenador = () => {
       <div className="overflow-x-auto mt-20">
         {(userLevel === 'admin' ||
           userLevel === 'gerente' ||
+          userLevel === 'instructor' ||
           userLevel === 'administrador') && (
           <div className="pl-5 mb-10">
             <Link to="/dashboard/instructores">

@@ -61,6 +61,12 @@ const NavbarStaff = () => {
       href: 'dashboard/admagrupadores',
       title: 'Adm. Agrupadores',
       roles: ['admin']
+    },
+    {
+      id: 6,
+      href: 'dashboard/logs',
+      title: 'Logs Detalle',
+      roles: ['gerente', 'admin', 'vendedor', 'administrador', 'instructor'] // Benjamin Orellana INI / 12/06/2024 /nueva forma de gestionar los accesos
     }
   ];
 
