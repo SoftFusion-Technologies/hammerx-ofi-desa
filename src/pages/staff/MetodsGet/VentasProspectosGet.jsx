@@ -8,6 +8,8 @@ import FormAltaVentas from '../../../components/Forms/FormAltaVentas';
 import Footer from '../../../components/footer/Footer';
 import { useAuth } from '../../../AuthContext';
 import StatsVentasModal from '../../../components/StatsVentasModal';
+import AgendasVentas from '../../../components/AgendasVentas';
+
 const VentasProspectosGet = ({ currentUser }) => {
   const [prospectos, setProspectos] = useState([]);
   const [page, setPage] = useState(0);
@@ -486,6 +488,8 @@ const VentasProspectosGet = ({ currentUser }) => {
   `}</style>
           </div>
 
+          <AgendasVentas userId={userId} />
+
           <div className="overflow-auto max-h-[70vh] mt-6 rounded-lg shadow-lg border border-gray-300 bg-white">
             <table className="min-w-[900px] text-sm border-collapse w-full">
               <thead className="bg-orange-600 text-white  sticky top-0 z-20">
@@ -950,7 +954,12 @@ const VentasProspectosGet = ({ currentUser }) => {
         setSelectedRecaptacion={setClaseSeleccionada}
         Sede={normalizeSede2(selectedSede)}
       />
-      <StatsVentasModal open={showStats} onClose={() => setShowStats(false)} />
+      <StatsVentasModal
+        open={showStats}
+        onClose={() => setShowStats(false)}
+        sede={selectedSede} // <-- acá le pasás la sede seleccionada (puede ser null para todas)
+        normalizeSede2={normalizeSede2}
+      />
     </>
   );
 };

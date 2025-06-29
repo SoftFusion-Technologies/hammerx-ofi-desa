@@ -35,7 +35,7 @@ function useCountUp(value, duration = 900) {
   return display;
 }
 
-export default function StatsVentasModal({ open, onClose }) {
+export default function StatsVentasModal({ open, onClose, sede }) {
   const [stats, setStats] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -47,14 +47,26 @@ export default function StatsVentasModal({ open, onClose }) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  console.log(sede);
+
+  // Ejemplo de uso correcto:
   useEffect(() => {
     if (open) {
+      setStats(null); // <-- esto activa el spinner hasta que venga la data nueva
+      const sedeParam = sede === 'smt' ? 'barriosur' : sede;
+
       axios
-        .get('http://localhost:8080/stats-ventas')
-        .then((res) => setStats(res.data))
+        .get('http://localhost:8080/stats-ventas', {
+          params: sedeParam ? { sede: sedeParam } : {}
+        })
+
+        .then((res) => {
+          console.log('Stats del backend:', res.data); // DEBUG: fijate en consola
+          setStats(res.data);
+        })
         .catch(() => setStats(null));
     }
-  }, [open]);
+  }, [open, sede]);
 
   if (!open) return null;
 
@@ -86,7 +98,8 @@ export default function StatsVentasModal({ open, onClose }) {
           {/* Título */}
           <div className="flex items-center justify-between mb-2 pr-7 font-bignoodle text-4xl text-center">
             <h2 className="text-xl font-bold text-[#fc4b08]">
-              Estadísticas de Ventas
+              Estadísticas de Ventas{' '}
+              <span className="text-green-500 uppercase">({sede})</span>
             </h2>
             {/* Botón cerrar arriba para mobile (sm:hidden) */}
             <button
