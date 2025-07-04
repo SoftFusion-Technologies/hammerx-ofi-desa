@@ -14,7 +14,7 @@ import {
   comercio9,
   comercio10,
   comercio11,
-  comercio12,
+  // comercio12,
   comercio13
 } from './marcas_v2';
 
@@ -31,7 +31,7 @@ const Marcas_v2 = () => {
     comercio9,
     comercio10,
     comercio11,
-    comercio12,
+    // comercio12,
     comercio13
   ];
 

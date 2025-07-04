@@ -438,43 +438,37 @@ const VentasProspectosGet = ({ currentUser }) => {
               style={{ WebkitOverflowScrolling: 'touch', maxWidth: '100vw' }}
             >
               {sedes.map(({ key, label }) => {
-                const isAdmin = userLevel.toLowerCase() === 'admin';
-                const isEnabled = isAdmin || userSede === normalizeString(key);
                 const normalizedKey = normalizeString(key);
                 const isSelected = selectedSede === normalizedKey;
+
                 return (
                   <button
                     key={key}
                     className={`
-            flex-shrink-0
-            px-6 py-2
-            rounded-full
-            font-bold
-            text-sm md:text-base
-            focus:outline-none focus:ring-2 focus:ring-green-500
-            transition-all duration-150
-            ${
-              isEnabled
-                ? isSelected
-                  ? 'bg-green-800 text-white shadow-md scale-105 border border-green-900'
-                  : 'bg-green-600 text-white hover:bg-green-700 border border-green-700'
-                : 'bg-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed opacity-70'
-            }
-          `}
+        flex-shrink-0
+        px-6 py-2
+        rounded-full
+        font-bold
+        text-sm md:text-base
+        focus:outline-none focus:ring-2 focus:ring-green-500
+        transition-all duration-150
+        ${
+          isSelected
+            ? 'bg-green-800 text-white shadow-md scale-105 border border-green-900'
+            : 'bg-green-600 text-white hover:bg-green-700 border border-green-700'
+        }
+      `}
                     style={{
                       minWidth: 120,
                       marginBottom: 4,
                       marginTop: 4,
                       letterSpacing: '.02em'
                     }}
-                    disabled={!isEnabled}
                     onClick={() => {
-                      if (isEnabled) {
-                        setSelectedSede(
-                          selectedSede === normalizedKey ? null : normalizedKey
-                        );
-                        setPage(1);
-                      }
+                      setSelectedSede(
+                        selectedSede === normalizedKey ? null : normalizedKey
+                      );
+                      setPage(1);
                     }}
                   >
                     {label}
