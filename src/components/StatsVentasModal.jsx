@@ -138,6 +138,47 @@ export default function StatsVentasModal({ open, onClose, sede }) {
                   value: c.cantidad
                 }))}
               />
+              {stats.campaniasPorOrigen &&
+                stats.campaniasPorOrigen.length > 0 && (
+                  <div>
+                    <div className="text-xs font-bold text-gray-600 dark:text-gray-300 mb-1 mt-2">
+                      Campañas por Origen
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {stats.campaniasPorOrigen.map((cpo, idx) => {
+                        // Buscamos la conversión para este origen (puede ser 0 si no hay)
+                        const conv = stats.campaniasConvertidasPorOrigen?.find(
+                          (cc) => cc.origen === cpo.origen
+                        );
+                        return (
+                          <div
+                            key={cpo.origen + idx}
+                            className="flex items-center gap-2 bg-orange-100 dark:bg-zinc-800 px-2 py-1 rounded-lg text-sm font-semibold"
+                          >
+                            <span className="text-[#fc4b08]">
+                              {/* Podés poner un ícono acá */}
+                            </span>
+                            {cpo.origen || (
+                              <span className="italic text-gray-400">
+                                Sin especificar
+                              </span>
+                            )}
+                            :{' '}
+                            <span className="text-gray-900 dark:text-white">
+                              {cpo.cantidad}
+                            </span>
+                            <span className="ml-2 px-2 py-0.5 rounded bg-green-100 dark:bg-green-700/40 text-green-700 dark:text-green-200 text-xs">
+                              {conv
+                                ? `${conv.cantidad_convertidos} convertidos`
+                                : '0 convertidos'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
               <StatGroup
                 title="Actividades"
                 items={stats.actividades.map((a) => ({

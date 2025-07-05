@@ -117,6 +117,7 @@ const FormAltaVentas = ({
   const formatSedeValue = (selectedSede) => {
     return selectedSede.length === 3 ? 'todas' : selectedSede.join(', ');
   };
+
   const handleSubmitProspecto = async (valores) => {
     try {
       console.log('Valores del form:', valores);
@@ -142,9 +143,15 @@ const FormAltaVentas = ({
         clase_prueba_3_fecha: valores.clase_prueba_3_fecha,
         clase_prueba_3_obs: valores.clase_prueba_3_obs,
         convertido: valores.convertido || false,
-        observacion: valores.observacion || ""
+        observacion: valores.observacion || ''
       };
 
+      if (valores.canal_contacto === 'Campaña') {
+        prospectoData.campania_origen = valores.campania_origen || '';
+      } else {
+        // Si no es campaña, lo mandás vacío o null (opcional)
+        prospectoData.campania_origen = '';
+      }
       const url = valores.id
         ? `http://localhost:8080/ventas_prospectos/${valores.id}`
         : 'http://localhost:8080/ventas_prospectos';
@@ -372,6 +379,35 @@ const FormAltaVentas = ({
                       )}
                     </div>
                   </div>
+
+                  {values.canal_contacto === 'Campaña' && (
+                    <div className="mt-3">
+                      <label
+                        htmlFor="campania_origen"
+                        className="text-black font-medium"
+                      >
+                        Origen de la campaña
+                      </label>
+                      <Field
+                        as="select"
+                        id="campania_origen"
+                        name="campania_origen"
+                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                      >
+                        <option value="">Seleccione origen</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="Whatsapp">Whatsapp</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="Otro">Otro</option>
+                      </Field>
+                      {errors.campania_origen && touched.campania_origen && (
+                        <div className="mt-1">
+                          <Alerta>{errors.campania_origen}</Alerta>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   <div className="flex items-center gap-4">
                     <label
                       htmlFor="contacto"

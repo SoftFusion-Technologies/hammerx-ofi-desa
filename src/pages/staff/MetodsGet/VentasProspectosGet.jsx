@@ -137,15 +137,29 @@ const VentasProspectosGet = ({ currentUser }) => {
     }
   };
 
-  // Actualiza el canal, optimista en local y actualiza backend
+  // Actualiza el canal y, si es campaña, el origen
   const handleCanalChange = async (id, nuevoCanal) => {
     setProspectos((old) =>
-      old.map((p) => (p.id === id ? { ...p, canal_contacto: nuevoCanal } : p))
+      old.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              canal_contacto: nuevoCanal,
+              campania_origen:
+                nuevoCanal === 'Campaña' ? p.campania_origen || '' : '' // si no es campaña, lo limpia
+            }
+          : p
+      )
     );
+
+    // Buscar el prospecto actual para saber el origen (si es campaña)
+    const prospecto = prospectos.find((p) => p.id === id);
 
     try {
       await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
-        canal_contacto: nuevoCanal
+        canal_contacto: nuevoCanal,
+        campania_origen:
+          nuevoCanal === 'Campaña' ? prospecto?.campania_origen || '' : ''
       });
     } catch (error) {
       console.error('Error al actualizar canal:', error);
@@ -299,6 +313,21 @@ const VentasProspectosGet = ({ currentUser }) => {
 
     // Se abre el modal para editar la recaptacion
     setModalNew(true);
+  };
+
+  const handleOrigenChange = async (id, value) => {
+    setProspectos((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, campania_origen: value } : p))
+    );
+
+    try {
+      await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
+        canal_contacto: 'Campaña', // siempre es campaña acá
+        campania_origen: value
+      });
+    } catch (error) {
+      console.error('Error al actualizar origen de campaña:', error);
+    }
   };
 
   return (
@@ -671,33 +700,22 @@ const VentasProspectosGet = ({ currentUser }) => {
                         p.convertido ? 'bg-green-500' : ''
                       }`}
                     >
+                      {/* Canal de contacto */}
                       <select
                         value={p.canal_contacto}
                         onChange={(e) =>
                           handleCanalChange(p.id, e.target.value)
                         }
                         className="
-                        w-full
-                        rounded
-                        border
-                        border-gray-300
-                        text-sm
-                        px-3
-                        py-2
-                        font-sans
-                        text-gray-700
-                        bg-white
-                        transition-colors
-                        duration-200
-                        ease-in-out
-                        hover:bg-orange-50
-                        hover:text-orange-900
-                        focus:outline-none
-                        focus:ring-2
-                        focus:ring-orange-400
-                        focus:border-orange-600
-                        cursor-pointer
-                      "
+      w-full
+      rounded
+      border border-gray-300
+      text-sm px-3 py-2 font-sans text-gray-700 bg-white
+      transition-colors duration-200 ease-in-out
+      hover:bg-orange-50 hover:text-orange-900
+      focus:outline-none focus:ring-2 focus:ring-orange-400
+      focus:border-orange-600 cursor-pointer
+    "
                       >
                         <option value="Mostrador">Mostrador</option>
                         <option value="Whatsapp">Whatsapp</option>
@@ -709,6 +727,23 @@ const VentasProspectosGet = ({ currentUser }) => {
                           Comentarios/Stickers
                         </option>
                       </select>
+
+                      {/* Select para origen de campaña (solo si el canal es "Campaña") */}
+                      {p.canal_contacto === 'Campaña' && (
+                        <select
+                          value={p.campania_origen || ''}
+                          onChange={(e) =>
+                            handleOrigenChange(p.id, e.target.value)
+                          }
+                          className="w-full mt-2 rounded border border-gray-300 text-sm px-3 py-2 font-sans text-gray-700 bg-white"
+                        >
+                          <option value="">Seleccione origen</option>
+                          <option value="Instagram">Instagram</option>
+                          <option value="Whatsapp">Whatsapp</option>
+                          <option value="Facebook">Facebook</option>
+                          <option value="Otro">Otro</option>
+                        </select>
+                      )}
                     </td>
 
                     <td
