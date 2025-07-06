@@ -44,29 +44,55 @@ const NotificationBell = () => {
 
   const fetchNotifications = async () => {
     try {
+      // 1. Notificaciones "manuales"
       const response = await fetch(`${URL}notifications/${userId}`);
       const data = await response.json();
-      if (Array.isArray(data)) {
-        const filteredData = data.filter((n) => {
-          if (
-            n.title === 'Nueva queja registrada' ||
-            n.title === 'Nueva pregunta frecuente registrada'
-          ) {
-            return true;
-          }
-          if (
-            n.title === 'Nueva clase de prueba registrada' ||
-            n.title === 'Nueva novedad registrada'
-          ) {
-            return userLevel !== 'instructor';
-          }
-          return false;
-        });
 
-        const unreadNotifications = filteredData.filter((n) => n.leido === 0);
-        setNotifications(filteredData);
-        setNewNotificationCount(unreadNotifications.length);
-      }
+      // 2. Notificaciones automáticas de clase de prueba (HOY)
+      const resClases = await fetch(
+        `${URL}notifications/clases-prueba/${userId}`
+      );
+      const clasesPrueba = await resClases.json();
+
+      // Normalizá formato para mostrar juntos:
+      const clasesPruebaNotis = clasesPrueba.map((p) => ({
+        id: `clase-prueba-${p.prospecto_id}`,
+        title: 'Clase de prueba agendada HOY',
+        message: `Clase para ${p.nombre} (${p.contacto})`,
+        created_at:
+          p.clase_prueba_1_fecha ||
+          p.clase_prueba_2_fecha ||
+          p.clase_prueba_3_fecha,
+        leido: 0, // Siempre 0 porque son "del día", no se pueden marcar como leídas
+        reference_id: p.prospecto_id,
+        type: 'clase_prueba'
+      }));
+
+      // Filtros de las notificaciones manuales como hacías antes
+      const filteredData = data.filter((n) => {
+        if (
+          n.title === 'Nueva queja registrada' ||
+          n.title === 'Nueva pregunta frecuente registrada'
+        ) {
+          return true;
+        }
+        if (
+          n.title === 'Nueva clase de prueba registrada' ||
+          n.title === 'Nueva novedad registrada'
+        ) {
+          return userLevel !== 'instructor';
+        }
+        return false;
+      });
+
+      // Uní ambas listas (las automáticas siempre van al principio)
+      const allNotis = [...clasesPruebaNotis, ...filteredData];
+
+      // Calculá no leídas
+      const unreadNotifications = allNotis.filter((n) => n.leido === 0);
+
+      setNotifications(allNotis);
+      setNewNotificationCount(unreadNotifications.length);
     } catch (error) {
       console.error('Error al obtener las notificaciones:', error);
     }
@@ -116,8 +142,15 @@ const NotificationBell = () => {
       navigate(`/dashboard/quejas/${notification.reference_id}`);
     } else if (notification.title === 'Nueva novedad registrada') {
       navigate(`/dashboard/novedades/${notification.reference_id}`);
-    } else if (notification.title === 'Nueva clase de prueba registrada') {
-      navigate(`/dashboard/testclass/`);
+    } else if (
+      notification.title === 'Nueva clase de prueba registrada' ||
+      notification.type === 'clase_prueba' ||
+      notification.title === 'Clase de prueba agendada HOY'
+    ) {
+      // Redirigí y pasá el prospecto_id como parámetro de estado
+      navigate('/dashboard/ventas', {
+        state: { prospectoId: notification.reference_id }
+      });
     } else if (notification.title === 'Nueva pregunta frecuente registrada') {
       navigate(`/dashboard/ask/${notification.reference_id}`);
     }

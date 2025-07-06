@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import NavbarStaff from '../NavbarStaff';
@@ -9,9 +9,13 @@ import Footer from '../../../components/footer/Footer';
 import { useAuth } from '../../../AuthContext';
 import StatsVentasModal from '../../../components/StatsVentasModal';
 import AgendasVentas from '../../../components/AgendasVentas';
+import { useLocation } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 
 const VentasProspectosGet = ({ currentUser }) => {
   const [prospectos, setProspectos] = useState([]);
+  const [prospectosConAgendaHoy, setProspectosConAgendaHoy] = useState([]);
+
   const [page, setPage] = useState(0);
   const rowsPerPage = 20;
   const [search, setSearch] = useState('');
@@ -34,6 +38,13 @@ const VentasProspectosGet = ({ currentUser }) => {
 
   const [observaciones, setObservaciones] = useState({});
 
+  const location = useLocation();
+  const prospectoIdToScroll = location.state?.prospectoId;
+  const dataLoaded = useRef(false); // Para evitar scroll antes de que llegue la data
+
+  const [showAgendasModal, setShowAgendasModal] = useState(false);
+  const [alertasSegundoContacto, setAlertasSegundoContacto] = useState({});
+
   useEffect(() => {
     const obs = {};
     prospectos.forEach((p) => {
@@ -41,6 +52,31 @@ const VentasProspectosGet = ({ currentUser }) => {
     });
     setObservaciones(obs);
   }, [prospectos]);
+
+  // Traer prospectos con clase de prueba hoy
+  useEffect(() => {
+    axios
+      .get(`http://localhost:8080/notifications/clases-prueba/${userId}`)
+      .then((res) =>
+        setProspectosConAgendaHoy(res.data.map((p) => p.prospecto_id))
+      )
+      .catch(() => setProspectosConAgendaHoy([]));
+  }, [userId]);
+
+  useEffect(() => {
+    // Pedí todas las alertas
+    axios
+      .get('http://localhost:8080/prospectos-alertas')
+      .then((res) => {
+        // armamos objeto: { [id]: 'rojo'/'amarillo'/'ninguno' }
+        const obj = {};
+        res.data.forEach((p) => {
+          obj[p.id] = p.color_2do_contacto;
+        });
+        setAlertasSegundoContacto(obj);
+      })
+      .catch(() => setAlertasSegundoContacto({}));
+  }, []);
 
   const normalizeString = (str) => {
     return str
@@ -105,6 +141,12 @@ const VentasProspectosGet = ({ currentUser }) => {
     setPage(1);
   }, []);
 
+  // Abrir automáticamente a los 2 segundos, solo la primera vez
+  useEffect(() => {
+    let timer = setTimeout(() => setShowAgendasModal(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const fetchProspectos = async () => {
     try {
       const response = await axios.get(URL, {
@@ -114,10 +156,27 @@ const VentasProspectosGet = ({ currentUser }) => {
         }
       });
       setProspectos(response.data);
+      dataLoaded.current = true;
     } catch (error) {
       console.error('Error al obtener prospectos:', error);
     }
   };
+
+  // Hacé scroll cuando la data esté cargada y venga el prospectoId
+  useEffect(() => {
+    if (dataLoaded.current && prospectoIdToScroll) {
+      const row = document.getElementById(`prospecto-${prospectoIdToScroll}`);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Opcional: resaltá la fila un rato
+        row.classList.add('bg-yellow-200', 'animate-pulse');
+        setTimeout(
+          () => row.classList.remove('animate-pulse', 'bg-yellow-200'),
+          1500
+        );
+      }
+    }
+  }, [prospectos, prospectoIdToScroll]);
 
   // Actualiza un campo checkbox (como n_contacto_2) y refresca lista
   const handleCheckboxChange = async (id, field) => {
@@ -211,6 +270,7 @@ const VentasProspectosGet = ({ currentUser }) => {
   };
 
   // Filtrar prospectos
+  // Filtro
   const filtered = prospectos?.length
     ? prospectos.filter((p) => {
         const nombreMatch = (p.nombre || '')
@@ -234,28 +294,27 @@ const VentasProspectosGet = ({ currentUser }) => {
       })
     : [];
 
-  // Ordenar por ID descendente
+  // Ordenar por convertido y por id desc
   const sorted = [...filtered].sort((a, b) => {
-    // Si a.convertido es false y b.convertido es true, a debe ir primero (return -1)
     if (!a.convertido && b.convertido) return -1;
-    // Si a.convertido es true y b.convertido es false, b debe ir primero (return 1)
     if (a.convertido && !b.convertido) return 1;
-    // Si ambos tienen el mismo valor de convertido, ordenar por id descendente
     return b.id - a.id;
   });
 
-  // Siempre tener al menos 1 página
+  // Paginación
   const totalPages = Math.max(Math.ceil(sorted.length / rowsPerPage), 1);
-
-  // Asegurar que `page` no supere el total
   const safePage = Math.min(page, totalPages);
-
-  // Calcular índices de paginación
   const startIndex = (safePage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
 
-  // Items visibles
-  const visibleProspectos = sorted.slice(0, prospectos.length);
+  // Items visibles paginados
+  const visibleProspectos = sorted.slice(startIndex, endIndex);
+
+  console.log('prospectosConAgendaHoy', prospectosConAgendaHoy);
+  console.log(
+    'visibleProspectos',
+    visibleProspectos.map((p) => p.id)
+  );
 
   // Calcular cuántas filas vacías para llegar a 20
   const emptyRowsCount = 20 - visibleProspectos.length;
@@ -458,6 +517,15 @@ const VentasProspectosGet = ({ currentUser }) => {
             >
               Ver Estadísticas
             </button>
+            <div
+              className="flex items-center ml-3 gap-1 bg-yellow-200 border border-yellow-400 text-yellow-900 font-bold px-4 py-1 rounded-xl shadow select-none cursor-pointer hover:scale-105 active:scale-95 transition"
+              onClick={() => setShowAgendasModal(true)}
+              title="Ver agendas automáticas del día"
+            >
+              <span className="text-xl font-black">⚠️</span>
+              <span>Agendas de hoy:</span>
+              <span className="text-lg">{prospectosConAgendaHoy.length}</span>
+            </div>
           </div>
 
           {/* Botones de sedes con control de acceso */}
@@ -511,8 +579,12 @@ const VentasProspectosGet = ({ currentUser }) => {
   `}</style>
           </div>
 
-          <AgendasVentas userId={userId} />
-
+          {/* Modal de agendas automáticas */}
+          <AgendasVentas
+            userId={userId}
+            open={showAgendasModal}
+            onClose={() => setShowAgendasModal(false)}
+          />
           <div className="overflow-auto max-h-[70vh] mt-6 rounded-lg shadow-lg border border-gray-300 bg-white">
             <table className="min-w-[900px] text-sm border-collapse w-full">
               <thead className="bg-orange-600 text-white  sticky top-0 z-20">
@@ -574,8 +646,13 @@ const VentasProspectosGet = ({ currentUser }) => {
               <tbody>
                 {visibleProspectos.map((p) => (
                   <tr
+                    id={`prospecto-${p.id}`}
                     key={p.id}
-                    className="hover:bg-orange-600 transition-colors duration-300 cursor-pointer text-gray-800"
+                    className={`${
+                      prospectosConAgendaHoy.includes(Number(p.id))
+                        ? 'bg-yellow-100 font-semibold'
+                        : ''
+                    } hover:bg-orange-600 transition-colors duration-300 cursor-pointer text-gray-800`}
                     style={{ minHeight: '48px' }}
                   >
                     <td
@@ -592,39 +669,58 @@ const VentasProspectosGet = ({ currentUser }) => {
                     >
                       {p.asesor_nombre}
                     </td>
-
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
                         p.convertido ? 'bg-green-500' : ''
                       }`}
                     >
-                      <input
-                        type="text"
-                        value={p.nombre}
-                        onChange={(e) =>
-                          handleChange(p.id, 'nombre', e.target.value)
-                        }
-                        className="
-      w-full
-      border-b
-      border-gray-300
-      text-sm
-      px-2
-      py-1
-      text-gray-700
-      bg-white
-      transition-colors
-      duration-200
-      ease-in-out
-      hover:text-black
-      focus:border-orange-600
-      focus:outline-none
-      cursor-text
-    "
-                        placeholder="Nombre completo"
-                      />
-                    </td>
+                      <div className="flex items-center gap-2">
+                        {alertasSegundoContacto[p.id] === 'amarillo' && (
+                          <span
+                            title="Pendiente segundo contacto"
+                            className="text-yellow-400 text-xl font-bold"
+                            style={{ lineHeight: 1 }}
+                          >
+                            &#9888;
+                          </span>
+                        )}
 
+                        {alertasSegundoContacto[p.id] === 'rojo' && (
+                          <AlertTriangle
+                            title="Segundo contacto URGENTE"
+                            className="text-red-500 inline-block"
+                            size={22}
+                            style={{ verticalAlign: 'middle', marginRight: 4 }}
+                          />
+                        )}
+
+                        <input
+                          type="text"
+                          value={p.nombre}
+                          onChange={(e) =>
+                            handleChange(p.id, 'nombre', e.target.value)
+                          }
+                          className="
+        w-full
+        border-b
+        border-gray-300
+        text-sm
+        px-2
+        py-1
+        text-gray-700
+        bg-white
+        transition-colors
+        duration-200
+        ease-in-out
+        hover:text-black
+        focus:border-orange-600
+        focus:outline-none
+        cursor-text
+      "
+                          placeholder="Nombre completo"
+                        />
+                      </div>
+                    </td>
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
                         p.convertido ? 'bg-green-500' : ''
@@ -656,7 +752,6 @@ const VentasProspectosGet = ({ currentUser }) => {
                         placeholder="DNI"
                       />
                     </td>
-
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
                         p.convertido ? 'bg-green-500' : ''
@@ -694,7 +789,6 @@ const VentasProspectosGet = ({ currentUser }) => {
                         <option value="ExSocio">ExSocio</option>
                       </select>
                     </td>
-
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[180px] ${
                         p.convertido ? 'bg-green-500' : ''
@@ -745,7 +839,6 @@ const VentasProspectosGet = ({ currentUser }) => {
                         </select>
                       )}
                     </td>
-
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
                         p.convertido ? 'bg-green-500' : ''
@@ -777,7 +870,6 @@ const VentasProspectosGet = ({ currentUser }) => {
                         placeholder="Usuario / Celular"
                       />
                     </td>
-
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[170px] ${
                         p.convertido ? 'bg-green-500' : ''
@@ -819,7 +911,6 @@ const VentasProspectosGet = ({ currentUser }) => {
                         <option value="Pase full">Pase full</option>
                       </select>
                     </td>
-
                     {/* N° contacto */}
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
@@ -833,7 +924,6 @@ const VentasProspectosGet = ({ currentUser }) => {
                         className="mx-auto cursor-default transform scale-150"
                       />
                     </td>
-
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
                         p.convertido ? 'bg-green-500' : ''
@@ -862,7 +952,6 @@ const VentasProspectosGet = ({ currentUser }) => {
                         className="mx-auto cursor-default transform scale-150"
                       />
                     </td>
-
                     {/* Clases de prueba */}
                     {[1, 2, 3].map((num) => (
                       <td
@@ -878,7 +967,6 @@ const VentasProspectosGet = ({ currentUser }) => {
                           : '-'}
                       </td>
                     ))}
-
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
                         p.convertido ? 'bg-green-500' : ''
@@ -906,7 +994,6 @@ const VentasProspectosGet = ({ currentUser }) => {
                         placeholder="Observación"
                       />
                     </td>
-
                     {/* Convertido */}
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
@@ -922,7 +1009,6 @@ const VentasProspectosGet = ({ currentUser }) => {
                         className="mx-auto cursor-default transform scale-150"
                       />
                     </td>
-
                     {/* Editar y eliminar */}
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[50px] ${

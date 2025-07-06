@@ -1,98 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Calendar, Bell, X, Eye } from 'lucide-react'; // Usá íconos propios si querés
+import { Calendar, Bell, X } from 'lucide-react';
 
 const URL = 'http://localhost:8080/';
 
-export default function AgendasVentas({ userId }) {
-  const [agendas, setAgendas] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [showNotaModal, setShowNotaModal] = useState(false);
-  const [agendaSeleccionada, setAgendaSeleccionada] = useState(null);
-  const [nota, setNota] = useState('');
-  // Estados para ver nota completa
-  const [showVerNota, setShowVerNota] = useState(false);
-  const [notaActual, setNotaActual] = useState('');
-
-  // Cada vez que el componente monta, setea el timer para abrir el modal
+export default function AgendasVentas({ userId, open, onClose }) {
+  const [notis, setNotis] = useState([]);
+  // Cargá los datos cuando se abre el modal y hay userId
   useEffect(() => {
-    const timer = setTimeout(() => setShowModal(true), 2000);
+    if (open && userId) {
+      axios
+        .get(`${URL}notifications/clases-prueba/${userId}`)
+        .then((res) => setNotis(res.data))
+        .catch(() => setNotis([]));
+    }
+  }, [userId, open]);
 
-    // Siempre consulta con el filtro por usuario_id
-    axios
-      .get(`${URL}agendas-ventas`, {
-        params: { usuario_id: userId }
-      })
-      .then((res) => setAgendas(res.data))
-      .catch(() => setAgendas([]));
-
-    return () => clearTimeout(timer);
-  }, [userId]); // << Se actualiza si cambia userId
-
-  // Si no debe mostrarse, no renderiza nada del modal
-  if (!showModal) return null;
+  if (!open) return null; // Mostralo solo si el prop open es true
 
   function formatearFecha(fechaISO) {
+    if (!fechaISO) return '';
     const fecha = new Date(fechaISO);
     const dia = String(fecha.getDate()).padStart(2, '0');
     const mes = String(fecha.getMonth() + 1).padStart(2, '0');
     const anio = fecha.getFullYear();
     return `${dia}-${mes}-${anio}`;
   }
-
-  // Abre el modal y selecciona la agenda
-  const handleAbrirNota = (agenda) => {
-    setAgendaSeleccionada(agenda);
-    setNota('');
-    setShowNotaModal(true);
-  };
-
-  // Envía el PUT al backend
-  const handleEnviarNota = async () => {
-    if (!agendaSeleccionada || !nota.trim()) return;
-
-    try {
-      await axios.put(`${URL}agendas-ventas/${agendaSeleccionada.id}`, {
-        nota_envio: nota
-      });
-
-      // Actualiza la agenda a "enviada" en frontend
-      setAgendas((prev) =>
-        prev.map((a) =>
-          a.id === agendaSeleccionada.id
-            ? {
-                ...a,
-                enviada: 1,
-                nota_envio: nota,
-                fecha_envio: new Date().toISOString()
-              }
-            : a
-        )
-      );
-
-      setShowNotaModal(false);
-      setAgendaSeleccionada(null);
-      setNota('');
-    } catch (err) {
-      alert('Error al marcar como enviada');
-    }
-  };
-
-  const handleEliminarAgenda = async (id) => {
-    if (!window.confirm('¿Seguro que deseas eliminar esta agenda?')) return;
-    try {
-      await axios.delete(`http://localhost:8080/agendas-ventas/${id}`);
-      setAgendas((prev) => prev.filter((a) => a.id !== id));
-    } catch (error) {
-      alert('Error al eliminar agenda');
-    }
-  };
-
-  // Función para truncar texto
-  const getResumenNota = (nota, max = 80) => {
-    if (!nota) return '';
-    return nota.length > max ? nota.slice(0, max) + '...' : nota;
-  };
 
   return (
     <div
@@ -103,7 +36,7 @@ export default function AgendasVentas({ userId }) {
       <div className="relative bg-white dark:bg-zinc-900/95 rounded-3xl shadow-2xl max-w-2xl w-[97vw] md:w-full px-4 md:px-10 py-8 animate-fade-in border border-orange-100 dark:border-zinc-700">
         {/* Botón cerrar */}
         <button
-          onClick={() => setShowModal(false)}
+          onClick={onClose}
           className="absolute top-4 right-4 md:top-6 md:right-6 text-gray-500 hover:text-red-500 transition-colors p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-400"
           aria-label="Cerrar"
         >
@@ -115,217 +48,135 @@ export default function AgendasVentas({ userId }) {
           <div className="flex items-center gap-4">
             <Bell className="text-[#fc4b08] drop-shadow" size={38} />
             <h2 className="text-4xl font-extrabold text-[#fc4b08] tracking-wide font-bignoodle relative after:content-[''] after:block after:h-1 after:bg-orange-200 after:w-1/2 after:mx-auto after:rounded-full after:mt-1">
-              Próximas Agendas y Recordatorios
+              Clases de prueba agendadas HOY
             </h2>
           </div>
           <p className="text-lg text-gray-500 dark:text-gray-300 text-center">
-            Aquí verás tus próximas gestiones, contactos y recordatorios
-            importantes.
+            Estos prospectos tienen una clase de prueba pendiente hoy.
           </p>
+          <div className="mt-2 mb-4 text-base text-orange-800 dark:text-orange-300 bg-orange-50 border-l-4 border-orange-300 rounded px-4 py-2 font-semibold shadow-sm text-center max-w-md mx-auto">
+            <span className="font-bold">Recordá notificar:</span>
+            <ul className="list-disc list-inside mt-1 text-[1rem] font-normal text-left inline-block mx-auto">
+              <li>Al instructor encargado de turno</li>
+              <li>Al recepcionista encargado de turno</li>
+              <li>Recordatorio al cliente</li>
+            </ul>
+          </div>
         </div>
 
-        {/* Listado de agendas */}
+        {/* Listado de notificaciones */}
         <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-1 md:pr-2 scrollbar-thin scrollbar-thumb-orange-200">
-          {agendas.length === 0 ? (
+          {notis.length === 0 ? (
             <div className="text-gray-400 text-xl text-center py-10 font-medium">
-              No hay agendas programadas.
+              No hay clases de prueba agendadas para hoy.
             </div>
           ) : (
-            agendas.map((a) => (
+            notis.map((n) => (
               <div
-                key={a.id}
-                className={`
-              flex flex-col md:flex-row md:items-center gap-4 p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow
-              ${
-                a.tipo === 'seguimiento'
-                  ? 'bg-orange-50/80 border-l-8 border-[#fc4b08]'
-                  : 'bg-green-50/80 border-l-8 border-green-400'
-              }
-            `}
-                style={{
-                  backdropFilter: 'blur(2px)',
-                  marginBottom: '8px'
-                }}
+                key={n.prospecto_id}
+                className="flex flex-col md:flex-row md:items-center gap-4 p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow bg-yellow-50/90 border-l-8 border-yellow-400"
+                style={{ backdropFilter: 'blur(2px)', marginBottom: '8px' }}
               >
                 {/* Fecha */}
                 <div className="flex items-center gap-3 min-w-[130px]">
-                  <Calendar className="text-gray-400" size={28} />
+                  <Calendar className="text-yellow-500" size={28} />
                   <span className="font-extrabold text-lg tracking-wide text-gray-900 dark:text-white">
-                    {a.fecha_agenda ? formatearFecha(a.fecha_agenda) : ''}
+                    {formatearFecha(
+                      n.clase_prueba_1_fecha ||
+                        n.clase_prueba_2_fecha ||
+                        n.clase_prueba_3_fecha
+                    )}
                   </span>
                 </div>
-                {/* Info prospecto y detalle */}
-                <div className="flex-1 flex flex-col md:flex-row md:items-center md:gap-6">
+                {/* Info prospecto */}
+                <div className="flex-1">
                   <div>
-                    <span className="font-semibold text-lg text-gray-800 dark:text-gray-100">
-                      {a.prospecto_nombre}
+                    <span className="font-semibold text-lg text-yellow-900 dark:text-yellow-100">
+                      {n.nombre}
                     </span>
-                    <span className="block text-gray-500 text-sm mt-1">
-                      Sede: <span className="font-bold">{a.sede}</span>
-                      &nbsp;|&nbsp; Colaborador:{' '}
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-300 text-sm">
+                    <span>
+                      Colaborador:{' '}
                       <span className="text-orange-700 dark:text-orange-400 font-bold">
-                        {a.asesor_nombre}
+                        {n.asesor_nombre}
                       </span>
                     </span>
-                  </div>
-                  <div className="mt-2 md:mt-0">
-                    <span
-                      className={`
-                    inline-block rounded-full px-3 py-1 text-sm font-bold shadow-sm mr-2
-                    ${
-                      a.tipo === 'seguimiento'
-                        ? 'bg-orange-200/80 text-orange-900'
-                        : 'bg-green-200/80 text-green-900'
-                    }
-                  `}
-                    >
-                      {a.tipo === 'seguimiento'
-                        ? '2do contacto'
-                        : 'Clase de prueba'}
-                    </span>
-                    <span className="text-gray-700 dark:text-gray-300 text-base">
-                      {a.descripcion}
+                    <span className="block mt-1">
+                      Contacto: <span className="font-bold">{n.contacto}</span>
                     </span>
                   </div>
-                  {a.motivo_no_envio && (
-                    <span className="text-xs text-red-600 font-medium ml-2 mt-2 md:mt-0">
-                      Motivo: {a.motivo_no_envio}
-                    </span>
-                  )}
                 </div>
-                {/* Estado agenda */}
-                <div className="text-sm text-gray-500 font-semibold mt-3 md:mt-0 md:ml-auto min-w-[135px]">
-                  {a.enviada ? (
-                    <div className="flex flex-col items-start gap-2 w-full">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-green-100 text-green-700 rounded px-3 py-1">
-                          Enviada
-                        </span>
-                        <button
-                          className="ml-2 text-red-500 hover:text-red-700 p-1 rounded-full transition"
-                          onClick={() => handleEliminarAgenda(a.id)}
-                          title="Eliminar agenda"
-                        >
-                          <X size={22} />
-                        </button>
-                      </div>
-                      {a.nota_envio && (
-                        <div className="mt-2 bg-green-50 border-l-4 border-green-400 px-4 py-2 rounded-xl text-green-800 text-sm font-medium shadow-sm w-full flex flex-wrap items-center gap-1">
-                          <span className="font-bold mr-2">📝 Nota:</span>
-                          <span className="truncate max-w-[130px] md:max-w-[250px] inline-block align-middle">
-                            {getResumenNota(a.nota_envio, 10)}
-                          </span>
-                          {a.nota_envio.length > 10 && (
-                            <button
-                              className="ml-2 text-blue-600 hover:underline text-xs font-bold"
-                              onClick={() => {
-                                setNotaActual(a.nota_envio);
-                                setShowVerNota(true);
-                              }}
-                            >
-                              Ver más
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span
-                      className="bg-yellow-200/70 text-yellow-800 rounded px-3 py-1 cursor-pointer hover:bg-yellow-300 transition"
-                      onClick={() => handleAbrirNota(a)}
-                      title="Marcar como enviada y agregar nota"
+                <div className="flex flex-col items-center gap-2 mt-1">
+                  <span className="inline-block rounded-full px-4 py-2 bg-yellow-200/80 text-yellow-900 font-bold">
+                    Pendiente
+                  </span>
+                  <a
+                    href={`https://wa.me/${n.contacto.replace(
+                      /\D/g,
+                      ''
+                    )}?text=${encodeURIComponent(
+                      `Hola, soy ${n.asesor_nombre} de HammerX y te quería recordar tu clase de prueba agendada para hoy.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex justify-center"
+                  >
+                    <button
+                      className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded-lg font-semibold shadow flex items-center gap-1 text-sm"
+                      style={{
+                        minWidth: 0,
+                        fontSize: '0.96rem',
+                        height: '32px'
+                      }}
                     >
-                      Pendiente
-                    </span>
-                  )}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="17"
+                        height="17"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                        className="inline-block"
+                        style={{ marginRight: '2px' }}
+                      >
+                        <path d="M20.52 3.48a12.1 12.1 0 0 0-17.09 0c-4.01 4-4.17 10.44-.36 14.62l-1.06 3.84a1.003 1.003 0 0 0 1.27 1.27l3.84-1.06c4.18 3.81 10.62 3.65 14.62-.36 4.01-4.01 4.01-10.52 0-14.55zm-1.41 13.13c-3.34 3.33-8.77 3.48-12.28.35l-.2-.18-2.34.65.65-2.34-.18-.2c-3.13-3.5-2.98-8.94.35-12.28a9.09 9.09 0 0 1 12.82 12zm-6.43-8.51c-2.46 0-4.46 2-4.46 4.46s2 4.46 4.46 4.46 4.46-2 4.46-4.46-2-4.46-4.46-4.46zm0 7.46c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"></path>
+                      </svg>
+                      Contactar
+                    </button>
+                  </a>
                 </div>
               </div>
             ))
           )}
         </div>
+
         {/* Botón cerrar extra abajo para mobile */}
         <button
           className="mt-10 w-full py-3 rounded-2xl bg-[#fc4b08] hover:bg-orange-600 text-white text-xl font-bold transition shadow-md block md:hidden"
-          onClick={() => setShowModal(false)}
+          onClick={onClose}
         >
           Cerrar
         </button>
       </div>
-
-      {/* Modales secundarios van aquí */}
-      {showNotaModal && (
-        <div className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center">
-          <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-2xl w-full max-w-lg relative animate-fade-in">
-            <button
-              className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
-              onClick={() => setShowNotaModal(false)}
-            >
-              <X size={28} />
-            </button>
-            <h3 className=" font-bold mb-6 text-[#fc4b08] font-bignoodle text-center text-4xl">
-              Agregar nota y marcar como enviada
-            </h3>
-            <textarea
-              value={nota}
-              onChange={(e) => setNota(e.target.value)}
-              className="w-full p-3 rounded-lg border border-gray-300 focus:border-[#fc4b08] focus:outline-none mb-4"
-              rows={4}
-              placeholder="Dejá tu anotación o mensaje de seguimiento..."
-              autoFocus
-            />
-            <button
-              onClick={handleEnviarNota}
-              disabled={!nota.trim()}
-              className="w-full bg-[#fc4b08] hover:bg-orange-600 text-white font-semibold py-3 rounded-xl text-lg shadow transition disabled:opacity-50"
-            >
-              Guardar y marcar como enviada
-            </button>
-          </div>
-        </div>
-      )}
-      {showVerNota && (
-        <div className="fixed inset-0 z-[10001] bg-black/50 flex items-center justify-center">
-          <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-2xl w-full max-w-md relative max-h-[80vh] overflow-y-auto animate-fade-in">
-            <button
-              className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
-              onClick={() => setShowVerNota(false)}
-            >
-              <X size={28} />
-            </button>
-            <h3 className="text-2xl font-bold mb-4 text-green-600 flex items-center gap-2">
-              <Eye /> Nota completa
-            </h3>
-            <div className="text-gray-700 dark:text-gray-200 whitespace-pre-wrap text-base max-h-[60vh] overflow-y-auto">
-              {notaActual}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Animación y scrollbars */}
       <style>{`
-    @keyframes fade-in {
-      0% { opacity: 0; transform: translateY(32px);}
-      100% { opacity: 1; transform: translateY(0);}
-    }
-    .animate-fade-in {
-      animation: fade-in 0.5s cubic-bezier(.5,1.4,.7,1) both;
-    }
-    ::-webkit-scrollbar {
-      height: 8px;
-      width: 8px;
-      background: transparent;
-    }
-    .scrollbar-thumb-orange-200::-webkit-scrollbar-thumb {
-      background: #fde4cf;
-      border-radius: 8px;
-    }
-    .truncate {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  `}</style>
+        @keyframes fade-in {
+          0% { opacity: 0; transform: translateY(32px);}
+          100% { opacity: 1; transform: translateY(0);}
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s cubic-bezier(.5,1.4,.7,1) both;
+        }
+        ::-webkit-scrollbar {
+          height: 8px;
+          width: 8px;
+          background: transparent;
+        }
+        .scrollbar-thumb-orange-200::-webkit-scrollbar-thumb {
+          background: #fde4cf;
+          border-radius: 8px;
+        }
+      `}</style>
     </div>
   );
 }
