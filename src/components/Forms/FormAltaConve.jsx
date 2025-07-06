@@ -25,6 +25,7 @@ import ReactQuill from 'react-quill';
 import '../../styles/Forms/FormAltaConve.css';
 import SelectSede from '../../components/SelectSede';
 import SelectSedes from '../../pages/staff/Components/SelectSedes';
+import { motion, AnimatePresence } from 'framer-motion'; // necesitas framer-motion
 
 const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
   // const [conve, setConve] = useState([]);
@@ -142,87 +143,127 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
 
   return (
     <div
-      className={`h-screen w-screen mt-16 fixed inset-0 flex pt-10 justify-center ${
-        isOpen ? 'block' : 'hidden'
-      } bg-gray-800 bg-opacity-75 z-50`}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm ${
+        isOpen ? '' : 'hidden'
+      }`}
     >
-      <div className={`container-inputs`}>
-        {/*
-                Formik es una biblioteca de formularios React de terceros.
-                Proporciona programación y validación de formularios básicos.
-                Se basa en componentes controlados
-                y reduce en gran medida el tiempo de programación de formularios.
-            */}
-        <Formik
-          // valores con los cuales el formulario inicia y este objeto tambien lo utilizo para cargar los datos en la API
-          innerRef={formikRef}
-          initialValues={{
-            nameConve: conve2 ? conve2.nameConve : '',
-            descConve: conve2 ? conve2.descConve : '',
-            precio: conve2 ? conve2.precio : '',
-            descuento: conve2 ? conve2.descuento : '',
-            preciofinal: conve2 ? conve2.preciofinal : '',
-            permiteFam: conve2 ? conve2.permiteFam : false,
-            cantFamiliares: conve2 ? conve2.cantFamiliares : 0,
-            sede: conve2 ? conve2.sede : '',
-            agrupador: conve2 ? conve2.agrupador : '', // 👈 Agregado
-            desc_usu: conve2 ? conve2.desc_usu : '',
-            permiteFec: conve2 ? conve2.permiteFec : 0, // Ajustado para ser un valor numérico nuevo requerimiento R8 - BO
-            // nuevos valores para precios en multisede
-            precio_concep: conve2 ? conve2.precio_concep : '',
-            descuento_concep: conve2 ? conve2.descuento_concep : '',
-            preciofinal_concep: conve2 ? conve2.preciofinal_concep : ''
-          }}
-          enableReinitialize
-          // cuando hacemos el submit esperamos a que cargen los valores y esos valores tomados se lo pasamos a la funcion handlesubmit que es la que los espera
-          onSubmit={async (values, { resetForm }) => {
-            await handleSubmitConve(values);
+      <div className="relative w-full max-w-xl mx-auto rounded-3xl shadow-2xl bg-white flex flex-col overflow-hidden animate-fade-in transition-all duration-200">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-orange-50 to-orange-100">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-red-400" />
+            <span className="w-3 h-3 rounded-full bg-yellow-300" />
+            <span className="w-3 h-3 rounded-full bg-green-400" />
+          </div>
+          <button
+            className="text-gray-500 hover:text-orange-500 transition text-2xl font-bold"
+            onClick={handleClose}
+            aria-label="Cerrar"
+            type="button"
+          >
+            ×
+          </button>
+        </div>
 
-            resetForm();
-          }}
-          validationSchema={nuevoConveSchema}
-        >
-          {({ isSubmitting, setFieldValue, errors, touched, values }) => {
-            return (
-              <div className="-mt-10 py-0 max-h-[1200px] max-w-[1200px] w-full h-full bg-white rounded-xl overflow-y-auto relative">
-                {' '}
-                {/* Cuando se haga el modal, sacarle el padding o ponerle uno de un solo digito */}
-                <Form className="formulario bg-white ">
-                  <div className="flex justify-between">
-                    <div className="tools">
-                      <div className="circle">
-                        <span className="red toolsbox"></span>
-                      </div>
-                      <div className="circle">
-                        <span className="yellow toolsbox"></span>
-                      </div>
-                      <div className="circle">
-                        <span className="green toolsbox"></span>
-                      </div>
+        <div className="w-full px-2 py-2 max-h-[85vh] overflow-y-auto">
+          <Formik
+            innerRef={formikRef}
+            initialValues={{
+              nameConve: conve2 ? conve2.nameConve : '',
+              descConve: conve2 ? conve2.descConve : '',
+              precio: conve2 ? conve2.precio : '',
+              descuento: conve2 ? conve2.descuento : '',
+              preciofinal: conve2 ? conve2.preciofinal : '',
+              permiteFam: conve2 ? conve2.permiteFam : false,
+              cantFamiliares: conve2 ? conve2.cantFamiliares : 0,
+              sede: conve2 ? conve2.sede : '',
+              agrupador: conve2 ? conve2.agrupador : '',
+              desc_usu: conve2 ? conve2.desc_usu : '',
+              permiteFec: conve2 ? conve2.permiteFec : 0,
+              precio_concep: conve2 ? conve2.precio_concep : '',
+              descuento_concep: conve2 ? conve2.descuento_concep : '',
+              preciofinal_concep: conve2 ? conve2.preciofinal_concep : ''
+            }}
+            enableReinitialize
+            onSubmit={async (values, { resetForm }) => {
+              await handleSubmitConve(values);
+              resetForm();
+            }}
+            validationSchema={nuevoConveSchema}
+          >
+            {({ isSubmitting, setFieldValue, errors, touched, values }) => (
+              <div className="py-2 px-1 md:px-4">
+                <Form className="formulario bg-white flex flex-col gap-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Field
+                        id="nameConve"
+                        type="text"
+                        className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus:ring-2 focus:ring-orange-500 transition-all"
+                        placeholder="Título del Convenio"
+                        name="nameConve"
+                        maxLength="70"
+                      />
+                      {errors.nameConve && touched.nameConve && (
+                        <Alerta>{errors.nameConve}</Alerta>
+                      )}
                     </div>
-                    <div
-                      className="pr-6 pt-3 text-[20px] cursor-pointer"
-                      onClick={handleClose}
-                    >
-                      x
+                    <div>
+                      <Field
+                        id="precio"
+                        name="precio"
+                        type="text"
+                        className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus:ring-2 focus:ring-orange-500 transition-all"
+                        placeholder="Precio"
+                        maxLength="14"
+                        onChange={(e) => {
+                          setFieldValue('precio', e.target.value);
+                          handlePrecioChange(
+                            { ...values, precio: e.target.value },
+                            setFieldValue,
+                            'precio',
+                            'descuento',
+                            'preciofinal'
+                          );
+                        }}
+                      />
                     </div>
                   </div>
-
-                  <div className="mb-4 px-6">
-                    <Field
-                      id="nameConve"
-                      type="text"
-                      className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      placeholder="Titulo del Convenio"
-                      name="nameConve"
-                      maxLength="70"
-                    />
-                    {errors.nameConve && touched.nameConve ? (
-                      <Alerta>{errors.nameConve}</Alerta>
-                    ) : null}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Field
+                        id="descuento"
+                        name="descuento"
+                        type="text"
+                        className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus:ring-2 focus:ring-orange-500 transition-all"
+                        placeholder="Descuento"
+                        maxLength="14"
+                        onChange={(e) => {
+                          setFieldValue('descuento', e.target.value);
+                          handlePrecioChange(
+                            { ...values, descuento: e.target.value },
+                            setFieldValue,
+                            'precio',
+                            'descuento',
+                            'preciofinal'
+                          );
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Field
+                        id="preciofinal"
+                        name="preciofinal"
+                        type="text"
+                        className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus:ring-2 focus:ring-orange-500 transition-all"
+                        placeholder="Precio Final"
+                        maxLength="14"
+                        readOnly
+                        value={values.preciofinal}
+                      />
+                    </div>
                   </div>
-
-                  <div className="mb-3 px-4">
+                  <div>
                     <ReactQuill
                       theme="snow"
                       value={values.descConve}
@@ -230,8 +271,8 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                         setFieldValue('descConve', content);
                         setDescUsuCount(content.length);
                       }}
-                      placeholder="Descripcion para Colaboradores"
-                      className={`mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 custom-quill-editor`}
+                      placeholder="Descripción para Colaboradores"
+                      className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all custom-quill-editor"
                     />
                     {descConveCount > maxLength && (
                       <style>{`
@@ -240,64 +281,9 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                       }
                     `}</style>
                     )}
-                    {errors.descConve && touched.descConve ? (
+                    {errors.descConve && touched.descConve && (
                       <Alerta>{errors.descConve}</Alerta>
-                    ) : null}
-                  </div>
-
-                  <div className="mb-4 px-6">
-                    <Field
-                      id="precio"
-                      name="precio"
-                      type="text"
-                      className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      placeholder="Precio"
-                      maxLength="14"
-                      onChange={(e) => {
-                        setFieldValue('precio', e.target.value);
-                        handlePrecioChange(
-                          { ...values, precio: e.target.value },
-                          setFieldValue,
-                          'precio',
-                          'descuento',
-                          'preciofinal'
-                        );
-                      }}
-                    />
-                  </div>
-
-                  <div className="mb-4 px-6">
-                    <Field
-                      id="descuento"
-                      name="descuento"
-                      type="text"
-                      className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      placeholder="Descuento"
-                      maxLength="14"
-                      onChange={(e) => {
-                        setFieldValue('descuento', e.target.value);
-                        handlePrecioChange(
-                          { ...values, descuento: e.target.value },
-                          setFieldValue,
-                          'precio',
-                          'descuento',
-                          'preciofinal'
-                        );
-                      }}
-                    />
-                  </div>
-
-                  <div className="mb-4 px-6">
-                    <Field
-                      id="preciofinal"
-                      name="preciofinal"
-                      type="text"
-                      className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      placeholder="Precio Final"
-                      maxLength="14"
-                      readOnly
-                      value={values.preciofinal}
-                    />
+                    )}
                   </div>
 
                   <SelectSede
@@ -306,7 +292,7 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                     touched={touched}
                   />
 
-                  <div className="mb-3 px-4">
+                  <div>
                     <ReactQuill
                       theme="snow"
                       value={values.desc_usu}
@@ -314,8 +300,8 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                         setFieldValue('desc_usu', content);
                         setDescUsuCount(content.length);
                       }}
-                      placeholder="Descripcion para Usuarios"
-                      className={`mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 custom-quill-editor`}
+                      placeholder="Descripción para Usuarios"
+                      className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus:ring-2 focus:ring-orange-500 transition-all custom-quill-editor"
                     />
                     {descUsuCount > maxLength && (
                       <style>{`
@@ -324,71 +310,63 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                       }
                     `}</style>
                     )}
-                    {errors.desc_usu && touched.desc_usu ? (
+                    {errors.desc_usu && touched.desc_usu && (
                       <Alerta>{errors.desc_usu}</Alerta>
-                    ) : null}
+                    )}
                   </div>
 
                   {visible && (
-                    <div>
-                      <div className="mb-4 px-6">
-                        <Field
-                          id="precio_concep"
-                          name="precio_concep"
-                          type="text"
-                          className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                          placeholder="Precio Concepción"
-                          maxLength="14"
-                          onChange={(e) => {
-                            setFieldValue('precio_concep', e.target.value);
-                            handlePrecioChange(
-                              { ...values, precio_concep: e.target.value },
-                              setFieldValue,
-                              'precio_concep',
-                              'descuento_concep',
-                              'preciofinal_concep'
-                            );
-                          }}
-                        />
-                      </div>
-
-                      <div className="mb-4 px-6">
-                        <Field
-                          id="descuento_concep"
-                          name="descuento_concep"
-                          type="text"
-                          className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                          placeholder="Descuento Concepción"
-                          maxLength="14"
-                          onChange={(e) => {
-                            setFieldValue('descuento_concep', e.target.value);
-                            handlePrecioChange(
-                              { ...values, descuento_concep: e.target.value },
-                              setFieldValue,
-                              'precio_concep', // Campo de precio
-                              'descuento_concep', // Campo de descuento
-                              'preciofinal_concep' // Campo de precio final
-                            );
-                          }}
-                        />
-                      </div>
-
-                      <div className="mb-4 px-6">
-                        <Field
-                          id="preciofinal_concep"
-                          name="preciofinal_concep"
-                          type="text"
-                          className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                          placeholder="Precio Final Concepción"
-                          maxLength="14"
-                          readOnly
-                          value={values.preciofinal_concep}
-                        />
-                      </div>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <Field
+                        id="precio_concep"
+                        name="precio_concep"
+                        type="text"
+                        className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus:ring-2 focus:ring-orange-500"
+                        placeholder="Precio Concepción"
+                        maxLength="14"
+                        onChange={(e) => {
+                          setFieldValue('precio_concep', e.target.value);
+                          handlePrecioChange(
+                            { ...values, precio_concep: e.target.value },
+                            setFieldValue,
+                            'precio_concep',
+                            'descuento_concep',
+                            'preciofinal_concep'
+                          );
+                        }}
+                      />
+                      <Field
+                        id="descuento_concep"
+                        name="descuento_concep"
+                        type="text"
+                        className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus:ring-2 focus:ring-orange-500"
+                        placeholder="Descuento Concepción"
+                        maxLength="14"
+                        onChange={(e) => {
+                          setFieldValue('descuento_concep', e.target.value);
+                          handlePrecioChange(
+                            { ...values, descuento_concep: e.target.value },
+                            setFieldValue,
+                            'precio_concep',
+                            'descuento_concep',
+                            'preciofinal_concep'
+                          );
+                        }}
+                      />
+                      <Field
+                        id="preciofinal_concep"
+                        name="preciofinal_concep"
+                        type="text"
+                        className="mt-2 block w-full p-4 text-black formulario__input bg-slate-100 rounded-xl text-lg focus:ring-2 focus:ring-orange-500"
+                        placeholder="Precio Final Concepción"
+                        maxLength="14"
+                        readOnly
+                        value={values.preciofinal_concep}
+                      />
                     </div>
                   )}
-                  <div className="mb-3 px-4">
-                    <label>
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    <label className="flex items-center">
                       <Field
                         className="ml-2"
                         type="checkbox"
@@ -398,9 +376,8 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                           setFieldValue('permiteFam', !values.permiteFam)
                         }
                       />
-                      Permite Familiar
+                      <span className="ml-2">Permite Familiar</span>
                     </label>
-
                     <SelectSedes
                       value={values.agrupador}
                       onChange={(value) => setFieldValue('agrupador', value)}
@@ -408,10 +385,10 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                   </div>
 
                   {values.permiteFam && (
-                    <div className="mb-3 px-4">
+                    <div className="flex flex-wrap gap-4 items-center">
                       <label>Cant de familiares:</label>
                       {[1, 2, 3, 4, 5].map((number) => (
-                        <label key={number} className="mx-2">
+                        <label key={number} className="flex items-center gap-1">
                           <Field
                             type="checkbox"
                             name="cantFamiliares"
@@ -426,50 +403,50 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                     </div>
                   )}
 
-                  <div className="mb-3 px-4">
-                    <label>Permite Fechas</label>
-                    <div className="d-flex">
-                      <label className="me-3">
-                        <Field
-                          type="radio"
-                          name="permiteFec"
-                          value="1"
-                          checked={values.permiteFec === 1}
-                          onChange={() => setFieldValue('permiteFec', 1)}
-                        />
-                        Sí
-                      </label>
-                      <label>
-                        <Field
-                          type="radio"
-                          name="permiteFec"
-                          value="0"
-                          checked={values.permiteFec === 0}
-                          onChange={() => setFieldValue('permiteFec', 0)}
-                        />
-                        No
-                      </label>
-                    </div>
+                  <div className="flex gap-4 items-center">
+                    <label className="flex items-center">
+                      <Field
+                        type="radio"
+                        name="permiteFec"
+                        value="1"
+                        checked={values.permiteFec === 1}
+                        onChange={() => setFieldValue('permiteFec', 1)}
+                      />
+                      <span className="ml-2">Permite Fechas</span>
+                    </label>
+                    <label className="flex items-center">
+                      <Field
+                        type="radio"
+                        name="permiteFec"
+                        value="0"
+                        checked={values.permiteFec === 0}
+                        onChange={() => setFieldValue('permiteFec', 0)}
+                      />
+                      <span className="ml-2">No</span>
+                    </label>
                   </div>
-                  <div className="fixed-button-container flex justify-center">
+                  <div className="flex justify-center ">
                     <input
                       type="submit"
                       value={conve2 ? 'Actualizar' : 'Crear Convenio'}
-                      className="bg-orange-500 py-2 px-5 rounded-xl text-white font-bold hover:cursor-pointer hover:bg-[#fc4b08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-100"
+                      className="bg-gradient-to-r from-orange-400 to-orange-500 py-2 px-7 rounded-xl text-white font-bold shadow-lg hover:scale-105 transition-all"
                     />
                   </div>
                 </Form>
               </div>
-            );
-          }}
-        </Formik>
+            )}
+          </Formik>
+        </div>
+        <ModalSuccess
+          textoModal={textoModal}
+          isVisible={showModal}
+          onClose={() => setShowModal(false)}
+        />
+        <ModalError
+          isVisible={errorModal}
+          onClose={() => setErrorModal(false)}
+        />
       </div>
-      <ModalSuccess
-        textoModal={textoModal}
-        isVisible={showModal}
-        onClose={() => setShowModal(false)}
-      />
-      <ModalError isVisible={errorModal} onClose={() => setErrorModal(false)} />
     </div>
   );
 };

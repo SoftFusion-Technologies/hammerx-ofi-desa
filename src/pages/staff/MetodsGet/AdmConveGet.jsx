@@ -67,7 +67,7 @@ const AdmConveGet = () => {
           setSede(user.sede); // Guardar la sede en el estado
           console.log(`ID del usuario ${userName}:`, user.id);
           console.log(`Sede del usuario ${userName}:`, user.sede);
-          obtenerConves(user.sede, false);
+          obtenerConves(user.sede);
         } else {
           console.log(`Usuario con email ${userName} no encontrado`);
         }
@@ -106,47 +106,30 @@ const AdmConveGet = () => {
     navigate(`/dashboard/integrantes?id_conv=${id}`);
   };
 
-  const obtenerConves = async (sede, mantenerFiltro = false) => {
+  const obtenerConves = async (sede) => {
     try {
       const response = await axios.get(URL);
       const convenios = response.data;
-
-      // 🔥 Filtrar solo convenios activos
       const conveniosActivos = convenios.filter((c) => c.archivado === 1);
 
-      // ✅ Determinar el filtro por sede si no se mantiene el filtro
-      if (!mantenerFiltro) {
-        if (userLevel === 'admin' || userLevel === 'administrador') {
-          setFilterSede('');
-          console.log('entraaa por admin');
-        } else {
-          const normalizedValue = normalizeSede(sede);
-          setFilterSede(normalizedValue);
-          console.log('entraaa por otro user');
-        }
+      if (userLevel === 'admin' || userLevel === 'administrador') {
+        setConve(conveniosActivos);
+        setFilterSede(''); // O el valor por defecto que quieras
+      } else {
+        // Solo convenios de la sede del usuario o Multisede
+        const userSedeNormalized = normalizeSede(sede);
+
+        setConve(
+          conveniosActivos.filter(
+            (c) =>
+              c.sede &&
+              (normalizeSede(c.sede) === userSedeNormalized ||
+                normalizeSede(c.sede) === 'Multisede')
+          )
+        );
+        setFilterSede(`sede:${userSedeNormalized}`);
       }
-
-      // ✅ Agrupar por agrupador (si existe), si no, por sede
-      const agrupados = {};
-
-      conveniosActivos.forEach((c) => {
-        const key =
-          c.agrupador && c.agrupador.trim() !== '' ? c.agrupador : c.sede;
-        if (!agrupados[key]) {
-          agrupados[key] = [];
-        }
-        agrupados[key].push(c);
-      });
-
-      console.log('Convenios agrupados', agrupados);
-
-      // ✅ Mostrar el grupo seleccionado si no es admin
-      const conveniosFiltrados =
-        filterSede === '' || userLevel === 'admin'
-          ? conveniosActivos
-          : agrupados[filterSede] || [];
-
-      setConve(conveniosFiltrados);
+      
     } catch (error) {
       console.log('Error al obtener los convenios:', error);
     }
@@ -321,16 +304,38 @@ const AdmConveGet = () => {
     );
   }, [conveArchivados, search]);
 
-  const mostrarResultados =
-    filterSede === 'Agrupadores'
-      ? results.filter(
-          (conve) => conve.agrupador && conve.agrupador.trim() !== ''
-        )
-      : filterSede === 'Archivados'
-      ? filteredArchivados
-      : filteredResults;
+  const mostrarResultados = useMemo(() => {
+    if (!filterSede || filterSede === '' || filterSede === 'Todas las sedes') {
+      // Principal: solo sin agrupador
+      return results.filter(
+        (conve) => !conve.agrupador || conve.agrupador.trim() === ''
+      );
+    }
+    if (filterSede === 'Archivados') {
+      return filteredArchivados;
+    }
 
-  // Se recalcula solo cuando cambian estos valores
+    // Nuevo: distinguir filtro por sede o agrupador
+    const [tipo, valor] = filterSede.split(':');
+
+    if (tipo === 'sede') {
+      // Convenios sin agrupador y con sede = valor
+      return results.filter(
+        (conve) =>
+          (!conve.agrupador || conve.agrupador.trim() === '') &&
+          (conve.sede || '').trim().toLowerCase() === valor.trim().toLowerCase()
+      );
+    }
+    if (tipo === 'agrupador') {
+      // Convenios con agrupador = valor
+      return results.filter(
+        (conve) =>
+          (conve.agrupador || '').trim().toLowerCase() ===
+          valor.trim().toLowerCase()
+      );
+    }
+    return [];
+  }, [results, filterSede, filteredArchivados]);
 
   const obtenerSedes = async (mantenerFiltro = false) => {
     try {
@@ -418,6 +423,24 @@ const AdmConveGet = () => {
     }
   };
 
+  // SEDES únicas activas
+  const sedesUnicas = sedes.map((sede) => sede.nombre);
+  const sedesConConveniosSinAgrupador = sedesUnicas.filter((sede) =>
+    results.some(
+      (c) =>
+        (!c.agrupador || c.agrupador.trim() === '') &&
+        (c.sede || '').trim().toLowerCase() === sede.trim().toLowerCase()
+    )
+  );
+  // AGRUPADORES únicos de los convenios
+  const agrupadoresUnicos = Array.from(
+    new Set(
+      results
+        .map((c) => c.agrupador && c.agrupador.trim())
+        .filter((a) => a && a !== '')
+    )
+  );
+
   return (
     <>
       <NavbarStaff />
@@ -435,10 +458,7 @@ const AdmConveGet = () => {
               <h1 className="pb-5">
                 Listado de Convenios: &nbsp;
                 <p className="mb-2">
-                  Cantidad de registros:{' '}
-                  {filterSede === 'Archivados'
-                    ? conveArchivados.length
-                    : filteredResults.length}
+                  Cantidad de registros: {mostrarResultados.length}
                 </p>
               </h1>
             </div>
@@ -454,14 +474,25 @@ const AdmConveGet = () => {
               />
               <select
                 value={filterSede}
-                onChange={handleFilterSedeChange} // Cambiar el filtro de sede
+                onChange={handleFilterSedeChange}
                 className="border rounded-sm ml-3"
               >
-                {getFilteredSedes().map((sede) => (
-                  <option key={sede} value={sede}>
-                    {sede}
-                  </option>
-                ))}
+                <option value="">Todas las sedes</option>
+                <optgroup label="Sedes">
+                  {sedesConConveniosSinAgrupador.map((sede) => (
+                    <option key={sede} value={`sede:${sede}`}>
+                      {sede}
+                    </option>
+                  ))}
+                </optgroup>
+
+                <optgroup label="Agrupadores">
+                  {agrupadoresUnicos.map((agrupador) => (
+                    <option key={agrupador} value={`agrupador:${agrupador}`}>
+                      {agrupador}
+                    </option>
+                  ))}
+                </optgroup>
                 <option value="Archivados">Archivados</option>
               </select>
             </form>
