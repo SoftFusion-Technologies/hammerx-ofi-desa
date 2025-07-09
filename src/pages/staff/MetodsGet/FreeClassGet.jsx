@@ -21,8 +21,11 @@ import '../../../styles/staff/background.css';
 import Footer from '../../../components/footer/Footer';
 import { useAuth } from '../../../AuthContext';
 import { FaWhatsapp } from 'react-icons/fa';
+import SimpleModal from '../../../components/SimpleModal';
+import { motion } from 'framer-motion';
+
 const FreeClassGet = () => {
-  const { userLevel } = useAuth();
+  const { userLevel, userId } = useAuth();
 
   // Estado para almacenar la lista de personas
   const [personClass, setPersonClass] = useState([]);
@@ -34,6 +37,12 @@ const FreeClassGet = () => {
   //URL estatica, luego cambiar por variable de entorno
   const URL = 'http://localhost:8080/testclass/';
 
+  const [userList, setUserList] = useState([]);
+  useEffect(() => {
+    fetch('http://localhost:8080/users')
+      .then((res) => res.json())
+      .then((data) => setUserList(data));
+  }, []);
   useEffect(() => {
     // utilizamos get para obtenerPersonas los datos contenidos en la url
     axios.get(URL).then((res) => {
@@ -206,6 +215,39 @@ const FreeClassGet = () => {
     );
   };
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [leadToMove, setLeadToMove] = useState(null);
+
+  const handleOpenMoverModal = (personClass) => {
+    setLeadToMove(personClass);
+    setModalOpen(true);
+  };
+
+  const handleMoverAVentas = async () => {
+    try {
+      const res = await fetch(`${URL}mover-a-ventas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idTestClass: leadToMove.id, usuario_id: userId })
+      });
+      if (res.ok) {
+        // Actualizar la tabla: puedes recargar, o actualizar el estado de ese row a movido
+        setModalOpen(false);
+        // Actualiza el estado global/lista para reflejar que está movido
+        obtenerPersonsClass();
+      }
+    } catch (err) {
+      // Maneja errores
+      alert('Error al mover: ' + err.message);
+    }
+  };
+
+  const getUserName = (userId) => {
+    // Busca en tu lista de usuarios, o usa tu propio estado global
+    const u = userList.find((u) => u.id === userId);
+    return u ? u.name : '';
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -348,6 +390,22 @@ const FreeClassGet = () => {
                             >
                               <FaWhatsapp className="text-white" /> WhatsApp
                             </button>
+
+                            <button
+                              disabled={personClass.movido_a_ventas}
+                              onClick={() => handleOpenMoverModal(personClass)}
+                              className={`table-action-btn ${
+                                personClass.movido_a_ventas
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                  : 'bg-blue-700 hover:bg-blue-800 text-white'
+                              }`}
+                            >
+                              {personClass.movido_a_ventas
+                                ? `Movido por ${getUserName(
+                                    personClass.usuario_movido_id
+                                  )}`
+                                : 'Mover a Ventas'}
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -396,6 +454,59 @@ const FreeClassGet = () => {
           )}
         </div>
       </div>
+      <SimpleModal open={modalOpen} onClose={() => setModalOpen(false)}>
+        <div className="flex flex-col items-center gap-3">
+          {/* Ícono animado en naranja */}
+          <motion.div
+            initial={{ scale: 0.7, rotate: -6 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 8 }}
+            className="bg-[#ebebeb]/20 p-3 rounded-full shadow-xl mb-2"
+          >
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
+              <circle
+                cx="12"
+                cy="12"
+                r="11"
+                fill="#fc4b08"
+                fillOpacity="0.14"
+              />
+              <path
+                d="M7 12.5L10 15.5L17 8.5"
+                stroke="#fc4b08"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </motion.div>
+          <h3 className="font-extrabold text-2xl text-[#fc4b08] drop-shadow mb-2">
+            ¿Mover lead a Ventas?
+          </h3>
+          <p className="text-md text-gray-800 text-center mb-1">
+            ¿Seguro que deseas mover a<br />
+            <span className="font-bold text-[#fc4b08] text-lg">
+              {leadToMove?.name} {leadToMove?.last_name}
+            </span>
+            <br />a ventas?
+          </p>
+          <div className="flex gap-3 mt-3">
+            <button
+              onClick={() => setModalOpen(false)}
+              className="px-5 py-2 rounded-full font-semibold border-2 border-[#fc4b08]/40 bg-white/80 text-[#fc4b08] hover:bg-[#fc4b08]/10 hover:text-[#fc4b08] transition-all shadow"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleMoverAVentas}
+              className="px-6 py-2 rounded-full font-bold bg-gradient-to-r from-[#fc4b08] to-orange-400 text-white shadow-md hover:scale-105 hover:shadow-lg transition-all outline-none ring-2 ring-[#fc4b08]/20 hover:ring-[#fc4b08]"
+            >
+              Confirmar
+            </button>
+          </div>
+        </div>
+      </SimpleModal>
+
       <Footer />
     </>
   );

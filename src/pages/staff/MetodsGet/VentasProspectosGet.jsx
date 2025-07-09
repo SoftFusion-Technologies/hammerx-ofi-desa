@@ -301,14 +301,51 @@ const VentasProspectosGet = ({ currentUser }) => {
     return b.id - a.id;
   });
 
-  // Paginación
+  // Asegura que la página siempre esté entre 1 y totalPages
   const totalPages = Math.max(Math.ceil(sorted.length / rowsPerPage), 1);
-  const safePage = Math.min(page, totalPages);
+  const safePage = Math.max(1, Math.min(page, totalPages)); // <-- Corrige si alguien fuerza page<1
+
   const startIndex = (safePage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
-
-  // Items visibles paginados
   const visibleProspectos = sorted.slice(startIndex, endIndex);
+
+  // Para la paginación
+  const handleChangePage = (nuevaPage) => {
+    const nextPage = Math.max(1, Math.min(nuevaPage, totalPages));
+    setPage(nextPage);
+
+    // Hacé el scroll después de un pequeño delay para que React pinte la nueva página
+    setTimeout(() => {
+      if (visibleProspectos.length > 0) {
+        const firstRow = document.getElementById(
+          `prospecto-${visibleProspectos[0].id}`
+        );
+        if (firstRow) {
+          firstRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Opcional: resalta la fila un segundo
+          firstRow.classList.add(
+            'ring-2',
+            'ring-[#fc4b08]',
+            'ring-offset-2',
+            'animate-pulse'
+          );
+          setTimeout(() => {
+            firstRow.classList.remove(
+              'ring-2',
+              'ring-[#fc4b08]',
+              'ring-offset-2',
+              'animate-pulse'
+            );
+          }, 900);
+        }
+      } else {
+        const listTop = document.getElementById('prospectos-lista-top');
+        if (listTop) {
+          listTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }, 80); // Pequeño delay para que la tabla ya esté renderizada
+  };
 
   console.log('prospectosConAgendaHoy', prospectosConAgendaHoy);
   console.log(
@@ -577,6 +614,74 @@ const VentasProspectosGet = ({ currentUser }) => {
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   `}</style>
+          </div>
+
+          <div className="w-full flex flex-col items-center mt-4">
+            <div className="flex gap-2 items-center select-none">
+              <button
+                className={`rounded-full px-3 py-1 font-bold border-2 text-[#fc4b08] border-[#fc4b08] bg-white/80 hover:bg-[#fc4b08] hover:text-white shadow-sm transition disabled:opacity-30`}
+                onClick={() => handleChangePage(1)}
+                disabled={safePage === 1}
+                aria-label="Primera página"
+              >
+                ⏮
+              </button>
+              <button
+                className={`rounded-full px-3 py-1 font-bold border-2 text-[#fc4b08] border-[#fc4b08] bg-white/80 hover:bg-[#fc4b08] hover:text-white shadow-sm transition disabled:opacity-30`}
+                onClick={() => handleChangePage(safePage - 1)}
+                disabled={safePage === 1}
+                aria-label="Anterior"
+              >
+                ←
+              </button>
+              {/* Números de página, máximo 5 botones visibles */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((n) =>
+                  totalPages <= 5
+                    ? true
+                    : Math.abs(n - safePage) <= 2 || n === 1 || n === totalPages
+                )
+                .map((n, i, arr) => (
+                  <React.Fragment key={n}>
+                    {/* ...puntitos entre saltos */}
+                    {i > 0 && n - arr[i - 1] > 1 && (
+                      <span className="px-1 text-gray-400">…</span>
+                    )}
+                    <button
+                      className={`rounded-full px-3 py-1 font-bold border-2 ${
+                        n === safePage
+                          ? 'bg-[#fc4b08] text-white border-[#fc4b08] scale-110 shadow-lg'
+                          : 'bg-white/90 text-[#fc4b08] border-[#fc4b08] hover:bg-[#fc4b08] hover:text-white'
+                      } shadow-sm transition`}
+                      onClick={() => handleChangePage(n)}
+                    >
+                      {n}
+                    </button>
+                  </React.Fragment>
+                ))}
+              <button
+                className={`rounded-full px-3 py-1 font-bold border-2 text-[#fc4b08] border-[#fc4b08] bg-white/80 hover:bg-[#fc4b08] hover:text-white shadow-sm transition disabled:opacity-30`}
+                onClick={() => handleChangePage(safePage + 1)}
+                disabled={safePage === totalPages}
+                aria-label="Siguiente"
+              >
+                →
+              </button>
+              <button
+                className={`rounded-full px-3 py-1 font-bold border-2 text-[#fc4b08] border-[#fc4b08] bg-white/80 hover:bg-[#fc4b08] hover:text-white shadow-sm transition disabled:opacity-30`}
+                onClick={() => handleChangePage(totalPages)}
+                disabled={safePage === totalPages}
+                aria-label="Última página"
+              >
+                ⏭
+              </button>
+            </div>
+            <span className="text-sm text-gray-500 mt-1">
+              Página <span className="font-bold">{safePage}</span> de{' '}
+              <span className="font-bold">{totalPages}</span> &bull; Mostrando{' '}
+              <span className="font-bold">{visibleProspectos.length}</span> de{' '}
+              <span className="font-bold">{sorted.length}</span> prospectos
+            </span>
           </div>
 
           {/* Modal de agendas automáticas */}
@@ -1051,7 +1156,75 @@ const VentasProspectosGet = ({ currentUser }) => {
             </table>
           </div>
         </div>
+        <div className="w-full flex flex-col items-center mt-4">
+          <div className="flex gap-2 items-center select-none">
+            <button
+              className={`rounded-full px-3 py-1 font-bold border-2 text-[#fc4b08] border-[#fc4b08] bg-white/80 hover:bg-[#fc4b08] hover:text-white shadow-sm transition disabled:opacity-30`}
+              onClick={() => handleChangePage(1)}
+              disabled={safePage === 1}
+              aria-label="Primera página"
+            >
+              ⏮
+            </button>
+            <button
+              className={`rounded-full px-3 py-1 font-bold border-2 text-[#fc4b08] border-[#fc4b08] bg-white/80 hover:bg-[#fc4b08] hover:text-white shadow-sm transition disabled:opacity-30`}
+              onClick={() => handleChangePage(safePage - 1)}
+              disabled={safePage === 1}
+              aria-label="Anterior"
+            >
+              ←
+            </button>
+            {/* Números de página, máximo 5 botones visibles */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((n) =>
+                totalPages <= 5
+                  ? true
+                  : Math.abs(n - safePage) <= 2 || n === 1 || n === totalPages
+              )
+              .map((n, i, arr) => (
+                <React.Fragment key={n}>
+                  {/* ...puntitos entre saltos */}
+                  {i > 0 && n - arr[i - 1] > 1 && (
+                    <span className="px-1 text-gray-400">…</span>
+                  )}
+                  <button
+                    className={`rounded-full px-3 py-1 font-bold border-2 ${
+                      n === safePage
+                        ? 'bg-[#fc4b08] text-white border-[#fc4b08] scale-110 shadow-lg'
+                        : 'bg-white/90 text-[#fc4b08] border-[#fc4b08] hover:bg-[#fc4b08] hover:text-white'
+                    } shadow-sm transition`}
+                    onClick={() => handleChangePage(n)}
+                  >
+                    {n}
+                  </button>
+                </React.Fragment>
+              ))}
+            <button
+              className={`rounded-full px-3 py-1 font-bold border-2 text-[#fc4b08] border-[#fc4b08] bg-white/80 hover:bg-[#fc4b08] hover:text-white shadow-sm transition disabled:opacity-30`}
+              onClick={() => handleChangePage(safePage + 1)}
+              disabled={safePage === totalPages}
+              aria-label="Siguiente"
+            >
+              →
+            </button>
+            <button
+              className={`rounded-full px-3 py-1 font-bold border-2 text-[#fc4b08] border-[#fc4b08] bg-white/80 hover:bg-[#fc4b08] hover:text-white shadow-sm transition disabled:opacity-30`}
+              onClick={() => handleChangePage(totalPages)}
+              disabled={safePage === totalPages}
+              aria-label="Última página"
+            >
+              ⏭
+            </button>
+          </div>
+          <span className="text-sm text-gray-500 mt-1">
+            Página <span className="font-bold">{safePage}</span> de{' '}
+            <span className="font-bold">{totalPages}</span> &bull; Mostrando{' '}
+            <span className="font-bold">{visibleProspectos.length}</span> de{' '}
+            <span className="font-bold">{sorted.length}</span> prospectos
+          </span>
+        </div>
       </div>
+
       <ClasePruebaModal
         isOpen={modalClaseOpen}
         onClose={() => setModalClaseOpen(false)}
