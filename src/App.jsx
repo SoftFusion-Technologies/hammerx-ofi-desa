@@ -193,6 +193,7 @@ import VentasProspectosGet from './pages/staff/MetodsGet/VentasProspectosGet.jsx
 
 import NotFound from './pages/NotFound.jsx';
 import LogsAuditoria from './pages/LogsAuditoria.jsx';
+import PromosDashboard from './pages/staff/MetodsGet/PromosDashboard.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
 /**
  * Componente principal de la aplicación.
@@ -764,6 +765,15 @@ const App = memo(() => {
                     <ProtectedRoute>
                       {' '}
                       <LogsAuditoria />
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                <Ruta
+                  path="/dashboard/imagenes"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <PromosDashboard />
                     </ProtectedRoute>
                   }
                 />{' '}

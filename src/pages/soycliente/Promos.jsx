@@ -1,32 +1,23 @@
-/*
- * Programador: Manrique Sergio Gustavo
- * Fecha Cración: 13 / 05 / 2025
- * Versión: 1.1.2
- * Última modificacion: 20 / 05 / 2025
- *
- * Descripción: Componente de que se muestra en Clients.jsx para la sección de "Promos para el cliente"
- *
- *
- *  Tema: Promos para el cliente
- *  Capa: Frontend
- */
-
-import { useState, useEffect, useRef, forwardRef } from "react";
-import Promo1 from "./PromosBancarias/1.jpg";
-import Promo2 from "./PromosBancarias/2.jpg";
-import Aos from "aos";
-import "aos/dist/aos.css";
-import fondo_img from "./Images/bienvenido.jpg";
-const images = import.meta.glob("./Images/convenios/*.{png,jpg,jpeg,svg}", {
-  eager: true,
+import { useState, useEffect, useRef, forwardRef } from 'react';
+import Promo1 from './PromosBancarias/1.jpg';
+import Promo2 from './PromosBancarias/2.jpg';
+import Aos from 'aos';
+import 'aos/dist/aos.css';
+import fondo_img from './Images/bienvenido.jpg';
+const images = import.meta.glob('./Images/convenios/*.{png,jpg,jpeg,svg}', {
+  eager: true
 });
+
+const BACKEND_URL = 'http://localhost:8080';
 
 const Promos = forwardRef((props, ref) => {
   const [selectedPromo, setSelectedPromo] = useState(null);
   const [open, setOpen] = useState(false);
+  const [imagenesPromoMes, setImagenesPromoMes] = useState([]);
   const cardRef = useRef(null);
   const buttonRef = useRef(null);
-  const color = "bg-gradient-to-b from-orange-500 to-[#fc4b08]";
+  const color = 'bg-gradient-to-b from-orange-500 to-[#fc4b08]';
+
   useEffect(() => {
     Aos.init({ duration: 1000 });
   }, []);
@@ -35,16 +26,29 @@ const Promos = forwardRef((props, ref) => {
 
   useEffect(() => {
     if (selectedPromo && cardRef.current) {
-      cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else if (hasInteracted) {
-      buttonRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      buttonRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [selectedPromo, hasInteracted]);
+
+  // Traer las imágenes de promo del mes (dinámico)
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/promos-mes`)
+      .then((res) => res.json())
+      .then((data) => setImagenesPromoMes(data));
+  }, []);
+
+  // Mapear imágenes a items para el dashboard
+  const itemsPromoMes = imagenesPromoMes.map((img) => ({
+    text: `${BACKEND_URL}/public/${img.imagen_url.replace(/^uploads\//, '')}`,
+    description: img.titulo || 'Promo del mes'
+  }));
 
   const conveniosImages = Object.entries(images)
     .map(([path, mod]) => ({
       path: mod.default,
-      name: path.split("/").pop(),
+      name: path.split('/').pop()
     }))
     .sort((a, b) => {
       const getNumber = (name) => {
@@ -56,99 +60,97 @@ const Promos = forwardRef((props, ref) => {
 
   const conveniosItems = conveniosImages.map((img, idx) => ({
     text: img.path,
-    description: `Convenio ${idx + 1}`,
+    description: `Convenio ${idx + 1}`
   }));
 
   const buttonsInfo = [
     {
-      id: "familiares",
-      text: "Promociones familiares",
-      header: "¿ENTRENAS EN FAMILIA?\n¡APROVECHEN ESTOS DESCUENTOS!",
+      id: 'familiares',
+      text: 'Promociones familiares',
+      header: '¿ENTRENAS EN FAMILIA?\n¡APROVECHEN ESTOS DESCUENTOS!',
       items: [
         {
-          text: "2 FAMILIARES",
-          description: "10% OFF PARA CADA UNO",
+          text: '2 FAMILIARES',
+          description: '10% OFF PARA CADA UNO'
         },
         {
-          text: "3 FAMILIARES",
-          description: "UNO ABONA LA MITAD",
+          text: '3 FAMILIARES',
+          description: 'UNO ABONA LA MITAD'
         },
         {
-          text: "4 FAMILIARES",
-          description: "UNO NO ABONA",
+          text: '4 FAMILIARES',
+          description: 'UNO NO ABONA'
         },
         {
-          text: "5 FAMILIARES",
-          description: "1 MENSUAL Y MEDIO GRATIS",
-        },
-      ],
+          text: '5 FAMILIARES',
+          description: '1 MENSUAL Y MEDIO GRATIS'
+        }
+      ]
     },
     {
-      id: "amigos",
-      text: "Promociones amigos/referidos",
+      id: 'amigos',
+      text: 'Promociones amigos/referidos',
       header:
-        "INVITA A UN AMIGO QUE NO SEA SOCIO DEL GYM Y OBTENE ESTOS DESCUENTOS EN TU PROXIMA RENOVACIÓN:",
+        'INVITA A UN AMIGO QUE NO SEA SOCIO DEL GYM Y OBTENE ESTOS DESCUENTOS EN TU PROXIMA RENOVACIÓN:',
       items: [
         {
-          text: "1 AMIGO",
-          description: "10% OFF",
+          text: '1 AMIGO',
+          description: '10% OFF'
         },
         {
-          text: "2 AMIGOS",
-          description: "25% OFF",
+          text: '2 AMIGOS',
+          description: '25% OFF'
         },
         {
-          text: "3 AMIGOS",
-          description: "40% OFF",
+          text: '3 AMIGOS',
+          description: '40% OFF'
         },
         {
-          text: "4 AMIGOS",
-          description: "¡MENSUAL GRATIS!",
-        },
-      ],
+          text: '4 AMIGOS',
+          description: '¡MENSUAL GRATIS!'
+        }
+      ]
     },
     {
-      id: "planes",
-      text: "Promociones planes largos",
-      header: "PAGA MENOS, ¡ELEGI TU PLAN LARGO!",
-      subheader: "(EN EFECTIVO)",
+      id: 'planes',
+      text: 'Promociones planes largos',
+      header: 'PAGA MENOS, ¡ELEGI TU PLAN LARGO!',
+      subheader: '(EN EFECTIVO)',
       items: [
         {
-          text: "TRIMESTRE",
-          description: "10% OFF",
+          text: 'TRIMESTRE',
+          description: '10% OFF'
         },
         {
-          text: "SEMESTRE",
-          description: "1 MES GRATIS",
+          text: 'SEMESTRE',
+          description: '1 MES GRATIS'
         },
         {
-          text: "ANUAL",
-          description: "3 MESES GRATIS",
-        },
-      ],
+          text: 'ANUAL',
+          description: '3 MESES GRATIS'
+        }
+      ]
     },
     {
-      id: "promociones",
-      text: "¡Promociones del mes!",
-      header: "¡Conocé todas nuestras promociones del mes!",
+      id: 'promociones',
+      text: '¡Promociones del mes!',
+      header: '¡Conocé todas nuestras promociones del mes!',
       bancario: true,
-      items: [
-        {
-          text: Promo1,
-          description: "Image de la promo 1",
-        },
-        {
-          text: Promo2,
-          description: "Image de la promo 2",
-        },
-      ],
+      items:
+        itemsPromoMes.length > 0
+          ? itemsPromoMes
+          : [
+              // fallback demo
+              { text: Promo1, description: 'Image de la promo 1' },
+              { text: Promo2, description: 'Image de la promo 2' }
+            ]
     },
     {
-      id: "convenios",
-      text: "Convenios",
+      id: 'convenios',
+      text: 'Convenios',
       convenios: true,
-      items: conveniosItems,
-    },
+      items: conveniosItems
+    }
   ];
 
   const handlePromoClick = (promoId) => {
@@ -167,16 +169,16 @@ const Promos = forwardRef((props, ref) => {
       <div
         className={`${
           promo.bancario
-            ? "bg-[#FD6112] max-w-5xl"
+            ? 'bg-[#FD6112] max-w-5xl'
             : promo.convenios
-            ? "bg-white max-w-5xl"
-            : "bg-white max-w-2xl border-orange-500"
+            ? 'bg-white max-w-5xl'
+            : 'bg-white max-w-2xl border-orange-500'
         } rounded-lg border-4 shadow-lg p-4 mx-auto mt-8`}
       >
         {promo.header && (
           <div
             className={`${
-              promo.bancario && "border-2"
+              promo.bancario && 'border-2'
             } ${color}  rounded-md p-4 text-white text-center mb-4 font-bignoodle`}
           >
             <h3 className="text-2xl font-bold whitespace-pre-line ">
@@ -239,16 +241,14 @@ const Promos = forwardRef((props, ref) => {
       className={`relative w-full font-bignoodle tracking-wider ${color} min-h-fit py-10`}
       ref={ref}
     >
-      {true && (
-        <>
-          <img
-            src={fondo_img}
-            alt="Promoción Galicia"
-            className="w-full h-full object-cover absolute inset-0 z-0"
-          />
-          <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-[#fc4b08]/80 to-orange-600" />
-        </>
-      )}
+      <>
+        <img
+          src={fondo_img}
+          alt="Promoción Galicia"
+          className="w-full h-full object-cover absolute inset-0 z-0"
+        />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-[#fc4b08]/80 to-orange-600" />
+      </>
       <div className="relative w-full min-h-fit">
         <div className="relative z-10">
           <div
@@ -258,10 +258,10 @@ const Promos = forwardRef((props, ref) => {
             <h1
               className="absolute uppercase pointer-events-none select-none whitespace-nowrap"
               style={{
-                fontSize: "clamp(4rem, 15vw, 13rem)",
-                color: "transparent",
-                WebkitTextStroke: "3px #fff",
-                textStroke: "3px #fff",
+                fontSize: 'clamp(4rem, 15vw, 13rem)',
+                color: 'transparent',
+                WebkitTextStroke: '3px #fff',
+                textStroke: '3px #fff'
               }}
             >
               ¡NUESTRAS PROMOS!
@@ -309,10 +309,10 @@ const Promos = forwardRef((props, ref) => {
               ref={cardRef}
               className={`transition-all duration-1000 ease-out transform ${
                 open && selectedPromo
-                  ? "scale-100 opacity-100 pointer-events-auto"
-                  : "scale-95 opacity-0 pointer-events-none"
+                  ? 'scale-100 opacity-100 pointer-events-auto'
+                  : 'scale-95 opacity-0 pointer-events-none'
               }`}
-              style={{ minHeight: selectedPromo ? "auto" : 0 }}
+              style={{ minHeight: selectedPromo ? 'auto' : 0 }}
             >
               {selectedPromo && (
                 <PromoCard

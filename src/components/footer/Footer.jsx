@@ -50,7 +50,8 @@ const Footer = () => {
   return (
     <>
       {!isDashboard && <Marcas_v2 />}
-      {userLevel === 'admin' && <DashboardImagesManager />}
+      {userLevel === 'admin' ||
+        (userLevel === 'imagenes' && <DashboardImagesManager />)}
       {userLevel === 'instructor' ||
         (isDashboard && (
           <div className="flex flex-col items-center gap-4 my-4">

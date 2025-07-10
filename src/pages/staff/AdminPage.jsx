@@ -183,42 +183,60 @@ const AdminPage = () => {
               </motion.div>
             )}
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1.2 }}
-              className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
-            >
-              {' '}
-              <Link to="/dashboard/quejas">
-                <button className="btnstaff">Quejas</button>
-              </Link>
-            </motion.div>
-
-            {userLevel !== 'instructor' && (
+            {userLevel !== 'imagenes' && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 1.4 }}
+                transition={{ duration: 0.6, delay: 1.2 }}
                 className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
               >
                 {' '}
-                <Link to="/dashboard/ventas">
-                  <button className="btnstaff">Ventas </button>
+                <Link to="/dashboard/quejas">
+                  <button className="btnstaff">Quejas</button>
                 </Link>
               </motion.div>
             )}
 
-            {userLevel !== 'instructor' && (
+            {userLevel !== 'instructor' ||
+              (userLevel !== 'imagenes' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.4 }}
+                  className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+                >
+                  {' '}
+                  <Link to="/dashboard/ventas">
+                    <button className="btnstaff">Ventas </button>
+                  </Link>
+                </motion.div>
+              ))}
+
+            {userLevel !== 'instructor' ||
+              (userLevel !== 'imagenes' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.6 }}
+                  className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+                >
+                  {' '}
+                  <Link to="/dashboard/recaptacion">
+                    <button className="btnstaff">Recaptación</button>
+                  </Link>
+                </motion.div>
+              ))}
+
+            {userLevel === 'imagenes' && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 1.6 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
                 className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
               >
                 {' '}
-                <Link to="/dashboard/recaptacion">
-                  <button className="btnstaff">Recaptación</button>
+                <Link to="/dashboard/imagenes">
+                  <button className="btnstaff">imagenes</button>
                 </Link>
               </motion.div>
             )}
