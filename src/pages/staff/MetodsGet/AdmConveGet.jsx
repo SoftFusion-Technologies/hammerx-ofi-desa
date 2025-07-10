@@ -129,7 +129,6 @@ const AdmConveGet = () => {
         );
         setFilterSede(`sede:${userSedeNormalized}`);
       }
-      
     } catch (error) {
       console.log('Error al obtener los convenios:', error);
     }
@@ -477,7 +476,9 @@ const AdmConveGet = () => {
                 onChange={handleFilterSedeChange}
                 className="border rounded-sm ml-3"
               >
-                <option value="">Todas las sedes</option>
+                {userLevel === 'admin' && (
+                  <option value="">Todas las sedes</option>
+                )}
                 <optgroup label="Sedes">
                   {sedesConConveniosSinAgrupador.map((sede) => (
                     <option key={sede} value={`sede:${sede}`}>

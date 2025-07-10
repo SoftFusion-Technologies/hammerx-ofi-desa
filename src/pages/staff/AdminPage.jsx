@@ -197,8 +197,8 @@ const AdminPage = () => {
               </motion.div>
             )}
 
-            {userLevel !== 'instructor' ||
-              (userLevel !== 'imagenes' && (
+            {userLevel === 'instructor' ||
+              (userLevel != 'imagenes' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -212,8 +212,8 @@ const AdminPage = () => {
                 </motion.div>
               ))}
 
-            {userLevel !== 'instructor' ||
-              (userLevel !== 'imagenes' && (
+            {userLevel === 'instructor' ||
+              (userLevel != 'imagenes' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
