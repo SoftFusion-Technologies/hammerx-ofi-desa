@@ -384,15 +384,21 @@ const FormAltaRecaptacion = ({
                     <Alerta>{errors.tipo_contacto}</Alerta>
                   )}
 
-                  {mostrarOtro && (
-                    <div className="mt-3">
-                      <Field
-                        name="detalle_contacto"
-                        placeholder="Especifique el tipo de contacto"
-                        className="block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                      />
-                    </div>
-                  )}
+                  <div className="mt-3">
+                    <label
+                      htmlFor="tipo_contacto"
+                      className="block font-medium left-0 mb-1"
+                    >
+                      <span className="text-black text-base pl-1">
+                        Detalle de contacto
+                      </span>
+                    </label>
+                    <Field
+                      name="detalle_contacto"
+                      placeholder="Especifique el detalle de contacto"
+                      className="block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                    />
+                  </div>
                 </div>
 
                 <div className="sticky bottom-0 bg-white py-3 px-4">
