@@ -9,6 +9,7 @@ import FiltroMesAnio from '../Components/FiltroMesAnio';
 import FormAltaRecaptacion from '../../../components/Forms/FormAltaRecaptacion';
 import FileUploadRecaptacion from '../Components/FileUploadRecaptacion';
 import DetalleContactoCell from '../Components/DetalleContactoCell';
+import ModalDetalleContacto from '../Components/ModalDetalleContacto';
 import ParticlesBackground from '../../../components/ParticlesBackground';
 import ModalBorradoMasivo from '../Components/ModalBorradoMasivo';
 import {
@@ -32,7 +33,10 @@ const RecaptacionGet = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [colaboradores, setColaboradores] = useState([]);
   const [usuarioFiltro, setUsuarioFiltro] = useState('');
-
+  const [modalDetalle, setModalDetalle] = useState({
+    open: false,
+    detalle: ''
+  });
   const { userLevel, userId } = useAuth();
 
   const [modalNewRec, setModalNewRecaptacion] = useState(false);
@@ -313,8 +317,14 @@ const RecaptacionGet = () => {
                         <span className="text-gray-300">sin tipo</span>
                       )}
                     </td>
-                    <td className="py-3 px-2">
-                      <DetalleContactoCell detalle={recap.detalle_contacto} />
+
+                    <td className="py-3 px-2 text-center min-w-[110px] max-w-[180px]">
+                      <DetalleContactoCell
+                        detalle={recap.detalle_contacto}
+                        onShowDetalle={(detalle) =>
+                          setModalDetalle({ open: true, detalle })
+                        }
+                      />
                     </td>
                     <td
                       className="py-3 px-2 text-center cursor-pointer"
@@ -450,6 +460,11 @@ const RecaptacionGet = () => {
         onClose={() => setOpenBorradoMasivo(false)}
         onConfirm={borrarPorMesAnio}
         getRecaptacion={getRecaptacion}
+      />
+      <ModalDetalleContacto
+        open={modalDetalle.open}
+        detalle={modalDetalle.detalle}
+        onClose={() => setModalDetalle({ open: false, detalle: '' })}
       />
     </>
   );
