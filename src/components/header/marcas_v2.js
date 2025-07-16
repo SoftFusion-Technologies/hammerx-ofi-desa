@@ -10,7 +10,7 @@ import comercio9 from '../../images/marcas/comercio9.png';
 import comercio10 from '../../images/marcas/comercio10.png';
 import comercio11 from '../../images/marcas/comercio11.png';
 // import comercio12 from '../../images/marcas/comercio12.png';
-import comercio13 from '../../images/marcas/comercio13.png';
+// import comercio13 from '../../images/marcas/comercio13.png';
 
 export {
   comercio1,
@@ -25,5 +25,5 @@ export {
   comercio10,
   comercio11,
   // comercio12,
-  comercio13
+  // comercio13
 };

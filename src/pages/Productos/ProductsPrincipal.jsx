@@ -26,6 +26,12 @@ import calzacorta1 from './Img/calza1_corta.png';
 import calzacorta2 from './Img/calza2_corta.png';
 import calza1biker from './Img/calza1_biker.png';
 import calza2biker from './Img/calza2_biker.png';
+
+// new remeras
+import newRemeracorta from './Img/newRemeracorta.jpeg';
+import newRemeracorta2 from './Img/newRemeracorta2.jpeg';
+import newMusculosa from './Img/newMusculosa.jpeg';
+
 // IMAGENES PRODUCTOS FIN
 
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'; // Íconos de flechas
@@ -127,6 +133,22 @@ const ProductsPrincipal = () => {
       newPrecio: 'Precio con efectivo o transferencia $13.000,00',
       categoria: 'premium',
       imagenes: [calza1biker, calza2biker]
+    },
+    {
+      id: 12,
+      nombre: 'REMERA CORTA HAMMER X ',
+      precio: '$14.500,00',
+      newPrecio: 'Precio con efectivo o transferencia $13.000,00',
+      categoria: 'premium',
+      imagenes: [newRemeracorta2, newRemeracorta]
+    },
+    {
+      id: 13,
+      nombre: 'MUSCULOSA HAMMER X NEGRA',
+      precio: '$14.500,00',
+      newPrecio: 'Precio con efectivo o transferencia $13.000,00',
+      categoria: 'premium',
+      imagenes: [newMusculosa, newMusculosa]
     }
   ];
 

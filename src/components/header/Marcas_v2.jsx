@@ -13,9 +13,9 @@ import {
   comercio8,
   comercio9,
   comercio10,
-  comercio11,
+  comercio11
   // comercio12,
-  comercio13
+  // comercio13
 } from './marcas_v2';
 
 const Marcas_v2 = () => {
@@ -32,7 +32,7 @@ const Marcas_v2 = () => {
     comercio10,
     comercio11,
     // comercio12,
-    comercio13
+    // comercio13
   ];
 
   const sliderSettings = {
