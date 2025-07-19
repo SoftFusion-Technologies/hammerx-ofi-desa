@@ -169,6 +169,15 @@ const RecaptacionGet = () => {
     });
   };
 
+  const borrarPorUsuario = async (usuario_id) => {
+    return await axios.delete(
+      'http://localhost:8080/recaptacion-masiva-usuario',
+      {
+        params: { usuario_id }
+      }
+    );
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -430,6 +439,7 @@ const RecaptacionGet = () => {
       {showUpload && (
         <FileUploadRecaptacion
           usuarioId={userId}
+          fetchColaboradores={fetchColaboradores}
           onClose={() => setShowUpload(false)}
           getRecaptacion={getRecaptacion}
           onSuccess={() => {
@@ -458,9 +468,13 @@ const RecaptacionGet = () => {
       <ModalBorradoMasivo
         open={openBorradoMasivo}
         onClose={() => setOpenBorradoMasivo(false)}
-        onConfirm={borrarPorMesAnio}
+        onConfirmMesAnio={borrarPorMesAnio}
+        onConfirmUsuario={borrarPorUsuario}
         getRecaptacion={getRecaptacion}
+        fetchColaboradores={fetchColaboradores}
+        colaboradores={colaboradores}
       />
+
       <ModalDetalleContacto
         open={modalDetalle.open}
         detalle={modalDetalle.detalle}

@@ -5,7 +5,8 @@ const FileUploadRecaptacion = ({
   usuarioId,
   onClose,
   onSuccess,
-  getRecaptacion
+  getRecaptacion,
+  fetchColaboradores
 }) => {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
@@ -36,6 +37,7 @@ const FileUploadRecaptacion = ({
       if (response.data.message.includes('exitosa')) {
         onSuccess && onSuccess();
         getRecaptacion();
+        fetchColaboradores();
       }
     } catch (error) {
       console.error('Error importando:', error.response || error.message);
