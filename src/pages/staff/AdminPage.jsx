@@ -88,6 +88,18 @@ const AdminPage = () => {
       <section className="relative w-full h-contain mx-auto bg-white">
         <div className="dashboardbg">
           <div className="xl:px-0 sm:px-16 px-6 max-w-7xl mx-auto grid grid-cols-2 max-sm:grid-cols-1 max-md:gap-y-10 md:gap-10 py-28 sm:pt-44 lg:pt-28 md:w-5/6 ">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+            >
+              <Link to="/dashboard/preguntas-ia">
+                <button className="btnstaff">
+                  Preguntale a la IA
+                </button>
+              </Link>
+            </motion.div>{' '}
             {(userLevel === 'admin' ||
               userLevel === 'administrador' ||
               userLevel === 'gerente' ||
@@ -103,7 +115,6 @@ const AdminPage = () => {
                 </Link>
               </motion.div>
             )}
-
             {(userLevel === 'gerente' ||
               userLevel === 'admin' ||
               userLevel === 'vendedor' ||
@@ -120,7 +131,6 @@ const AdminPage = () => {
                 </Link>
               </motion.div>
             )}
-
             {/* {(userLevel === 'gerente' ||
               userLevel === 'admin' ||
               userLevel === 'administrador') && (
@@ -130,7 +140,6 @@ const AdminPage = () => {
                 </Link>
               </div>
             )} */}
-
             {(userLevel === 'gerente' ||
               userLevel === 'admin' ||
               userLevel === 'vendedor' ||
@@ -148,7 +157,6 @@ const AdminPage = () => {
                 </Link>
               </motion.div>
             )}
-
             {(userLevel === 'gerente' ||
               userLevel === 'admin' ||
               userLevel === 'instructor' ||
@@ -165,7 +173,6 @@ const AdminPage = () => {
                 </button>
               </motion.div>
             )}
-
             {(userLevel === 'admin' ||
               userLevel === 'administrador' ||
               userLevel === 'instructor' ||
@@ -182,7 +189,6 @@ const AdminPage = () => {
                 </Link>
               </motion.div>
             )}
-
             {userLevel !== 'imagenes' && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -196,7 +202,6 @@ const AdminPage = () => {
                 </Link>
               </motion.div>
             )}
-
             {userLevel === 'instructor' ||
               (userLevel != 'imagenes' && (
                 <motion.div
@@ -211,7 +216,6 @@ const AdminPage = () => {
                   </Link>
                 </motion.div>
               ))}
-
             {userLevel === 'instructor' ||
               (userLevel != 'imagenes' && (
                 <motion.div
@@ -226,7 +230,6 @@ const AdminPage = () => {
                   </Link>
                 </motion.div>
               ))}
-
             {userLevel === 'imagenes' && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

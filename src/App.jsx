@@ -194,6 +194,7 @@ import VentasProspectosGet from './pages/staff/MetodsGet/VentasProspectosGet.jsx
 import NotFound from './pages/NotFound.jsx';
 import LogsAuditoria from './pages/LogsAuditoria.jsx';
 import PromosDashboard from './pages/staff/MetodsGet/PromosDashboard.jsx';
+import PreguntasIA from './pages/staff/PreguntasIA.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
 /**
  * Componente principal de la aplicación.
@@ -774,6 +775,15 @@ const App = memo(() => {
                     <ProtectedRoute>
                       {' '}
                       <PromosDashboard />
+                    </ProtectedRoute>
+                  }
+                />{' '}
+                <Ruta
+                  path="/dashboard/preguntas-ia"
+                  element={
+                    <ProtectedRoute>
+                      {' '}
+                      <PreguntasIA />
                     </ProtectedRoute>
                   }
                 />{' '}
