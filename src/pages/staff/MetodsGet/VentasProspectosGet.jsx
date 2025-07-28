@@ -11,6 +11,7 @@ import StatsVentasModal from '../../../components/StatsVentasModal';
 import AgendasVentas from '../../../components/AgendasVentas';
 import { useLocation } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
+import FiltroMesAnio from '../Components/FiltroMesAnio';
 
 const VentasProspectosGet = ({ currentUser }) => {
   const [prospectos, setProspectos] = useState([]);
@@ -44,6 +45,9 @@ const VentasProspectosGet = ({ currentUser }) => {
 
   const [showAgendasModal, setShowAgendasModal] = useState(false);
   const [alertasSegundoContacto, setAlertasSegundoContacto] = useState({});
+
+  const [mes, setMes] = useState('');
+  const [anio, setAnio] = useState('');
 
   useEffect(() => {
     const obs = {};
@@ -137,9 +141,11 @@ const VentasProspectosGet = ({ currentUser }) => {
   }, [userSede, selectedSede]);
 
   useEffect(() => {
-    fetchProspectos();
-    setPage(1);
-  }, []);
+    if (mes && anio) {
+      fetchProspectos();
+      setPage(1);
+    }
+  }, [mes, anio]);
 
   // Abrir automáticamente a los 2 segundos, solo la primera vez
   useEffect(() => {
@@ -152,7 +158,9 @@ const VentasProspectosGet = ({ currentUser }) => {
       const response = await axios.get(URL, {
         params: {
           usuario_id: currentUser?.id,
-          level: currentUser?.level
+          level: currentUser?.level,
+          mes, // <--- Nuevo
+          anio // <--- Nuevo
         }
       });
       setProspectos(response.data);
@@ -347,11 +355,11 @@ const VentasProspectosGet = ({ currentUser }) => {
     }, 80); // Pequeño delay para que la tabla ya esté renderizada
   };
 
-  console.log('prospectosConAgendaHoy', prospectosConAgendaHoy);
-  console.log(
-    'visibleProspectos',
-    visibleProspectos.map((p) => p.id)
-  );
+  // console.log('prospectosConAgendaHoy', prospectosConAgendaHoy);
+  // console.log(
+  //   'visibleProspectos',
+  //   visibleProspectos.map((p) => p.id)
+  // );
 
   // Calcular cuántas filas vacías para llegar a 20
   const emptyRowsCount = 20 - visibleProspectos.length;
@@ -443,6 +451,15 @@ const VentasProspectosGet = ({ currentUser }) => {
               Registros de Prospectos - Cantidad: {visibleProspectos.length}
             </h1>
           </div>
+          {/* Filtros */}
+          <section className="flex flex-col sm:flex-row flex-wrap gap-4 justify-between items-center my-6 px-2">
+            <FiltroMesAnio
+              mes={mes}
+              setMes={setMes}
+              anio={anio}
+              setAnio={setAnio}
+            />
+          </section>
 
           <form className="mb-5 max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
             {/* Buscar por nombre */}
@@ -1247,6 +1264,8 @@ const VentasProspectosGet = ({ currentUser }) => {
         onClose={() => setShowStats(false)}
         sede={selectedSede} // <-- acá le pasás la sede seleccionada (puede ser null para todas)
         normalizeSede2={normalizeSede2}
+        mes={mes} // ✅ Nuevo
+        anio={anio} // ✅ Nuevo
       />
     </>
   );

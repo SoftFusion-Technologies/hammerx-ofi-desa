@@ -35,7 +35,14 @@ function useCountUp(value, duration = 900) {
   return display;
 }
 
-export default function StatsVentasModal({ open, onClose, sede }) {
+export default function StatsVentasModal({
+  open,
+  onClose,
+  sede,
+  normalizeSede2,
+  mes,
+  anio
+}) {
   const [stats, setStats] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -52,21 +59,26 @@ export default function StatsVentasModal({ open, onClose, sede }) {
   // Ejemplo de uso correcto:
   useEffect(() => {
     if (open) {
-      setStats(null); // <-- esto activa el spinner hasta que venga la data nueva
+      setStats(null); // Spinner de carga mientras llega la data
+
       const sedeParam = sede === 'smt' ? 'barriosur' : sede;
 
-      axios
-        .get('http://localhost:8080/stats-ventas', {
-          params: sedeParam ? { sede: sedeParam } : {}
-        })
+      const params = {};
 
+      if (sedeParam) params.sede = normalizeSede2(sedeParam);
+      if (mes) params.mes = mes;
+      if (anio) params.anio = anio;
+
+      axios
+        .get('http://localhost:8080/stats-ventas', { params })
         .then((res) => {
-          console.log('Stats del backend:', res.data); // DEBUG: fijate en consola
           setStats(res.data);
         })
-        .catch(() => setStats(null));
+        .catch((err) => {
+          console.error('Error al obtener estadísticas:', err);
+        });
     }
-  }, [open, sede]);
+  }, [open, sede, mes, anio, normalizeSede2]);
 
   if (!open) return null;
 
@@ -100,6 +112,13 @@ export default function StatsVentasModal({ open, onClose, sede }) {
             <h2 className="text-xl font-bold text-[#fc4b08]">
               Estadísticas de Ventas{' '}
               <span className="text-green-500 uppercase">({sede})</span>
+              <span className="text-gray-500 normal-case font-semibold text-base ml-2">
+                •{' '}
+                {new Date(anio, mes - 1)
+                  .toLocaleString('es-AR', { month: 'long' })
+                  .toUpperCase()}{' '}
+                {anio}
+              </span>
             </h2>
             {/* Botón cerrar arriba para mobile (sm:hidden) */}
             <button
