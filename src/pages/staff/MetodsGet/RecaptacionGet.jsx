@@ -23,6 +23,7 @@ import {
   FiChevronLeft,
   FiChevronRight
 } from 'react-icons/fi';
+import Pagination from '../Components/getPaginationRange';
 
 const RecaptacionGet = () => {
   const [recaptaciones, setRecaptaciones] = useState([]);
@@ -223,7 +224,6 @@ const RecaptacionGet = () => {
               </div>
             )}
           </div>
-
           {/* Filtros */}
           <section className="flex flex-col sm:flex-row flex-wrap gap-4 justify-between items-center my-6 px-2">
             <FiltroMesAnio
@@ -396,37 +396,14 @@ const RecaptacionGet = () => {
               </tbody>
             </table>
           </div>
-
           {/* Paginación premium */}
-          <nav className="flex justify-center items-center my-10 gap-2">
-            <button
-              className="px-4 py-2 rounded-full font-bold bg-orange-50 hover:bg-[#fc4b08] hover:text-white transition flex items-center gap-2 shadow"
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <FiChevronLeft /> Prev
-            </button>
-            {pageNumbers.map((n) => (
-              <button
-                key={n}
-                onClick={() => setCurrentPage(n)}
-                className={`px-4 py-2 rounded-full font-bold ${
-                  currentPage === n
-                    ? 'bg-[#d35400] text-white shadow-lg'
-                    : 'bg-orange-50 hover:bg-orange-200'
-                } transition`}
-              >
-                {n}
-              </button>
-            ))}
-            <button
-              className="px-4 py-2 rounded-full font-bold bg-orange-50 hover:bg-[#fc4b08] hover:text-white transition flex items-center gap-2 shadow"
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              Next <FiChevronRight />
-            </button>
-          </nav>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onChange={setCurrentPage}
+            siblingCount={1} // o 2 si querés ver más páginas alrededor
+            edgeCount={1} // 1er/última siempre visibles
+          />{' '}
         </div>
       </div>
       <Footer />

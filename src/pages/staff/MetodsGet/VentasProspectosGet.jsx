@@ -12,6 +12,7 @@ import AgendasVentas from '../../../components/AgendasVentas';
 import { useLocation } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import FiltroMesAnio from '../Components/FiltroMesAnio';
+import ObservacionField from '../Components/ObservacionField';
 
 const VentasProspectosGet = ({ currentUser }) => {
   const [prospectos, setProspectos] = useState([]);
@@ -1094,26 +1095,19 @@ const VentasProspectosGet = ({ currentUser }) => {
                         p.convertido ? 'bg-green-500' : ''
                       }`}
                     >
-                      <input
-                        type="text"
-                        value={observaciones[p.id] ?? ''}
-                        onChange={(e) =>
+                      <ObservacionField
+                        value={observaciones[p.id] ?? p.observacion ?? ''}
+                        onSave={async (nuevo) => {
+                          // actualiza estado local
                           setObservaciones((prev) => ({
                             ...prev,
-                            [p.id]: e.target.value
-                          }))
-                        }
-                        onBlur={async (e) => {
-                          if (e.target.value !== p.observacion) {
-                            await handleChange(
-                              p.id,
-                              'observacion',
-                              e.target.value
-                            );
+                            [p.id]: nuevo
+                          }));
+                          // persiste si cambió
+                          if (nuevo !== p.observacion) {
+                            await handleChange(p.id, 'observacion', nuevo);
                           }
                         }}
-                        className="w-full border-b border-gray-300 text-sm px-2 py-1 text-gray-700 bg-white transition-colors duration-200 ease-in-out hover:text-black focus:border-orange-600 focus:outline-none cursor-text"
-                        placeholder="Observación"
                       />
                     </td>
                     {/* Convertido */}

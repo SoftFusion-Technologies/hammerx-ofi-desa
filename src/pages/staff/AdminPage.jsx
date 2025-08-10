@@ -10,6 +10,7 @@ import PreguntaDetalleModal from './MetodsGet/PreguntaDetalleModal';
 import { useAuth } from '../../AuthContext';
 import ModalTareasDiarias from './ModalTareasDiarias';
 import { motion } from 'framer-motion';
+import CardRecaptacion from './Components/CardRecaptacion';
 
 const AdminPage = () => {
   const [modalPreguntasOpen, setModalPreguntasOpen] = useState(false);
@@ -26,6 +27,12 @@ const AdminPage = () => {
   const { userId, userLevel, userName } = useAuth();
 
   console.log(userId);
+
+  // opcional: mes/año actual
+  const now = new Date();
+  const mesActual = now.getMonth() + 1;
+  const anioActual = now.getFullYear();
+
   const abrirModalPreguntas = async () => {
     try {
       const response = await axios.get(URL);
@@ -95,9 +102,7 @@ const AdminPage = () => {
               className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
             >
               <Link to="/dashboard/preguntas-ia">
-                <button className="btnstaff">
-                  Preguntale a la IA
-                </button>
+                <button className="btnstaff">Preguntale a la IA</button>
               </Link>
             </motion.div>{' '}
             {(userLevel === 'admin' ||
@@ -216,20 +221,14 @@ const AdminPage = () => {
                   </Link>
                 </motion.div>
               ))}
-            {userLevel === 'instructor' ||
-              (userLevel != 'imagenes' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 1.6 }}
-                  className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
-                >
-                  {' '}
-                  <Link to="/dashboard/recaptacion">
-                    <button className="btnstaff">Recaptación</button>
-                  </Link>
-                </motion.div>
-              ))}
+            {(userLevel === 'instructor' || userLevel !== 'imagenes') && (
+              <CardRecaptacion
+                userLevel={userLevel}
+                userId={userId}
+                mes={mesActual}
+                anio={anioActual}
+              />
+            )}
             {userLevel === 'imagenes' && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
