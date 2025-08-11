@@ -11,6 +11,7 @@ import { useAuth } from '../../AuthContext';
 import ModalTareasDiarias from './ModalTareasDiarias';
 import { motion } from 'framer-motion';
 import CardRecaptacion from './Components/CardRecaptacion';
+import BadgeAgendaVentas from './MetodsGet/Details/BadgeAgendaVentas';
 
 const AdminPage = () => {
   const [modalPreguntasOpen, setModalPreguntasOpen] = useState(false);
@@ -208,16 +209,28 @@ const AdminPage = () => {
               </motion.div>
             )}
             {userLevel === 'instructor' ||
-              (userLevel != 'imagenes' && (
+              (userLevel !== 'imagenes' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 1.4 }}
-                  className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+                  className="relative overflow-visible bg-white font-bignoodle
+                 w-[250px] h-[100px] text-[20px]
+                 lg:w-[400px] lg:h-[150px] lg:text-[30px]
+                 mx-auto flex justify-center items-center
+                 rounded-tr-xl rounded-bl-xl"
                 >
-                  {' '}
+                  {/* 🔔 grande y pegado al borde */}
+                  <BadgeAgendaVentas
+                    userId={userId}
+                    userLevel={userLevel}
+                    size="lg"
+                  />
+
                   <Link to="/dashboard/ventas">
-                    <button className="btnstaff">Ventas </button>
+                    <button className="btnstaff flex items-center gap-2">
+                      Ventas
+                    </button>
                   </Link>
                 </motion.div>
               ))}

@@ -13,7 +13,7 @@ import { useLocation } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import FiltroMesAnio from '../Components/FiltroMesAnio';
 import ObservacionField from '../Components/ObservacionField';
-
+import AgendaDeHoyModal from '../Components/AgendaDeHoyModal';
 const VentasProspectosGet = ({ currentUser }) => {
   const [prospectos, setProspectos] = useState([]);
   const [prospectosConAgendaHoy, setProspectosConAgendaHoy] = useState([]);
@@ -49,6 +49,8 @@ const VentasProspectosGet = ({ currentUser }) => {
 
   const [mes, setMes] = useState('');
   const [anio, setAnio] = useState('');
+
+  const [openAgenda, setOpenAgenda] = useState(false);
 
   useEffect(() => {
     const obs = {};
@@ -561,17 +563,20 @@ const VentasProspectosGet = ({ currentUser }) => {
             <Link to="#">
               <button
                 onClick={abrirModal}
-                className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10 "
+                className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
               >
                 Nuevo Registro
               </button>
             </Link>
+
             <button
               onClick={() => setShowStats(true)}
               className="bg-[#fc4b08] hover:bg-orange-500 text-white py-2 px-4 rounded transition-colors duration-100 font-semibold"
             >
               Ver Estadísticas
             </button>
+
+            {/* ⚠️ Mantener pill amarillo */}
             <div
               className="flex items-center ml-3 gap-1 bg-yellow-200 border border-yellow-400 text-yellow-900 font-bold px-4 py-1 rounded-xl shadow select-none cursor-pointer hover:scale-105 active:scale-95 transition"
               onClick={() => setShowAgendasModal(true)}
@@ -581,6 +586,15 @@ const VentasProspectosGet = ({ currentUser }) => {
               <span>Agendas de hoy:</span>
               <span className="text-lg">{prospectosConAgendaHoy.length}</span>
             </div>
+
+            {/* 🔴 Nuevo botón Agenda de hoy con badge fijo en 4 */}
+            <button
+              onClick={() => setOpenAgenda(true)}
+              className="relative bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded font-semibold transition-colors duration-100"
+              title="Ver agenda de hoy"
+            >
+              Nueva Agendas
+            </button>
           </div>
 
           {/* Botones de sedes con control de acceso */}
@@ -1260,6 +1274,12 @@ const VentasProspectosGet = ({ currentUser }) => {
         normalizeSede2={normalizeSede2}
         mes={mes} // ✅ Nuevo
         anio={anio} // ✅ Nuevo
+      />
+      <AgendaDeHoyModal
+        open={openAgenda}
+        onClose={() => setOpenAgenda(false)}
+        userId={userId}
+        level={userLevel}
       />
     </>
   );
