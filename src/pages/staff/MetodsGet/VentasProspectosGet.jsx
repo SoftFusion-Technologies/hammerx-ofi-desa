@@ -14,6 +14,153 @@ import { AlertTriangle } from 'lucide-react';
 import FiltroMesAnio from '../Components/FiltroMesAnio';
 import ObservacionField from '../Components/ObservacionField';
 import AgendaDeHoyModal from '../Components/AgendaDeHoyModal';
+import * as XLSX from 'xlsx';
+
+const normalizeSede = (sede) => {
+  if (!sede) return '';
+  const normalized = sede.toLowerCase().replace(/\s/g, '');
+  return normalized === 'barriosur' ? 'smt' : normalized;
+};
+
+function aplicarFiltros({
+  prospectos,
+  search,
+  selectedSede,
+  tipoFiltro,
+  canalFiltro,
+  actividadFiltro
+}) {
+  if (!prospectos?.length) return [];
+
+  const q = (search || '').toLowerCase();
+
+  const filtered = prospectos.filter((p) => {
+    // 1) búsqueda por nombre (podés sumar DNI / contacto si querés)
+    const nombreMatch = (p.nombre || '').toLowerCase().includes(q);
+    if (!nombreMatch) return false;
+
+    // 2) sede
+    if (selectedSede) {
+      const sedeProspecto = normalizeSede(p.sede);
+      if (sedeProspecto !== selectedSede) return false;
+    }
+
+    // 3) filtros select
+    if (tipoFiltro && p.tipo_prospecto !== tipoFiltro) return false;
+    if (canalFiltro && p.canal_contacto !== canalFiltro) return false;
+    if (actividadFiltro && p.actividad !== actividadFiltro) return false;
+
+    return true;
+  });
+
+  // Ordenar como en la UI (convertido primero false->true, luego id desc)
+  const sorted = filtered.sort((a, b) => {
+    if (!a.convertido && b.convertido) return -1;
+    if (a.convertido && !b.convertido) return 1;
+    return b.id - a.id;
+  });
+
+  return sorted;
+}
+
+function exportProspectosExcel({
+  mes,
+  anio,
+  prospectos,
+  search,
+  selectedSede,
+  tipoFiltro,
+  canalFiltro,
+  actividadFiltro,
+  formatDate
+}) {
+  // 1) Tomamos TODO lo filtrado (no paginado)
+  const rows = aplicarFiltros({
+    prospectos,
+    search,
+    selectedSede,
+    tipoFiltro,
+    canalFiltro,
+    actividadFiltro
+  });
+
+  // 2) Mapeo a AOA (array of arrays) para controlar orden y encabezados
+  const header = [
+    'Fecha',
+    'Colaborador',
+    'Nombre',
+    'DNI',
+    'Tipo Prospecto',
+    'Canal Contacto',
+    'Usuario / Celular',
+    'Actividad',
+    '#1',
+    '#2',
+    '#3',
+    'Clase 1',
+    'Clase 2',
+    'Clase 3',
+    'Observación',
+    'Convertido'
+  ];
+
+  const aoa = [
+    header,
+    ...rows.map((p) => [
+      p.fecha ? formatDate(p.fecha) : '',
+      p.asesor_nombre || '',
+      p.nombre || '',
+      p.dni || '',
+      p.tipo_prospecto || '',
+      p.canal_contacto || '',
+      p.contacto || '',
+      p.actividad || '',
+      '✔', // #1 fijo marcado en UI
+      p.n_contacto_2 ? '✔' : '',
+      p.n_contacto_3 ? '✔' : '',
+      p.clase_prueba_1_fecha ? formatDate(p.clase_prueba_1_fecha) : '',
+      p.clase_prueba_2_fecha ? formatDate(p.clase_prueba_2_fecha) : '',
+      p.clase_prueba_3_fecha ? formatDate(p.clase_prueba_3_fecha) : '',
+      (p.observacion || '').toString().replace(/\n/g, ' '),
+      p.convertido ? 'Sí' : 'No'
+    ])
+  ];
+
+  // 3) Crear Sheet y Workbook
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // 4) Ancho de columnas aproximado
+  ws['!cols'] = [
+    { wch: 12 }, // Fecha
+    { wch: 20 }, // Colaborador
+    { wch: 24 }, // Nombre
+    { wch: 14 }, // DNI
+    { wch: 16 }, // Tipo Prospecto
+    { wch: 18 }, // Canal
+    { wch: 22 }, // Usuario/Celular
+    { wch: 18 }, // Actividad
+    { wch: 6 }, // #1
+    { wch: 6 }, // #2
+    { wch: 6 }, // #3
+    { wch: 12 }, // Clase 1
+    { wch: 12 }, // Clase 2
+    { wch: 12 }, // Clase 3
+    { wch: 30 }, // Observación
+    { wch: 10 } // Convertido
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(
+    wb,
+    ws,
+    `Ventas${anio}-${String(mes).padStart(2, '0')}`
+  );
+
+  // 5) Descargar
+  const filename = `Ventas${anio}-${String(mes).padStart(2, '0')}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+
 const VentasProspectosGet = ({ currentUser }) => {
   const [prospectos, setProspectos] = useState([]);
   const [prospectosConAgendaHoy, setProspectosConAgendaHoy] = useState([]);
@@ -91,12 +238,6 @@ const VentasProspectosGet = ({ currentUser }) => {
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
       .replace(/\s+/g, '');
-  };
-
-  const normalizeSede = (sede) => {
-    if (!sede) return '';
-    const normalized = sede.toLowerCase().replace(/\s/g, '');
-    return normalized === 'barriosur' ? 'smt' : normalized;
   };
 
   const normalizeSede2 = (sede) => {
@@ -455,6 +596,7 @@ const VentasProspectosGet = ({ currentUser }) => {
             </h1>
           </div>
           {/* Filtros */}
+
           <section className="flex flex-col sm:flex-row flex-wrap gap-4 justify-between items-center my-6 px-2">
             <FiltroMesAnio
               mes={mes}
@@ -464,6 +606,24 @@ const VentasProspectosGet = ({ currentUser }) => {
             />
           </section>
 
+          <button
+            onClick={() =>
+              exportProspectosExcel({
+                mes,
+                anio,
+                prospectos, // todos los registros del mes/año ya cargados
+                search,
+                selectedSede, // filtros activos
+                tipoFiltro,
+                canalFiltro,
+                actividadFiltro,
+                formatDate // tu helper
+              })
+            }
+            className="ml-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-500"
+          >
+            Exportar Excel
+          </button>
           <form className="mb-5 max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
             {/* Buscar por nombre */}
             <div className="mb-5">
