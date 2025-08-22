@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import NavBar from './NavbarStaff';
 import Footer from '../../components/footer/Footer';
@@ -12,6 +12,7 @@ import UploadImageModal from '../../components/Forms/ModalUploads/UploadImageMod
 import NotificationsAgendas from './NotificationsAgendas';
 import * as XLSX from 'xlsx';
 import { formatearFecha } from '../../Helpers/index';
+import FilterBar from '../../pages/staff/Components/FilterBar';
 
 const PlanillaEntrenador = () => {
   const URL = 'http://localhost:8080/';
@@ -78,6 +79,8 @@ const PlanillaEntrenador = () => {
   const [deleteYear, setDeleteYear] = useState('');
 
   const [alumnosNuevos, setAlumnosNuevos] = useState([]); // Estado para los alumnos nuevos
+
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'P' | 'N' | 'NMA'
 
   useEffect(() => {
     // Función para convertir el número del mes al nombre del mes
@@ -312,7 +315,7 @@ const PlanillaEntrenador = () => {
       // Juntar y setear rows
       const allRows = [...alumnosConAsistencias, ...filasVacias];
       setRows(allRows);
-      setFilteredAlumnos(allRows);
+      // setFilteredAlumnos(allRows);
     } catch (error) {
       console.error('Error fetching alumnos:', error);
     } finally {
@@ -1234,6 +1237,15 @@ const PlanillaEntrenador = () => {
     return alumnoEncontrado ? 'yellow' : '';
   };
 
+  // NUEVO: set con ids marcados (mes anterior)
+  const nuevosMesAnteriorIds = useMemo(() => {
+    return new Set(
+      (alumnosNuevos || [])
+        .filter((a) => a?.marca === 1 && a?.idAlumno != null)
+        .map((a) => a.idAlumno)
+    );
+  }, [alumnosNuevos]);
+
   const handleActualizarMes = async (alumnoId) => {
     try {
       const response = await axios.post(`${URL}actualizar-mes`, {
@@ -1264,6 +1276,44 @@ const PlanillaEntrenador = () => {
     // Limpia el timeout si el componente se desmonta antes
     return () => clearTimeout(timer);
   }, []);
+
+  // --- Helper central: aplica filtros sobre la fuente "rows"
+  const applyFilters = (rows, status, { nuevosMesAnteriorIds }) => {
+    const prospectoLabels = { nuevo: 'N', prospecto: 'P', socio: 'S' };
+    const isNMA = (al) => {
+      const c = (al.c || '').toString().toLowerCase();
+      const motivo = (al.motivo || '').toString().toLowerCase();
+      const pd = (al.punto_d || '').toString().toLowerCase();
+      return c === 'nma' || motivo.includes('nma') || pd.includes('nma');
+    };
+
+    let base = rows;
+    if (status !== 'all') base = base.filter((al) => al?.id);
+
+    return base.filter((al) => {
+      if (status === 'all') return true;
+
+      if (status === 'N_PREV') {
+        // ← NUEVO: “nuevos del mes anterior (marca=1)”
+        return nuevosMesAnteriorIds?.has(al.id);
+      }
+
+      const label = prospectoLabels[al?.prospecto] || '';
+      if (status === 'P') return label === 'P';
+      if (status === 'N') return label === 'N';
+      if (status === 'S') return label === 'S';
+      if (status === 'NMA') return isNMA(al);
+
+      return true;
+    });
+  };
+
+  // --- Cuando cambiás "rows" (después de fetchAlumnos), aplicá el filtro activo
+  useEffect(() => {
+    setFilteredAlumnos(
+      applyFilters(rows, statusFilter, { nuevosMesAnteriorIds })
+    );
+  }, [rows, statusFilter, nuevosMesAnteriorIds]);
 
   return (
     <>
@@ -1542,6 +1592,14 @@ const PlanillaEntrenador = () => {
             </div>
           </div>
         )}
+
+        <FilterBar
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          onClear={() => setStatusFilter('all')}
+          sourceRows={rows}
+          nuevosMesAnteriorIds={nuevosMesAnteriorIds}
+        />
 
         <table className="min-w-full border-collapse table-auto border border-gray-400">
           <thead>

@@ -234,7 +234,7 @@ const AdminPage = () => {
                   </Link>
                 </motion.div>
               ))}
-            {(userLevel === 'instructor' || userLevel !== 'imagenes') && (
+            {userLevel !== 'instructor' && userLevel !== 'imagenes' && (
               <CardRecaptacion
                 userLevel={userLevel}
                 userId={userId}
