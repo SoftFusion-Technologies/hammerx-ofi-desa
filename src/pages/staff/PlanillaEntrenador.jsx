@@ -82,6 +82,10 @@ const PlanillaEntrenador = () => {
 
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'P' | 'N' | 'NMA'
 
+  const [nPrevKinds, setNPrevKinds] = useState(
+    new Set(['prospecto_c', 'nuevo'])
+  );
+
   useEffect(() => {
     // Función para convertir el número del mes al nombre del mes
     const getMonthName = (month) => {
@@ -1278,14 +1282,8 @@ const PlanillaEntrenador = () => {
   }, []);
 
   // --- Helper central: aplica filtros sobre la fuente "rows"
-  const applyFilters = (rows, status, { nuevosMesAnteriorIds }) => {
+  const applyFilters = (rows, status, { nuevosMesAnteriorIds, nPrevKinds }) => {
     const prospectoLabels = { nuevo: 'N', prospecto: 'P', socio: 'S' };
-    const isNMA = (al) => {
-      const c = (al.c || '').toString().toLowerCase();
-      const motivo = (al.motivo || '').toString().toLowerCase();
-      const pd = (al.punto_d || '').toString().toLowerCase();
-      return c === 'nma' || motivo.includes('nma') || pd.includes('nma');
-    };
 
     let base = rows;
     if (status !== 'all') base = base.filter((al) => al?.id);
@@ -1294,26 +1292,35 @@ const PlanillaEntrenador = () => {
       if (status === 'all') return true;
 
       if (status === 'N_PREV') {
-        // ← NUEVO: “nuevos del mes anterior (marca=1)”
-        return nuevosMesAnteriorIds?.has(al.id);
+        // Debe estar pintado amarillo este mes
+        if (!nuevosMesAnteriorIds?.has(al.id)) return false;
+
+        // Mapear null/undefined a 'legacy' para registros anteriores al upgrade
+        const origen = al?.socio_origen ?? 'legacy'; // 'prospecto_c' | 'nuevo' | 'legacy'
+
+        // Si no hay selección, mostrar TODOS (PC→S, N→S y legacy)
+        const selected =
+          nPrevKinds && nPrevKinds.size > 0
+            ? nPrevKinds
+            : new Set(['prospecto_c', 'nuevo', 'legacy']);
+
+        return selected.has(origen);
       }
 
       const label = prospectoLabels[al?.prospecto] || '';
       if (status === 'P') return label === 'P';
       if (status === 'N') return label === 'N';
       if (status === 'S') return label === 'S';
-      if (status === 'NMA') return isNMA(al);
 
       return true;
     });
   };
-
   // --- Cuando cambiás "rows" (después de fetchAlumnos), aplicá el filtro activo
   useEffect(() => {
     setFilteredAlumnos(
-      applyFilters(rows, statusFilter, { nuevosMesAnteriorIds })
+      applyFilters(rows, statusFilter, { nuevosMesAnteriorIds, nPrevKinds })
     );
-  }, [rows, statusFilter, nuevosMesAnteriorIds]);
+  }, [rows, statusFilter, nuevosMesAnteriorIds, nPrevKinds]);
 
   return (
     <>
@@ -1599,6 +1606,8 @@ const PlanillaEntrenador = () => {
           onClear={() => setStatusFilter('all')}
           sourceRows={rows}
           nuevosMesAnteriorIds={nuevosMesAnteriorIds}
+          nPrevKinds={nPrevKinds}
+          setNPrevKinds={setNPrevKinds}
         />
 
         <table className="min-w-full border-collapse table-auto border border-gray-400">
