@@ -19,6 +19,7 @@ import { flecha1, flecha2, logo, hero2 } from '../../images/svg/index';
 import { video } from '../../Video';
 import { video2 } from '../../Video';
 import './hero.css';
+import SedesSegmented from './SedesSegmented';
 const Hero = () => {
   useEffect(() => {
     Aos.init({ duration: 1500, delay: '200' });
@@ -80,20 +81,7 @@ const Hero = () => {
                   NUESTRAS SEDES
                 </p>
               </li>
-              {mostrarBotonesSedes && (
-                <div className="flex mx-auto mb-2 max-sm:flex-col">
-                  <Link to={'/Sedes/Concepcion'} className="max-sm:mx-auto">
-                    <button className="bg-[#fc4b08] transition hover:bg-[#fc6e08] text-white  py-2 px-4 rounded sm:mr-4">
-                      CONCEPCIÓN
-                    </button>
-                  </Link>
-                  <Link to={'/Sedes/Monteros'} className="max-sm:mx-auto">
-                    <button className="bg-[#fc4b08] transition hover:bg-[#fc6e08] text-white  py-2 px-4 rounded max-sm:mt-2">
-                      MONTEROS
-                    </button>
-                  </Link>
-                </div>
-              )}
+              <SedesSegmented mostrarBotonesSedes={mostrarBotonesSedes} />
               <hr className="text-black w-5/6" />
               <li className="py-2 hover:text-orange-500 transition duration-200 ease-in-out">
                 <a href="#about">CONOCÉ TODA NUESTRA INFO</a>
@@ -203,20 +191,8 @@ const Hero = () => {
                   NUESTRAS SEDES
                 </p>
               </li>
-              {mostrarBotonesSedes && (
-                <div className="flex mx-auto mb-2 max-sm:flex-col">
-                  <Link to={'/Sedes/Concepcion'} className="max-sm:mx-auto">
-                    <button className="bg-[#fc4b08] transition hover:bg-[#fc6e08] text-white  py-2 px-4 rounded sm:mr-4">
-                      CONCEPCIÓN
-                    </button>
-                  </Link>
-                  <Link to={'/Sedes/Monteros'} className="max-sm:mx-auto">
-                    <button className="bg-[#fc4b08] transition hover:bg-[#fc6e08] text-white  py-2 px-4 rounded max-sm:mt-2">
-                      MONTEROS
-                    </button>
-                  </Link>
-                </div>
-              )}
+              <SedesSegmented mostrarBotonesSedes={mostrarBotonesSedes} />
+
               <hr className="text-black w-5/6" />
               <li className="py-2 hover:text-orange-500 transition duration-200 ease-in-out">
                 <a href="#about">CONOCÉ TODA NUESTRA INFO</a>

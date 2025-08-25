@@ -12,8 +12,8 @@ const Footer = () => {
   const location = useLocation();
   const path = location.pathname;
   const isDashboard = path.startsWith('/dashboard');
-  const URL = 'http://localhost:8080/';
   const { userLevel } = useAuth();
+  const URL = 'https://vps-4294061-x.dattaweb.com/';
 
   const [imagenes, setImagenes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -49,7 +49,7 @@ const Footer = () => {
     );
   return (
     <>
-      {!isDashboard && <Marcas_v2 />}
+      {/* {!isDashboard && <Marcas_v2 />} */}
       {userLevel === 'admin' ||
         (userLevel === 'imagenes' && <DashboardImagesManager />)}
       {userLevel === 'instructor' ||

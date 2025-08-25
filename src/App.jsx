@@ -195,6 +195,7 @@ import NotFound from './pages/NotFound.jsx';
 import LogsAuditoria from './pages/LogsAuditoria.jsx';
 import PromosDashboard from './pages/staff/MetodsGet/PromosDashboard.jsx';
 import PreguntasIA from './pages/staff/PreguntasIA.jsx';
+import ProximamenteSede from './pages/ProximamenteSede.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
 /**
  * Componente principal de la aplicación.
@@ -272,6 +273,16 @@ const App = memo(() => {
                 <Ruta
                   path="/Sedes/Concepcion"
                   element={<Sedeconcepcion />}
+                />{' '}
+                <Ruta
+                  path="/nueva_sede_hammerx_barrio_norte"
+                  element={
+                    <ProximamenteSede
+                      titulo="PRÓXIMAMENTE"
+                      subtitulo="Estamos preparando esta sede para vos"
+                      onAvisarme={() => setOpenNotify(true)}
+                    />
+                  }
                 />{' '}
                 {/* Página de la sede de Concepción */}
                 <Ruta path="/Sedes/Monteros" element={<Sedemonteros />} />{' '}
