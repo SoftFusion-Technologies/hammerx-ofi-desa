@@ -196,6 +196,7 @@ import LogsAuditoria from './pages/LogsAuditoria.jsx';
 import PromosDashboard from './pages/staff/MetodsGet/PromosDashboard.jsx';
 import PreguntasIA from './pages/staff/PreguntasIA.jsx';
 import ProximamenteSede from './pages/ProximamenteSede.jsx';
+import ScrollToTop from './components/ScrollToTop.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
 /**
  * Componente principal de la aplicación.
@@ -252,6 +253,8 @@ const App = memo(() => {
             <Loading />
           ) : (
             <>
+              <ScrollToTop />
+
               {/* Enrutamiento de las diferentes páginas */}
               <Rutas>
                 <Ruta path="/" element={<HomePage />} />{' '}
