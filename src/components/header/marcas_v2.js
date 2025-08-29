@@ -1,29 +1,26 @@
-import comercio1 from '../../images/marcas/comercio1.png';
-import comercio2 from '../../images/marcas/comercio2.png';
-import comercio3 from '../../images/marcas/comercio3.png';
-import comercio4 from '../../images/marcas/comercio4.png';
-import comercio5 from '../../images/marcas/comercio5.png';
-import comercio6 from '../../images/marcas/comercio6.png';
-import comercio7 from '../../images/marcas/comercio7.png';
-import comercio8 from '../../images/marcas/comercio8.png';
-import comercio9 from '../../images/marcas/comercio9.png';
-import comercio10 from '../../images/marcas/comercio10.png';
-import comercio11 from '../../images/marcas/comercio11.png';
-// import comercio12 from '../../images/marcas/comercio12.png';
-// import comercio13 from '../../images/marcas/comercio13.png';
+// Cargamos todas las imágenes comercio*.png
+const modules = import.meta.glob('../../images/marcas/comercio*.png', {
+  eager: true
+});
 
-export {
-  comercio1,
-  comercio2,
-  comercio3,
-  comercio4,
-  comercio5,
-  comercio6,
-  comercio7,
-  comercio8,
-  comercio9,
-  comercio10,
-  comercio11,
-  // comercio12,
-  // comercio13
-};
+const items = Object.entries(modules)
+  .map(([path, mod]) => {
+    const m = path.match(/comercio(\d+)\.png$/);
+    if (!m) return null;
+    const num = Number(m[1]);
+    return { num, url: mod.default };
+  })
+  .filter(Boolean)
+  .filter(({ num }) => num !== 12 && num !== 13) // excluye 12 y 13
+  .sort((a, b) => a.num - b.num);
+
+// Array de URLs en orden (1,2,3, ... 19, 20, ...)
+export const comerciosArray = items.map(({ url }) => url);
+
+// Mapa { comercio1: url, comercio2: url, ... }
+export const comerciosMap = Object.fromEntries(
+  items.map(({ num, url }) => [`comercio${num}`, url])
+);
+
+// Si querés un default, exportá el array
+export default comerciosArray;

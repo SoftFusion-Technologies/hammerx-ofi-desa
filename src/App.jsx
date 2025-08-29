@@ -32,6 +32,7 @@ import PostulanteDetails from './pages/staff/MetodsGet/PostulanteGetId';
 import IntegranteDetails from './pages/staff/MetodsGet/IntegranteConveGetId';
 import FrequentDetails from './pages/staff/MetodsGet/FrequentAsksGetId';
 import TaskDetails from './pages/staff/MetodsGet/TaskGetId';
+import Marcas_v2 from './components/header/Marcas_v2.jsx';
 
 import TaskReminder2 from './components/TaskReminder2.jsx';
 
@@ -807,6 +808,7 @@ const App = memo(() => {
             </>
           )}
         </Suspense>
+        <Marcas_v2></Marcas_v2>
       </Router>
       {/* </div> */}
     </AuthProvider>
