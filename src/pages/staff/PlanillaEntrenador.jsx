@@ -86,6 +86,13 @@ const PlanillaEntrenador = () => {
     new Set(['prospecto_c', 'nuevo'])
   );
 
+
+  useEffect(() => {
+    if (statusFilter === 'N_PREV') {
+      setNPrevKinds(new Set(['prospecto_c', 'nuevo', 'legacy']));
+    }
+  }, [statusFilter]);
+
   useEffect(() => {
     // Función para convertir el número del mes al nombre del mes
     const getMonthName = (month) => {

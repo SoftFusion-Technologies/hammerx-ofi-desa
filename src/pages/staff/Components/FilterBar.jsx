@@ -46,12 +46,17 @@ export default function FilterBar({
   const OPTIONS = useMemo(
     () => [
       { key: 'all', label: 'Todos', icon: FaUsers, tint: 'blue' },
-      { key: 'P', label: 'Prospectos (P)', icon: FaUserPlus, tint: 'amber' },
+      {
+        key: 'P',
+        label: 'Prospectos No Convertidos',
+        icon: FaUserPlus,
+        tint: 'amber'
+      },
       { key: 'N', label: 'Nuevos (N)', icon: FaUserCheck, tint: 'emerald' },
       { key: 'S', label: 'Socios (S)', icon: FaUserFriends, tint: 'indigo' },
       {
         key: 'N_PREV',
-        label: 'Nuevos (mes ant.) y Prospectos Convertidos.',
+        label: 'Nuevos (mes anterior)',
         icon: FaHistory,
         tint: 'orange'
       }
@@ -380,7 +385,7 @@ export default function FilterBar({
 
       {/* Subfiltro: solo para N_PREV */}
       {statusFilter === 'N_PREV' && (
-        <div className="mt-2 px-1">
+        <div className="mt-2 px-1 hidden">
           <div className="inline-flex flex-wrap items-center gap-2">
             <span className="text-xs text-gray-500">Origen:</span>
 
