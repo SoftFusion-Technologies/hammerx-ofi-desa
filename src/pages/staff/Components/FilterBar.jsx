@@ -6,7 +6,8 @@ import {
   FaTag,
   FaTimes,
   FaUserFriends,
-  FaHistory
+  FaHistory,
+  FaCalendarCheck
 } from 'react-icons/fa';
 
 /**
@@ -31,7 +32,10 @@ export default function FilterBar({
   storageKey = 'filterBar.status',
   // 👇 OPCIONALES (controlado)
   nPrevKinds,
-  setNPrevKinds
+  setNPrevKinds,
+  sociosMesIds,
+  prosKinds,
+  setProsKinds
 }) {
   const ALL_KINDS = new Set(['prospecto_c', 'nuevo', 'legacy']);
 
@@ -47,8 +51,15 @@ export default function FilterBar({
     () => [
       { key: 'all', label: 'Todos', icon: FaUsers, tint: 'blue' },
       {
+        key: 'S_MES',
+        label: 'Alumnos del mes (≥6)',
+        icon: FaCalendarCheck,
+        tint: 'teal'
+      },
+
+      {
         key: 'P',
-        label: 'Prospectos No Convertidos',
+        label: 'Prospectos',
         icon: FaUserPlus,
         tint: 'amber'
       },
@@ -78,6 +89,15 @@ export default function FilterBar({
     if (!sourceRows) return null;
     const valid = sourceRows.filter((r) => r?.id);
 
+    // 🔧 Normalizador: admite 'P/N/S' y 'prospecto/nuevo/socio'
+    const getLabel = (v) => {
+      const raw = (v ?? '').toString().trim().toLowerCase();
+      if (raw === 'p' || raw === 'prospecto') return 'P';
+      if (raw === 'n' || raw === 'nuevo') return 'N';
+      if (raw === 's' || raw === 'socio') return 'S';
+      return '';
+    };
+
     const obj = {
       all: valid.length,
       P: 0,
@@ -86,11 +106,18 @@ export default function FilterBar({
       N_PREV: 0,
       N_PREV_PC: 0,
       N_PREV_N: 0,
-      N_PREV_LEGACY: 0
+      N_PREV_LEGACY: 0,
+      S_MES: 0,
+      PROS: 0, // total Prospectos (convertidos + no convertidos)
+      PROS_CONV: 0, // Prospectos convertidos (N C o P C)
+      PROS_NO: 0 // Prospectos no convertidos (P sin c)
     };
 
     for (const al of valid) {
-      const label = LABELS[al?.prospecto] || '';
+      const label = getLabel(al?.prospecto); // 'S' | 'P' | 'N'
+      const cFlag = (al?.c ?? '').toString().trim().toLowerCase(); // '' | 'c'
+
+      // Conteo general por estado
       if (label === 'P') obj.P++;
       if (label === 'N') obj.N++;
       if (label === 'S') obj.S++;
@@ -103,9 +130,21 @@ export default function FilterBar({
         if (al.socio_origen === 'nuevo') obj.N_PREV_N++;
         if (!al.socio_origen) obj.N_PREV_LEGACY++;
       }
+
+      // 🔥 Conteo de “alumnos del mes” (≥6 asistencias)
+      if (sociosMesIds?.has(Number(al.id))) obj.S_MES++;
+
+      // 🔥 Prospectos convertidos y no convertidos
+      const isConvertido = cFlag === 'c' && (label === 'P' || label === 'N'); // P C o N C
+      const isNoConvertido = label === 'P' && !cFlag; // P sin c
+
+      if (isConvertido || isNoConvertido) obj.PROS++; // total prospectos
+      if (isConvertido) obj.PROS_CONV++; // convertidos
+      if (isNoConvertido) obj.PROS_NO++; // no convertidos
     }
+
     return obj;
-  }, [sourceRows, nuevosMesAnteriorIds, LABELS]);
+  }, [sourceRows, nuevosMesAnteriorIds, sociosMesIds]);
 
   // -------- sticky con sombra al scrollear
   const rootRef = useRef(null);
@@ -251,7 +290,8 @@ export default function FilterBar({
       amber: 'text-amber-600',
       emerald: 'text-emerald-600',
       indigo: 'text-indigo-600',
-      orange: 'text-orange-500'
+      orange: 'text-orange-500',
+      teal: 'text-teal-600'
     }[t] || 'text-gray-800');
 
   const toggleKind = (k) => {
@@ -382,6 +422,166 @@ export default function FilterBar({
           </button>
         </div>
       </div>
+
+      {statusFilter === 'PROS' && (
+        <div className="mt-2 px-1">
+          <div className="inline-flex flex-wrap items-center gap-2">
+            <span className="text-xs text-gray-500">Prospectos:</span>
+
+            {/* Convertidos: N C o P C */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = new Set(prosKinds || []);
+                if (next.has('conv')) next.delete('conv');
+                else next.add('conv');
+                if (next.size === 0) {
+                  next.add('conv');
+                  next.add('no_conv');
+                }
+                setProsKinds(next);
+              }}
+              className={[
+                'px-2.5 h-8 rounded-full text-xs font-medium border transition',
+                prosKinds?.has('conv')
+                  ? 'bg-emerald-100 border-emerald-200 text-emerald-700'
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+              ].join(' ')}
+              title="Prospectos Convertidos (N C o P C)"
+            >
+              Convertidos
+              {counts && (
+                <span className="ml-2 inline-flex items-center justify-center px-1.5 min-w-[1.25rem] h-5 rounded-full text-[11px] bg-black/10 text-current">
+                  {counts.PROS_CONV ?? 0}
+                </span>
+              )}
+            </button>
+
+            {/* No convertidos: P sin c */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = new Set(prosKinds || []);
+                if (next.has('no_conv')) next.delete('no_conv');
+                else next.add('no_conv');
+                if (next.size === 0) {
+                  next.add('conv');
+                  next.add('no_conv');
+                }
+                setProsKinds(next);
+              }}
+              className={[
+                'px-2.5 h-8 rounded-full text-xs font-medium border transition',
+                prosKinds?.has('no_conv')
+                  ? 'bg-orange-100 border-orange-200 text-orange-700'
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+              ].join(' ')}
+              title="Prospectos No Convertidos (P sin c)"
+            >
+              No convertidos
+              {counts && (
+                <span className="ml-2 inline-flex items-center justify-center px-1.5 min-w-[1.25rem] h-5 rounded-full text-[11px] bg-black/10 text-current">
+                  {counts.PROS_NO ?? 0}
+                </span>
+              )}
+            </button>
+
+            {/* Resumen */}
+            <span className="text-[11px] text-gray-500">
+              (mostrando{' '}
+              {['conv', 'no_conv'].every((k) => prosKinds?.has(k))
+                ? 'todos'
+                : [
+                    prosKinds?.has('conv') ? 'convertidos' : null,
+                    prosKinds?.has('no_conv') ? 'no convertidos' : null
+                  ]
+                    .filter(Boolean)
+                    .join(' + ')}
+              )
+            </span>
+          </div>
+        </div>
+      )}
+
+      {statusFilter === 'P' && (
+        <div className="mt-2 px-1">
+          <div className="inline-flex flex-wrap items-center gap-2">
+            <span className="text-xs text-gray-500">Prospectos:</span>
+
+            {/* Convertidos: P C o N C */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = new Set(prosKinds || []);
+                next.has('conv') ? next.delete('conv') : next.add('conv');
+                if (next.size === 0) {
+                  next.add('conv');
+                  next.add('no_conv');
+                }
+                setProsKinds(next);
+              }}
+              className={[
+                'px-2.5 h-8 rounded-full text-xs font-medium border transition',
+                prosKinds?.has('conv')
+                  ? 'bg-emerald-100 border-emerald-200 text-emerald-700'
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+              ].join(' ')}
+              title="Prospectos Convertidos (P C o N C)"
+            >
+              Convertidos
+              {counts && (
+                <span className="ml-2 inline-flex items-center justify-center px-1.5 min-w-[1.25rem] h-5 rounded-full text-[11px] bg-black/10 text-current">
+                  {counts.PROS_CONV ?? 0}
+                </span>
+              )}
+            </button>
+
+            {/* No convertidos: P sin c */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = new Set(prosKinds || []);
+                next.has('no_conv')
+                  ? next.delete('no_conv')
+                  : next.add('no_conv');
+                if (next.size === 0) {
+                  next.add('conv');
+                  next.add('no_conv');
+                }
+                setProsKinds(next);
+              }}
+              className={[
+                'px-2.5 h-8 rounded-full text-xs font-medium border transition',
+                prosKinds?.has('no_conv')
+                  ? 'bg-orange-100 border-orange-200 text-orange-700'
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+              ].join(' ')}
+              title="Prospectos No Convertidos (P sin c)"
+            >
+              No convertidos
+              {counts && (
+                <span className="ml-2 inline-flex items-center justify-center px-1.5 min-w-[1.25rem] h-5 rounded-full text-[11px] bg-black/10 text-current">
+                  {counts.PROS_NO ?? 0}
+                </span>
+              )}
+            </button>
+
+            {/* Resumen */}
+            <span className="text-[11px] text-gray-500">
+              (mostrando{' '}
+              {['conv', 'no_conv'].every((k) => prosKinds?.has(k))
+                ? 'todos'
+                : [
+                    prosKinds?.has('conv') ? 'convertidos' : null,
+                    prosKinds?.has('no_conv') ? 'no convertidos' : null
+                  ]
+                    .filter(Boolean)
+                    .join(' + ')}
+              )
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Subfiltro: solo para N_PREV */}
       {statusFilter === 'N_PREV' && (

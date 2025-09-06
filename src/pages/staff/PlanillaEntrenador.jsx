@@ -86,12 +86,31 @@ const PlanillaEntrenador = () => {
     new Set(['prospecto_c', 'nuevo'])
   );
 
+  const [prosKinds, setProsKinds] = useState(new Set(['conv', 'no_conv']));
 
   useEffect(() => {
     if (statusFilter === 'N_PREV') {
       setNPrevKinds(new Set(['prospecto_c', 'nuevo', 'legacy']));
     }
   }, [statusFilter]);
+
+  const [mesSel, setMesSel] = useState(new Date().getMonth() + 1);
+  const [anioSel, setAnioSel] = useState(new Date().getFullYear());
+  const [asistenciasMes, setAsistenciasMes] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(
+          `${URL}asistencias?mes=${mesSel}&anio=${anioSel}`
+        );
+        const data = await res.json();
+        setAsistenciasMes(Array.isArray(data) ? data : []);
+      } catch {
+        setAsistenciasMes([]);
+      }
+    })();
+  }, [mesSel, anioSel]);
 
   useEffect(() => {
     // Función para convertir el número del mes al nombre del mes
@@ -1288,9 +1307,35 @@ const PlanillaEntrenador = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  const sociosMesIds = useMemo(() => {
+    const counts = new Map();
+    for (const a of asistenciasMes) {
+      if (a?.estado === 'P' && a?.mes === mesSel && a?.anio === anioSel) {
+        counts.set(a.alumno_id, (counts.get(a.alumno_id) || 0) + 1);
+      }
+    }
+    const ok = new Set();
+    for (const [alumnoId, cant] of counts) if (cant >= 6) ok.add(alumnoId);
+    return ok;
+  }, [asistenciasMes, mesSel, anioSel]);
+
   // --- Helper central: aplica filtros sobre la fuente "rows"
-  const applyFilters = (rows, status, { nuevosMesAnteriorIds, nPrevKinds }) => {
+  const applyFilters = (
+    rows,
+    status,
+    { nuevosMesAnteriorIds, nPrevKinds, sociosMesIds, prosKinds }
+  ) => {
+    // Mapeo rápido para etiquetas visibles (compatibilidad)
     const prospectoLabels = { nuevo: 'N', prospecto: 'P', socio: 'S' };
+
+    // 🔧 Normalizador robusto: admite 'P/N/S' y 'prospecto/nuevo/socio'
+    const getLabel = (v) => {
+      const raw = (v ?? '').toString().trim().toLowerCase();
+      if (raw === 'p' || raw === 'prospecto') return 'P';
+      if (raw === 'n' || raw === 'nuevo') return 'N';
+      if (raw === 's' || raw === 'socio') return 'S';
+      return ''; // desconocido
+    };
 
     let base = rows;
     if (status !== 'all') base = base.filter((al) => al?.id);
@@ -1314,20 +1359,60 @@ const PlanillaEntrenador = () => {
         return selected.has(origen);
       }
 
-      const label = prospectoLabels[al?.prospecto] || '';
-      if (status === 'P') return label === 'P';
-      if (status === 'N') return label === 'N';
-      if (status === 'S') return label === 'S';
+      if (status === 'S_MES') {
+        // 🔥 Alumnos del mes (≥6 asistencias)
+        // Mostrar TODOS los alumnos (S, P, N) que tengan >=6 asistencias este mes
+        return sociosMesIds?.has(Number(al.id));
+      }
+
+      if (status === 'P') {
+        // 🔥 Prospectos con subfiltros
+        const label = getLabel(al?.prospecto); // 'S' | 'P' | 'N'
+        const cFlag = (al?.c ?? '').toString().trim().toLowerCase(); // '' | 'c'
+
+        // Convertidos: N C o P C
+        const isConvertido = cFlag === 'c' && (label === 'P' || label === 'N');
+
+        // No convertidos: P sin 'c'
+        const isNoConvertido = label === 'P' && !cFlag;
+
+        // Si no hay selección, mostrar ambos por defecto
+        const selected = prosKinds?.size
+          ? prosKinds
+          : new Set(['conv', 'no_conv']);
+
+        const pasaConv = selected.has('conv') && isConvertido;
+        const pasaNoConv = selected.has('no_conv') && isNoConvertido;
+
+        return pasaConv || pasaNoConv;
+      }
+
+      // Filtros tradicionales por etiqueta
+      const simple = getLabel(al?.prospecto); // usa el normalizador para P/N/S
+      if (status === 'N') return simple === 'N';
+      if (status === 'S') return simple === 'S';
 
       return true;
     });
   };
-  // --- Cuando cambiás "rows" (después de fetchAlumnos), aplicá el filtro activo
+
   useEffect(() => {
     setFilteredAlumnos(
-      applyFilters(rows, statusFilter, { nuevosMesAnteriorIds, nPrevKinds })
+      applyFilters(rows, statusFilter, {
+        nuevosMesAnteriorIds,
+        nPrevKinds,
+        sociosMesIds,
+        prosKinds
+      })
     );
-  }, [rows, statusFilter, nuevosMesAnteriorIds, nPrevKinds]);
+  }, [
+    rows,
+    statusFilter,
+    nuevosMesAnteriorIds,
+    nPrevKinds,
+    sociosMesIds,
+    prosKinds
+  ]);
 
   return (
     <>
@@ -1615,6 +1700,9 @@ const PlanillaEntrenador = () => {
           nuevosMesAnteriorIds={nuevosMesAnteriorIds}
           nPrevKinds={nPrevKinds}
           setNPrevKinds={setNPrevKinds}
+          sociosMesIds={sociosMesIds}
+          prosKinds={prosKinds}
+          setProsKinds={setProsKinds}
         />
 
         <table className="min-w-full border-collapse table-auto border border-gray-400">
