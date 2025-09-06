@@ -99,18 +99,20 @@ const PlanillaEntrenador = () => {
   const [asistenciasMes, setAsistenciasMes] = useState([]);
 
   useEffect(() => {
+    // Trae SOLO el mes/año seleccionados
     (async () => {
       try {
         const res = await fetch(
-          `${URL}asistencias?mes=${mesSel}&anio=${anioSel}`
+          `${URL}asistencias?mes=${selectedMonth}&anio=${selectedYear}`
         );
         const data = await res.json();
         setAsistenciasMes(Array.isArray(data) ? data : []);
-      } catch {
+      } catch (e) {
+        console.error('Error asistencias mes:', e);
         setAsistenciasMes([]);
       }
     })();
-  }, [mesSel, anioSel]);
+  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     // Función para convertir el número del mes al nombre del mes
@@ -857,24 +859,7 @@ const PlanillaEntrenador = () => {
   const lastIndex = currentPage * itemsPerPage;
   const firstIndex = lastIndex - itemsPerPage;
   const records = filteredAlumnos.slice(firstIndex, lastIndex);
-  const nPage = Math.ceil(filteredAlumnos.length / itemsPerPage);
-  const numbers = [...Array(nPage + 1).keys()].slice(1);
-
-  function prevPage() {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  }
-
-  function changeCPage(id) {
-    setCurrentPage(id);
-  }
-
-  function nextPage() {
-    if (currentPage < nPage) {
-      setCurrentPage(currentPage + 1);
-    }
-  }
+  // const nPage = Math.ceil(filteredAlumnos.length / itemsPerPage);
 
   const openModal = async (rowIndex, agendaIndex, agendaIdRec) => {
     try {
@@ -1249,7 +1234,9 @@ const PlanillaEntrenador = () => {
   useEffect(() => {
     const obtenerAlumnosNuevos = async () => {
       try {
-        const response = await fetch('http://localhost:8080/alumnos_nuevos');
+        const response = await fetch(
+          'http://localhost:8080/alumnos_nuevos'
+        );
         const data = await response.json();
         setAlumnosNuevos(data);
       } catch (error) {
@@ -1307,19 +1294,23 @@ const PlanillaEntrenador = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // --- IDs con ≥6 asistencias "P" en el mes/año seleccionados
   const sociosMesIds = useMemo(() => {
-    const counts = new Map();
+    const counts = new Map(); // alumno_id -> cantidad de P
     for (const a of asistenciasMes) {
-      if (a?.estado === 'P' && a?.mes === mesSel && a?.anio === anioSel) {
-        counts.set(a.alumno_id, (counts.get(a.alumno_id) || 0) + 1);
+      const esP = a?.estado === 'P';
+      const mismoMes = Number(a?.mes) === Number(selectedMonth);
+      const mismoAnio = Number(a?.anio) === Number(selectedYear);
+      if (esP && mismoMes && mismoAnio) {
+        const id = Number(a.alumno_id);
+        counts.set(id, (counts.get(id) || 0) + 1);
       }
     }
     const ok = new Set();
     for (const [alumnoId, cant] of counts) if (cant >= 6) ok.add(alumnoId);
     return ok;
-  }, [asistenciasMes, mesSel, anioSel]);
+  }, [asistenciasMes, selectedMonth, selectedYear]);
 
-  // --- Helper central: aplica filtros sobre la fuente "rows"
   const applyFilters = (
     rows,
     status,
@@ -1414,6 +1405,76 @@ const PlanillaEntrenador = () => {
     prosKinds
   ]);
 
+  // 1) Fuente única: aplicar filtros de estado/subfiltros/mes
+  const filteredByStatus = useMemo(() => {
+    return applyFilters(rows, statusFilter, {
+      nuevosMesAnteriorIds,
+      nPrevKinds,
+      sociosMesIds, // depende de selectedMonth/Year: ya lo tenés
+      prosKinds
+    });
+  }, [
+    rows,
+    statusFilter,
+    nuevosMesAnteriorIds,
+    nPrevKinds,
+    sociosMesIds,
+    prosKinds
+  ]);
+
+  // 2) Búsqueda (NO pisar con rows cuando search == '')
+  const filteredBySearch = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return filteredByStatus;
+    return filteredByStatus.filter((al) =>
+      (al?.nombre ?? '').toLowerCase().includes(q)
+    );
+  }, [filteredByStatus, search]);
+
+  // 3) Paginación
+  const nPage = Math.max(1, Math.ceil(filteredBySearch.length / itemsPerPage));
+  const numbers = [...Array(nPage + 1).keys()].slice(1);
+
+  const currentPageSafe = Math.min(currentPage, nPage);
+  const paged = useMemo(() => {
+    const start = (currentPageSafe - 1) * itemsPerPage;
+    return filteredBySearch.slice(start, start + itemsPerPage);
+  }, [filteredBySearch, currentPageSafe, itemsPerPage]);
+
+  // 4) Mantener currentPage consistente cuando cambian los datos filtrados
+  useEffect(() => {
+    if (currentPage > nPage) setCurrentPage(nPage); // si quedó fuera de rango
+    if (currentPage < 1) setCurrentPage(1);
+  }, [nPage]); // se recalcula cada vez que cambian filtros/búsqueda/mes y por ende cambia nPage
+
+  // 5) Resetear a la primera página cuando cambian filtros “grandes”
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    statusFilter,
+    prosKinds,
+    nPrevKinds,
+    selectedMonth,
+    selectedYear,
+    search
+  ]);
+
+  function prevPage() {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  }
+
+  function changeCPage(id) {
+    setCurrentPage(id);
+  }
+
+  function nextPage() {
+    if (currentPage < nPage) {
+      setCurrentPage(currentPage + 1);
+    }
+  }
+
   return (
     <>
       <NavBar />
@@ -1430,6 +1491,7 @@ const PlanillaEntrenador = () => {
             </Link>
           </div>
         )}
+
         {loading && (
           <div className="flex items-center justify-center">
             <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#fc4b08]"></span>
@@ -1454,6 +1516,7 @@ const PlanillaEntrenador = () => {
         {showNotification && (
           <NotificationsAgendas user1={user_id} user2={userId} />
         )}
+
         <div className="flex justify-center">
           <h2 className="pb-5 font-bignoodle text-[#fc4b08] text-5xl">
             {nombreInstructor}
@@ -1691,7 +1754,6 @@ const PlanillaEntrenador = () => {
             </div>
           </div>
         )}
-
         <FilterBar
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
@@ -1783,8 +1845,6 @@ const PlanillaEntrenador = () => {
                     >
                       P
                     </button>
-
-                    {/* Botón N solo si mes es anterior */}
                     {(selectedYear < anioActual ||
                       (selectedYear === anioActual &&
                         selectedMonth < mesActual)) && (
@@ -2032,13 +2092,13 @@ const PlanillaEntrenador = () => {
                     </button>
 
                     {/* Icono de Eliminar */}
-                    {/* <button
+                    <button
                       onClick={() => handleDelete(rowIndex)}
                       className="text-red-500 px-2"
                       title="Eliminar"
                     >
                       &#10060;
-                    </button> */}
+                    </button>
                   </td>
                 </tr>
               ))
