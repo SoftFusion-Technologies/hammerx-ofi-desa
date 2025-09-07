@@ -212,7 +212,9 @@ const VentasProspectosGet = ({ currentUser }) => {
   const prospectoIdToScroll = location.state?.prospectoId;
   const dataLoaded = useRef(false); // Para evitar scroll antes de que llegue la data
 
+  const [agendaVentasCant, setAgendaVentasCant] = useState(0); // 👈 nuevo
   const [showAgendasModal, setShowAgendasModal] = useState(false);
+
   const [alertasSegundoContacto, setAlertasSegundoContacto] = useState({});
 
   const [mes, setMes] = useState('');
@@ -247,6 +249,26 @@ const VentasProspectosGet = ({ currentUser }) => {
       )
       .catch(() => setProspectosConAgendaHoy([]));
   }, [userId]);
+
+  useEffect(() => {
+    const loadAgendaVentasCount = async () => {
+      try {
+        const qs = new URLSearchParams({
+          level: userLevel === 'admin' ? 'admin' : 'vendedor',
+          ...(userLevel !== 'admin' ? { usuario_id: String(userId) } : {}),
+          with_prospect: '1'
+        });
+        const r = await fetch(
+          `http://localhost:8080/ventas/agenda/hoy?${qs.toString()}`
+        );
+        const d = await r.json();
+        setAgendaVentasCant(Array.isArray(d) ? d.length : 0);
+      } catch {
+        setAgendaVentasCant(0);
+      }
+    };
+    if (userId) loadAgendaVentasCount();
+  }, [userId, userLevel]);
 
   useEffect(() => {
     // Pedí todas las alertas
@@ -455,37 +477,37 @@ const VentasProspectosGet = ({ currentUser }) => {
   // Filtrar prospectos
   const filtered = prospectos?.length
     ? prospectos.filter((p) => {
-      const nombreMatch = (p.nombre || '')
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      if (!nombreMatch) return false;
+        const nombreMatch = (p.nombre || '')
+          .toLowerCase()
+          .includes(search.toLowerCase());
+        if (!nombreMatch) return false;
 
-      // Filtro sede si aplica
-      if (selectedSede) {
-        const sedeProspecto = normalizeSede(p.sede);
-        if (sedeProspecto !== selectedSede) return false;
-      }
+        // Filtro sede si aplica
+        if (selectedSede) {
+          const sedeProspecto = normalizeSede(p.sede);
+          if (sedeProspecto !== selectedSede) return false;
+        }
 
-      // Filtros adicionales
-      if (tipoFiltro && p.tipo_prospecto !== tipoFiltro) return false;
-      if (canalFiltro && p.canal_contacto !== canalFiltro) return false;
-      if (actividadFiltro && p.actividad !== actividadFiltro) return false;
+        // Filtros adicionales
+        if (tipoFiltro && p.tipo_prospecto !== tipoFiltro) return false;
+        if (canalFiltro && p.canal_contacto !== canalFiltro) return false;
+        if (actividadFiltro && p.actividad !== actividadFiltro) return false;
 
-      // 🔹 NUEVO: filtro por convertido
-      if (convertidoFiltro === 'si' && !p.convertido) return false;
-      if (convertidoFiltro === 'no' && p.convertido) return false;
-      // 🔹 NUEVO FILTRO: sólo los que tienen alerta amarilla o roja
-      if (alertaFiltro === 'con-alerta') {
-        const color = alertasSegundoContacto[p.id];
-        if (color !== 'amarillo' && color !== 'rojo') return false;
-      }
+        // 🔹 NUEVO: filtro por convertido
+        if (convertidoFiltro === 'si' && !p.convertido) return false;
+        if (convertidoFiltro === 'no' && p.convertido) return false;
+        // 🔹 NUEVO FILTRO: sólo los que tienen alerta amarilla o roja
+        if (alertaFiltro === 'con-alerta') {
+          const color = alertasSegundoContacto[p.id];
+          if (color !== 'amarillo' && color !== 'rojo') return false;
+        }
 
-      // 🔹 NUEVO: filtro comisión
-      if (comisionFiltro === 'con' && !esComision(p.comision)) return false;
-      if (comisionFiltro === 'sin' && esComision(p.comision)) return false;
+        // 🔹 NUEVO: filtro comisión
+        if (comisionFiltro === 'con' && !esComision(p.comision)) return false;
+        if (comisionFiltro === 'sin' && esComision(p.comision)) return false;
 
-      return true;
-    })
+        return true;
+      })
     : [];
 
   // Ordenar por convertido y por id desc
@@ -822,6 +844,35 @@ const VentasProspectosGet = ({ currentUser }) => {
     }
   };
 
+  // estados nuevos
+  const [tipoSeleccionado, setTipoSeleccionado] = useState(null);
+
+  // reemplazo: abrimos el picker primero, no el modal directo
+  const openClasePruebaPicker = (id, num) => {
+    setClaseSeleccionada({ id, num });
+
+    Swal.fire({
+      title: `Clase #${num}`,
+      text: '¿Qué querés agendar?',
+      input: 'select',
+      inputOptions: {
+        Agenda: 'Agenda',
+        'Visita programada': 'Visita programada',
+        'Clase de prueba': 'Clase de prueba'
+      },
+      inputPlaceholder: 'Seleccioná una opción',
+      showCancelButton: true,
+      confirmButtonText: 'Continuar',
+      confirmButtonColor: '#10b981',
+      cancelButtonText: 'Cancelar'
+    }).then((res) => {
+      if (res.isConfirmed && res.value) {
+        setTipoSeleccionado(res.value); // guardamos tipo elegido
+        setModalClaseOpen(true); // abrimos tu modal de edición
+      }
+    });
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -938,17 +989,19 @@ const VentasProspectosGet = ({ currentUser }) => {
             >
               <span className="text-xl font-black">⚠️</span>
               <span>Agendas de hoy:</span>
-              <span className="text-lg">{prospectosConAgendaHoy.length}</span>
+              <span className="text-lg">
+                {prospectosConAgendaHoy.length + agendaVentasCant}
+              </span>
             </div>
 
             {/* 🔴 Nuevo botón Agenda de hoy con badge fijo en 4 */}
-            <button
+            {/* <button
               onClick={() => setOpenAgenda(true)}
               className="relative bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded font-semibold transition-colors duration-100"
               title="Ver agenda de hoy"
             >
               Nueva Agendas
-            </button>
+            </button> */}
           </div>
 
           {/* Botones de sedes con control de acceso */}
@@ -1077,11 +1130,14 @@ const VentasProspectosGet = ({ currentUser }) => {
           </div>
 
           {/* Modal de agendas automáticas */}
-          {/* <AgendasVentas
+          <AgendasVentas
             userId={userId}
+            level={userLevel} // 👈 pasar el nivel
             open={showAgendasModal}
             onClose={() => setShowAgendasModal(false)}
-          /> */}
+            onVentasCountChange={setAgendaVentasCant} // 👈 opcional para refrescar contador al marcar done
+          />
+
           <div className="overflow-auto max-h-[70vh] mt-6 rounded-lg shadow-lg border border-gray-300 bg-white">
             <table className="uppercase min-w-[900px] text-sm border-collapse w-full">
               <thead className="bg-orange-600 text-white  sticky top-0 z-20">
@@ -1481,20 +1537,30 @@ const VentasProspectosGet = ({ currentUser }) => {
                       />
                     </td>
                     {/* Clases de prueba */}
-                    {[1, 2, 3].map((num) => (
-                      <td
-                        key={num}
-                        className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
-                          p
-                        )}`}
-                        onClick={() => openClasePruebaModal(p.id, num)}
-                        title="Click para editar fecha y observaciones"
-                      >
-                        {p[`clase_prueba_${num}_fecha`]
-                          ? formatDate(p[`clase_prueba_${num}_fecha`])
-                          : '-'}
-                      </td>
-                    ))}
+                    {[1, 2, 3].map((num) => {
+                      const fecha = p[`clase_prueba_${num}_fecha`];
+                      const tipo = p[`clase_prueba_${num}_tipo`]; // 👈 nuevo campo
+                      return (
+                        <td
+                          key={num}
+                          className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
+                            p
+                          )} cursor-pointer`}
+                          onClick={() => openClasePruebaPicker(p.id, num)}
+                          title="Click para elegir tipo y editar fecha/observaciones"
+                        >
+                          <div className="text-sm">
+                            {fecha ? formatDate(fecha) : '-'}
+                          </div>
+                          {tipo && (
+                            <div className="mt-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-orange-100 text-orange-800">
+                              {tipo}
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[160px] ${getBgClass(
                         p
@@ -1645,13 +1711,16 @@ const VentasProspectosGet = ({ currentUser }) => {
           </span>
         </div>
       </div>
-
       <ClasePruebaModal
         isOpen={modalClaseOpen}
-        onClose={() => setModalClaseOpen(false)}
+        onClose={() => {
+          setModalClaseOpen(false);
+          setTipoSeleccionado(null); // limpiar tipo al cerrar
+        }}
         onSave={handleClasePruebaSave}
         numeroClase={claseSeleccionada?.num}
         prospecto={prospectos.find((p) => p.id === claseSeleccionada?.id)}
+        tipoSeleccionado={tipoSeleccionado}
       />
 
       <Footer />

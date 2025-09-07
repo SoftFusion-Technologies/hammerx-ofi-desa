@@ -5,7 +5,8 @@ const ClasePruebaModal = ({
   onClose,
   onSave,
   numeroClase,
-  prospecto
+  prospecto,
+  tipoSeleccionado
 }) => {
   const [fecha, setFecha] = useState('');
   const [observacion, setObservacion] = useState('');
@@ -14,6 +15,7 @@ const ClasePruebaModal = ({
     if (prospecto && numeroClase) {
       const fechaKey = `clase_prueba_${numeroClase}_fecha`;
       const obsKey = `clase_prueba_${numeroClase}_obs`;
+      const tipoKey = `clase_prueba_${numeroClase}_tipo`;
 
       setFecha(prospecto[fechaKey]?.slice(0, 10) || '');
       setObservacion(prospecto[obsKey] || '');
@@ -23,10 +25,12 @@ const ClasePruebaModal = ({
   const handleSubmit = () => {
     const fechaKey = `clase_prueba_${numeroClase}_fecha`;
     const obsKey = `clase_prueba_${numeroClase}_obs`;
+    const tipoKey = `clase_prueba_${numeroClase}_tipo`;
 
     onSave(prospecto.id, {
       [fechaKey]: fecha,
-      [obsKey]: observacion
+      [obsKey]: observacion,
+      [tipoKey]: tipoSeleccionado || prospecto?.[tipoKey] || null
     });
 
     onClose();
@@ -38,8 +42,17 @@ const ClasePruebaModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
       <div className="bg-white rounded-lg p-6 shadow-lg w-[90%] max-w-md">
         <h2 className="text-xl font-semibold mb-4 text-orange-600">
-          Clase de prueba #{numeroClase}
+          Clase #{numeroClase}
         </h2>
+
+        {tipoSeleccionado && (
+          <div className="mb-3">
+            <span className="text-xs text-gray-600">Tipo seleccionado: </span>
+            <span className="px-2 py-0.5 rounded bg-orange-100 text-orange-800 text-xs font-semibold">
+              {tipoSeleccionado}
+            </span>
+          </div>
+        )}
 
         <div className="mb-4">
           <label className="block text-sm text-gray-700">Fecha:</label>
