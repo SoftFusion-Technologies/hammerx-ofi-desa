@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   Star,
   CalendarCheck2,
-  X
+  X,
+  BadgeDollarSign,
+  Percent
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -34,6 +36,13 @@ function useCountUp(value, duration = 900) {
   }, [value, duration]);
   return display;
 }
+
+const pct = (v) => {
+  if (v == null || isNaN(v)) return '0%';
+  return `${(Number(v) * 100).toFixed(1)}%`;
+};
+
+const safeArr = (arr) => (Array.isArray(arr) ? arr : []);
 
 export default function StatsVentasModal({
   open,
@@ -92,7 +101,9 @@ export default function StatsVentasModal({
         onClick={onClose}
       >
         <motion.div
-          className={`bg-white dark:bg-zinc-900 w-full sm:w-[420px] max-w-full h-full sm:h-auto sm:rounded-l-3xl p-6 shadow-2xl flex flex-col gap-5 z-50 overflow-y-auto relative`}
+          className={`bg-white dark:bg-zinc-900 w-full sm:w-[480px] max-w-full
+             h-full sm:max-h-[85vh] sm:h-auto sm:rounded-l-3xl p-6
+             shadow-2xl flex flex-col gap-5 z-50 overflow-y-auto relative`}
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
@@ -238,6 +249,112 @@ export default function StatsVentasModal({
                 value={stats.total_convertidos}
                 color="#58b35e"
               />
+              {/* --- COMISIONES --- */}
+              <StatCard
+                icon={<BadgeDollarSign />}
+                label="Comisiones"
+                value={stats.total_comisiones || 0}
+                color="#0ea5e9" // sky-500
+              />
+              <StatCard
+                icon={<Percent />}
+                label="Tasa Comisión / Convertidos"
+                value={Math.round(
+                  (stats.tasa_comision_sobre_convertidos || 0) * 100
+                )} // animado con CountUp
+                color="#0ea5e9"
+              />
+              <div className="text-xs text-gray-500 -mt-3">
+                {pct(stats.tasa_comision_sobre_convertidos)} del total de
+                convertidos
+              </div>
+
+              <StatGroup
+                title="Comisiones por Asesor"
+                items={safeArr(stats.comisionesPorAsesor).map((a) => ({
+                  icon: <BadgeDollarSign />,
+                  label: a.asesor_nombre || 'Sin asesor',
+                  value: a.cantidad
+                }))}
+              />
+
+              <StatGroup
+                title="Comisiones por Canal"
+                items={safeArr(stats.comisionesPorCanal).map((c) => ({
+                  icon: <TrendingUp />,
+                  label: c.canal || 'Sin canal',
+                  value: c.cantidad
+                }))}
+              />
+
+              <StatGroup
+                title="Comisiones por Actividad"
+                items={safeArr(stats.comisionesPorActividad).map((a) => ({
+                  icon: <Star />,
+                  label: a.actividad || 'Sin actividad',
+                  value: a.cantidad
+                }))}
+              />
+
+              {stats.comisionesPorOrigenCampania &&
+                stats.comisionesPorOrigenCampania.length > 0 && (
+                  <div>
+                    <div className="text-xs font-bold text-gray-600 dark:text-gray-300 mb-1 mt-2">
+                      Comisiones por Origen (Campañas)
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                      {stats.comisionesPorOrigenCampania.map((cpo, idx) => (
+                        <div
+                          key={(cpo.origen || 'sin') + idx}
+                          className="flex items-center gap-2 bg-sky-100 dark:bg-zinc-800 px-2 py-1 rounded-lg text-sm font-semibold shrink-0"
+                        >
+                          <span className="text-sky-600">
+                            <BadgeDollarSign size={16} />
+                          </span>
+                          {cpo.origen || (
+                            <span className="italic text-gray-400">
+                              Sin origen
+                            </span>
+                          )}
+                          :{' '}
+                          <span className="text-gray-900 dark:text-white">
+                            {cpo.cantidad}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {stats.comisionesPorDia && stats.comisionesPorDia.length > 0 && (
+                <div>
+                  <div className="text-xs font-bold text-gray-600 dark:text-gray-300 mb-1 mt-2">
+                    Comisiones por día
+                  </div>
+                  {/* En vez de grafico, pill timeline simple con scroll horizontal */}
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                    {stats.comisionesPorDia.map((d, idx) => (
+                      <div
+                        key={String(d.dia) + idx}
+                        className="flex items-center gap-2 bg-sky-50 dark:bg-zinc-800 px-2 py-1 rounded-lg text-xs font-semibold shrink-0"
+                        title={new Date(d.dia).toLocaleDateString('es-AR')}
+                      >
+                        <span className="text-sky-600">
+                          <CalendarCheck2 size={14} />
+                        </span>
+                        {new Date(d.dia).toLocaleDateString('es-AR', {
+                          day: '2-digit',
+                          month: '2-digit'
+                        })}
+                        :{' '}
+                        <span className="text-gray-900 dark:text-white">
+                          {d.cantidad}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -283,16 +400,18 @@ function StatCard({ icon, label, value, color = '#fc4b08' }) {
 
 // Grupo de stats horizontales
 function StatGroup({ title, items }) {
+  const data = safeArr(items);
   return (
     <div>
       <div className="text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">
         {title}
       </div>
-      <div className="flex flex-wrap gap-2">
-        {items.map((item, idx) => (
+      <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+        {data.map((item, idx) => (
           <div
             key={item.label + idx}
-            className="flex items-center gap-2 bg-orange-100 dark:bg-zinc-800 px-2 py-1 rounded-lg text-sm font-semibold"
+            className="flex items-center gap-2 bg-orange-100 dark:bg-zinc-800
+                       px-2 py-1 rounded-lg text-sm font-semibold shrink-0"
           >
             <span className="text-[#fc4b08]">{item.icon}</span>
             {item.label}:{' '}
@@ -303,3 +422,27 @@ function StatGroup({ title, items }) {
     </div>
   );
 }
+
+function StatCardPercent({ icon, label, ratio, color = '#0ea5e9' }) {
+  const value = Math.round((ratio || 0) * 100);
+  const display = useCountUp(value);
+  return (
+    <div className="flex items-center gap-4 bg-sky-50 dark:bg-zinc-800/80 p-3 rounded-xl shadow-sm">
+      <span
+        className="rounded-xl bg-white dark:bg-zinc-900 p-2"
+        style={{ color }}
+      >
+        {icon}
+      </span>
+      <div>
+        <div className="text-xl font-bold text-gray-900 dark:text-white">
+          {display}%
+        </div>
+        <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300">
+          {label}
+        </div>
+      </div>
+    </div>
+  );
+}
+
