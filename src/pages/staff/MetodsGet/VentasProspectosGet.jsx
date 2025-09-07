@@ -15,6 +15,27 @@ import FiltroMesAnio from '../Components/FiltroMesAnio';
 import ObservacionField from '../Components/ObservacionField';
 import AgendaDeHoyModal from '../Components/AgendaDeHoyModal';
 import * as XLSX from 'xlsx';
+import Swal from 'sweetalert2';
+import FilterToolbar from './Components/FilterToolbar';
+const getBgClass = (p) => {
+  const esComision =
+    p.comision === true || p.comision === 1 || p.comision === '1';
+  const esConvertido =
+    p.convertido === true || p.convertido === 1 || p.convertido === '1';
+
+  if (esComision) return 'bg-sky-500'; // 🔹 Celeste = Comisión
+  if (esConvertido) return 'bg-green-500'; // 🟢 Verde = Convertido
+  return ''; // ⚪ Sin color = ninguno
+};
+
+const esConvertido = (v) => v === true || v === 1 || v === '1';
+const esComision = (v) => v === true || v === 1 || v === '1';
+
+const SEDES = [
+  { value: 'monteros', label: 'Monteros' },
+  { value: 'concepcion', label: 'Concepción' },
+  { value: 'barrio sur', label: 'Barrio Sur' }
+];
 
 const normalizeSede = (sede) => {
   if (!sede) return '';
@@ -198,6 +219,16 @@ const VentasProspectosGet = ({ currentUser }) => {
   const [anio, setAnio] = useState('');
 
   const [openAgenda, setOpenAgenda] = useState(false);
+
+  // const [soloConvertidos, setSoloConvertidos] = useState(false);
+  const [alertaFiltro, setAlertaFiltro] = useState('');
+  const [convertidoFiltro, setConvertidoFiltro] = useState('');
+
+  // Evita clicks dobles mientras se procesa
+  const [savingIds, setSavingIds] = useState(new Set());
+
+  const [comisionFiltro, setComisionFiltro] = useState('');
+  // '' | 'con' | 'sin'
 
   useEffect(() => {
     const obs = {};
@@ -422,28 +453,39 @@ const VentasProspectosGet = ({ currentUser }) => {
   };
 
   // Filtrar prospectos
-  // Filtro
   const filtered = prospectos?.length
     ? prospectos.filter((p) => {
-        const nombreMatch = (p.nombre || '')
-          .toLowerCase()
-          .includes(search.toLowerCase());
+      const nombreMatch = (p.nombre || '')
+        .toLowerCase()
+        .includes(search.toLowerCase());
+      if (!nombreMatch) return false;
 
-        if (!nombreMatch) return false;
+      // Filtro sede si aplica
+      if (selectedSede) {
+        const sedeProspecto = normalizeSede(p.sede);
+        if (sedeProspecto !== selectedSede) return false;
+      }
 
-        // Filtro sede si aplica
-        if (selectedSede) {
-          const sedeProspecto = normalizeSede(p.sede);
-          if (sedeProspecto !== selectedSede) return false;
-        }
+      // Filtros adicionales
+      if (tipoFiltro && p.tipo_prospecto !== tipoFiltro) return false;
+      if (canalFiltro && p.canal_contacto !== canalFiltro) return false;
+      if (actividadFiltro && p.actividad !== actividadFiltro) return false;
 
-        // Filtros adicionales
-        if (tipoFiltro && p.tipo_prospecto !== tipoFiltro) return false;
-        if (canalFiltro && p.canal_contacto !== canalFiltro) return false;
-        if (actividadFiltro && p.actividad !== actividadFiltro) return false;
+      // 🔹 NUEVO: filtro por convertido
+      if (convertidoFiltro === 'si' && !p.convertido) return false;
+      if (convertidoFiltro === 'no' && p.convertido) return false;
+      // 🔹 NUEVO FILTRO: sólo los que tienen alerta amarilla o roja
+      if (alertaFiltro === 'con-alerta') {
+        const color = alertasSegundoContacto[p.id];
+        if (color !== 'amarillo' && color !== 'rojo') return false;
+      }
 
-        return true;
-      })
+      // 🔹 NUEVO: filtro comisión
+      if (comisionFiltro === 'con' && !esComision(p.comision)) return false;
+      if (comisionFiltro === 'sin' && esComision(p.comision)) return false;
+
+      return true;
+    })
     : [];
 
   // Ordenar por convertido y por id desc
@@ -578,6 +620,208 @@ const VentasProspectosGet = ({ currentUser }) => {
     }
   };
 
+  const handleSedeChange = async (prospectoId, nuevaSede) => {
+    // buscamos el prospecto actual para mostrar su nombre en el mensaje
+    const prospecto = prospectos.find((p) => p.id === prospectoId);
+    const sedeAnterior = prospecto?.sede;
+
+    // actualización optimista
+    setProspectos((arr) =>
+      arr.map((p) => (p.id === prospectoId ? { ...p, sede: nuevaSede } : p))
+    );
+
+    try {
+      await axios.put(
+        `http://localhost:8080/ventas_prospectos/${prospectoId}`,
+        {
+          sede: nuevaSede
+        }
+      );
+
+      // ✅ Éxito
+      Swal.fire({
+        title: 'Sede actualizada',
+        text: `El prospecto "${prospecto?.nombre}" fue cambiado de "${sedeAnterior}" a "${nuevaSede}".`,
+        icon: 'success',
+        confirmButtonColor: '#10b981', // Tailwind green-500
+        confirmButtonText: 'OK'
+      });
+    } catch (e) {
+      // rollback si falla
+      setProspectos((arr) =>
+        arr.map((p) =>
+          p.id === prospectoId ? { ...p, sede: sedeAnterior } : p
+        )
+      );
+
+      // ❌ Error
+      Swal.fire({
+        title: 'Error',
+        text: `No se pudo actualizar la sede de "${prospecto?.nombre}". Inténtalo de nuevo.`,
+        icon: 'error',
+        confirmButtonColor: '#ef4444', // Tailwind red-500
+        confirmButtonText: 'Cerrar'
+      });
+    }
+  };
+
+  const handleConvertidoToggle = async (
+    prospectoId,
+    nextValue /* boolean */
+  ) => {
+    // evitar clicks repetidos
+    if (savingIds.has(prospectoId)) return;
+    setSavingIds((s) => new Set([...s, prospectoId]));
+
+    const prospecto = prospectos.find((p) => p.id === prospectoId);
+    if (!prospecto) {
+      setSavingIds((s) => {
+        const n = new Set(s);
+        n.delete(prospectoId);
+        return n;
+      });
+      return;
+    }
+
+    const prev = {
+      convertido: !!prospecto.convertido,
+      comision: !!prospecto.comision
+    };
+
+    // Caso 1: Destildan -> convertido = false y comision = false
+    if (!nextValue) {
+      // Optimista
+      setProspectos((arr) =>
+        arr.map((p) =>
+          p.id === prospectoId
+            ? { ...p, convertido: false, comision: false }
+            : p
+        )
+      );
+
+      try {
+        await axios.put(
+          `http://localhost:8080/ventas_prospectos/${prospectoId}`,
+          {
+            convertido: false,
+            comision: false,
+            comision_usuario_id: userId
+          }
+        );
+
+        Swal.fire({
+          title: 'Actualizado',
+          text: `Se anuló la conversión y comisión de "${prospecto.nombre}".`,
+          icon: 'success',
+          confirmButtonColor: '#10b981'
+        });
+      } catch (e) {
+        // Rollback
+        setProspectos((arr) =>
+          arr.map((p) => (p.id === prospectoId ? { ...p, ...prev } : p))
+        );
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo anular la conversión/comisión. Intenta de nuevo.',
+          icon: 'error',
+          confirmButtonColor: '#ef4444'
+        });
+      } finally {
+        setSavingIds((s) => {
+          const n = new Set(s);
+          n.delete(prospectoId);
+          return n;
+        });
+      }
+      return;
+    }
+
+    // Caso 2: Tildan -> modal "¿Es comisión?"
+    try {
+      const { isConfirmed, isDenied, dismiss } = await Swal.fire({
+        title: '¿Es comisión?',
+        text: `Vas a marcar convertido a "${prospecto.nombre}". ¿Corresponde comisión?`,
+        icon: 'question',
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, es comisión',
+        denyButtonText: 'No',
+        confirmButtonColor: '#10b981', // green
+        denyButtonColor: '#6b7280', // gray
+        cancelButtonText: 'Cancelar'
+      });
+
+      // Si cancelan, no hacer nada (ni optimista, ni request)
+      if (dismiss === Swal.DismissReason.cancel) {
+        setSavingIds((s) => {
+          const n = new Set(s);
+          n.delete(prospectoId);
+          return n;
+        });
+        // Re-sincroniza el checkbox con el estado previo
+        setProspectos((arr) =>
+          arr.map((p) =>
+            p.id === prospectoId ? { ...p, convertido: prev.convertido } : p
+          )
+        );
+        return;
+      }
+
+      const esComision = isConfirmed; // true si confirmaron "Sí, es comisión"
+
+      // Optimista
+      setProspectos((arr) =>
+        arr.map((p) =>
+          p.id === prospectoId
+            ? { ...p, convertido: true, comision: !!esComision }
+            : p
+        )
+      );
+
+      await axios.put(
+        `http://localhost:8080/ventas_prospectos/${prospectoId}`,
+        {
+          convertido: true,
+          comision: !!esComision,
+          ...(esComision && userId ? { comision_usuario_id: userId } : {})
+        }
+      );
+
+      if (esComision) {
+        await Swal.fire({
+          title: '¡Felicidades!',
+          text: '¡Tu comisión quedó registrada!',
+          icon: 'success',
+          confirmButtonColor: '#10b981'
+        });
+      } else {
+        await Swal.fire({
+          title: 'Convertido',
+          text: `El prospecto "${prospecto.nombre}" fue marcado como convertido.`,
+          icon: 'success',
+          confirmButtonColor: '#10b981'
+        });
+      }
+    } catch (e) {
+      // Rollback
+      setProspectos((arr) =>
+        arr.map((p) => (p.id === prospectoId ? { ...p, ...prev } : p))
+      );
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo actualizar el estado. Intenta nuevamente.',
+        icon: 'error',
+        confirmButtonColor: '#ef4444'
+      });
+    } finally {
+      setSavingIds((s) => {
+        const n = new Set(s);
+        n.delete(prospectoId);
+        return n;
+      });
+    }
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -590,10 +834,8 @@ const VentasProspectosGet = ({ currentUser }) => {
               </button>
             </Link>
           </div>
-          <div className="text-center pt-4">
-            <h1>
-              Registros de Prospectos - Cantidad: {visibleProspectos.length}
-            </h1>
+          <div className="text-center pt-4 text-[#fc4b08] font-bignoodle text-6xl font-bold">
+            <h1>VENTAS</h1>
           </div>
           {/* Filtros */}
 
@@ -624,100 +866,52 @@ const VentasProspectosGet = ({ currentUser }) => {
           >
             Exportar Excel
           </button>
-          <form className="mb-5 max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
-            {/* Buscar por nombre */}
-            <div className="mb-5">
-              <label
-                htmlFor="search"
-                className="block text-gray-700 font-medium mb-2"
-              >
-                Buscar por nombre
-              </label>
-              <input
-                id="search"
-                type="text"
-                value={search}
-                onChange={handleSearch}
-                placeholder="Escribí un nombre para buscar"
-                className="w-full border border-gray-300 rounded-md px-4 py-2
-        focus:outline-none focus:ring-2 focus:ring-green-500 transition
-        placeholder-gray-400"
-              />
-            </div>
-
-            {/* Filtros */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label
-                  htmlFor="tipoFiltro"
-                  className="block text-gray-700 font-medium mb-2"
-                >
-                  Tipo Prospecto
-                </label>
-                <select
-                  id="tipoFiltro"
-                  value={tipoFiltro}
-                  onChange={(e) => setTipoFiltro(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2
-          focus:outline-none focus:ring-2 focus:ring-green-500 transition"
-                >
-                  <option value="">Todos</option>
-                  <option value="Nuevo">Nuevo</option>
-                  <option value="ExSocio">ExSocio</option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="canalFiltro"
-                  className="block text-gray-700 font-medium mb-2"
-                >
-                  Canal Contacto
-                </label>
-                <select
-                  id="canalFiltro"
-                  value={canalFiltro}
-                  onChange={(e) => setCanalFiltro(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2
-          focus:outline-none focus:ring-2 focus:ring-green-500 transition"
-                >
-                  <option value="">Todos</option>
-                  <option value="Mostrador">Mostrador</option>
-                  <option value="Whatsapp">Whatsapp</option>
-                  <option value="Instagram">Instagram</option>
-                  <option value="Facebook">Facebook</option>
-                  <option value="Pagina web">Página web</option>
-                  <option value="Campaña">Campaña</option>
-                  <option value="Comentarios/Stickers">
-                    Comentarios/Stickers
-                  </option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="actividadFiltro"
-                  className="block text-gray-700 font-medium mb-2"
-                >
-                  Actividad
-                </label>
-                <select
-                  id="actividadFiltro"
-                  value={actividadFiltro}
-                  onChange={(e) => setActividadFiltro(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2
-          focus:outline-none focus:ring-2 focus:ring-green-500 transition"
-                >
-                  <option value="">Todas</option>
-                  <option value="No especifica">No especifica</option>
-                  <option value="Musculacion">Musculación</option>
-                  <option value="Pilates">Pilates</option>
-                  <option value="Clases grupales">Clases grupales</option>
-                  <option value="Pase full">Pase full</option>
-                </select>
-              </div>
-            </div>
-          </form>
+          <FilterToolbar
+            search={search}
+            setSearch={setSearch}
+            tipoFiltro={tipoFiltro}
+            setTipoFiltro={setTipoFiltro}
+            canalFiltro={canalFiltro}
+            setCanalFiltro={setCanalFiltro}
+            actividadFiltro={actividadFiltro}
+            setActividadFiltro={setActividadFiltro}
+            convertidoFiltro={convertidoFiltro}
+            setConvertidoFiltro={setConvertidoFiltro}
+            comisionFiltro={comisionFiltro}
+            setComisionFiltro={setComisionFiltro}
+            alertaFiltro={alertaFiltro}
+            setAlertaFiltro={setAlertaFiltro}
+            selectedSede={selectedSede}
+            setSelectedSede={setSelectedSede}
+            mes={mes}
+            setMes={setMes}
+            anio={anio}
+            setAnio={setAnio}
+            onExportClick={() =>
+              exportProspectosExcel({
+                mes,
+                anio,
+                prospectos,
+                search,
+                selectedSede,
+                tipoFiltro,
+                canalFiltro,
+                actividadFiltro,
+                convertidoFiltro,
+                alertaFiltro,
+                comisionFiltro,
+                formatDate
+              })
+            }
+            counts={{
+              all: prospectos.length,
+              convertidos: prospectos.filter((p) => p.convertido).length,
+              comision: prospectos.filter((p) => p.comision).length,
+              alerta: prospectos.filter((p) =>
+                ['amarillo', 'rojo'].includes(alertasSegundoContacto[p.id])
+              ).length
+            }}
+          />
 
           <div className="flex justify-center gap-3 pb-10 flex-wrap">
             <Link to="#">
@@ -808,6 +1002,12 @@ const VentasProspectosGet = ({ currentUser }) => {
   `}</style>
           </div>
 
+          <div className="text-center pt-4">
+            <h1>
+              Registros de Prospectos - Cantidad: {visibleProspectos.length}
+            </h1>
+          </div>
+
           <div className="w-full flex flex-col items-center mt-4">
             <div className="flex gap-2 items-center select-none">
               <button
@@ -877,13 +1077,13 @@ const VentasProspectosGet = ({ currentUser }) => {
           </div>
 
           {/* Modal de agendas automáticas */}
-          <AgendasVentas
+          {/* <AgendasVentas
             userId={userId}
             open={showAgendasModal}
             onClose={() => setShowAgendasModal(false)}
-          />
+          /> */}
           <div className="overflow-auto max-h-[70vh] mt-6 rounded-lg shadow-lg border border-gray-300 bg-white">
-            <table className="min-w-[900px] text-sm border-collapse w-full">
+            <table className="uppercase min-w-[900px] text-sm border-collapse w-full">
               <thead className="bg-orange-600 text-white  sticky top-0 z-20">
                 <tr>
                   <th className="border border-gray-200 px-3 py-2 text-left min-w-[140px]">
@@ -894,6 +1094,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                   </th>
                   <th className="border border-gray-200 px-3 py-2 text-left min-w-[140px]">
                     Nombre
+                  </th>{' '}
+                  <th className="border border-gray-200 px-3 py-2 text-left min-w-[140px]">
+                    Sede
                   </th>
                   <th className="border border-gray-200 px-3 py-2 text-left w-24">
                     DNI
@@ -953,23 +1156,23 @@ const VentasProspectosGet = ({ currentUser }) => {
                     style={{ minHeight: '48px' }}
                   >
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       {formatDate(p.fecha)}
                     </td>
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       {p.asesor_nombre}
                     </td>
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <div className="flex items-center gap-2">
                         {alertasSegundoContacto[p.id] === 'amarillo' && (
@@ -1019,9 +1222,37 @@ const VentasProspectosGet = ({ currentUser }) => {
                       </div>
                     </td>
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[180px] ${getBgClass(
+                        p
+                      )}`}
+                    >
+                      {/* Sede */}
+                      <select
+                        value={(p.sede || '').toLowerCase()}
+                        onChange={(e) => handleSedeChange(p.id, e.target.value)}
+                        className="
+      w-full
+      rounded
+      border border-gray-300
+      text-sm px-3 py-2 font-sans text-gray-700 bg-white
+      transition-colors duration-200 ease-in-out
+      hover:bg-orange-50 hover:text-orange-900
+      focus:outline-none focus:ring-2 focus:ring-orange-400
+      focus:border-orange-600 cursor-pointer
+    "
+                      >
+                        {SEDES.map((s) => (
+                          <option key={s.value} value={s.value}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <input
                         type="text"
@@ -1050,9 +1281,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                       />
                     </td>
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <select
                         value={p.tipo_prospecto}
@@ -1087,9 +1318,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                       </select>
                     </td>
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[180px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[180px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       {/* Canal de contacto */}
                       <select
@@ -1137,9 +1368,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                       )}
                     </td>
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <input
                         type="text"
@@ -1168,9 +1399,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                       />
                     </td>
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[170px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[170px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <select
                         value={p.actividad || ''}
@@ -1210,9 +1441,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                     </td>
                     {/* N° contacto */}
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <input
                         type="checkbox"
@@ -1222,9 +1453,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                       />
                     </td>
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <input
                         type="checkbox"
@@ -1236,9 +1467,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                       />
                     </td>
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <input
                         type="checkbox"
@@ -1253,9 +1484,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                     {[1, 2, 3].map((num) => (
                       <td
                         key={num}
-                        className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
-                          p.convertido ? 'bg-green-500' : ''
-                        }`}
+                        className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
+                          p
+                        )}`}
                         onClick={() => openClasePruebaModal(p.id, num)}
                         title="Click para editar fecha y observaciones"
                       >
@@ -1265,9 +1496,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                       </td>
                     ))}
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[160px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <ObservacionField
                         value={observaciones[p.id] ?? p.observacion ?? ''}
@@ -1286,24 +1517,29 @@ const VentasProspectosGet = ({ currentUser }) => {
                     </td>
                     {/* Convertido */}
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <input
                         type="checkbox"
                         checked={!!p.convertido}
-                        onChange={() =>
-                          handleCheckboxChange(p.id, 'convertido')
+                        disabled={savingIds.has(p.id)}
+                        onChange={(e) =>
+                          handleConvertidoToggle(p.id, e.target.checked)
                         }
-                        className="mx-auto cursor-default transform scale-150"
+                        className={`mx-auto transform scale-150 ${
+                          savingIds.has(p.id)
+                            ? 'cursor-not-allowed opacity-60'
+                            : 'cursor-pointer'
+                        }`}
                       />
                     </td>
                     {/* Editar y eliminar */}
                     <td
-                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${
-                        p.convertido ? 'bg-green-500' : ''
-                      }`}
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
+                        p
+                      )}`}
                     >
                       <div className="flex justify-center items-center gap-3">
                         {/* <button
