@@ -213,7 +213,7 @@ const App = memo(() => {
   // URL para obtener las tareas
   // const URL = 'http://localhost:8080/schedulertask/';
   const URL = 'http://localhost:8080/schedulertask/';
-  //const URL = 'https://vps-4294061-x.dattaweb.com/schedulertask';
+  //const URL = 'http://localhos:8080/schedulertask';
 
   // Función para obtener las tareas
   const obtenerTasks = async () => {

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Calendar, Bell, X } from 'lucide-react';
 
-const URL = 'https://vps-4294061-x.dattaweb.com/';
+const URL = 'http://localhos:8080/';
 
 export default function AgendasVentas({
   userId,

@@ -13,7 +13,7 @@ const Footer = () => {
   const path = location.pathname;
   const isDashboard = path.startsWith('/dashboard');
   const { userLevel } = useAuth();
-  const URL = 'https://vps-4294061-x.dattaweb.com/';
+  const URL = 'http://localhos:8080/';
 
   const [imagenes, setImagenes] = useState([]);
   const [loading, setLoading] = useState(false);

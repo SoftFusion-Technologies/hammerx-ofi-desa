@@ -375,7 +375,7 @@ const IntegranteConveGet = ({ integrantes }) => {
   const autorizarConvenio = async () => {
     try {
       await axios.put(
-        `https://vps-4294061-x.dattaweb.com/integrantes/autorizar-convenio/${id_conv}`
+        `http://localhos:8080/integrantes/autorizar-convenio/${id_conv}`
       );
       alert(`Integrantes del convenio ${id_conv} autorizados con éxito`);
       obtenerIntegrantes2(); // Refrescar la lista de integrantes
