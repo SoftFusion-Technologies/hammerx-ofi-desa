@@ -15,29 +15,27 @@ function BadgeAgendaVentas({ userId, userLevel, size = 'lg', className = '' }) {
 
       const base = 'http://localhost:8080';
 
-      // Traemos VENTAS de hoy (todas: pendientes + realizadas)
-      const ventasRes = await fetch(
-        `${base}/ventas/agenda/hoy?${qs.toString()}`,
+      // 🔴 Ventas: usar contador del backend (solo pendientes)
+      const ventasCountRes = await fetch(
+        `${base}/ventas/agenda/hoy/count?${qs.toString()}`,
         { cache: 'no-store' }
       );
-      const ventasArr = ventasRes.ok ? await ventasRes.json() : [];
+      const ventasCountJson = ventasCountRes.ok
+        ? await ventasCountRes.json()
+        : { count: 0 };
+      const ventasPendientes = Number(ventasCountJson?.count ?? 0);
 
-      // Traemos CLASES de prueba de hoy
+      // 🟡 Clases: traemos el listado de hoy y contamos solo las pendientes (n_contacto_2 = 0)
       const clasesRes = await fetch(
         `${base}/notifications/clases-prueba/${userId}`,
         { cache: 'no-store' }
       );
       const clasesArr = clasesRes.ok ? await clasesRes.json() : [];
+      const clasesPendientes = Array.isArray(clasesArr)
+        ? clasesArr.filter((n) => Number(n?.n_contacto_2) === 0).length
+        : 0;
 
-      // 👇 Opción A: coincidir con el modal (todas las ventas, aunque estén done)
-      const ventasCount = Array.isArray(ventasArr) ? ventasArr.length : 0;
-
-      // 👉 Si preferís que descuente “Enviado”, usá esta línea en vez de la anterior:
-      // const ventasCount = Array.isArray(ventasArr) ? ventasArr.filter(v => !v.done).length : 0;
-
-      const clasesCount = Array.isArray(clasesArr) ? clasesArr.length : 0;
-
-      setCount(ventasCount + clasesCount);
+      setCount(ventasPendientes + clasesPendientes);
     } catch (err) {
       console.error('Badge count error:', err);
       setCount(0);
@@ -46,15 +44,18 @@ function BadgeAgendaVentas({ userId, userLevel, size = 'lg', className = '' }) {
 
   useEffect(() => {
     load();
-    // refresco periódico
     const id = setInterval(load, 60_000);
-    // refresco instantáneo cuando otra parte del UI emita el evento
-    const onExternalUpdate = () => load();
-    window.addEventListener('ventas-agenda-updated', onExternalUpdate);
+
+    // Permite refrescar el badge cuando se marcan realizados en otros componentes
+    const onVentasUpdate = () => load();
+    const onClasesUpdate = () => load();
+    window.addEventListener('ventas-agenda-updated', onVentasUpdate);
+    window.addEventListener('clases-prueba-updated', onClasesUpdate);
 
     return () => {
       clearInterval(id);
-      window.removeEventListener('ventas-agenda-updated', onExternalUpdate);
+      window.removeEventListener('ventas-agenda-updated', onVentasUpdate);
+      window.removeEventListener('clases-prueba-updated', onClasesUpdate);
     };
   }, [userId, userLevel]);
 
@@ -72,8 +73,8 @@ function BadgeAgendaVentas({ userId, userLevel, size = 'lg', className = '' }) {
         sizes[size] ?? sizes.lg,
         className
       ].join(' ')}
-      aria-label={`Agenda de ventas: ${count} pendientes`}
-      title={`Agenda de ventas: ${count} pendientes`}
+      aria-label={`Agendas pendientes de hoy: ${count}`}
+      title={`Agendas pendientes de hoy: ${count}`}
     >
       {count}
     </span>
