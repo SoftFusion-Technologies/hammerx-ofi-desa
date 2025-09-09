@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 
+const OPCIONES_TIPO = ['Agenda', 'Visita programada', 'Clase de prueba'];
+
 const ClasePruebaModal = ({
   isOpen,
   onClose,
   onSave,
   numeroClase,
-  prospecto,
-  tipoSeleccionado
+  prospecto, // objeto completo
+  tipoSeleccionado // string desde el padre (puede venir vacío)
 }) => {
   const [fecha, setFecha] = useState('');
   const [observacion, setObservacion] = useState('');
+  const [tipo, setTipo] = useState(''); // 👈 ahora editable
 
   useEffect(() => {
     if (prospecto && numeroClase) {
@@ -19,8 +22,10 @@ const ClasePruebaModal = ({
 
       setFecha(prospecto[fechaKey]?.slice(0, 10) || '');
       setObservacion(prospecto[obsKey] || '');
+      // prioridad: lo que el padre haya seleccionado (picker) > lo guardado
+      setTipo(tipoSeleccionado || prospecto[tipoKey] || '');
     }
-  }, [prospecto, numeroClase]);
+  }, [prospecto, numeroClase, tipoSeleccionado]);
 
   const handleSubmit = () => {
     const fechaKey = `clase_prueba_${numeroClase}_fecha`;
@@ -28,9 +33,9 @@ const ClasePruebaModal = ({
     const tipoKey = `clase_prueba_${numeroClase}_tipo`;
 
     onSave(prospecto.id, {
-      [fechaKey]: fecha,
-      [obsKey]: observacion,
-      [tipoKey]: tipoSeleccionado || prospecto?.[tipoKey] || null
+      [fechaKey]: fecha || null,
+      [obsKey]: observacion || '',
+      [tipoKey]: tipo || null
     });
 
     onClose();
@@ -39,21 +44,32 @@ const ClasePruebaModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg p-6 shadow-lg w-[90%] max-w-md">
-        <h2 className="text-xl font-semibold mb-4 text-orange-600">
-          Clase #{numeroClase}
+    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-3">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-2xl w-full max-w-md">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4 text-orange-600">
+          Clase #{numeroClase} — {prospecto?.nombre || 'Prospecto'}
         </h2>
 
-        {tipoSeleccionado && (
-          <div className="mb-3">
-            <span className="text-xs text-gray-600">Tipo seleccionado: </span>
-            <span className="px-2 py-0.5 rounded bg-orange-100 text-orange-800 text-xs font-semibold">
-              {tipoSeleccionado}
-            </span>
-          </div>
-        )}
+        {/* Tipo (editable) */}
+        <div className="mb-4">
+          <label className="block text-sm text-gray-700 mb-1">Tipo:</label>
+          <select
+            value={tipo}
+            onChange={(e) => setTipo(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2"
+          >
+            <option value="" disabled>
+              Seleccioná una opción
+            </option>
+            {OPCIONES_TIPO.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
 
+        {/* Fecha */}
         <div className="mb-4">
           <label className="block text-sm text-gray-700">Fecha:</label>
           <input
@@ -64,7 +80,8 @@ const ClasePruebaModal = ({
           />
         </div>
 
-        <div className="mb-4">
+        {/* Observación */}
+        <div className="mb-1">
           <label className="block text-sm text-gray-700">Observación:</label>
           <textarea
             value={observacion}
@@ -74,16 +91,17 @@ const ClasePruebaModal = ({
           />
         </div>
 
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex justify-end gap-3 mt-5">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
+            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-60"
+            disabled={!tipo} // obligamos a elegir tipo
           >
             Guardar
           </button>

@@ -848,9 +848,23 @@ const VentasProspectosGet = ({ currentUser }) => {
   const [tipoSeleccionado, setTipoSeleccionado] = useState(null);
 
   // reemplazo: abrimos el picker primero, no el modal directo
-  const openClasePruebaPicker = (id, num) => {
-    setClaseSeleccionada({ id, num });
+  const openClasePruebaPicker = (prospecto, num) => {
+    const fechaKey = `clase_prueba_${num}_fecha`;
+    const tipoKey = `clase_prueba_${num}_tipo`;
 
+    const yaTieneDatos = Boolean(prospecto?.[fechaKey] || prospecto?.[tipoKey]);
+
+    // Guardamos selección base para el modal
+    setClaseSeleccionada({ id: prospecto.id, num, prospecto });
+
+    if (yaTieneDatos) {
+      // 👉 Abre modal directo con lo que ya tiene (tipo preseleccionado)
+      setTipoSeleccionado(prospecto?.[tipoKey] || '');
+      setModalClaseOpen(true);
+      return;
+    }
+
+    // 👉 No tiene datos → primero picker de tipo
     Swal.fire({
       title: `Clase #${num}`,
       text: '¿Qué querés agendar?',
@@ -867,8 +881,8 @@ const VentasProspectosGet = ({ currentUser }) => {
       cancelButtonText: 'Cancelar'
     }).then((res) => {
       if (res.isConfirmed && res.value) {
-        setTipoSeleccionado(res.value); // guardamos tipo elegido
-        setModalClaseOpen(true); // abrimos tu modal de edición
+        setTipoSeleccionado(res.value);
+        setModalClaseOpen(true);
       }
     });
   };
@@ -1546,7 +1560,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                           className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
                             p
                           )} cursor-pointer`}
-                          onClick={() => openClasePruebaPicker(p.id, num)}
+                          onClick={() => openClasePruebaPicker(p, num)}
                           title="Click para elegir tipo y editar fecha/observaciones"
                         >
                           <div className="text-sm">
@@ -1722,6 +1736,8 @@ const VentasProspectosGet = ({ currentUser }) => {
         prospecto={prospectos.find((p) => p.id === claseSeleccionada?.id)}
         tipoSeleccionado={tipoSeleccionado}
       />
+
+      
 
       <Footer />
 
