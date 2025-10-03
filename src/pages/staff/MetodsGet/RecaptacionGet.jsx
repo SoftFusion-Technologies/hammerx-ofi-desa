@@ -274,8 +274,9 @@ const RecaptacionGet = () => {
                   <th className="py-4 px-2">Fecha</th>
                   <th className="py-4 px-2">Usuario</th>
                   <th className="py-4 px-2">Nombre</th>
-                  <th className="py-4 px-2">Tipo Contacto</th>
-                  <th className="py-4 px-2">Detalle Contacto</th>
+                  <th className="py-4 px-2">Tipo de Contacto</th>
+                  <th className="py-4 px-2">Canal de Contacto</th>
+                  <th className="py-4 px-2">Detalle de Contacto</th>
                   <th className="py-4 px-2">Enviado</th>
                   <th className="py-4 px-2">Respondido</th>
                   <th className="py-4 px-2">Agendado</th>
@@ -324,6 +325,15 @@ const RecaptacionGet = () => {
                         </span>
                       ) : (
                         <span className="text-gray-300">sin tipo</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-2">
+                      {recap.canal_contacto ? (
+                        <span className="bg-orange-200 text-[#d35400] rounded-full px-3 py-1 font-black text-xs">
+                          {recap.canal_contacto}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300">sin canal</span>
                       )}
                     </td>
 

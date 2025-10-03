@@ -127,6 +127,7 @@ const FormAltaRecaptacion = ({
         usuario_id: valores.usuario_id,
         nombre: valores.nombre,
         tipo_contacto: valores.tipo_contacto,
+        canal_contacto: valores.canal_contacto,
         detalle_contacto: valores.detalle_contacto,
         enviado: valores.enviado || false,
         respondido: valores.respondido || false,
@@ -203,6 +204,7 @@ const FormAltaRecaptacion = ({
             usuario_id: Rec ? Rec.usuario_id : '', // ID del usuario relacionado
             nombre: Rec ? Rec.nombre : '',
             tipo_contacto: Rec ? Rec.tipo_contacto : '', // Debe ser uno de los valores ENUM
+            canal_contacto: Rec ? Rec.canal_contacto || '' : '', // nuevo campo
             detalle_contacto: Rec ? Rec.detalle_contacto || '' : '', // nuevo campo
             enviado: Rec ? Rec.enviado : false,
             respondido: Rec ? Rec.respondido : false,
@@ -383,6 +385,22 @@ const FormAltaRecaptacion = ({
                   {errors.tipo_contacto && touched.tipo_contacto && (
                     <Alerta>{errors.tipo_contacto}</Alerta>
                   )}
+
+                  <div className="mt-3">
+                    <label
+                      htmlFor="tipo_contacto"
+                      className="block font-medium left-0 mb-1"
+                    >
+                      <span className="text-black text-base pl-1">
+                        Canal de contacto
+                      </span>
+                    </label>
+                    <Field
+                      name="canal_contacto"
+                      placeholder="Especifique el canal de contacto"
+                      className="block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                    />
+                  </div>
 
                   <div className="mt-3">
                     <label
