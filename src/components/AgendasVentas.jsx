@@ -271,6 +271,8 @@ export default function AgendasVentas({
                   n.clase_prueba_1_fecha ??
                   n.clase_prueba_2_fecha ??
                   n.clase_prueba_3_fecha;
+                // prioriza la observación del turno de hoy
+                const observacion = n?.obs_for_today ?? n?.observacion ?? '';
 
                 return (
                   <div
@@ -310,6 +312,12 @@ export default function AgendasVentas({
                           Tipo:{' '}
                           <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-100 text-orange-800 font-semibold">
                             {tipo || '—'}
+                          </span>
+                        </span>
+                        <span className="block mt-0.5">
+                          Observación:{' '}
+                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-100 text-orange-800 font-semibold">
+                            {observacion || '—'}
                           </span>
                         </span>
                         <span className="block mt-0.5">
