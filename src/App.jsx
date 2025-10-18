@@ -16,12 +16,21 @@
  */
 import axios from 'axios';
 import React, { lazy, Suspense, useState, useEffect, memo } from 'react';
-
+import imgLogo from './IMG_2463.png';
 import {
   BrowserRouter as Router,
   Routes as Rutas,
   Route as Ruta
 } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+
+function HideOnPaths({ paths, children }) {
+  const { pathname } = useLocation(); // <- funciona porque está dentro del <Router>
+  const ocultar = paths.some(
+    (p) => pathname === p || pathname.startsWith(p + '/')
+  );
+  return ocultar ? null : children;
+}
 import Footer from './components/footer/Footer'; // Importa el componente del pie de página
 import LoginForm from './components/login/LoginForm';
 import { AuthProvider } from './AuthContext';
@@ -198,6 +207,7 @@ import PromosDashboard from './pages/staff/MetodsGet/PromosDashboard.jsx';
 import PreguntasIA from './pages/staff/PreguntasIA.jsx';
 import ProximamenteSede from './pages/ProximamenteSede.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
+import SoftFusionIntro from './pages/Innovation/SoftFusionIntro.jsx';
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
 /**
  * Componente principal de la aplicación.
@@ -259,6 +269,17 @@ const App = memo(() => {
               {/* Enrutamiento de las diferentes páginas */}
               <Rutas>
                 <Ruta path="/" element={<HomePage />} />{' '}
+                <Ruta
+                  path="/innovation"
+                  element={
+                    <SoftFusionIntro
+                      logoSrc={imgLogo}
+                      onReady={(nombre) =>
+                        console.log('Nombre guardado:', nombre)
+                      }
+                    />
+                  }
+                />{' '}
                 {/* Página principal */}
                 <Ruta path="/clientes" element={<Clients />} />{' '}
                 {/* Página de clientes */}
@@ -808,7 +829,9 @@ const App = memo(() => {
             </>
           )}
         </Suspense>
-        <Marcas_v2></Marcas_v2>
+        <HideOnPaths paths={['/innovation', '/login']}>
+          <Marcas_v2 />
+        </HideOnPaths>{' '}
       </Router>
       {/* </div> */}
     </AuthProvider>
