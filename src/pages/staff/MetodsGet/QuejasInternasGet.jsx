@@ -1,476 +1,802 @@
 /*
- * Programador: Benjamin Orellana
- * Fecha Cración: 01 / 04 / 2024
- * Versión: 1.0
+ * Programador: Benjamin Orellana (con mejoras UX/RBAC por ChatGPT)
+ * Fecha: 01/04/2024 (refactor 18/10/2025)
+ * Versión: 3.0 (UX++ + SweetAlert2)
  *
  * Descripción:
- * Este archivo (QuejasInternasGet.jsx) es el componente el cual renderiza los datos de los que envian para clase gratis
- * Estos datos llegan cuando se completa el formulario de Quiero probar una clase
- *
- * Tema: Configuración
- * Capa: Frontend
- * Contacto: benjamin.orellanaof@gmail.com || 3863531891
+ * Quejas Internas con control de acceso (RBAC) y UX premium:
+ * - Ancho ampliado (max-w-[1600px])
+ * - SweetAlert2 (confirm/éxito/error + toasts)
+ * - Búsqueda global, filtros rápidos (estado + rango fecha)
+ * - Chips de contexto de visibilidad, stats, badges
+ * - Loader skeleton, tabla moderna, paginación pro
+ * - Acciones con tooltips, abrir WhatsApp, copiar contacto
  */
+
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { formatearFecha } from '../../../Helpers';
-import { Link } from 'react-router-dom';
-import NavbarStaff from '../NavbarStaff';
-import '../../../styles/MetodsGet/Tabla.css';
-import '../../../styles/staff/background.css';
-import Footer from '../../../components/footer/Footer';
+import { Link, useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  FaPlus,
+  FaSearch,
+  FaTimes,
+  FaCheck,
+  FaInfoCircle,
+  FaChevronLeft,
+  FaChevronRight,
+  FaSyncAlt,
+  FaTrash,
+  FaEdit,
+  FaPhoneAlt,
+  FaCopy
+} from 'react-icons/fa';
+import Swal from 'sweetalert2';
 import { useAuth } from '../../../AuthContext';
-import { FaWhatsapp } from 'react-icons/fa';
+import NavbarStaff from '../NavbarStaff';
+import Footer from '../../../components/footer/Footer';
 import FormAltaQueja from '../../../components/Forms/FormAltaQueja';
 import QuejasDetails from './QuejasInternasGetId';
-import { useParams } from 'react-router-dom';
+import '../../../styles/staff/background.css';
 
+// ===================== Helpers =====================
+const toCanonical = (str = '') =>
+  str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim();
+
+const isCoordinator = (level = '') => {
+  const L = toCanonical(level);
+  return L === 'ADMIN' || L === 'ADMINISTRADOR' || L === 'GERENTE';
+};
+
+const formatDateTimeAR = (value) => {
+  try {
+    return new Date(value).toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires'
+    });
+  } catch {
+    return value ?? '';
+  }
+};
+
+// Toast SweetAlert2
+const toast = (title, icon = 'success') =>
+  Swal.fire({
+    title,
+    icon,
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 1800,
+    timerProgressBar: true
+  });
+
+// ===================== Componente =====================
 const QuejasInternasGet = () => {
-  const { userLevel, userName } = useAuth();
+  const { userLevel, userName } = useAuth(); // userName = email
+  const [userSede, setUserSede] = useState('');
+  const [userLevelCanon, setUserLevelCanon] = useState(toCanonical(userLevel));
 
-  // Estado para almacenar la lista de personas
   const [quejas, setQuejas] = useState([]);
-  // Estado para almacenar el término de búsqueda
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Controles UI
   const [search, setSearch] = useState('');
+  const [estadoFilter, setEstadoFilter] = useState('todos'); // todos | resueltas | pendientes
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [soloPropias, setSoloPropias] = useState(false);
 
   const [modalNewQueja, setModalNewQueja] = useState(false);
-
   const [selectedQueja, setSelectedQueja] = useState(null);
-  const [modalUserDetails, setModalUserDetails] = useState(false); // Estado para controlar el modal de detalles del usuario
+  const [modalUserDetails, setModalUserDetails] = useState(false);
 
-  //URL estatica, luego cambiar por variable de entorno
-  const URL = 'http://localhost:8080/quejas/';
+  const { id } = useParams(); // para abrir detalle por URL
 
+  // URL base (mover a .env si preferís)
+  const API_BASE = 'http://localhost:8080';
+  const URL = `${API_BASE}/quejas/`;
+
+  // ===================== Cargar sede/level desde /users =====================
   useEffect(() => {
-    obtenerQuejas();
-  }, []);
-
-  const obtenerQuejas = async () => {
-    try {
-      const response = await axios.get(URL);
-      setQuejas(response.data);
-    } catch (error) {
-      console.log('Error al obtener las quejas:', error);
-    }
-  };
-
-  const obtenerQueja = async (id) => {
-    try {
-      const url = `${URL}${id}`;
-      const respuesta = await fetch(url);
-      const resultado = await respuesta.json();
-      setSelectedQueja(resultado);
-      setModalUserDetails(true); // Abre el modal de detalles del usuario
-    } catch (error) {
-      console.log('Error al obtener el usuario:', error);
-    }
-  };
-  const handleEliminarQueja = async (id) => {
-    const confirmacion = window.confirm(
-      '¿Seguro que desea eliminar esta queja?'
-    );
-    if (confirmacion) {
+    const loadUserMeta = async () => {
       try {
-        await axios.delete(`${URL}${id}`);
-        setQuejas(quejas.filter((q) => q.id !== id));
-      } catch (error) {
-        console.log(error);
+        const { data: users } = await axios.get(`${API_BASE}/users`);
+        const me = users?.find(
+          (u) =>
+            (u?.email || '').toLowerCase() === (userName || '').toLowerCase()
+        );
+        if (me) {
+          setUserSede(me.sede || '');
+          setUserLevelCanon(toCanonical(me.level || userLevel));
+          await obtenerQuejas(me?.sede || '');
+        } else {
+          setUserSede('');
+          setUserLevelCanon(toCanonical(userLevel));
+          await obtenerQuejas('');
+        }
+      } catch (err) {
+        console.log('Error al leer /users:', err);
+        await obtenerQuejas('');
       }
+    };
+    loadUserMeta();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userName]);
+
+  // ===================== Obtener quejas (server filtra por headers) =====================
+  const obtenerQuejas = async (sedeActual = userSede) => {
+    setLoading(true);
+    setError('');
+    try {
+      const headers = {
+        'x-user-email': userName || '',
+        'x-user-level': userLevel || '',
+        'x-user-sede': sedeActual || ''
+      };
+      const response = await axios.get(URL, { headers });
+      setQuejas(response.data || []);
+    } catch (err) {
+      console.error('Error al obtener las quejas:', err);
+      setError('No se pudieron cargar las quejas. Intenta nuevamente.');
+      Swal.fire('Ups...', 'No se pudieron cargar las quejas.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ===================== Obtener detalle si viene :id =====================
+  useEffect(() => {
+    const fetchQuejaDetails = async () => {
+      try {
+        const response = await fetch(`${URL}${id}`);
+        const data = await response.json();
+        if (data) {
+          setSelectedQueja(data);
+          setModalUserDetails(true);
+        }
+      } catch (e) {
+        console.error('Error al obtener los detalles de la queja:', e);
+      }
+    };
+    if (id) fetchQuejaDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  // ===================== Acciones =====================
+  const commonHeaders = {
+    'Content-Type': 'application/json',
+    'x-user-email': userName || '',
+    'x-user-level': userLevel || '',
+    'x-user-sede': userSede || ''
+  };
+
+  const handleEliminarQueja = async (id) => {
+    const confirm = await Swal.fire({
+      title: '¿Eliminar queja?',
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#ef4444'
+    });
+    if (!confirm.isConfirmed) return;
+
+    try {
+      await axios.delete(`${URL}${id}`, { headers: commonHeaders });
+      setQuejas((prev) => prev.filter((q) => q.id !== id));
+      toast('Queja eliminada', 'success');
+    } catch (err) {
+      console.log(err);
+      Swal.fire('Error', 'No se pudo eliminar la queja.', 'error');
     }
   };
 
   const handleEditarQueja = (queja) => {
-    // Se actualiza el estado con los detalles de la queja seleccionada
     setSelectedQueja(queja);
-
-    // Se abre el modal para editar la queja
     setModalNewQueja(true);
   };
 
   const handleResolverQueja = async (id) => {
-    try {
-      const response = await fetch(
-        `http://localhost:8080/quejas/${id}/resolver`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ resuelto_por: userName })
-        }
-      );
+    const confirm = await Swal.fire({
+      title: 'Marcar como resuelta',
+      text: '¿Confirmás que la queja está resuelta?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, resolver',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#059669'
+    });
+    if (!confirm.isConfirmed) return;
 
-      if (!response.ok) {
-        const errorData = await response.json(); // si hay error, asumimos que viene con mensaje
-        alert(errorData.mensajeError || 'Error al marcar como resuelta');
+    try {
+      const resp = await fetch(`${API_BASE}/quejas/${id}/resolver`, {
+        method: 'PUT',
+        headers: commonHeaders,
+        body: JSON.stringify({ resuelto_por: userName })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        Swal.fire('Error', err.mensajeError || 'No se pudo resolver', 'error');
         return;
       }
-
-      // Solo intentar parsear JSON si hay contenido
-      const contentLength = response.headers.get('Content-Length');
-      if (contentLength && parseInt(contentLength) > 0) {
-        const data = await response.json();
-        alert(data.message || 'Queja marcada como resuelta');
+      const text = await resp.text();
+      if (text) {
+        const data = JSON.parse(text);
+        toast(data.message || 'Queja resuelta', 'success');
       } else {
-        alert('Queja marcada como resuelta');
+        toast('Queja resuelta', 'success');
       }
-
-      // Actualizar estado
-      obtenerQuejas(); // tu función para recargar datos
-    } catch (error) {
-      alert('Error en la petición: ' + error.message);
+      obtenerQuejas();
+    } catch (e) {
+      Swal.fire('Error', 'Ocurrió un problema en la petición.', 'error');
     }
   };
 
   const handleNoResueltoQueja = async (id) => {
-    try {
-      const response = await fetch(
-        `http://localhost:8080/quejas/${id}/no-resuelto`,
-        {
-          method: 'PUT'
-        }
-      );
+    const confirm = await Swal.fire({
+      title: 'Reabrir queja',
+      text: 'La queja volverá a estado pendiente.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Reabrir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#111827'
+    });
+    if (!confirm.isConfirmed) return;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(errorData.mensajeError || 'Error al marcar como no resuelta');
+    try {
+      const resp = await fetch(`${API_BASE}/quejas/${id}/no-resuelto`, {
+        method: 'PUT',
+        headers: commonHeaders
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        Swal.fire('Error', err.mensajeError || 'No se pudo reabrir', 'error');
         return;
       }
-
-      alert('Queja marcada como no resuelta');
+      toast('Queja reabierta', 'success');
       obtenerQuejas();
-    } catch (error) {
-      alert('Error en la petición: ' + error.message);
+    } catch (e) {
+      Swal.fire('Error', 'Ocurrió un problema en la petición.', 'error');
     }
   };
-  const searcher = (e) => {
-    setSearch(e.target.value);
+
+  const abrirModal = () => setModalNewQueja(true);
+  const cerrarModal = () => {
+    setModalNewQueja(false);
+    setSelectedQueja(null);
+    obtenerQuejas();
   };
 
-  let results = [];
-  if (!search) {
-    // Si no hay término de búsqueda, usamos los resultados completos
-    results = quejas; // Reemplazamos personClass por quejas
-  } else if (search) {
-    // Si hay un término de búsqueda, filtramos los resultados
-    results = quejas.filter((dato) => {
-      const nombreMatch = dato.nombre
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const tipoUsuarioMatch = dato.tipo_usuario
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const contactoMatch = dato.contacto && dato.contacto.includes(search);
-      const motivoMatch = dato.motivo
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const sedeMatch = dato.sede.toLowerCase().includes(search.toLowerCase());
+  const copiar = async (texto) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast('Copiado al portapapeles');
+    } catch {
+      Swal.fire('Atención', 'No se pudo copiar.', 'info');
+    }
+  };
 
-      return (
-        nombreMatch ||
-        tipoUsuarioMatch ||
-        contactoMatch ||
-        motivoMatch ||
-        sedeMatch
+  const abrirWhats = (numero) => {
+    if (!numero) return;
+    const limpio = String(numero).replace(/[^0-9]/g, '');
+    const url = `https://wa.me/${limpio}`;
+    window.open(url, '_blank');
+  };
+
+  // ===================== Filtros en UI (client-side extra) =====================
+  const filtered = useMemo(() => {
+    let data = [...(quejas || [])];
+
+    // Solo propias (extra, además del filtrado del backend)
+    if (soloPropias && !isCoordinator(userLevelCanon)) {
+      data = data.filter(
+        (d) =>
+          (d.cargado_por || '').toLowerCase() === (userName || '').toLowerCase()
       );
-    });
-  }
+    }
 
-  // Función para ordenar las quejas de forma decreciente basado en el id
-  const ordenarQuejasDecreciente = (quejas) => {
-    return [...quejas].sort((a, b) => b.id - a.id);
-  };
+    // texto
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      data = data.filter((d) => {
+        return (
+          (d.nombre || '').toLowerCase().includes(q) ||
+          (d.tipo_usuario || '').toLowerCase().includes(q) ||
+          (d.contacto || '').toLowerCase().includes(q) ||
+          (d.motivo || '').toLowerCase().includes(q) ||
+          (d.sede || '').toLowerCase().includes(q) ||
+          String(d.id || '').includes(q)
+        );
+      });
+    }
+    // estado
+    if (estadoFilter !== 'todos') {
+      data = data.filter((d) =>
+        estadoFilter === 'resueltas'
+          ? Number(d.resuelto) === 1
+          : Number(d.resuelto) !== 1
+      );
+    }
+    // rango fechas (por campo fecha)
+    if (fromDate) {
+      const from = new Date(fromDate);
+      data = data.filter((d) => new Date(d.fecha) >= from);
+    }
+    if (toDate) {
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999);
+      data = data.filter((d) => new Date(d.fecha) <= to);
+    }
+    // orden desc por id
+    data.sort((a, b) => (b?.id || 0) - (a?.id || 0));
+    return data;
+  }, [
+    quejas,
+    search,
+    estadoFilter,
+    fromDate,
+    toDate,
+    soloPropias,
+    userLevelCanon,
+    userName
+  ]);
 
-  // Llamada a la función para obtener las quejas ordenadas de forma decreciente
-  const sortedQuejas = ordenarQuejasDecreciente(results);
+  // Stats
+  const total = filtered.length;
+  const resueltas = filtered.filter((d) => Number(d.resuelto) === 1).length;
+  const pendientes = total - resueltas;
 
+  // ===================== Paginación =====================
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, estadoFilter, fromDate, toDate, itemsPerPage, soloPropias]);
+
   const lastIndex = currentPage * itemsPerPage;
   const firstIndex = lastIndex - itemsPerPage;
-  const records = sortedQuejas.slice(firstIndex, lastIndex);
-  const nPage = Math.ceil(sortedQuejas.length / itemsPerPage);
-  const numbers = [...Array(nPage + 1).keys()].slice(1);
+  const pageRecords = filtered.slice(firstIndex, lastIndex);
+  const nPage = Math.ceil(filtered.length / itemsPerPage) || 1;
 
-  function prevPage() {
-    if (currentPage !== firstIndex) {
-      setCurrentPage(currentPage - 1);
-    }
-  }
+  const prevPage = () => currentPage > 1 && setCurrentPage((p) => p - 1);
+  const nextPage = () => currentPage < nPage && setCurrentPage((p) => p + 1);
 
-  function changeCPage(id) {
-    setCurrentPage(id);
-  }
-
-  function nextPage() {
-    if (currentPage !== firstIndex) {
-      setCurrentPage(currentPage + 1);
-    }
-  }
-
-  const abrirModal = () => {
-    setModalNewQueja(true);
-  };
-
-  const cerarModal = () => {
-    setModalNewQueja(false);
-    obtenerQuejas();
-    setSelectedQueja(null); // Limpiar la queja seleccionada al cerrar
-  };
-
-  const { id } = useParams(); // Obtener el id de la URL
-
-  
-  useEffect(() => {
-    const fetchQuejaDetails = async () => {
-      try {
-        const response = await fetch(`http://localhost:8080/quejas/${id}`);
-        const data = await response.json();
-
-        if (data) {
-          setSelectedQueja(data);
-          setModalUserDetails(true); // Abrimos el modal
-        }
-      } catch (error) {
-        console.error('Error al obtener los detalles de la queja:', error);
-      }
-    };
-
-    if (id) {
-      fetchQuejaDetails();
-    }
-  }, [id]); // Este efecto solo se ejecuta cuando el id cambia
-
+  // ===================== UI =====================
   return (
     <>
       <NavbarStaff />
-      <div className="dashboardbg h-contain pt-10 pb-10">
-        <div className="bg-white rounded-lg w-11/12 mx-auto pb-2">
-          <div className="pl-5 pt-5">
+
+      <div className="dashboardbg min-h-screen py-8">
+        <div className="mx-auto w-[98%] max-w-[1600px]">
+          {/* Header */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <Link to="/dashboard">
-              <button className="py-2 px-5 bg-[#fc4b08] rounded-lg text-sm text-white hover:bg-orange-500">
-                Volver
+              <button className="inline-flex items-center gap-2 rounded-xl bg-[#fc4b08] px-4 py-2 text-sm font-medium text-white shadow hover:bg-orange-500 transition">
+                <FaChevronLeft /> Volver
               </button>
             </Link>
-          </div>
-          <div className="flex justify-center">
-            <h1 className="pb-5">
-              Listado de Quejas :{' '}
-              <span className="text-center">
-                Cantidad de registros : {results.length}
+
+            <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-600">
+              <FaInfoCircle />
+              <span className="rounded-full bg-zinc-100 px-3 py-1">
+                {isCoordinator(userLevelCanon)
+                  ? 'Viendo: Todas las quejas (coordinador)'
+                  : `Viendo: Mis quejas + QR-${toCanonical(userSede || '')}`}
               </span>
-            </h1>
+            </div>
           </div>
 
-          {/* formulario de busqueda */}
-          <form className="flex justify-center pb-5">
-            <input
-              value={search}
-              onChange={searcher}
-              type="text"
-              placeholder="Buscar mediante el NOMBRE"
-              className="border rounded-sm"
-            />
-          </form>
-
-          <div className="flex justify-center pb-10">
-            <Link to="#">
-              <button
-                onClick={abrirModal}
-                className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
-              >
-                Agregar Queja
-              </button>
-            </Link>
-          </div>
-
-          {Object.keys(results).length === 0 ? (
-            <p className="text-center pb-10">
-              La Queja NO Existe ||{' '}
-              <span className="text-span"> Queja: {results.length}</span>
-            </p>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full mx-auto">
-                  <thead className="bg-[#fc4b08] text-white">
-                    <tr key={quejas.id}>
-                      <th className="thid">ID</th>
-                      <th>Fecha Solicitud</th>
-                      <th>Cargado por</th>
-                      <th>Nombre</th>
-                      <th>Tipo Usuario</th>
-                      <th>Contacto</th>
-                      <th>Motivo</th>
-                      <th>Sede</th>
-                      <th>Estado</th>
-                      <th> Resuelto por</th>
-
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {records.map((queja) => (
-                      <tr key={queja.id}>
-                        <td onClick={() => obtenerQueja(queja.id)}>
-                          {queja.id}
-                        </td>
-                        <td onClick={() => obtenerQueja(queja.id)}>
-                          {new Date(queja.fecha).toLocaleString('es-AR', {
-                            timeZone: 'America/Argentina/Buenos_Aires'
-                          })}
-                        </td>
-
-                        <td onClick={() => obtenerQueja(queja.id)}>
-                          {queja.cargado_por}
-                        </td>
-                        <td onClick={() => obtenerQueja(queja.id)}>
-                          {queja.nombre}
-                        </td>
-                        <td onClick={() => obtenerQueja(queja.id)}>
-                          {queja.tipo_usuario}
-                        </td>
-                        <td onClick={() => obtenerQueja(queja.id)}>
-                          {queja.contacto}
-                        </td>
-                        <td onClick={() => obtenerQueja(queja.id)}>
-                          <span>
-                            {queja.motivo.length > 4
-                              ? `${queja.motivo.slice(0, 4)}...`
-                              : queja.motivo}
-                          </span>
-                        </td>
-                        <td onClick={() => obtenerQueja(queja.id)}>
-                          {queja.sede}
-                        </td>
-                        <td onClick={() => obtenerQueja(queja.id)}>
-                          <span
-                            className={`${
-                              queja.resuelto === 1
-                                ? 'text-green-500'
-                                : 'text-red-500'
-                            }`}
-                          >
-                            {queja.resuelto === 1 ? 'Resuelto' : 'No Resuelto'}
-                          </span>
-                        </td>
-
-                        <td className="text-sm">
-                          {Number(queja.resuelto) === 1 &&
-                          queja.resuelto_por &&
-                          queja.fecha_resuelto ? (
-                            <>
-                              <p className="text-green-700 font-bold">
-                                RESUELTO
-                              </p>
-                              <p>
-                                <span className="font-semibold">Por:</span>{' '}
-                                {queja.resuelto_por}
-                              </p>
-                              <p>
-                                <span className="font-semibold">Fecha:</span>{' '}
-                                {new Date(
-                                  queja.fecha_resuelto
-                                ).toLocaleString()}
-                              </p>
-                            </>
-                          ) : (
-                            <span className="text-red-600 font-bold">
-                              Aún no se resolvío
-                            </span>
-                          )}
-                        </td>
-
-                        {/* ACCIONES */}
-                        <td className="flex space-x-3 px-2">
-                          {/* Botón para Eliminar - Solo visible para admin */}
-                          {(userLevel === 'admin' ||
-                            userLevel === 'administrador') && (
-                            <button
-                              onClick={() => handleEliminarQueja(queja.id)}
-                              type="button"
-                              className="py-2 px-4 my-1 bg-red-500 text-white rounded-md hover:bg-red-600"
-                            >
-                              Eliminar
-                            </button>
-                          )}
-
-                          {/* Botón para Editar - Siempre visible */}
-                          <button
-                            onClick={() => handleEditarQueja(queja)}
-                            type="button"
-                            className="py-2 px-4 my-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
-                          >
-                            Editar
-                          </button>
-
-                          {/* Resolver o Marcar como no resuelto - Siempre visible */}
-                          {!queja.resuelto ? (
-                            <button
-                              onClick={() => handleResolverQueja(queja.id)}
-                              type="button"
-                              className="py-2 px-4 my-1 bg-green-600 text-white rounded-md hover:bg-green-700"
-                            >
-                              Resolver
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleNoResueltoQueja(queja.id)}
-                              type="button"
-                              className="py-2 px-4 my-1 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                            >
-                              Marcar como no resuelto
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {/* Card principal */}
+          <div className="rounded-3xl border border-white/10 bg-white/95 shadow-[0_10px_40px_-10px_rgba(0,0,0,.25)] backdrop-blur-xl">
+            {/* Top bar: título + acciones */}
+            <div className="sticky top-0 z-10 flex flex-col gap-4 border-b border-zinc-100 p-6 md:flex-row md:items-center md:justify-between bg-white/90 backdrop-blur">
+              <div>
+                <h1 className="text-2xl font-semibold text-zinc-800 font-bignoodle">
+                  Quejas Internas
+                </h1>
+                <p className="text-xs text-zinc-500">
+                  Total: <strong>{total}</strong> • Resueltas:{' '}
+                  <strong className="text-emerald-600">{resueltas}</strong> •
+                  Pendientes:{' '}
+                  <strong className="text-red-600">{pendientes}</strong>
+                </p>
               </div>
-              <nav className="flex justify-center items-center my-10">
-                <ul className="pagination">
-                  <li className="page-item">
-                    <a href="#" className="page-link" onClick={prevPage}>
-                      Prev
-                    </a>
-                  </li>
-                  {numbers.map((number, index) => (
-                    <li
-                      className={`page-item ${
-                        currentPage === number ? 'active' : ''
-                      }`}
-                      key={index}
+
+              <div className="flex flex-wrap items-center gap-2">
+                {!isCoordinator(userLevelCanon) && (
+                  <button
+                    onClick={() => setSoloPropias((s) => !s)}
+                    className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm shadow-sm border ${
+                      soloPropias
+                        ? 'bg-zinc-900 text-white border-zinc-900'
+                        : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
+                    }`}
+                    title="Filtrar únicamente mis quejas (además del alcance del backend)"
+                  >
+                    {soloPropias
+                      ? 'Solo mis quejas'
+                      : 'Todo dentro de mi alcance'}
+                  </button>
+                )}
+
+                <button
+                  onClick={() => obtenerQuejas(userSede)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                  title="Refrescar"
+                >
+                  <FaSyncAlt className="animate-spin-slow" /> Refrescar
+                </button>
+                <button
+                  onClick={abrirModal}
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-emerald-700"
+                >
+                  <FaPlus /> Agregar Queja
+                </button>
+              </div>
+            </div>
+
+            {/* Filtros */}
+            <div className="grid grid-cols-1 gap-3 p-6 md:grid-cols-12">
+              <div className="md:col-span-5">
+                <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2">
+                  <FaSearch className="shrink-0" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    type="text"
+                    placeholder="Buscar por ID, nombre, motivo, contacto, sede..."
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400"
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch('')}
+                      className="rounded-full p-1 text-zinc-500 hover:bg-zinc-100"
+                      aria-label="Limpiar búsqueda"
                     >
-                      <a
-                        href="#"
-                        className="page-link"
-                        onClick={() => changeCPage(number)}
-                      >
-                        {number}
-                      </a>
-                    </li>
-                  ))}
-                  <li className="page-item">
-                    <a href="#" className="page-link" onClick={nextPage}>
-                      Next
-                    </a>
-                  </li>
-                </ul>
-              </nav>
-            </>
-          )}
+                      <FaTimes />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="md:col-span-3">
+                <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2">
+                  <select
+                    value={estadoFilter}
+                    onChange={(e) => setEstadoFilter(e.target.value)}
+                    className="w-full bg-transparent text-sm outline-none"
+                  >
+                    <option value="todos">Todos los estados</option>
+                    <option value="pendientes">Pendientes</option>
+                    <option value="resueltas">Resueltas</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="md:col-span-2">
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="w-full rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="w-full rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6">
+              {/* Loading / Error / Empty */}
+              <AnimatePresence initial={false}>
+                {loading && (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="space-y-3"
+                  >
+                    {/* skeleton rows */}
+                    {[...Array(6)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-12 w-full animate-pulse rounded-xl bg-zinc-100"
+                      />
+                    ))}
+                    <p className="mt-2 text-center text-sm text-zinc-500">
+                      Cargando quejas...
+                    </p>
+                  </motion.div>
+                )}
+
+                {!loading && error && (
+                  <motion.div
+                    key="error"
+                    initial={{ y: -6, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                {!loading && !error && filtered.length === 0 && (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="grid place-items-center py-16"
+                  >
+                    <p className="text-sm text-zinc-500">
+                      No hay quejas que coincidan con el filtro.
+                    </p>
+                    <button
+                      onClick={abrirModal}
+                      className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-emerald-700"
+                    >
+                      <FaPlus /> Cargar nueva queja
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Tabla */}
+              {!loading && !error && filtered.length > 0 && (
+                <div className="overflow-x-auto rounded-2xl border border-zinc-100">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-orange-600 text-white">
+                      <tr>
+                        <th className="px-3 py-3 text-left">ID</th>
+                        <th className="px-3 py-3 text-left">Fecha</th>
+                        <th className="px-3 py-3 text-left">Cargado por</th>
+                        <th className="px-3 py-3 text-left">Nombre</th>
+                        <th className="px-3 py-3 text-left">Tipo</th>
+                        <th className="px-3 py-3 text-left">Contacto</th>
+                        <th className="px-3 py-3 text-left">Motivo</th>
+                        <th className="px-3 py-3 text-left">Sede</th>
+                        <th className="px-3 py-3 text-left">Estado</th>
+                        <th className="px-3 py-3 text-left">Detalle</th>
+                        <th className="px-3 py-3 text-left">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100 bg-white">
+                      {pageRecords.map((queja) => {
+                        const puedeEliminar = isCoordinator(userLevelCanon);
+                        const puedeResolver =
+                          isCoordinator(userLevelCanon) ||
+                          (queja.cargado_por || '').toLowerCase() ===
+                            (userName || '').toLowerCase();
+                        return (
+                          <tr key={queja.id} className="hover:bg-orange-500 ">
+                            <td
+                              className="px-3 py-3 font-medium text-zinc-800 cursor-pointer"
+                              onClick={() => {
+                                setSelectedQueja(queja);
+                                setModalUserDetails(true);
+                              }}
+                            >
+                              {queja.id}
+                            </td>
+                            <td
+                              className="px-3 py-3 text-zinc-700 cursor-pointer"
+                              onClick={() => {
+                                setSelectedQueja(queja);
+                                setModalUserDetails(true);
+                              }}
+                            >
+                              {formatDateTimeAR(queja.fecha)}
+                            </td>
+                            <td className="px-3 py-3 text-zinc-700">
+                              {queja.cargado_por}
+                            </td>
+                            <td className="px-3 py-3 text-zinc-700">
+                              {queja.nombre}
+                            </td>
+                            <td className="px-3 py-3 text-zinc-700">
+                              {queja.tipo_usuario}
+                            </td>
+                            <td className="px-3 py-3 text-zinc-700">
+                              <div className="flex items-center gap-2">
+                                <span>{queja.contacto}</span>
+                                {queja.contacto && (
+                                  <>
+                                    <button
+                                      onClick={() => abrirWhats(queja.contacto)}
+                                      title="Abrir WhatsApp"
+                                      className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs hover:bg-zinc-50"
+                                    >
+                                      <FaPhoneAlt />
+                                    </button>
+                                    <button
+                                      onClick={() => copiar(queja.contacto)}
+                                      title="Copiar contacto"
+                                      className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs hover:bg-zinc-50"
+                                    >
+                                      <FaCopy />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-3 text-zinc-700 max-w-[360px]">
+                              <div title={queja.motivo} className="truncate">
+                                {queja.motivo}
+                              </div>
+                            </td>
+                            <td className="px-3 py-3 text-zinc-700">
+                              {queja.sede}
+                            </td>
+                            <td className="px-3 py-3">
+                              {Number(queja.resuelto) === 1 ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                  <FaCheck /> Resuelto
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-200">
+                                  Pendiente
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-zinc-700">
+                              {Number(queja.resuelto) === 1 &&
+                              queja.resuelto_por &&
+                              queja.fecha_resuelto ? (
+                                <div className="text-xs text-emerald-700">
+                                  <div className="font-semibold">
+                                    Por: {queja.resuelto_por}
+                                  </div>
+                                  <div className="opacity-80">
+                                    {formatDateTimeAR(queja.fecha_resuelto)}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-red-600">
+                                  Sin resolver
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-3">
+                              <div className="flex flex-wrap gap-2">
+                                {puedeEliminar && (
+                                  <button
+                                    onClick={() =>
+                                      handleEliminarQueja(queja.id)
+                                    }
+                                    className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600"
+                                    title="Eliminar queja"
+                                  >
+                                    <FaTrash /> Eliminar
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleEditarQueja(queja)}
+                                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600"
+                                  title="Editar queja"
+                                >
+                                  <FaEdit /> Editar
+                                </button>
+                                {Number(queja.resuelto) !== 1 ? (
+                                  <button
+                                    disabled={!puedeResolver}
+                                    onClick={() =>
+                                      handleResolverQueja(queja.id)
+                                    }
+                                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
+                                      puedeResolver
+                                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                                        : 'bg-emerald-300 cursor-not-allowed'
+                                    }`}
+                                    title={
+                                      puedeResolver
+                                        ? 'Marcar como resuelta'
+                                        : 'No tenés permisos para resolver esta queja'
+                                    }
+                                  >
+                                    <FaCheck /> Resolver
+                                  </button>
+                                ) : (
+                                  <button
+                                    disabled={!puedeResolver}
+                                    onClick={() =>
+                                      handleNoResueltoQueja(queja.id)
+                                    }
+                                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
+                                      puedeResolver
+                                        ? 'bg-zinc-700 hover:bg-zinc-800'
+                                        : 'bg-zinc-300 cursor-not-allowed'
+                                    }`}
+                                    title={
+                                      puedeResolver
+                                        ? 'Marcar como no resuelta'
+                                        : 'No tenés permisos'
+                                    }
+                                  >
+                                    Reabrir
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Paginación */}
+              {!loading && !error && filtered.length > 0 && (
+                <div className="mt-6 flex flex-col items-center justify-between gap-3 md:flex-row">
+                  <div className="flex items-center gap-2 text-xs text-zinc-600">
+                    <span>Mostrando</span>
+                    <select
+                      className="rounded-lg border border-zinc-200 bg-white px-2 py-1"
+                      value={itemsPerPage}
+                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                    <span>
+                      de <strong>{filtered.length}</strong>
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={prevPage}
+                      disabled={currentPage === 1}
+                      className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 disabled:opacity-40"
+                    >
+                      <FaChevronLeft /> Anterior
+                    </button>
+                    <span className="text-xs text-zinc-600">
+                      Página <strong>{currentPage}</strong> de{' '}
+                      <strong>{nPage}</strong>
+                    </span>
+                    <button
+                      onClick={nextPage}
+                      disabled={currentPage === nPage}
+                      className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 disabled:opacity-40"
+                    >
+                      Siguiente <FaChevronRight />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-      <Footer />
 
+      {/* Modales */}
       <FormAltaQueja
         isOpen={modalNewQueja}
-        onClose={cerarModal}
+        onClose={cerrarModal}
         queja={selectedQueja}
         setSelectedQueja={setSelectedQueja}
-        obtenerQuejas={obtenerQuejas}
+        obtenerQuejas={() => obtenerQuejas(userSede)}
       />
+
       {selectedQueja && (
         <QuejasDetails
           queja={selectedQueja}
@@ -479,6 +805,8 @@ const QuejasInternasGet = () => {
           onClose={() => setModalUserDetails(false)}
         />
       )}
+
+      <Footer />
     </>
   );
 };

@@ -13,6 +13,8 @@ import NotificationsAgendas from './NotificationsAgendas';
 import * as XLSX from 'xlsx';
 import { formatearFecha } from '../../Helpers/index';
 import FilterBar from '../../pages/staff/Components/FilterBar';
+import Swal from 'sweetalert2';
+import ModalCargarQueja from './Components/ModalCargarQueja';
 
 const PlanillaEntrenador = () => {
   const URL = 'http://localhost:8080/';
@@ -97,6 +99,40 @@ const PlanillaEntrenador = () => {
   const [mesSel, setMesSel] = useState(new Date().getMonth() + 1);
   const [anioSel, setAnioSel] = useState(new Date().getFullYear());
   const [asistenciasMes, setAsistenciasMes] = useState([]);
+
+  const [instructorSede, setInstructorSede] = useState('');
+  const [instructorLevel, setInstructorLevel] = useState(userLevel || '');
+
+  const API_BASE = 'http://localhost:8080';
+
+  const [openQuejaModal, setOpenQuejaModal] = useState(false);
+  const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
+
+  // instructor meta (ya la tenés o similar)
+  const instructor = {
+    email: userName,
+    sede: instructorSede,
+    level: userLevel
+  };
+
+  useEffect(() => {
+    const loadMe = async () => {
+      try {
+        const { data: users } = await axios.get(`${API_BASE}/users`);
+        const me = users?.find(
+          (u) =>
+            (u?.email || '').toLowerCase() === (userName || '').toLowerCase()
+        );
+        if (me) {
+          setInstructorSede(me.sede || '');
+          setInstructorLevel(me.level || '');
+        }
+      } catch (e) {
+        console.log('No se pudo obtener la sede del profe', e);
+      }
+    };
+    loadMe();
+  }, [userName]);
 
   useEffect(() => {
     // Trae SOLO el mes/año seleccionados
@@ -1234,9 +1270,7 @@ const PlanillaEntrenador = () => {
   useEffect(() => {
     const obtenerAlumnosNuevos = async () => {
       try {
-        const response = await fetch(
-          'http://localhost:8080/alumnos_nuevos'
-        );
+        const response = await fetch('http://localhost:8080/alumnos_nuevos');
         const data = await response.json();
         setAlumnosNuevos(data);
       } catch (error) {
@@ -1684,6 +1718,32 @@ const PlanillaEntrenador = () => {
                 disabled={idAlumno_recf === null}
               >
                 Eliminar
+              </button>
+              {/* NUEVO: Cargar queja */}
+              <button
+                onClick={() => {
+                  const alumno = filteredAlumnos.find(
+                    (a) => a.id === idAlumno_recf
+                  );
+                  if (!alumno) {
+                    Swal.fire(
+                      'Atención',
+                      'No hay alumno seleccionado.',
+                      'info'
+                    );
+                    return;
+                  }
+                  setAlumnoSeleccionado(alumno);
+                  setOpenQuejaModal(true);
+                }}
+                className={`pb-3 py-2 px-4 rounded transition-colors duration-100 z-10 ${
+                  idAlumno_recf === null
+                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                }`}
+                disabled={idAlumno_recf === null}
+              >
+                Cargar queja
               </button>
             </div>
 
@@ -2137,6 +2197,18 @@ const PlanillaEntrenador = () => {
           onClose={() => setModalAlumnoDetails(false)}
         />
       )}
+      <ModalCargarQueja
+        isOpen={openQuejaModal}
+        onClose={() => setOpenQuejaModal(false)}
+        alumno={alumnoSeleccionado}
+        instructor={instructor}
+        apiBase="http://localhost:8080"
+        onSuccess={() => {
+          // opcional: refrescar listados globales o badge del alumno
+          // e.g. reloadQuejasCountForAlumno(alumnoSeleccionado.id)
+        }}
+      />
+
       <Footer />
     </>
   );
