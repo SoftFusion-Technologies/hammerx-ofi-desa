@@ -635,11 +635,16 @@ const QuejasInternasGet = () => {
                                 )}
                               </div>
                             </td>
-                            <td className="px-3 py-3 text-zinc-700 max-w-[360px]">
-                              <div title={queja.motivo} className="truncate">
+                            <td className="px-3 py-3 text-zinc-700 align-top">
+                              <div
+                                title={queja.motivo}
+                                className="max-w-[360px] overflow-hidden break-words"
+                                style={{ display: 'block' }}
+                              >
                                 {queja.motivo}
                               </div>
                             </td>
+
                             <td className="px-3 py-3 text-zinc-700">
                               {queja.sede}
                             </td>
