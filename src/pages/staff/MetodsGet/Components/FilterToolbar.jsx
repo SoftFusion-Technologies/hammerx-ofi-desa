@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import DebouncedSearchInput from './DebouncedSearchInput';
 import { FilterChip } from './FilterChip';
-import { QuickFilters } from './QuickFilters';
 
 export default function FilterToolbar({
   // estado y setters actuales:
@@ -27,11 +26,13 @@ export default function FilterToolbar({
   anio,
   setAnio,
   onExportClick,
-  counts // { all, convertidos, comision, alerta }  <- opcional
+  comisionEstadoFiltro, // NUEVO
+  setComisionEstadoFiltro, // NUEVO
+  counts // { all, convertidos, comision, alerta, comiEnRev?, comiAprob?, comiRecha? }
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Persistencia (simple) en localStorage
+  // ---------- Persistencia ----------
   useEffect(() => {
     const payload = {
       search,
@@ -41,7 +42,8 @@ export default function FilterToolbar({
       convertidoFiltro,
       comisionFiltro,
       alertaFiltro,
-      selectedSede
+      selectedSede,
+      comisionEstadoFiltro
     };
     localStorage.setItem('prospectos.filters', JSON.stringify(payload));
   }, [
@@ -52,7 +54,8 @@ export default function FilterToolbar({
     convertidoFiltro,
     comisionFiltro,
     alertaFiltro,
-    selectedSede
+    selectedSede,
+    comisionEstadoFiltro
   ]);
 
   useEffect(() => {
@@ -68,11 +71,13 @@ export default function FilterToolbar({
         setComisionFiltro(f.comisionFiltro ?? '');
         setAlertaFiltro(f.alertaFiltro ?? '');
         setSelectedSede(f.selectedSede ?? '');
+        setComisionEstadoFiltro(f.comisionEstadoFiltro ?? '');
       } catch {}
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ---------- Chips activos ----------
   const activeChips = useMemo(() => {
     const arr = [];
     if (search)
@@ -105,24 +110,41 @@ export default function FilterToolbar({
         label: `Actividad: ${actividadFiltro}`,
         clear: () => setActividadFiltro('')
       });
+
     if (convertidoFiltro)
       arr.push({
         k: 'conv',
         label: `Convertidos: ${convertidoFiltro === 'si' ? 'Sí' : 'No'}`,
         clear: () => setConvertidoFiltro('')
       });
+
     if (comisionFiltro)
       arr.push({
         k: 'comi',
         label: `Comisión: ${comisionFiltro === 'con' ? 'Con' : 'Sin'}`,
         clear: () => setComisionFiltro('')
       });
+
     if (alertaFiltro)
       arr.push({
         k: 'alerta',
         label: `Alertas`,
         clear: () => setAlertaFiltro('')
       });
+
+    if (comisionEstadoFiltro) {
+      const labelMap = {
+        en_revision: 'Comisión: En revisión (amarillo)',
+        aprobado: 'Comisión: Aprobadas (azul)',
+        rechazado: 'Comisión: Rechazadas (rojo)'
+      };
+      arr.push({
+        k: 'comiEstado',
+        label:
+          labelMap[comisionEstadoFiltro] || `Comisión: ${comisionEstadoFiltro}`,
+        clear: () => setComisionEstadoFiltro('')
+      });
+    }
     return arr;
   }, [
     search,
@@ -133,6 +155,7 @@ export default function FilterToolbar({
     convertidoFiltro,
     comisionFiltro,
     alertaFiltro,
+    comisionEstadoFiltro,
     setSearch,
     setSelectedSede,
     setTipoFiltro,
@@ -140,7 +163,8 @@ export default function FilterToolbar({
     setActividadFiltro,
     setConvertidoFiltro,
     setComisionFiltro,
-    setAlertaFiltro
+    setAlertaFiltro,
+    setComisionEstadoFiltro
   ]);
 
   const anyFilter = activeChips.length > 0;
@@ -154,9 +178,10 @@ export default function FilterToolbar({
     setConvertidoFiltro('');
     setComisionFiltro('');
     setAlertaFiltro('');
+    setComisionEstadoFiltro('');
   };
 
-  // atajo teclado: Ctrl/Cmd + K para focus búsqueda
+  // ---------- Atajo Ctrl/Cmd+K ----------
   useEffect(() => {
     const fn = (e) => {
       const isMac = navigator.platform.toUpperCase().includes('MAC');
@@ -172,6 +197,55 @@ export default function FilterToolbar({
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn);
   }, []);
+
+  // ---------- Quick Filters específicos de estado/convertido ----------
+  const QuickBtn = ({ children, onClick, activeClass }) => (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1.5 text-xs rounded-full border transition ${
+        activeClass || 'border-gray-300 text-gray-700 hover:bg-gray-50'
+      }`}
+    >
+      {children}
+    </button>
+  );
+
+  const isAzul = comisionEstadoFiltro === 'aprobado';
+  const isAmarillo = comisionEstadoFiltro === 'en_revision';
+  const isRojo = comisionEstadoFiltro === 'rechazado';
+  const isVerde = convertidoFiltro === 'si' && comisionFiltro === 'sin'; // convertidos sin comisión
+
+  const setQuickTodos = () => {
+    setComisionEstadoFiltro('');
+    setConvertidoFiltro('');
+    setComisionFiltro('');
+  };
+
+  const setQuickVerdes = () => {
+    // Convertidos sin comisión → verdes
+    setComisionEstadoFiltro('');
+    setConvertidoFiltro('si');
+    setComisionFiltro('sin');
+  };
+
+  const setQuickAzules = () => {
+    // Comisiones aprobadas → azules
+    setComisionEstadoFiltro('aprobado');
+    setConvertidoFiltro('');
+    setComisionFiltro('con'); // opcional, refuerza
+  };
+
+  const setQuickAmarillos = () => {
+    setComisionEstadoFiltro('en_revision');
+    setConvertidoFiltro('');
+    setComisionFiltro('con'); // pueden estar marcados como comision=true
+  };
+
+  const setQuickRojos = () => {
+    setComisionEstadoFiltro('rechazado');
+    setConvertidoFiltro('');
+    setComisionFiltro('con'); // visible como comisiones rechazadas
+  };
 
   return (
     <section className="mb-6 max-w-5xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -214,18 +288,62 @@ export default function FilterToolbar({
         </div>
       </div>
 
-      {/* Search + Quick pills */}
+      {/* Search + Quick pills (custom) */}
       <div className="px-5 pt-5">
         <DebouncedSearchInput value={search} onChange={setSearch} />
-        <div className="mt-3">
-          <QuickFilters
-            totals={
-              counts || { all: 0, convertidos: 0, comision: 0, alerta: 0 }
+
+        {/* Quicks: Todos / Verdes (Convertidos) / Azules / Amarillos / Rojos */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <QuickBtn
+            onClick={setQuickTodos}
+            activeClass={
+              !isAzul && !isAmarillo && !isRojo && !isVerde
+                ? 'border-emerald-400 text-emerald-700 bg-emerald-50'
+                : undefined
             }
-            setConvertidoFiltro={setConvertidoFiltro}
-            setComisionFiltro={setComisionFiltro}
-            setAlertaFiltro={setAlertaFiltro}
-          />
+          >
+            Todos
+          </QuickBtn>
+
+          <QuickBtn
+            onClick={setQuickVerdes}
+            activeClass={
+              isVerde
+                ? 'border-green-400 text-green-700 bg-green-50'
+                : undefined
+            }
+          >
+            Convertidos (verde)
+          </QuickBtn>
+
+          <QuickBtn
+            onClick={setQuickAzules}
+            activeClass={
+              isAzul ? 'border-sky-400 text-sky-700 bg-sky-50' : undefined
+            }
+          >
+            Comisiones aprobadas (azul)
+          </QuickBtn>
+
+          <QuickBtn
+            onClick={setQuickAmarillos}
+            activeClass={
+              isAmarillo
+                ? 'border-amber-400 text-amber-700 bg-amber-50'
+                : undefined
+            }
+          >
+            En revisión (amarillo)
+          </QuickBtn>
+
+          <QuickBtn
+            onClick={setQuickRojos}
+            activeClass={
+              isRojo ? 'border-rose-400 text-rose-700 bg-rose-50' : undefined
+            }
+          >
+            Rechazadas (rojo)
+          </QuickBtn>
         </div>
       </div>
 
@@ -357,7 +475,7 @@ export default function FilterToolbar({
             </select>
           </div>
 
-          {/* Comisión */}
+          {/* Comisión (con/sin) */}
           <div>
             <label className="block text-gray-700 font-medium mb-2">
               Comisión
@@ -372,6 +490,25 @@ export default function FilterToolbar({
               <option value="sin">Sin comisión</option>
             </select>
           </div>
+
+          {/* Estado de Comisión */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Estado de comisión
+            </label>
+            <select
+              value={comisionEstadoFiltro}
+              onChange={(e) => setComisionEstadoFiltro(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            >
+              <option value="">Todos</option>
+              <option value="en_revision">En revisión (amarillo)</option>
+              <option value="aprobado">Aprobadas (azul)</option>
+              <option value="rechazado">Rechazadas (rojo)</option>
+            </select>
+          </div>
+
+          
 
           {/* Alertas */}
           <div>

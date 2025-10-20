@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import NavbarStaff from '../NavbarStaff';
@@ -17,15 +17,19 @@ import AgendaDeHoyModal from '../Components/AgendaDeHoyModal';
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
 import FilterToolbar from './Components/FilterToolbar';
+import ComisionesModal from './Components/ComisionesModal';
+import VendedorComisionesPanel from './Components/VendedorComisionesPanel';
 const getBgClass = (p) => {
-  const esComision =
-    p.comision === true || p.comision === 1 || p.comision === '1';
-  const esConvertido =
-    p.convertido === true || p.convertido === 1 || p.convertido === '1';
+  if (p.comision_estado === 'en_revision') return 'bg-amber-400';
+  if (p.comision_estado === 'aprobado') return 'bg-sky-500';
+  if (p.comision_estado === 'rechazado') return 'bg-rose-500';
 
-  if (esComision) return 'bg-sky-500'; // 🔹 Celeste = Comisión
-  if (esConvertido) return 'bg-green-500'; // 🟢 Verde = Convertido
-  return ''; // ⚪ Sin color = ninguno
+  const esCom = p.comision === true || p.comision === 1 || p.comision === '1';
+  const esConv =
+    p.convertido === true || p.convertido === 1 || p.convertido === '1';
+  if (esCom) return 'bg-sky-500';
+  if (esConv) return 'bg-green-500';
+  return '';
 };
 
 const esConvertido = (v) => v === true || v === 1 || v === '1';
@@ -190,7 +194,7 @@ const VentasProspectosGet = ({ currentUser }) => {
   const rowsPerPage = 20;
   const [search, setSearch] = useState('');
 
-  const { userLevel, userId } = useAuth(); // suponiendo que tienes userId también
+  const { userLevel, userId, userName } = useAuth(); // suponiendo que tienes userId también
 
   const [modalClaseOpen, setModalClaseOpen] = useState(false);
   const [modalNew, setModalNew] = useState(false);
@@ -231,6 +235,93 @@ const VentasProspectosGet = ({ currentUser }) => {
 
   const [comisionFiltro, setComisionFiltro] = useState('');
   // '' | 'con' | 'sin'
+
+  const [showComisiones, setShowComisiones] = useState(false);
+
+  const [comisionEstadoFiltro, setComisionEstadoFiltro] = useState('');
+  // valores: '', 'en_revision', 'aprobado', 'rechazado'
+
+  const [currentUser2, setCurrentUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  // Objeto mínimo desde Auth (fallback optimista)
+  const userFromAuth = useMemo(
+    () => ({
+      id: userId ?? null,
+      name: userName ?? '',
+      level: userLevel ?? '',
+      sede: '' // lo completamos desde la API si está
+    }),
+    [userId, userName, userLevel]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateUser() {
+      if (!userId) {
+        setCurrentUser(userFromAuth);
+        setUserLoading(false);
+        return;
+      }
+
+      setUserLoading(true);
+      // optimista: mostrará algo mientras llega la API
+      setCurrentUser(userFromAuth);
+
+      try {
+        // 1) Intento directo por id
+        const { data } = await axios.get(
+          `http://localhost:8080/users/${userId}`
+        );
+        if (!cancelled && data) {
+          setCurrentUser({
+            id: data.id,
+            name: data.name,
+            level: data.level,
+            sede: data.sede ?? ''
+          });
+          setUserLoading(false);
+          return;
+        }
+      } catch {
+        // ignore y cae al plan B
+      }
+
+      try {
+        // 2) Fallback: /users y filtramos por id
+        const { data: list } = await axios.get(`http://localhost:8080/users`);
+        const found = Array.isArray(list)
+          ? list.find((u) => Number(u.id) === Number(userId))
+          : null;
+
+        if (!cancelled) {
+          if (found) {
+            setCurrentUser({
+              id: found.id,
+              name: found.name,
+              level: found.level,
+              sede: found.sede ?? ''
+            });
+          } else {
+            // Último fallback: nos quedamos con lo que vino del Auth
+            setCurrentUser(userFromAuth);
+          }
+          setUserLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setCurrentUser(userFromAuth);
+          setUserLoading(false);
+        }
+      }
+    }
+
+    hydrateUser();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, userFromAuth]);
 
   useEffect(() => {
     const obs = {};
@@ -506,6 +597,10 @@ const VentasProspectosGet = ({ currentUser }) => {
         if (comisionFiltro === 'con' && !esComision(p.comision)) return false;
         if (comisionFiltro === 'sin' && esComision(p.comision)) return false;
 
+        // NUEVO: Estado de comisión (amarillo/azul/rojo)
+        if (comisionEstadoFiltro) {
+          if ((p.comision_estado || '') !== comisionEstadoFiltro) return false;
+        }
         return true;
       })
     : [];
@@ -687,11 +782,78 @@ const VentasProspectosGet = ({ currentUser }) => {
     }
   };
 
+  // === Constantes ===
+  const PLANES = [
+    'Mensual',
+    'Trimestre',
+    'Semestre',
+    'Anual',
+    'Débitos automáticos',
+    'Otros'
+  ];
+
+  // === Helper: select de plan + input "Otros" en un solo modal ===
+  async function promptTipoPlanConOtros(PLANES) {
+    return Swal.fire({
+      title: 'Tipo de plan',
+      html: `
+      <div style="text-align:left">
+        <label for="swal-plan" style="display:block;margin-bottom:6px">Seleccioná un plan</label>
+        <select id="swal-plan" class="swal2-input" style="width:100%;box-sizing:border-box">
+          <option value="">-- Seleccionar --</option>
+          ${PLANES.map((p) => `<option value="${p}">${p}</option>`).join('')}
+        </select>
+        <div id="swal-otros-wrap" style="display:none;margin-top:8px">
+          <label for="swal-otros" style="display:block;margin-bottom:6px">Detalle (si elegiste “Otros”)</label>
+          <input id="swal-otros" class="swal2-input" placeholder="Ej: Plan Corporativo X" />
+        </div>
+      </div>
+    `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Continuar',
+      cancelButtonText: 'Cancelar',
+      didOpen: () => {
+        const sel = document.getElementById('swal-plan');
+        const otrosWrap = document.getElementById('swal-otros-wrap');
+        sel.addEventListener('change', () => {
+          otrosWrap.style.display = sel.value === 'Otros' ? 'block' : 'none';
+        });
+      },
+      preConfirm: () => {
+        const sel = /** @type {HTMLSelectElement} */ (
+          document.getElementById('swal-plan')
+        );
+        const otros = /** @type {HTMLInputElement}  */ (
+          document.getElementById('swal-otros')
+        );
+        const tipo_plan = (sel.value || '').trim();
+        const tipo_plan_custom = (otros?.value || '').trim();
+
+        if (!tipo_plan) {
+          Swal.showValidationMessage('Debés seleccionar un plan');
+          return false;
+        }
+        if (tipo_plan === 'Otros' && !tipo_plan_custom) {
+          Swal.showValidationMessage('Completá el detalle para “Otros”');
+          return false;
+        }
+
+        // Respeta límites de la BD
+        return {
+          tipo_plan: tipo_plan.slice(0, 80),
+          tipo_plan_custom:
+            tipo_plan === 'Otros' ? tipo_plan_custom.slice(0, 120) : null
+        };
+      }
+    }).then((r) => (r.isConfirmed ? r.value : null));
+  }
+
+  // === Handler principal ===
   const handleConvertidoToggle = async (
     prospectoId,
     nextValue /* boolean */
   ) => {
-    // evitar clicks repetidos
     if (savingIds.has(prospectoId)) return;
     setSavingIds((s) => new Set([...s, prospectoId]));
 
@@ -705,22 +867,24 @@ const VentasProspectosGet = ({ currentUser }) => {
       return;
     }
 
-    const prev = {
-      convertido: !!prospecto.convertido,
-      comision: !!prospecto.comision
-    };
+    const prev = { ...prospecto };
 
-    // Caso 1: Destildan -> convertido = false y comision = false
+    // Caso 1: Destildan => revertir conversión (UR limpia comisión en back)
     if (!nextValue) {
       // Optimista
       setProspectos((arr) =>
         arr.map((p) =>
           p.id === prospectoId
-            ? { ...p, convertido: false, comision: false }
+            ? {
+                ...p,
+                convertido: false,
+                comision: false,
+                comision_estado: null,
+                comision_id: null
+              }
             : p
         )
       );
-
       try {
         await axios.put(
           `http://localhost:8080/ventas_prospectos/${prospectoId}`,
@@ -730,8 +894,7 @@ const VentasProspectosGet = ({ currentUser }) => {
             comision_usuario_id: userId
           }
         );
-
-        Swal.fire({
+        await Swal.fire({
           title: 'Actualizado',
           text: `Se anuló la conversión y comisión de "${prospecto.nombre}".`,
           icon: 'success',
@@ -740,11 +903,11 @@ const VentasProspectosGet = ({ currentUser }) => {
       } catch (e) {
         // Rollback
         setProspectos((arr) =>
-          arr.map((p) => (p.id === prospectoId ? { ...p, ...prev } : p))
+          arr.map((p) => (p.id === prospectoId ? prev : p))
         );
-        Swal.fire({
+        await Swal.fire({
           title: 'Error',
-          text: 'No se pudo anular la conversión/comisión. Intenta de nuevo.',
+          text: 'No se pudo anular la conversión/comisión.',
           icon: 'error',
           confirmButtonColor: '#ef4444'
         });
@@ -758,7 +921,7 @@ const VentasProspectosGet = ({ currentUser }) => {
       return;
     }
 
-    // Caso 2: Tildan -> modal "¿Es comisión?"
+    // Caso 2: Tildan => primero preguntar si es comisión
     try {
       const { isConfirmed, isDenied, dismiss } = await Swal.fire({
         title: '¿Es comisión?',
@@ -768,70 +931,117 @@ const VentasProspectosGet = ({ currentUser }) => {
         showCancelButton: true,
         confirmButtonText: 'Sí, es comisión',
         denyButtonText: 'No',
-        confirmButtonColor: '#10b981', // green
-        denyButtonColor: '#6b7280', // gray
+        confirmButtonColor: '#10b981',
+        denyButtonColor: '#6b7280',
         cancelButtonText: 'Cancelar'
       });
 
-      // Si cancelan, no hacer nada (ni optimista, ni request)
       if (dismiss === Swal.DismissReason.cancel) {
-        setSavingIds((s) => {
-          const n = new Set(s);
-          n.delete(prospectoId);
-          return n;
-        });
-        // Re-sincroniza el checkbox con el estado previo
+        // Deshacer toggling visual
         setProspectos((arr) =>
           arr.map((p) =>
             p.id === prospectoId ? { ...p, convertido: prev.convertido } : p
           )
         );
+        setSavingIds((s) => {
+          const n = new Set(s);
+          n.delete(prospectoId);
+          return n;
+        });
         return;
       }
 
-      const esComision = isConfirmed; // true si confirmaron "Sí, es comisión"
-
-      // Optimista
+      // Optimista (convertido true siempre)
       setProspectos((arr) =>
-        arr.map((p) =>
-          p.id === prospectoId
-            ? { ...p, convertido: true, comision: !!esComision }
-            : p
-        )
+        arr.map((p) => (p.id === prospectoId ? { ...p, convertido: true } : p))
       );
 
-      await axios.put(
-        `http://localhost:8080/ventas_prospectos/${prospectoId}`,
-        {
-          convertido: true,
-          comision: !!esComision,
-          ...(esComision && userId ? { comision_usuario_id: userId } : {})
-        }
-      );
-
-      if (esComision) {
-        await Swal.fire({
-          title: '¡Felicidades!',
-          text: '¡Tu comisión quedó registrada!',
-          icon: 'success',
-          confirmButtonColor: '#10b981'
-        });
-      } else {
+      if (isDenied) {
+        // No es comisión => POST convertir con esComision=false
+        const { data } = await axios.post(
+          `http://localhost:8080/ventas-prospectos/${prospectoId}/convertir`,
+          { esComision: false }
+        );
+        // Sin comisión
+        setProspectos((arr) =>
+          arr.map((p) =>
+            p.id === prospectoId
+              ? {
+                  ...p,
+                  ...data?.prospecto,
+                  comision: false,
+                  comision_estado: null,
+                  comision_id: null
+                }
+              : p
+          )
+        );
         await Swal.fire({
           title: 'Convertido',
           text: `El prospecto "${prospecto.nombre}" fue marcado como convertido.`,
           icon: 'success',
           confirmButtonColor: '#10b981'
         });
+        return;
       }
+
+      // Sí es comisión: pedir plan + (si Otros) texto, en un modal
+      const planData = await promptTipoPlanConOtros(PLANES);
+      if (!planData) {
+        // Cancelaron → rollback
+        setProspectos((arr) =>
+          arr.map((p) => (p.id === prospectoId ? prev : p))
+        );
+        setSavingIds((s) => {
+          const n = new Set(s);
+          n.delete(prospectoId);
+          return n;
+        });
+        return;
+      }
+      const { tipo_plan, tipo_plan_custom } = planData;
+
+      // POST convertir con comisión
+      const payload = {
+        esComision: true,
+        tipo_plan,
+        ...(tipo_plan === 'Otros' ? { tipo_plan_custom } : {}),
+        observacion: '' // opcional
+      };
+
+      const { data } = await axios.post(
+        `http://localhost:8080/ventas-prospectos/${prospectoId}/convertir`,
+        payload
+      );
+
+      // Actualizar con la respuesta (queda en revisión = amarillo)
+      setProspectos((arr) =>
+        arr.map((p) =>
+          p.id === prospectoId
+            ? {
+                ...p,
+                ...data?.prospecto,
+                convertido: true,
+                comision: true,
+                comision_estado: 'en_revision',
+                comision_id: data?.comision?.id ?? p.comision_id
+              }
+            : p
+        )
+      );
+
+      await Swal.fire({
+        title: 'Comisión enviada',
+        text: 'Tu comisión quedó en revisión. Un coordinador la aprobará o rechazará.',
+        icon: 'success',
+        confirmButtonColor: '#10b981'
+      });
     } catch (e) {
       // Rollback
-      setProspectos((arr) =>
-        arr.map((p) => (p.id === prospectoId ? { ...p, ...prev } : p))
-      );
-      Swal.fire({
+      setProspectos((arr) => arr.map((p) => (p.id === prospectoId ? prev : p)));
+      await Swal.fire({
         title: 'Error',
-        text: 'No se pudo actualizar el estado. Intenta nuevamente.',
+        text: 'No se pudo convertir/registrar la comisión.',
         icon: 'error',
         confirmButtonColor: '#ef4444'
       });
@@ -840,6 +1050,129 @@ const VentasProspectosGet = ({ currentUser }) => {
         const n = new Set(s);
         n.delete(prospectoId);
         return n;
+      });
+    }
+  };
+
+  const handleAprobarComision = async (prospecto) => {
+    try {
+      if (!prospecto.comision_id) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Sin comisión',
+          text: 'No hay comisión vinculada a este prospecto.'
+        });
+        return;
+      }
+
+      const { value: monto } = await Swal.fire({
+        title: 'Monto de la comisión',
+        input: 'number',
+        inputAttributes: { min: 0, step: '0.01' },
+        inputValidator: (v) =>
+          v === '' || Number(v) < 0 ? 'Ingresá un monto válido' : undefined,
+        showCancelButton: true,
+        confirmButtonText: 'Aprobar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (monto === undefined) return; // cancelado
+
+      // Optimista: pintar celeste
+      setProspectos((arr) =>
+        arr.map((p) =>
+          p.id === prospecto.id ? { ...p, comision_estado: 'aprobado' } : p
+        )
+      );
+
+      await axios.put(
+        `http://localhost:8080/ventas-comisiones/${prospecto.comision_id}/aprobar`,
+        {
+          monto_comision: Number(monto),
+          moneda: 'ARS',
+          user_id: userId,
+          userLevel: userLevel
+        }, // body
+        { headers: { 'x-user-id': userId, 'x-user-role': userLevel } } // headers
+      );
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Aprobada',
+        text: 'Comisión aprobada correctamente.'
+      });
+    } catch (e) {
+      // Rollback a en_revision
+      setProspectos((arr) =>
+        arr.map((p) =>
+          p.id === prospecto.id ? { ...p, comision_estado: 'en_revision' } : p
+        )
+      );
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo aprobar la comisión.'
+      });
+    }
+  };
+
+  const handleRechazarComision = async (prospecto) => {
+    try {
+      if (!prospecto.comision_id) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Sin comisión',
+          text: 'No hay comisión vinculada a este prospecto.'
+        });
+        return;
+      }
+
+      const { value: motivo } = await Swal.fire({
+        title: 'Motivo de rechazo',
+        input: 'text',
+        inputPlaceholder: 'Ej: Falta comprobante de pago',
+        inputValidator: (v) =>
+          !v || !v.trim() ? 'Ingresá un motivo' : undefined,
+        showCancelButton: true,
+        confirmButtonText: 'Rechazar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (!motivo) return;
+
+      // Optimista: pintar rojo
+      setProspectos((arr) =>
+        arr.map((p) =>
+          p.id === prospecto.id ? { ...p, comision_estado: 'rechazado' } : p
+        )
+      );
+
+      await axios.put(
+        `http://localhost:8080/ventas-comisiones/${prospecto.comision_id}/rechazar`,
+        {
+          motivo_rechazo: motivo.trim(),
+          user_id: userId,
+          userLevel: userLevel
+        },
+        { headers: { 'x-user-id': userId, 'x-user-role': userLevel } }
+      );
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Rechazada',
+        text: 'Comisión rechazada.'
+      });
+    } catch (e) {
+      // Rollback a en_revision
+      setProspectos((arr) =>
+        arr.map((p) =>
+          p.id === prospecto.id ? { ...p, comision_estado: 'en_revision' } : p
+        )
+      );
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo rechazar la comisión.'
       });
     }
   };
@@ -887,6 +1220,25 @@ const VentasProspectosGet = ({ currentUser }) => {
     });
   };
 
+  const handleComisionStateChange = ({
+    prospectoId,
+    estado,
+    comisionId,
+    monto
+  }) => {
+    setProspectos((arr) =>
+      arr.map((p) =>
+        p.id === prospectoId
+          ? {
+              ...p,
+              comision: true,
+              comision_id: comisionId ?? p.comision_id,
+              comision_estado: estado // 'aprobado' | 'rechazado' | 'en_revision'
+            }
+          : p
+      )
+    );
+  };
   return (
     <>
       <NavbarStaff />
@@ -968,12 +1320,24 @@ const VentasProspectosGet = ({ currentUser }) => {
                 formatDate
               })
             }
+            comisionEstadoFiltro={comisionEstadoFiltro} // NUEVO
+            setComisionEstadoFiltro={setComisionEstadoFiltro} // NUEVO
             counts={{
               all: prospectos.length,
               convertidos: prospectos.filter((p) => p.convertido).length,
               comision: prospectos.filter((p) => p.comision).length,
               alerta: prospectos.filter((p) =>
                 ['amarillo', 'rojo'].includes(alertasSegundoContacto[p.id])
+              ).length,
+              // opcional: contadores por estado de comisión
+              comiEnRev: prospectos.filter(
+                (p) => p.comision_estado === 'en_revision'
+              ).length,
+              comiAprob: prospectos.filter(
+                (p) => p.comision_estado === 'aprobado'
+              ).length,
+              comiRecha: prospectos.filter(
+                (p) => p.comision_estado === 'rechazado'
               ).length
             }}
           />
@@ -1070,6 +1434,27 @@ const VentasProspectosGet = ({ currentUser }) => {
           </div>
 
           <div className="text-center pt-4">
+            {/* Botón visible solo para gerente/admin */}
+            {(userLevel === 'gerente' || userLevel === 'admin') && (
+              <div className="w-full flex justify-center mb-3">
+                <button
+                  onClick={() => setShowComisiones(true)}
+                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold bg-sky-600 text-white hover:bg-sky-700 shadow"
+                >
+                  Ver comisiones
+                </button>
+              </div>
+            )}
+            {/* Panel solo para VENDEDOR */}
+            {userLoading ? (
+              <div className="max-w-5xl mx-auto my-6">
+                <div className="h-40 rounded-2xl bg-neutral-200 animate-pulse" />
+              </div>
+            ) : currentUser2 &&
+              currentUser2.id &&
+              String(currentUser2.level || '').toLowerCase() === 'vendedor' ? (
+              <VendedorComisionesPanel user={currentUser2} />
+            ) : null}{' '}
             <h1>
               Registros de Prospectos - Cantidad: {visibleProspectos.length}
             </h1>
@@ -1206,6 +1591,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                   </th>
                   <th className="border border-gray-200 px-2 py-2 text-center w-16">
                     Convertido
+                  </th>
+                  <th className="border border-gray-200 px-2 py-2 text-center w-16">
+                    Estado conversión
                   </th>
                   <th className="border border-gray-200 px-3 py-2 text-center w-16 rounded-r-lg">
                     Acciones
@@ -1615,6 +2003,35 @@ const VentasProspectosGet = ({ currentUser }) => {
                         }`}
                       />
                     </td>
+                    <td
+                      className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
+                        p
+                      )}`}
+                    >
+                      {p.comision_estado ? (
+                        <>
+                          <span>
+                            {p.comision_estado === 'en_revision' &&
+                              'En revisión'}
+                            {p.comision_estado === 'aprobado' && 'Aprobado'}
+                            {p.comision_estado === 'rechazado' && 'Rechazado'}
+                          </span>
+                          {/* Si cargás la comisión al traer la grilla, podés mostrar tipo_plan */}
+                          {p.comision_tipo_plan && (
+                            <span className="block text-xs text-zinc-500">
+                              Plan: {p.comision_tipo_plan}
+                              {p.comision_tipo_plan === 'Otros' &&
+                              p.comision_tipo_plan_custom
+                                ? ` (${p.comision_tipo_plan_custom})`
+                                : ''}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+
                     {/* Editar y eliminar */}
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
@@ -1639,6 +2056,27 @@ const VentasProspectosGet = ({ currentUser }) => {
                         >
                           ❌
                         </button>
+                        {/* Acciones Coordinador (solo si está en revisión) */}
+                        <td className="border border-gray-300 px-4 py-3">
+                          {(p.comision_estado === 'en_revision' &&
+                            userLevel === 'gerente') ||
+                            (userLevel === 'admin' && (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleAprobarComision(p)}
+                                  className="rounded-md px-3 py-2 text-sm font-medium ring-1 ring-sky-300 bg-sky-100 text-sky-800 hover:bg-sky-200"
+                                >
+                                  Aprobar
+                                </button>
+                                <button
+                                  onClick={() => handleRechazarComision(p)}
+                                  className="rounded-md px-3 py-2 text-sm font-medium ring-1 ring-rose-300 bg-rose-100 text-rose-800 hover:bg-rose-200"
+                                >
+                                  Rechazar
+                                </button>
+                              </div>
+                            ))}
+                        </td>
                       </div>
                     </td>
                   </tr>
@@ -1737,8 +2175,6 @@ const VentasProspectosGet = ({ currentUser }) => {
         tipoSeleccionado={tipoSeleccionado}
       />
 
-      
-
       <Footer />
 
       <FormAltaVentas
@@ -1762,6 +2198,14 @@ const VentasProspectosGet = ({ currentUser }) => {
         userId={userId}
         level={userLevel}
       />
+      {showComisiones && (
+        <ComisionesModal
+          onClose={() => setShowComisiones(false)}
+          userLevel={userLevel}
+          userId={userId}
+          onComisionStateChange={handleComisionStateChange} // <- NUEVO
+        />
+      )}
     </>
   );
 };
