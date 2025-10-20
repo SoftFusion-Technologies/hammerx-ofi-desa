@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 import FilterToolbar from './Components/FilterToolbar';
 import ComisionesModal from './Components/ComisionesModal';
 import VendedorComisionesPanel from './Components/VendedorComisionesPanel';
+import ComisionesVigentesModal from '../Components/ComisionesVigentesModal';
 const getBgClass = (p) => {
   if (p.comision_estado === 'en_revision') return 'bg-amber-400';
   if (p.comision_estado === 'aprobado') return 'bg-sky-500';
@@ -243,6 +244,8 @@ const VentasProspectosGet = ({ currentUser }) => {
 
   const [currentUser2, setCurrentUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
+
+  const [openComi, setOpenComi] = useState(false);
 
   // Objeto mínimo desde Auth (fallback optimista)
   const userFromAuth = useMemo(
@@ -1371,6 +1374,13 @@ const VentasProspectosGet = ({ currentUser }) => {
                 {prospectosConAgendaHoy.length + agendaVentasCant}
               </span>
             </div>
+            <button
+              onClick={() => setOpenComi(true)}
+              className="relative bg-emerald-400 text-zinc-900 border border-zinc-200 hover:bg-emerald-600 py-2 px-4 rounded-xl font-semibold transition"
+              title="Ver comisiones vigentes"
+            >
+              Comisiones vigentes
+            </button>
 
             {/* 🔴 Nuevo botón Agenda de hoy con badge fijo en 4 */}
             {/* <button
@@ -2206,6 +2216,11 @@ const VentasProspectosGet = ({ currentUser }) => {
           onComisionStateChange={handleComisionStateChange} // <- NUEVO
         />
       )}
+      <ComisionesVigentesModal
+        open={openComi}
+        onClose={() => setOpenComi(false)}
+        userLevel={userLevel}
+      />
     </>
   );
 };
