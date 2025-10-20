@@ -20,6 +20,7 @@ import FilterToolbar from './Components/FilterToolbar';
 import ComisionesModal from './Components/ComisionesModal';
 import VendedorComisionesPanel from './Components/VendedorComisionesPanel';
 import ComisionesVigentesModal from '../Components/ComisionesVigentesModal';
+
 const getBgClass = (p) => {
   if (p.comision_estado === 'en_revision') return 'bg-amber-400';
   if (p.comision_estado === 'aprobado') return 'bg-sky-500';
@@ -293,7 +294,9 @@ const VentasProspectosGet = ({ currentUser }) => {
 
       try {
         // 2) Fallback: /users y filtramos por id
-        const { data: list } = await axios.get(`http://localhost:8080/users`);
+        const { data: list } = await axios.get(
+          `http://localhost:8080/users`
+        );
         const found = Array.isArray(list)
           ? list.find((u) => Number(u.id) === Number(userId))
           : null;
@@ -337,7 +340,9 @@ const VentasProspectosGet = ({ currentUser }) => {
   // Traer prospectos con clase de prueba hoy
   useEffect(() => {
     axios
-      .get(`http://localhost:8080/notifications/clases-prueba/${userId}`)
+      .get(
+        `http://localhost:8080/notifications/clases-prueba/${userId}`
+      )
       .then((res) =>
         setProspectosConAgendaHoy(res.data.map((p) => p.prospecto_id))
       )
@@ -411,7 +416,9 @@ const VentasProspectosGet = ({ currentUser }) => {
 
     const fetchUserSede = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/users/${userId}`);
+        const response = await fetch(
+          `http://localhost:8080/users/${userId}`
+        );
         if (!response.ok)
           throw new Error('No se pudo obtener la info del usuario');
         const data = await response.json();
@@ -514,11 +521,14 @@ const VentasProspectosGet = ({ currentUser }) => {
     const prospecto = prospectos.find((p) => p.id === id);
 
     try {
-      await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
-        canal_contacto: nuevoCanal,
-        campania_origen:
-          nuevoCanal === 'Campaña' ? prospecto?.campania_origen || '' : ''
-      });
+      await axios.put(
+        `http://localhost:8080/ventas_prospectos/${id}`,
+        {
+          canal_contacto: nuevoCanal,
+          campania_origen:
+            nuevoCanal === 'Campaña' ? prospecto?.campania_origen || '' : ''
+        }
+      );
     } catch (error) {
       console.error('Error al actualizar canal:', error);
     }
@@ -731,10 +741,13 @@ const VentasProspectosGet = ({ currentUser }) => {
     );
 
     try {
-      await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
-        canal_contacto: 'Campaña', // siempre es campaña acá
-        campania_origen: value
-      });
+      await axios.put(
+        `http://localhost:8080/ventas_prospectos/${id}`,
+        {
+          canal_contacto: 'Campaña', // siempre es campaña acá
+          campania_origen: value
+        }
+      );
     } catch (error) {
       console.error('Error al actualizar origen de campaña:', error);
     }
@@ -1242,6 +1255,41 @@ const VentasProspectosGet = ({ currentUser }) => {
       )
     );
   };
+
+  // IDs y emails habilitados
+  const ALLOWED_IDS = new Set([66, 92, 81]);
+  const ALLOWED_EMAILS = new Set(
+    [
+      'fedekap@hotmail.com',
+      'solciruiz098@gmail.com.ar',
+      'lourdesbsoraire@gmail.com'
+    ].map((e) => e.toLowerCase())
+  );
+
+  // Normalizaciones
+  const isVendedor =
+    String(currentUser2?.level || '').toLowerCase() === 'vendedor';
+
+  // Si tu auth carga el email en userName, lo usamos como fallback
+  const emailLower = String(currentUser2?.email || userName || '')
+    .trim()
+    .toLowerCase();
+
+  const canSeePanel =
+    isVendedor &&
+    ((currentUser2?.id && ALLOWED_IDS.has(Number(currentUser2.id))) ||
+      (emailLower && ALLOWED_EMAILS.has(emailLower)));
+
+  const isManager = ['admin', 'gerente'].includes(
+    String(currentUser2?.level || '').toLowerCase()
+  );
+
+  const canSeeComisionesBtn =
+    isManager ||
+    (isVendedor &&
+      ((currentUser2?.id && ALLOWED_IDS.has(Number(currentUser2.id))) ||
+        (emailLower && ALLOWED_EMAILS.has(emailLower))));
+
   return (
     <>
       <NavbarStaff />
@@ -1374,13 +1422,15 @@ const VentasProspectosGet = ({ currentUser }) => {
                 {prospectosConAgendaHoy.length + agendaVentasCant}
               </span>
             </div>
-            <button
-              onClick={() => setOpenComi(true)}
-              className="relative bg-emerald-400 text-zinc-900 border border-zinc-200 hover:bg-emerald-600 py-2 px-4 rounded-xl font-semibold transition"
-              title="Ver comisiones vigentes"
-            >
-              Comisiones vigentes
-            </button>
+            {canSeeComisionesBtn && (
+              <button
+                onClick={() => setOpenComi(true)}
+                className="relative bg-emerald-400 text-zinc-900 border border-zinc-200 hover:bg-emerald-600 py-2 px-4 rounded-xl font-semibold transition"
+                title="Ver comisiones vigentes"
+              >
+                Comisiones vigentes
+              </button>
+            )}
 
             {/* 🔴 Nuevo botón Agenda de hoy con badge fijo en 4 */}
             {/* <button
@@ -1455,16 +1505,20 @@ const VentasProspectosGet = ({ currentUser }) => {
                 </button>
               </div>
             )}
-            {/* Panel solo para VENDEDOR */}
+            {/* Panel solo para VENDEDOR (filtrado por lista blanca) */}
             {userLoading ? (
               <div className="max-w-5xl mx-auto my-6">
                 <div className="h-40 rounded-2xl bg-neutral-200 animate-pulse" />
               </div>
-            ) : currentUser2 &&
-              currentUser2.id &&
-              String(currentUser2.level || '').toLowerCase() === 'vendedor' ? (
-              <VendedorComisionesPanel user={currentUser2} />
-            ) : null}{' '}
+            ) : canSeePanel ? (
+              // pasamos email por si el componente lo necesita luego
+              <VendedorComisionesPanel
+                user={{
+                  ...currentUser2,
+                  email: currentUser2?.email ?? userName
+                }}
+              />
+            ) : null}
             <h1>
               Registros de Prospectos - Cantidad: {visibleProspectos.length}
             </h1>
