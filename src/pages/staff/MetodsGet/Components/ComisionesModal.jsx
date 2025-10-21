@@ -22,6 +22,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 import ParticlesBackground from '../../../../components/ParticlesBackground';
+import { ComisionesTable } from './ComisionesTable';
+import ComisionEditModal from './ComisionEditModal';
 /*************************************************
  * ComisionesModal v2 (Cards + Canvas Particles)
  * Autor: SoftFusion • 2025-10-19
@@ -383,84 +385,44 @@ export default function ComisionesModal({
     }
   };
 
-  const editar = async (row) => {
-    if (row.estado !== 'en_revision') return;
-    const edited = await promptTipoPlanConOtros();
-    if (!edited) return;
+ const eliminar = async (row) => {
 
-    const { value: obs } = await Swal.fire({
-      background: '#0f172a',
-      color: '#e5e7eb',
-      title: 'Observación (opcional)',
-      input: 'text',
-      inputPlaceholder: 'Agrega una observación',
-      showCancelButton: true,
-      confirmButtonText: 'Guardar',
-      cancelButtonText: 'Omitir'
-    });
+   const { isConfirmed } = await Swal.fire({
+     background: '#0f172a',
+     color: '#e5e7eb',
+     title: 'Eliminar comisión',
+     text: 'Esta acción no se puede deshacer. ¿Continuar?',
+     icon: 'warning',
+     showCancelButton: true,
+     confirmButtonText: 'Eliminar',
+     confirmButtonColor: '#ef4444',
+     cancelButtonText: 'Cancelar'
+   });
+   if (!isConfirmed) return;
 
-    try {
-      await axios.put(`http://localhost:8080/ventas-comisiones/${row.id}`, {
-        tipo_plan: edited.tipo_plan,
-        ...(edited.tipo_plan === 'Otros'
-          ? { tipo_plan_custom: edited.tipo_plan_custom }
-          : { tipo_plan_custom: null }),
-        observacion: (obs || '').slice(0, 255)
-      });
-      Swal.fire({
-        background: '#0f172a',
-        color: '#e5e7eb',
-        icon: 'success',
-        title: 'Actualizada',
-        text: 'Comisión actualizada.'
-      });
-      fetchComisiones(page, { silent: true });
-    } catch (e) {
-      Swal.fire({
-        background: '#0f172a',
-        color: '#e5e7eb',
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo actualizar.'
-      });
-    }
-  };
+   try {
+     await axios.delete(`http://localhost:8080/ventas-comisiones/${row.id}`, {
+       data: { actor_id: userId } // <<<<<< clave para que el back identifique al actor
+     });
+     await Swal.fire({
+       background: '#0f172a',
+       color: '#e5e7eb',
+       icon: 'success',
+       title: 'Eliminada',
+       text: 'Comisión eliminada.'
+     });
+     fetchComisiones(1);
+   } catch (e) {
+     await Swal.fire({
+       background: '#0f172a',
+       color: '#e5e7eb',
+       icon: 'error',
+       title: 'Error',
+       text: e?.response?.data?.mensajeError || 'No se pudo eliminar.'
+     });
+   }
+ };
 
-  const eliminar = async (row) => {
-    if (row.estado !== 'en_revision') return;
-    const { isConfirmed } = await Swal.fire({
-      background: '#0f172a',
-      color: '#e5e7eb',
-      title: 'Eliminar comisión',
-      text: 'Esta acción no se puede deshacer. ¿Continuar?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Eliminar',
-      confirmButtonColor: '#ef4444',
-      cancelButtonText: 'Cancelar'
-    });
-    if (!isConfirmed) return;
-
-    try {
-      await axios.delete(`http://localhost:8080/ventas-comisiones/${row.id}`);
-      Swal.fire({
-        background: '#0f172a',
-        color: '#e5e7eb',
-        icon: 'success',
-        title: 'Eliminada',
-        text: 'Comisión eliminada.'
-      });
-      fetchComisiones(1);
-    } catch (e) {
-      Swal.fire({
-        background: '#0f172a',
-        color: '#e5e7eb',
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo eliminar.'
-      });
-    }
-  };
 
   // CTA combinada: si está aprobado → mostrar "Rechazar"; si rechazado → "Aprobar"; si en revisión → ambos.
   const PrimaryAction = ({ row }) => {
@@ -504,6 +466,15 @@ export default function ComisionesModal({
     );
   };
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [editRow, setEditRow] = useState(null);
+
+  // reemplazá tu editar(row) por:
+  const editar = (row) => {
+    setEditRow(row);
+    setEditOpen(true);
+  };
+
   // ========================= Render =========================
   return (
     <AnimatePresence>
@@ -526,7 +497,7 @@ export default function ComisionesModal({
         <ParticlesBackground></ParticlesBackground>
         {/* Panel */}
         <motion.div
-          className="absolute inset-0 flex flex-col"
+          className="absolute inset-0 flex flex-col isolate"
           initial={{ y: 24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 24, opacity: 0 }}
@@ -537,7 +508,10 @@ export default function ComisionesModal({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="h-[68px] shrink-0 px-4 md:px-6 flex items-center justify-between bg-slate-900/70 backdrop-blur border-b border-white/10 text-slate-100">
+          <div
+            className="h-[68px] shrink-0 px-4 md:px-6 flex items-center justify-between 
+                  bg-slate-900 text-slate-100 border-b border-white/10"
+          >
             <div className="flex items-center gap-2">
               <Sparkles className="text-sky-400" size={18} />
               <h2 className="font-bignoodle text-2xl  font-semibold tracking-tight">
@@ -556,7 +530,12 @@ export default function ComisionesModal({
           </div>
 
           {/* Toolbar */}
-          <div className="px-4 md:px-6 py-3 border-b border-white/10 bg-slate-900/60 backdrop-blur">
+          <div
+            className="px-4 md:px-6 py-3 border-b border-white/10 
+                  bg-slate-900 text-slate-100"
+          >
+            {' '}
+            {/* sin /60 y sin backdrop-blur */}
             <div className="flex flex-col md:flex-row md:items-center gap-2">
               <div className="flex-1 relative">
                 <Search
@@ -650,14 +629,15 @@ export default function ComisionesModal({
             </AnimatePresence>
           </div>
 
-          {/* Grid de Cards */}
+          {/* Tabla de Comisiones */}
           <div className="flex-1 overflow-auto px-4 md:px-6 py-5">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="rounded-2xl ring-1 ring-white/10 bg-slate-900/60 backdrop-blur p-6">
+                <div className="h-6 w-40 rounded bg-white/10 animate-pulse mb-4" />
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-40 rounded-2xl ring-1 ring-white/10 bg-slate-900/60 backdrop-blur p-4 animate-pulse"
+                    className="h-10 w-full rounded bg-white/5 animate-pulse mb-2"
                   />
                 ))}
               </div>
@@ -682,101 +662,12 @@ export default function ComisionesModal({
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-                {items.map((row) => (
-                  <motion.div
-                    key={row.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-                    className="group relative rounded-2xl ring-1 ring-white/10 bg-slate-900/60 backdrop-blur p-4 hover:ring-white/20 hover:bg-slate-900/70"
-                  >
-                    {/* Header card */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="text-[13px] text-slate-400">
-                          {new Date(
-                            row.created_at || row.updated_at
-                          ).toLocaleString()}
-                        </div>
-                        <div className="mt-0.5 font-medium text-slate-100">
-                          {row?.prospecto?.nombre || '-'}
-                        </div>
-                        <div className="text-xs text-slate-400">
-                          {row?.prospecto?.dni || ''}
-                        </div>
-                      </div>
-                      <EstadoPill estado={row.estado} />
-                    </div>
-
-                    {/* Body */}
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-[13px]">
-                      <div className="text-slate-400">Vendedor</div>
-                      <div className="text-right text-slate-200">
-                        {row?.vendedor?.name || row.vendedor_id}
-                      </div>
-
-                      <div className="text-slate-400">Sede</div>
-                      <div className="text-right capitalize text-slate-200">
-                        {row.sede}
-                      </div>
-
-                      <div className="text-slate-400">Plan</div>
-                      <div className="text-right text-slate-200">
-                        {row.tipo_plan}
-                        {row.tipo_plan === 'Otros' && row.tipo_plan_custom ? (
-                          <span className="block text-[11px] text-slate-400">
-                            — {row.tipo_plan_custom}
-                          </span>
-                        ) : null}
-                      </div>
-
-                      {/* Etiqueta dinámica */}
-                      <div className="text-slate-400">
-                        {row.estado === 'rechazado'
-                          ? 'Motivo rechazo'
-                          : 'Monto'}
-                      </div>
-
-                      {/* Valor */}
-                      <div className="text-right text-slate-100 font-semibold">
-                        {row.estado === 'aprobado'
-                          ? row.monto_comision != null
-                            ? `$ ${Number(row.monto_comision).toFixed(2)}`
-                            : '-'
-                          : row.estado === 'rechazado'
-                          ? row.motivo_rechazo?.trim() || '-'
-                          : '-'}
-                      </div>
-                    </div>
-
-                    {/* Acciones */}
-                    <div className="mt-4 flex items-center justify-between gap-2">
-                      <div className="flex gap-1.5">
-                        {row.estado === 'en_revision' && (
-                          <button
-                            onClick={() => editar(row)}
-                            title="Editar"
-                            className="p-2 rounded-lg ring-1 ring-white/10 hover:bg-white/10 text-slate-200"
-                          >
-                            <Pencil size={16} />
-                          </button>
-                        )}
-                        {row.estado === 'en_revision' && (
-                          <button
-                            onClick={() => eliminar(row)}
-                            title="Eliminar"
-                            className="p-2 rounded-lg ring-1 ring-rose-400/40 text-rose-300 hover:bg-rose-500/10"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                      <PrimaryAction row={row} />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+              <ComisionesTable
+                rows={items}
+                editar={editar}
+                eliminar={eliminar}
+                PrimaryAction={PrimaryAction}
+              />
             )}
           </div>
 
@@ -817,6 +708,23 @@ export default function ComisionesModal({
           </div>
         </motion.div>
       </motion.div>
+      <ComisionEditModal
+        open={editOpen}
+        row={editRow}
+        onClose={() => {
+          setEditOpen(false);
+          setEditRow(null);
+        }}
+        onSaved={(updated) => {
+          // actualiza en memoria sin refetch (o llamá fetchComisiones(page))
+          if (!updated) return;
+          // si rows/ items vienen por prop/estado superior, ajustá el setter
+          // Ejemplo si tenés setItems:
+          setItems((prev) =>
+            prev.map((r) => (r.id === updated.id ? { ...r, ...updated } : r))
+          );
+        }}
+      />
     </AnimatePresence>
   );
 }

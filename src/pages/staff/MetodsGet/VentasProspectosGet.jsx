@@ -294,9 +294,7 @@ const VentasProspectosGet = ({ currentUser }) => {
 
       try {
         // 2) Fallback: /users y filtramos por id
-        const { data: list } = await axios.get(
-          `http://localhost:8080/users`
-        );
+        const { data: list } = await axios.get(`http://localhost:8080/users`);
         const found = Array.isArray(list)
           ? list.find((u) => Number(u.id) === Number(userId))
           : null;
@@ -340,9 +338,7 @@ const VentasProspectosGet = ({ currentUser }) => {
   // Traer prospectos con clase de prueba hoy
   useEffect(() => {
     axios
-      .get(
-        `http://localhost:8080/notifications/clases-prueba/${userId}`
-      )
+      .get(`http://localhost:8080/notifications/clases-prueba/${userId}`)
       .then((res) =>
         setProspectosConAgendaHoy(res.data.map((p) => p.prospecto_id))
       )
@@ -416,9 +412,7 @@ const VentasProspectosGet = ({ currentUser }) => {
 
     const fetchUserSede = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:8080/users/${userId}`
-        );
+        const response = await fetch(`http://localhost:8080/users/${userId}`);
         if (!response.ok)
           throw new Error('No se pudo obtener la info del usuario');
         const data = await response.json();
@@ -521,14 +515,11 @@ const VentasProspectosGet = ({ currentUser }) => {
     const prospecto = prospectos.find((p) => p.id === id);
 
     try {
-      await axios.put(
-        `http://localhost:8080/ventas_prospectos/${id}`,
-        {
-          canal_contacto: nuevoCanal,
-          campania_origen:
-            nuevoCanal === 'Campaña' ? prospecto?.campania_origen || '' : ''
-        }
-      );
+      await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
+        canal_contacto: nuevoCanal,
+        campania_origen:
+          nuevoCanal === 'Campaña' ? prospecto?.campania_origen || '' : ''
+      });
     } catch (error) {
       console.error('Error al actualizar canal:', error);
     }
@@ -741,13 +732,10 @@ const VentasProspectosGet = ({ currentUser }) => {
     );
 
     try {
-      await axios.put(
-        `http://localhost:8080/ventas_prospectos/${id}`,
-        {
-          canal_contacto: 'Campaña', // siempre es campaña acá
-          campania_origen: value
-        }
-      );
+      await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
+        canal_contacto: 'Campaña', // siempre es campaña acá
+        campania_origen: value
+      });
     } catch (error) {
       console.error('Error al actualizar origen de campaña:', error);
     }
@@ -976,7 +964,7 @@ const VentasProspectosGet = ({ currentUser }) => {
         // No es comisión => POST convertir con esComision=false
         const { data } = await axios.post(
           `http://localhost:8080/ventas-prospectos/${prospectoId}/convertir`,
-          { esComision: false }
+          { esComision: false, actor_id: userId }
         );
         // Sin comisión
         setProspectos((arr) =>
@@ -1022,7 +1010,8 @@ const VentasProspectosGet = ({ currentUser }) => {
         esComision: true,
         tipo_plan,
         ...(tipo_plan === 'Otros' ? { tipo_plan_custom } : {}),
-        observacion: '' // opcional
+        observacion: '', // opcional
+        actor_id: userId
       };
 
       const { data } = await axios.post(
@@ -1040,7 +1029,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                 convertido: true,
                 comision: true,
                 comision_estado: 'en_revision',
-                comision_id: data?.comision?.id ?? p.comision_id
+                comision_id: data?.comision?.id ?? p.comision_id,
+                comision_usuario_id: userId,
+                comision_registrada_at: new Date().toISOString()
               }
             : p
         )
@@ -1070,9 +1061,32 @@ const VentasProspectosGet = ({ currentUser }) => {
     }
   };
 
+  const patchComision = async (p, body) => {
+    if (!p?.comision_id) throw new Error('comision_id no definido');
+    const res = await axios.patch(
+      `http://localhost:8080/ventas-comisiones/${p.comision_id}`,
+      { actor_id: userId, ...body } // SIEMPRE actor_id
+    );
+    return res.data?.data || null;
+  };
+
+  const applyProspectoEstado = (prospectoId, nextEstado, comisionId) => {
+    setProspectos((arr) =>
+      arr.map((px) =>
+        px.id === prospectoId
+          ? {
+              ...px,
+              comision_estado: nextEstado,
+              comision_id: comisionId ?? px.comision_id
+            }
+          : px
+      )
+    );
+  };
+
   const handleAprobarComision = async (prospecto) => {
     try {
-      if (!prospecto.comision_id) {
+      if (!prospecto?.comision_id) {
         await Swal.fire({
           icon: 'error',
           title: 'Sin comisión',
@@ -1081,36 +1095,72 @@ const VentasProspectosGet = ({ currentUser }) => {
         return;
       }
 
-      const { value: monto } = await Swal.fire({
-        title: 'Monto de la comisión',
-        input: 'number',
-        inputAttributes: { min: 0, step: '0.01' },
-        inputValidator: (v) =>
-          v === '' || Number(v) < 0 ? 'Ingresá un monto válido' : undefined,
+      // Asegurar que tenemos los vendedores permitidos
+      const sellers = await loadAllowedSellers();
+
+      // Construimos el HTML del form (monto + vendedor)
+      const defaultSellerId = String(userId); // por defecto: el actor actual
+      const sellerOptions = sellers
+        .map((u) => `<option value="${u.id}">${u.name} (#${u.id})</option>`)
+        .join('');
+
+      const { isConfirmed, value } = await Swal.fire({
+        title: 'Aprobar comisión',
+        html: `
+        <div style="text-align:left">
+          <label style="display:block;margin-bottom:6px">Monto de la comisión</label>
+          <input id="swal-monto" type="number" min="0" step="0.01" style="width:100%;padding:8px;border-radius:8px;background:#0b1220;color:#e5e7eb;border:1px solid #334155" placeholder="Ej: 2000.00" />
+
+          <div style="height:10px"></div>
+          <label style="display:block;margin-bottom:6px">Asignar a vendedor</label>
+          <select id="swal-vendedor" style="width:100%;padding:8px;border-radius:8px;background:#0b1220;color:#e5e7eb;border:1px solid #334155">
+            ${sellerOptions}
+          </select>
+        </div>
+      `,
+        didOpen: () => {
+          const $monto = document.getElementById('swal-monto');
+          const $vend = document.getElementById('swal-vendedor');
+          if ($vend) $vend.value = defaultSellerId;
+          if ($monto) $monto.focus();
+        },
+        focusConfirm: false,
         showCancelButton: true,
         confirmButtonText: 'Aprobar',
-        cancelButtonText: 'Cancelar'
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#10b981',
+        background: '#0f172a',
+        color: '#e5e7eb',
+        preConfirm: () => {
+          const $monto = document.getElementById('swal-monto');
+          const $vend = document.getElementById('swal-vendedor');
+          const monto = Number(String($monto?.value || '').replace(',', '.'));
+          const vendedor_id = Number($vend?.value);
+
+          if (!Number.isFinite(monto) || monto < 0) {
+            Swal.showValidationMessage('Ingresá un monto válido');
+            return;
+          }
+          if (!vendedor_id) {
+            Swal.showValidationMessage('Seleccioná un vendedor');
+            return;
+          }
+          return { monto, vendedor_id };
+        }
       });
 
-      if (monto === undefined) return; // cancelado
+      if (!isConfirmed || !value) return;
+      const { monto, vendedor_id } = value;
 
-      // Optimista: pintar celeste
-      setProspectos((arr) =>
-        arr.map((p) =>
-          p.id === prospecto.id ? { ...p, comision_estado: 'aprobado' } : p
-        )
-      );
+      // Optimista → aprobado (azul)
+      applyProspectoEstado(prospecto.id, 'aprobado', prospecto.comision_id);
 
-      await axios.put(
-        `http://localhost:8080/ventas-comisiones/${prospecto.comision_id}/aprobar`,
-        {
-          monto_comision: Number(monto),
-          moneda: 'ARS',
-          user_id: userId,
-          userLevel: userLevel
-        }, // body
-        { headers: { 'x-user-id': userId, 'x-user-role': userLevel } } // headers
-      );
+      await patchComision(prospecto, {
+        estado: 'aprobado',
+        monto_comision: monto,
+        moneda: 'ARS',
+        vendedor_id // << puede ser el actor o uno distinto (FEDE, SOL, LOURDES)
+      });
 
       await Swal.fire({
         icon: 'success',
@@ -1119,22 +1169,19 @@ const VentasProspectosGet = ({ currentUser }) => {
       });
     } catch (e) {
       // Rollback a en_revision
-      setProspectos((arr) =>
-        arr.map((p) =>
-          p.id === prospecto.id ? { ...p, comision_estado: 'en_revision' } : p
-        )
-      );
+      applyProspectoEstado(prospecto.id, 'en_revision', prospecto.comision_id);
       await Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo aprobar la comisión.'
+        text:
+          e?.response?.data?.mensajeError || 'No se pudo aprobar la comisión.'
       });
     }
   };
 
   const handleRechazarComision = async (prospecto) => {
     try {
-      if (!prospecto.comision_id) {
+      if (!prospecto?.comision_id) {
         await Swal.fire({
           icon: 'error',
           title: 'Sin comisión',
@@ -1143,7 +1190,7 @@ const VentasProspectosGet = ({ currentUser }) => {
         return;
       }
 
-      const { value: motivo } = await Swal.fire({
+      const { value: motivo, isConfirmed } = await Swal.fire({
         title: 'Motivo de rechazo',
         input: 'text',
         inputPlaceholder: 'Ej: Falta comprobante de pago',
@@ -1153,25 +1200,15 @@ const VentasProspectosGet = ({ currentUser }) => {
         confirmButtonText: 'Rechazar',
         cancelButtonText: 'Cancelar'
       });
+      if (!isConfirmed) return;
 
-      if (!motivo) return;
+      // Optimista → rojo
+      applyProspectoEstado(prospecto.id, 'rechazado', prospecto.comision_id);
 
-      // Optimista: pintar rojo
-      setProspectos((arr) =>
-        arr.map((p) =>
-          p.id === prospecto.id ? { ...p, comision_estado: 'rechazado' } : p
-        )
-      );
-
-      await axios.put(
-        `http://localhost:8080/ventas-comisiones/${prospecto.comision_id}/rechazar`,
-        {
-          motivo_rechazo: motivo.trim(),
-          user_id: userId,
-          userLevel: userLevel
-        },
-        { headers: { 'x-user-id': userId, 'x-user-role': userLevel } }
-      );
+      await patchComision(prospecto, {
+        estado: 'rechazado',
+        motivo_rechazo: motivo.trim()
+      });
 
       await Swal.fire({
         icon: 'success',
@@ -1179,16 +1216,77 @@ const VentasProspectosGet = ({ currentUser }) => {
         text: 'Comisión rechazada.'
       });
     } catch (e) {
-      // Rollback a en_revision
-      setProspectos((arr) =>
-        arr.map((p) =>
-          p.id === prospecto.id ? { ...p, comision_estado: 'en_revision' } : p
-        )
-      );
+      applyProspectoEstado(prospecto.id, 'en_revision', prospecto.comision_id);
       await Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo rechazar la comisión.'
+        text:
+          e?.response?.data?.mensajeError || 'No se pudo rechazar la comisión.'
+      });
+    }
+  };
+
+  const handleMenuCambiarDesdeAprobado = async (prospecto) => {
+    if (!prospecto?.comision_id) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Sin comisión',
+        text: 'No hay comisión vinculada a este prospecto.'
+      });
+      return;
+    }
+
+    const { value: next, isConfirmed } = await Swal.fire({
+      title: 'Cambiar estado',
+      input: 'radio',
+      inputOptions: {
+        en_revision: 'Volver a revisión (amarillo)',
+        rechazado: 'Rechazado (rojo)'
+      },
+      inputValidator: (v) => (!v ? 'Seleccioná un estado' : undefined),
+      showCancelButton: true,
+      confirmButtonText: 'Cambiar',
+      confirmButtonColor: '#10b981',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!isConfirmed) return;
+
+    const prev = prospecto.comision_estado;
+    applyProspectoEstado(prospecto.id, next, prospecto.comision_id);
+
+    try {
+      // si eligen rechazado y querés pedir motivo:
+      if (next === 'rechazado') {
+        const { value: motivo, isConfirmed: conf } = await Swal.fire({
+          title: 'Motivo de rechazo',
+          input: 'text',
+          inputPlaceholder: 'Opcional',
+          showCancelButton: true,
+          confirmButtonText: 'Rechazar'
+        });
+        if (!conf) {
+          applyProspectoEstado(prospecto.id, prev, prospecto.comision_id);
+          return;
+        }
+        await patchComision(prospecto, {
+          estado: 'rechazado',
+          motivo_rechazo: (motivo || '').trim()
+        });
+      } else {
+        // volver a revisión
+        await patchComision(prospecto, { estado: 'en_revision' });
+      }
+      await Swal.fire({
+        icon: 'success',
+        title: 'Actualizado',
+        text: `Estado cambiado a ${next.replace('_', ' ')}.`
+      });
+    } catch (e) {
+      applyProspectoEstado(prospecto.id, prev, prospecto.comision_id);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: e?.response?.data?.mensajeError || 'No se pudo cambiar el estado.'
       });
     }
   };
@@ -1290,6 +1388,26 @@ const VentasProspectosGet = ({ currentUser }) => {
       ((currentUser2?.id && ALLOWED_IDS.has(Number(currentUser2.id))) ||
         (emailLower && ALLOWED_EMAILS.has(emailLower))));
 
+  const [vendedoresAllowed, setVendedoresAllowed] = useState([]);
+
+  const isAllowedUser = (u) => {
+    if (!u) return false;
+    const byId = ALLOWED_IDS.has(Number(u.id));
+    const byEmail = u.email
+      ? ALLOWED_EMAILS.has(String(u.email).toLowerCase())
+      : false;
+    return byId || byEmail;
+  };
+  const loadAllowedSellers = async () => {
+    if (vendedoresAllowed.length) return vendedoresAllowed;
+    const res = await fetch('http://localhost:8080/users');
+    const data = await res.json();
+    const list = (Array.isArray(data) ? data : []).filter(isAllowedUser);
+    // Orden por nombre
+    list.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    setVendedoresAllowed(list);
+    return list;
+  };
   return (
     <>
       <NavbarStaff />
@@ -2122,24 +2240,54 @@ const VentasProspectosGet = ({ currentUser }) => {
                         </button>
                         {/* Acciones Coordinador (solo si está en revisión) */}
                         <td className="border border-gray-300 px-4 py-3">
-                          {(p.comision_estado === 'en_revision' &&
-                            userLevel === 'gerente') ||
-                            (userLevel === 'admin' && (
-                              <div className="flex items-center gap-2">
+                          {(() => {
+                            const canManage =
+                              (userLevel === 'gerente' ||
+                                userLevel === 'admin') &&
+                              p.convertido === true &&
+                              p.comision === true &&
+                              !!p.comision_id;
+
+                            if (!canManage) return null;
+
+                            if (p.comision_estado === 'en_revision') {
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleAprobarComision(p)}
+                                    className="rounded-md px-3 py-2 text-sm font-medium ring-1 ring-sky-300 bg-sky-100 text-sky-800 hover:bg-sky-200"
+                                  >
+                                    Aprobar
+                                  </button>
+                                  <button
+                                    onClick={() => handleRechazarComision(p)}
+                                    className="rounded-md px-3 py-2 text-sm font-medium ring-1 ring-rose-300 bg-rose-100 text-rose-800 hover:bg-rose-200"
+                                  >
+                                    Rechazar
+                                  </button>
+                                </div>
+                              );
+                            }
+
+                            if (p.comision_estado === 'aprobado') {
+                              return (
                                 <button
-                                  onClick={() => handleAprobarComision(p)}
+                                  onClick={() =>
+                                    handleMenuCambiarDesdeAprobado(p)
+                                  }
                                   className="rounded-md px-3 py-2 text-sm font-medium ring-1 ring-sky-300 bg-sky-100 text-sky-800 hover:bg-sky-200"
+                                  title="Cambiar estado"
                                 >
                                   Aprobar
                                 </button>
-                                <button
-                                  onClick={() => handleRechazarComision(p)}
-                                  className="rounded-md px-3 py-2 text-sm font-medium ring-1 ring-rose-300 bg-rose-100 text-rose-800 hover:bg-rose-200"
-                                >
-                                  Rechazar
-                                </button>
-                              </div>
-                            ))}
+                              );
+                            }
+
+                            // (Opcional) si querés permitir desde rechazado volver a revisión o aprobar:
+                            // if (p.comision_estado === 'rechazado') { ... }
+
+                            return null;
+                          })()}
                         </td>
                       </div>
                     </td>
