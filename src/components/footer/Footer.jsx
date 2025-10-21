@@ -13,7 +13,7 @@ const Footer = () => {
   const path = location.pathname;
   const isDashboard = path.startsWith('/dashboard');
   const { userLevel } = useAuth();
-  const URL = 'http://localhos:8080/';
+  const URL = 'http://localhost:8080/';
 
   const [imagenes, setImagenes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,8 @@ const Footer = () => {
     return (
       <div className="text-center text-gray-400 py-8">
         No hay imágenes cargadas aún.
-        {userLevel === 'admin' && <DashboardImagesManager />}
+        {userLevel === 'admin' ||
+          (userLevel === 'imagenes' && <DashboardImagesManager />)}
       </div>
     );
   return (
@@ -52,6 +53,7 @@ const Footer = () => {
       {/* {!isDashboard && <Marcas_v2 />} */}
       {userLevel === 'admin' ||
         (userLevel === 'imagenes' && <DashboardImagesManager />)}
+
       {userLevel === 'instructor' ||
         (isDashboard && (
           <div className="flex flex-col items-center gap-4 my-4">
