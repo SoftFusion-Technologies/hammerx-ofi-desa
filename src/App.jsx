@@ -67,6 +67,7 @@ const NewSede = lazy(() => import('./pages/NewSede'));
 const ProductosPrincipal = lazy(() =>
   import('./pages/Productos/ProductsPrincipal.jsx')
 );
+
 // COMPONENTES PRINCIPALES DE LA PAGINA
 
 // const FormPostu = lazy(() => import('./components/Forms/FormPostulante')); se elimina
@@ -112,6 +113,8 @@ const AltaNovedadForm = lazy(() =>
 );
 const AltaTaskForm = lazy(() => import('./components/Forms/FormAltaTask'));
 const AltaFreAskForm = lazy(() => import('./components/Forms/FormAltaFrecAsk'));
+
+const SedeBarrioNorte = lazy(() => import('./pages/SedeBarrioNorte'));
 // Renderizado de pagina del STAFF, para los metodos Get, y listado
 
 // Renderizado de los nuevos COMPONENTES / PAGOS - INICIO - Benjamin Orellana - 27 Jul 24
@@ -300,14 +303,12 @@ const App = memo(() => {
                   element={<Sedeconcepcion />}
                 />{' '}
                 <Ruta
+                  path="/nueva_sede_hammerx"
+                  element={<SedeBarrioNorte />}
+                />
+                <Ruta
                   path="/nueva_sede_hammerx_barrio_norte"
-                  element={
-                    <ProximamenteSede
-                      titulo="PRÓXIMAMENTE"
-                      subtitulo="Estamos preparando esta sede para vos"
-                      onAvisarme={() => setOpenNotify(true)}
-                    />
-                  }
+                  element={<SedeBarrioNorte />}
                 />{' '}
                 {/* Página de la sede de Concepción */}
                 <Ruta path="/Sedes/Monteros" element={<Sedemonteros />} />{' '}

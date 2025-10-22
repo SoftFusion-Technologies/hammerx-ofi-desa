@@ -8,7 +8,8 @@ export default function SedesButtons({ mostrarBotonesSedes = true }) {
   const links = [
     { path: '/Sedes/Concepcion', label: 'CONCEPCIÓN' },
     { path: '/Sedes/Monteros', label: 'MONTEROS' },
-    { path: '/nueva_sede_hammerx', label: 'BARRIO SUR' } // ruta especial
+    { path: '/Sedes/BarrioSur', label: 'BARRIO SUR' },
+    { path: '/nueva_sede_hammerx', label: 'BARRIO NORTE' } // ruta especial
   ];
 
   const baseBtn =
@@ -25,7 +26,7 @@ export default function SedesButtons({ mostrarBotonesSedes = true }) {
         {/* Responsive: 1 columna en mobile, 3 en sm+ */}
         <nav
           aria-label="Nuestras sedes"
-          className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
         >
           {links.map(({ path, label }) => {
             const active = isActive(path);
