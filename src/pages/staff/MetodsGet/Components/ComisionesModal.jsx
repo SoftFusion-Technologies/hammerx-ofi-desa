@@ -33,6 +33,7 @@ import ComisionEditModal from './ComisionEditModal';
  * - Mantiene filtros, paginación, aprobar/rechazar/editar/eliminar.
  * - Incluye fondo con partículas canvas ultra-liviano.
  *************************************************/
+const API_URL = 'http://localhost:8080/ventas-comisiones';
 
 // ========================= Constantes =========================
 const PLANES = [
@@ -196,10 +197,12 @@ export default function ComisionesModal({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [items]);
 
+  // 1) fetchComisiones SIN depender de `page` y sin pisar con data.page
   const fetchComisiones = useCallback(
-    async (p = page, opts = {}) => {
+    async (p = 1, opts = {}) => {
       try {
         if (!opts.silent) setLoading(true);
+
         const params = {
           page: p,
           pageSize,
@@ -208,13 +211,13 @@ export default function ComisionesModal({
           ...(sede ? { sede } : {}),
           ...(vendedorId ? { vendedor_id: vendedorId } : {})
         };
-        const { data } = await axios.get(
-          'http://localhost:8080/ventas-comisiones',
-          { params }
-        );
-        setItems(data.items || []);
-        setTotal(data.total || 0);
-        setPage(data.page || p);
+
+        const { data } = await axios.get(API_URL, { params });
+
+        setItems(data?.items ?? []);
+        setTotal(Number(data?.total) || 0);
+        // 👇 Confiamos en la página solicitada
+        setPage(p);
       } catch (e) {
         Swal.fire({
           background: '#0f172a',
@@ -223,17 +226,34 @@ export default function ComisionesModal({
           title: 'Error',
           text: 'No se pudo cargar la lista.'
         });
+        console.log(e);
       } finally {
         if (!opts.silent) setLoading(false);
       }
     },
-    [estado, q, sede, vendedorId, page, pageSize]
+    // 👇 NO incluir `page` en deps
+    [estado, q, sede, vendedorId, pageSize]
   );
 
+  // 2) Carga inicial y cuando cambian filtros "duros" (estado/sede/vendedor)
   useEffect(() => {
     fetchComisiones(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [estado]);
+  }, [estado, sede, vendedorId]);
+
+  // 3) Búsqueda con debounce (solo cuando cambia `q`)
+  useEffect(() => {
+    const t = setTimeout(() => fetchComisiones(1), 380);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
+
+  // (opcional) helper para paginar sin repetir lógica
+  const goToPage = (p) => {
+    const target = Math.max(1, p);
+    setPage(target);
+    fetchComisiones(target);
+  };
 
   const debouncedSearch = useDebouncedCallback((v) => setQ(v), 350);
   useEffect(() => {
@@ -385,44 +405,45 @@ export default function ComisionesModal({
     }
   };
 
- const eliminar = async (row) => {
+  const eliminar = async (row) => {
+    const { isConfirmed } = await Swal.fire({
+      background: '#0f172a',
+      color: '#e5e7eb',
+      title: 'Eliminar comisión',
+      text: 'Esta acción no se puede deshacer. ¿Continuar?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar',
+      confirmButtonColor: '#ef4444',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!isConfirmed) return;
 
-   const { isConfirmed } = await Swal.fire({
-     background: '#0f172a',
-     color: '#e5e7eb',
-     title: 'Eliminar comisión',
-     text: 'Esta acción no se puede deshacer. ¿Continuar?',
-     icon: 'warning',
-     showCancelButton: true,
-     confirmButtonText: 'Eliminar',
-     confirmButtonColor: '#ef4444',
-     cancelButtonText: 'Cancelar'
-   });
-   if (!isConfirmed) return;
-
-   try {
-     await axios.delete(`http://localhost:8080/ventas-comisiones/${row.id}`, {
-       data: { actor_id: userId } // <<<<<< clave para que el back identifique al actor
-     });
-     await Swal.fire({
-       background: '#0f172a',
-       color: '#e5e7eb',
-       icon: 'success',
-       title: 'Eliminada',
-       text: 'Comisión eliminada.'
-     });
-     fetchComisiones(1);
-   } catch (e) {
-     await Swal.fire({
-       background: '#0f172a',
-       color: '#e5e7eb',
-       icon: 'error',
-       title: 'Error',
-       text: e?.response?.data?.mensajeError || 'No se pudo eliminar.'
-     });
-   }
- };
-
+    try {
+      await axios.delete(
+        `http://localhost:8080/ventas-comisiones/${row.id}`,
+        {
+          data: { actor_id: userId } // <<<<<< clave para que el back identifique al actor
+        }
+      );
+      await Swal.fire({
+        background: '#0f172a',
+        color: '#e5e7eb',
+        icon: 'success',
+        title: 'Eliminada',
+        text: 'Comisión eliminada.'
+      });
+      fetchComisiones(1);
+    } catch (e) {
+      await Swal.fire({
+        background: '#0f172a',
+        color: '#e5e7eb',
+        icon: 'error',
+        title: 'Error',
+        text: e?.response?.data?.mensajeError || 'No se pudo eliminar.'
+      });
+    }
+  };
 
   // CTA combinada: si está aprobado → mostrar "Rechazar"; si rechazado → "Aprobar"; si en revisión → ambos.
   const PrimaryAction = ({ row }) => {
@@ -679,11 +700,7 @@ export default function ComisionesModal({
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    const p = Math.max(1, page - 1);
-                    setPage(p);
-                    fetchComisiones(p);
-                  }}
+                  onClick={() => goToPage(page - 1)}
                   disabled={page <= 1}
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ring-1 ring-white/10 disabled:opacity-50 hover:bg-white/10"
                 >
@@ -693,11 +710,7 @@ export default function ComisionesModal({
                   Página {page} / {totalPages}
                 </span>
                 <button
-                  onClick={() => {
-                    const p = Math.min(totalPages, page + 1);
-                    setPage(p);
-                    fetchComisiones(p);
-                  }}
+                  onClick={() => goToPage(page + 1)}
                   disabled={page >= totalPages}
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ring-1 ring-white/10 disabled:opacity-50 hover:bg-white/10"
                 >
