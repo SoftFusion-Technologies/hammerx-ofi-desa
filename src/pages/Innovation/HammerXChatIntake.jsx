@@ -9,7 +9,7 @@ const SAMPLE_REPORT_NAME = 'informe-2025-10-07-5.pdf';
 
 // 0) Config: URL de n8n (producción)
 const N8N_WEBHOOK_URL =
-  'https://bright-jellyfish-49.hooks.n8n.cloud/webhook-test/a02bcc4b-6929-4373-94ea-28d0dd54eb5d';
+  'https://hammer-n8n.e3n0qp.easypanel.host/webhook/dfb8cf0c-ba87-4eaa-bfcc-6d98f6c2c594';
 
 // utils fetch → n8n con timeout + retries
 async function postToN8NWithRetry({

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Footer from '../components/footer/Footer';
-import Mapa from '../components/footer/Mapa';
 import { logo } from '../images/svg/index';
-import SillaPilates from '../images/sedes/SedeBarrioNorte2.jpeg';
-import BalanzaIA from '../images/sedes/SedeBarrioNorte1.jpeg';
+import SillaPilates from '../images/sedes/SedeBarrioNorte2.png';
+import BalanzaIA from '../images/sedes/SedeBarrioNorte1.png';
 import FormTestClass_v2 from '../components/Forms/FormTestClass_v2';
 import '../styles/clients/newsede.css';
 import ModalContactoSede from '../components/ModalContactoSede';
@@ -43,12 +42,6 @@ const SedeBarrioNorte = () => {
         '+70 equipos de última generación para que entrenes sin esperas.'
     },
     {
-      icon: FaDumbbell, // Se puede usar el mismo icono
-      title: 'Sector de Pesos Libres',
-      description:
-        'Más de 50 pares de mancuernas desde 2.5kg hasta 50kg, barras olímpicas y todo lo que necesitas para entrenar pesado.'
-    },
-    {
       icon: FaShower,
       title: 'Baños y Vestuarios',
       description:
@@ -73,14 +66,6 @@ const SedeBarrioNorte = () => {
   // --- Datos para las instalaciones del Primer Piso ---
   const firstFloorFeatures = [
     {
-      icon: FaChair,
-      title: 'Sillas de Masajes',
-      description:
-        'Relaja tus músculos después de cada entrenamiento con nuestras modernas sillas de masaje, ¡un verdadero lujo!',
-      image: SillaPilates,
-      isFullWidth: true
-    },
-    {
       icon: FaSpa,
       title: 'Sala de Pilates',
       description:
@@ -103,6 +88,14 @@ const SedeBarrioNorte = () => {
       title: 'Terraza',
       description:
         'Espacio al aire libre para complementar tus entrenamientos, estirar o simplemente descansar.'
+    },
+    {
+      icon: FaChair,
+      title: 'Sillas de Masajes',
+      description:
+        'Relaja tus músculos después de cada entrenamiento con nuestras modernas sillas de masaje, ¡un verdadero lujo!',
+      image: SillaPilates,
+      isFullWidth: true
     }
   ];
 
@@ -176,8 +169,8 @@ const SedeBarrioNorte = () => {
               </div>
             </div>
             <div className="text-white p-6 rounded-lg text-center w-full md:w-96 bg-gradient-to-r from-[#fc4b08] to-[#ff8c00] ">
-              <p className="text-7xl font-bignoodle leading-none">2</p>
-              <p className="text-2xl font-bignoodle uppercase">Pisos</p>
+              <p className="text-7xl font-bignoodle leading-none">3</p>
+              <p className="text-2xl font-bignoodle uppercase">Plantas</p>
               <p className="uppercase text-sm font-messina mt-1">
                 De puro fitness y bienestar
               </p>
@@ -196,8 +189,9 @@ const SedeBarrioNorte = () => {
             </h2>
           </div>
 
-          {/* --- TARJETA DE PLANTA BAJA --- */}
-          <div className="bg-white rounded-lg shadow-lg p-6 border-t-4 border-[#fc4b08] mb-12">
+          {/* --- BLOQUE PLANTA BAJA --- */}
+          {/* VISTA PC (hidden en mobile) */}
+          <div className="hidden md:block bg-white rounded-lg shadow-lg p-6 border-t-4 border-[#fc4b08] mb-12">
             <div className="flex items-center gap-3 mb-6">
               <span className="text-white rounded-full h-8 w-8 flex items-center justify-center font-bold bg-[#fc4b08]">
                 PB
@@ -206,13 +200,12 @@ const SedeBarrioNorte = () => {
                 Planta Baja - Fuerza y Tecnología
               </h3>
             </div>
-            {/* Contenedor deslizable en móvil, grilla en desktop */}
-            <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 pb-4 -mx-2 px-2">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {groundFloorFeatures.map((feature, index) => (
                 <div
                   key={index}
-                  className={`shrink-0 w-64 md:w-auto ${
-                    feature.isFullWidth ? 'md:col-span-2 lg:col-span-4' : ''
+                  className={`w-auto ${
+                    feature.isFullWidth ? 'col-span-2 lg:col-span-3' : ''
                   }`}
                 >
                   <div className="p-4 border border-gray-200 rounded-lg h-full flex flex-col">
@@ -239,9 +232,56 @@ const SedeBarrioNorte = () => {
               ))}
             </div>
           </div>
+          {/* VISTA MOBILE (hidden en pc) */}
+          <div className="md:hidden bg-white rounded-lg shadow-lg border-t-4 border-[#fc4b08] mb-12">
+            <div className="p-6">
+              {' '}
+              {/* padding para el texto dentro del bloque */}
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-white rounded-full h-8 w-8 flex items-center justify-center font-bold bg-[#fc4b08]">
+                  PB
+                </span>
+                <h3 className="text-2xl font-bignoodle uppercase text-[#fc4b08]">
+                  Planta Baja - Fuerza y Tecnología
+                </h3>
+              </div>
+            </div>
+            {/* Contenedor del carrusel*/}
+            <div className="flex overflow-x-auto gap-4 pb-4 px-6">
+              {groundFloorFeatures.map((feature, index) => (
+                <div key={index} className="shrink-0 w-64">
+                  <div className="p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-orange-50 to-orange-400">
+                    <div>
+                      <feature.icon className="text-4xl mb-3 text-[#fc4b08]" />
+                      <h4 className="font-bignoodle uppercase text-lg mb-1 text-[#fc4b08] font-semibold">
+                        {feature.title}
+                      </h4>
+                      <p className="text-gray-600 text-sm font-semibold">
+                        {feature.description}
+                      </p>
+                    </div>
+                    <div className="mt-4 flex-grow flex items-center justify-center">
+                      {feature.image ? (
+                        <img
+                          src={feature.image}
+                          alt={feature.title}
+                          className="w-full min-h-[200px] flex items-center justify-center overflow-hidden"
+                        />
+                      ) : (
+                        <div className="w-full min-h-[200px] flex items-center justify-center overflow-hidden">
+                          <feature.icon className="text-9xl text-[#fc4b08]  opacity-80" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-          {/* --- TARJETA DE PRIMER PISO --- */}
-          <div className="bg-white rounded-lg shadow-lg p-6 border-t-4 border-[#fc4b08]">
+          {/* --- BLOQUE PRIMER PISO --- */}
+          {/* VISTA PC (hidden en mobile) */}
+          <div className="hidden md:block bg-white rounded-lg shadow-lg p-6 border-t-4 border-[#fc4b08]">
             <div className="flex items-center gap-3 mb-6">
               <span className="text-white rounded-full h-8 w-8 flex items-center justify-center font-bold bg-[#fc4b08]">
                 1
@@ -250,13 +290,12 @@ const SedeBarrioNorte = () => {
                 Primer Piso - Clases grupales y Relax
               </h3>
             </div>
-            {/* Contenedor deslizable en móvil, grilla en desktop */}
-            <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 pb-4 -mx-2 px-2">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {firstFloorFeatures.map((feature, index) => (
                 <div
                   key={index}
-                  className={`shrink-0 w-64 md:w-auto ${
-                    feature.isFullWidth ? 'md:col-span-2 lg:col-span-4' : ''
+                  className={`w-auto ${
+                    feature.isFullWidth ? 'col-span-2 lg:col-span-4' : ''
                   }`}
                 >
                   <div className="p-4 border border-gray-200 rounded-lg h-full flex flex-col">
@@ -278,6 +317,54 @@ const SedeBarrioNorte = () => {
                         />
                       </div>
                     )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* VISTA MOBILE (hidden en pc) */}
+          <div className="md:hidden bg-white rounded-lg shadow-lg border-t-4 border-[#fc4b08]">
+            <div className="p-6">
+              {' '}
+              {/* padding para el texto dentro del bloque */}
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-white rounded-full h-8 w-8 flex items-center justify-center font-bold bg-[#fc4b08]">
+                  1
+                </span>
+                <h3 className="text-2xl font-bignoodle uppercase text-[#fc4b08]">
+                  Primer Piso - Clases grupales y Relax
+                </h3>
+              </div>
+            </div>
+            {/* Contenedor del carrusel, sin márgenes negativos ni padding horizontal aquí */}
+            <div className="flex overflow-x-auto gap-4 pb-4 px-6">
+              {' '}
+              {/* Agregado px-6 aquí para espacio a los lados */}
+              {firstFloorFeatures.map((feature, index) => (
+                <div key={index} className="shrink-0 w-64">
+                  <div className="p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-orange-50 to-orange-400">
+                    <div>
+                      <feature.icon className="text-4xl mb-3 text-[#fc4b08]" />
+                      <h4 className="font-bignoodle uppercase text-lg mb-1 text-[#fc4b08] font-semibold">
+                        {feature.title}
+                      </h4>
+                      <p className="text-gray-600 text-sm font-semibold">
+                        {feature.description}
+                      </p>
+                    </div>
+                    <div className="mt-4 flex-grow flex items-center justify-center">
+                      {feature.image ? (
+                        <img
+                          src={feature.image}
+                          alt={feature.title}
+                          className="w-full min-h-[200px] flex items-center justify-center overflow-hidden"
+                        />
+                      ) : (
+                        <div className="w-full min-h-[200px] flex items-center justify-center overflow-hidden">
+                          <feature.icon className="text-9xl text-[#fc4b08] opacity-80" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -303,6 +390,7 @@ const SedeBarrioNorte = () => {
       </section>
 
       {/* Título de la sección del mapa */}
+
       <h2
         style={{ background: '#fc4b08' }}
         className="mb-5 text-4xl md:text-6xl font-bold text-white font-bignoodle text-center"
@@ -311,6 +399,7 @@ const SedeBarrioNorte = () => {
       </h2>
 
       {/* Mapa de Google */}
+
       <div id="ubicacion" className="w-full">
         <iframe
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4223.568095001174!2d-65.20257459999999!3d-26.8210825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94225c22aac40d25%3A0xd5e93c92c00674bc!2s25%20de%20Mayo%20720%2C%20T4000%20San%20Miguel%20de%20Tucum%C3%A1n%2C%20Tucum%C3%A1n!5e1!3m2!1ses!2sar!4v1761148495178!5m2!1ses!2sar" // Tu URL del mapa
@@ -339,6 +428,7 @@ const SedeBarrioNorte = () => {
           <button
             onClick={abrirModalTestClass}
             className="uppercase mt-4 px-6 py-2 bg-white text-orange-500 font-semibold rounded-lg shadow hover:bg-gray-100"
+            disabled={true}
           >
             Inscribirme
           </button>
@@ -349,7 +439,6 @@ const SedeBarrioNorte = () => {
           showModal={modalContacto}
           closeModal={cerrarModalContacto}
         />
-        {/* FormPostulante se eliminó ya que el botón ahora abre el de clases de prueba */}
         <FormTestClass_v2
           isOpen={modalTestClass}
           onClose={cerrarModalTestClass}
