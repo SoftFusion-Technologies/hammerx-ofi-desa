@@ -1374,7 +1374,6 @@ const PilatesGestionLogica = () => {
       instructoresData,
       sedesData,
       rol,
-      freeSlots,
       expiredStudents,
       waitingListMatches,
       cupoMaximoPilates,
@@ -1386,9 +1385,6 @@ const PilatesGestionLogica = () => {
       isConfirmModalOpen,
       personToConfirm,
       freeSlots,
-    },
-    ref: {
-      refSedeUsuario: refSedeUsuario,
     },
     setters: {
       setSection,
