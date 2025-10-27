@@ -1,43 +1,30 @@
-/*
- * Programador: Emir Segovia
- * Fecha Cración: 05 / 06 / 2024
- * Versión: 1.0
- *
- * Descripción:
- * Este archivo (LoginForm.jsx) es el componente el cual realiza el logeo de los usuarios mendiante una validacion de la base de datos y un token de sesion.
- *
- * Tema: Renderizacion
- * Capa: Frontend
- * Contacto: emirvalles90f@gmail.com || 3865761910
- */
+import React, { useState } from "react";
+import Modal from "react-modal";
+import Alerta from "../Error";
+import { useNavigate } from "react-router-dom";
+import Validation from "./LoginValidation";
+import axios from "axios";
+import "../../styles/login.css";
+import { useInstructorAuth } from "../../AuthInstructorContext";
 
-import React, { useState } from 'react';
-import Modal from 'react-modal';
-import Alerta from '../Error';
-import { useNavigate } from 'react-router-dom';
-import Validation from './LoginValidation';
-import axios from 'axios';
-import '../../styles/login.css';
-import { useAuth } from '../../AuthContext';
+import { motion } from "framer-motion";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+Modal.setAppElement("#root");
 
-import { motion } from 'framer-motion';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
-Modal.setAppElement('#root');
-
-const LoginForm = () => {
+const LoginProfesorPilates = () => {
   const [values, setValues] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
 
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { loginInstructor } = useInstructorAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
+  const [modalMessage, setModalMessage] = useState("");
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
@@ -46,7 +33,7 @@ const LoginForm = () => {
   const handleInput = (event) => {
     setValues((prev) => ({
       ...prev,
-      [event.target.name]: event.target.value
+      [event.target.name]: event.target.value,
     }));
   };
 
@@ -59,41 +46,44 @@ const LoginForm = () => {
       setLoading(true);
 
       axios
-        .post('http://localhost:8080/login', values)
+        .post("http://localhost:8080/login_profesores", values)
         .then((res) => {
-          if (res.data.message === 'Success') {
-            login(res.data.token, values.email, res.data.level, res.data.id, res.data.sede);
-            navigate('/dashboard');
+          if (res.data.message === "Success") {
+            loginInstructor(
+              res.data.token,
+              values.email,
+              res.data.level,
+              res.data.id,
+              res.data.sede_id
+            );
+            navigate("/pilates/instructor");
           } else {
-            setModalMessage('Usuario o Contraseña incorrectos');
+            setModalMessage("Usuario o Contraseña incorrectos");
             setIsModalOpen(true);
           }
         })
         .catch((err) => {
           setLoading(false);
-          console.log(err);
+          setModalMessage("Error de conexión");
+          setIsModalOpen(true);
         });
     }
   };
 
   return (
     <div className="h-screen w-full loginbg flex items-center justify-center bg-cover bg-center relative">
-      {/* Botón Dark Mode opcional */}
-      {/* <button className="absolute top-5 right-5 text-white">🌙</button> */}
-
-      {/* Tarjeta animada */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         whileHover={{
           scale: 1.01,
-          boxShadow: '0 8px 30px rgba(252,75,8,0.3)'
+          boxShadow: "0 8px 30px rgba(252,75,8,0.3)",
         }}
         className="bg-white shadow-2xl rounded-2xl p-8 w-[95%] max-w-md mx-auto"
       >
         <h1 className="text-5xl font-bignoodle font-bold text-center text-orange-600 mb-2">
-          Bienvenido
+          Bienvenido Instructor
         </h1>
 
         <motion.p
@@ -102,7 +92,7 @@ const LoginForm = () => {
           transition={{ delay: 0.2 }}
           className="text-center text-sm text-gray-500 mb-6"
         >
-          Iniciá sesión para acceder al panel
+          Iniciá sesión para acceder al panel de Pilates
         </motion.p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -112,7 +102,7 @@ const LoginForm = () => {
               htmlFor="email"
               className="block text-sm font-medium text-gray-700"
             >
-              Correo Electrónico
+              Correo electrónico
             </label>
             <motion.input
               whileFocus={{ scale: 1.02 }}
@@ -138,7 +128,7 @@ const LoginForm = () => {
               <motion.input
                 whileFocus={{ scale: 1.02 }}
                 id="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="••••••••"
                 className="w-full mt-1 p-3 bg-orange-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all pr-10"
@@ -162,13 +152,13 @@ const LoginForm = () => {
               whileTap={{ scale: 0.95 }}
               type="submit"
               className="bg-orange-500 text-white w-full py-3 rounded-lg font-semibold text-lg shadow-md hover:bg-[#fc4b08] transition-all"
+              disabled={loading}
             >
-              Iniciar Sesión
+              {loading ? "Ingresando..." : "Iniciar Sesión"}
             </motion.button>
           </div>
         </form>
 
-        {/* Frase motivadora */}
         <p className="mt-6 text-center text-xs text-gray-400 italic">
           "La constancia supera al talento"
         </p>
@@ -197,4 +187,4 @@ const LoginForm = () => {
   );
 };
 
-export default LoginForm;
+export default LoginProfesorPilates;

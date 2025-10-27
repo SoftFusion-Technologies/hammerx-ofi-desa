@@ -26,6 +26,7 @@
     "react-bootstrap": "^2.10.4",
     "react-circular-progressbar": "^2.1.0",
     "react-countup": "^6.5.3",
+    "react-datepicker": "^8.8.0",
     "react-dom": "^18.2.0",
     "react-fontawesome": "^1.7.1",
     "react-hot-toast": "^2.5.2",

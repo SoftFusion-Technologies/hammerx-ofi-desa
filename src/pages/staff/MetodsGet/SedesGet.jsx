@@ -18,6 +18,7 @@ import { Link } from 'react-router-dom';
 import '../../../styles/MetodsGet/Tabla.css';
 import '../../../styles/staff/background.css';
 import Footer from '../../../components/footer/Footer';
+import Swal from 'sweetalert2';
 import FormAltaSedes from '../../../components/Forms/FormAltaSedes';
 import SedesDetails from './SedesGetId';
 import { useAuth } from '../../../AuthContext';
@@ -42,9 +43,11 @@ const SedesGet = () => {
 
   //URL estatica, luego cambiar por variable de entorno
   const URL = 'http://localhost:8080/Sedes/';
+  const URLmaxInscriptoCiudad = 'http://localhost:8080/sedes/alumnos/por/sede';
 
   // Estado para almacenar la lista de Sedess
   const [Sedes, setSedes] = useState([]);
+  const [SedesMaxInscriptoCiudad, setSedesMaxInscriptoCiudad] = useState([]);
 
   //------------------------------------------------------
   // 1.3 Relacion al Filtrado - Inicio - Benjamin Orellana
@@ -79,6 +82,14 @@ const SedesGet = () => {
     });
   }, []);
 
+  useEffect(() => {
+    // utilizamos get para obtenerAgrupadors los datos contenidos en la url 
+    axios.get(URLmaxInscriptoCiudad).then((res) => {
+      setSedesMaxInscriptoCiudad(res.data);
+      obtenerSedesMaxInscriptoCiudad();
+    });
+  }, []);
+
   // Función para obtener todos los Agrupadors desde la API
   const obtenerSedess = async () => {
     try {
@@ -89,22 +100,123 @@ const SedesGet = () => {
     }
   };
 
-  const handleEliminarSedes = async (id) => {
-    const confirmacion = window.confirm('¿Seguro que desea eliminar?');
-    if (confirmacion) {
-      try {
-        const url = `${URL}${id}`;
-        const respuesta = await fetch(url, {
-          method: 'DELETE'
-        });
-        await respuesta.json();
-        const arraySedes = Sedes.filter((Sedes) => Sedes.id !== id);
-
-        setSedes(arraySedes);
-      } catch (error) {
-        console.log(error);
-      }
+  // Función para obtener la cantidad máxima de inscriptos en sedes que sean de ciudad
+  const obtenerSedesMaxInscriptoCiudad = async () => {
+    try {
+      const response = await axios.get(URLmaxInscriptoCiudad);
+      setSedesMaxInscriptoCiudad(response.data);
+    } catch (error) {
+      console.log('Error al obtener la cantidad máxima de inscriptos en sedes que sean de ciudad:', error);
     }
+  };
+
+  const handleEliminarSedes = async (id, esCiudad) => {
+    const countdownStart = 10;
+    let countdownInterval;
+
+    const esCiudadBool = Boolean(esCiudad);
+
+    const htmlCiudad =
+      '<div style="text-align:left">' +
+      'Esta acción eliminará de forma permanente la sede seleccionada y todos los datos vinculados a ella.<br><br>' +
+      '<b>Al confirmar la eliminación, se borrarán:</b><br>' +
+      '- Todos los horarios de pilates asociados a la sede.<br>' +
+      '- Todas las inscripciones de clientes en esos horarios.<br>' +
+      '- Todas las asistencias registradas para esas inscripciones.<br>' +
+      '- Toda la lista de espera vinculada a la sede.<br>' +
+      '- La sede en sí.<br><br>' +
+      '<span style="color:#d9534f;font-weight:bold">⚠️ Advertencia:</span><br>' +
+      'Esta acción es irreversible. Todos los datos mencionados se perderán definitivamente y no podrán recuperarse.<br>' +
+      'Asegúrate de que realmente deseas eliminar la sede y toda su información asociada antes de continuar.' +
+      '</div>' +
+      '<div style="margin-top:16px;text-align:center;font-size:14px;">' +
+      '<span style="display:block;margin-bottom:6px;">Podrás confirmar en:</span>' +
+      `<span id="countdown-timer" style="font-size:18px;font-weight:bold;color:#d9534f;">${countdownStart}</span> segundos` +
+      '</div>';
+
+    const htmlNoCiudad =
+      '<div style="text-align:left">' +
+      'Esta acción eliminará de forma permanente la sede seleccionada.<br><br>' +
+      '<span style="color:#d9534f;font-weight:bold">⚠️ Advertencia:</span><br>' +
+      'Esta acción es irreversible y no podrá deshacerse.' +
+      '</div>';
+
+    Swal.fire({
+      title: '¿Estás seguro que deseas eliminar la sede?',
+      html: esCiudadBool ? htmlCiudad : htmlNoCiudad,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        if (!esCiudadBool) return;
+
+        const confirmBtn = Swal.getConfirmButton();
+        const countdownNode = Swal.getHtmlContainer()?.querySelector('#countdown-timer');
+        if (!confirmBtn || !countdownNode) return;
+
+        const originalText = confirmBtn.textContent;
+        let remaining = countdownStart;
+
+        const updateCountdown = () => {
+          if (!countdownNode) return;
+          countdownNode.textContent = String(remaining);
+          confirmBtn.textContent = `Eliminar (habilitado en ${remaining}s)`;
+        };
+
+        confirmBtn.disabled = true;
+        updateCountdown();
+
+        countdownInterval = setInterval(() => {
+          remaining -= 1;
+          if (remaining <= 0) {
+            clearInterval(countdownInterval);
+            countdownInterval = undefined;
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = originalText;
+            if (countdownNode) countdownNode.textContent = '0';
+            return;
+          }
+          updateCountdown();
+        }, 1000);
+      },
+      willClose: () => {
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = undefined;
+        }
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const url = `${URL}${id}`;
+          const respuesta = await fetch(url, {
+            method: 'DELETE'
+          });
+          await respuesta.json();
+          const arraySedes = Sedes.filter((Sedes) => Sedes.id !== id);
+          setSedes(arraySedes);
+          Swal.fire({
+            title: 'Eliminado',
+            text: 'La sede y todos sus datos asociados han sido eliminados.',
+            icon: 'success',
+            timer: 2500,
+            showConfirmButton: false
+          });
+        } catch (error) {
+          console.log(error);
+          Swal.fire({
+            title: 'Error',
+            text: 'Ocurrió un error al eliminar la sede.',
+            icon: 'error',
+            timer: 2500,
+            showConfirmButton: false
+          });
+        }
+      }
+    });
   };
 
   const obtenerSedes = async (id) => {
@@ -243,6 +355,8 @@ const SedesGet = () => {
                     <th>ID</th>
                     <th>Nombre</th>
                     <th>Estado</th>
+                    <th>¿Tiene pilates?</th>
+                    <th>Capacidad</th>
                     <th>Creado</th>
                     <th>Acciones</th>
                   </tr>
@@ -263,6 +377,12 @@ const SedesGet = () => {
                           {Sedes.estado}
                         </td>
                         <td onClick={() => obtenerSedes(Sedes.id)}>
+                          {Sedes.es_ciudad ? 'SI' : 'NO'}
+                        </td>
+                        <td onClick={() => obtenerSedes(Sedes.id)}>
+                          {Sedes.cupo_maximo_pilates ? Sedes.cupo_maximo_pilates : 'N/A'}
+                        </td>
+                        <td onClick={() => obtenerSedes(Sedes.id)}>
                           {Sedes.created_at}
                         </td>
                         {/* ACCIONES */}
@@ -270,7 +390,7 @@ const SedesGet = () => {
                           userLevel === 'administrador') && (
                           <td className="">
                             <button
-                              onClick={() => handleEliminarSedes(Sedes.id)}
+                              onClick={() => handleEliminarSedes(Sedes.id, Sedes.es_ciudad)}
                               type="button"
                               className="py-2 px-4 my-1 bg-red-500 text-white rounded-md hover:bg-red-600"
                             >
@@ -328,18 +448,10 @@ const SedesGet = () => {
             Sedes={selectedSedes}
             setSelectedSedes={setSelectedSedes}
             obtenerSedess={obtenerSedess}
+            SedesMaxInscriptoCiudad={SedesMaxInscriptoCiudad}
           />
         </div>
       </div>
-      {/* {selectedSedes && (
-        <SedesDetails
-          Sedes={selectedSedes}
-          setSelectedSedes={setSelectedSedes}
-          isOpen={modalSedesDetails}
-          onClose={() => setModalSedesDetails(false)}
-        />
-      )} */}
-
       <Footer />
     </>
   );

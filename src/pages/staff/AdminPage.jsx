@@ -105,11 +105,11 @@ const AdminPage = () => {
               <Link to="/dashboard/preguntas-ia">
                 <button className="btnstaff">Preguntale a la IA</button>
               </Link>
-            </motion.div>{' '}
-            {(userLevel === 'admin' ||
-              userLevel === 'administrador' ||
-              userLevel === 'gerente' ||
-              userLevel === 'vendedor') && (
+            </motion.div>{" "}
+            {(userLevel === "admin" ||
+              userLevel === "administrador" ||
+              userLevel === "gerente" ||
+              userLevel === "vendedor") && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -121,17 +121,17 @@ const AdminPage = () => {
                 </Link>
               </motion.div>
             )}
-            {(userLevel === 'gerente' ||
-              userLevel === 'admin' ||
-              userLevel === 'vendedor' ||
-              userLevel === 'administrador') && (
+            {(userLevel === "gerente" ||
+              userLevel === "admin" ||
+              userLevel === "vendedor" ||
+              userLevel === "administrador") && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
               >
-                {' '}
+                {" "}
                 <Link to="/dashboard/testclass">
                   <button className="btnstaff">Leads y Prospectos</button>
                 </Link>
@@ -146,70 +146,70 @@ const AdminPage = () => {
                 </Link>
               </div>
             )} */}
-            {(userLevel === 'gerente' ||
-              userLevel === 'admin' ||
-              userLevel === 'vendedor' ||
-              userLevel === '' ||
-              userLevel === 'administrador') && (
+            {(userLevel === "gerente" ||
+              userLevel === "admin" ||
+              userLevel === "vendedor" ||
+              userLevel === "" ||
+              userLevel === "administrador") && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
                 className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
               >
-                {' '}
+                {" "}
                 <Link to="/dashboard/admconvenios">
                   <button className="btnstaff">Convenios</button>
                 </Link>
               </motion.div>
             )}
-            {(userLevel === 'gerente' ||
-              userLevel === 'admin' ||
-              userLevel === 'instructor' ||
-              userLevel === 'administrador') && (
+            {(userLevel === "gerente" ||
+              userLevel === "admin" ||
+              userLevel === "instructor" ||
+              userLevel === "administrador") && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.8 }}
                 className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
               >
-                {' '}
+                {" "}
                 <button className="btnstaff" onClick={handleButtonClick}>
                   Instructores
                 </button>
               </motion.div>
             )}
-            {(userLevel === 'admin' ||
-              userLevel === 'administrador' ||
-              userLevel === 'instructor' ||
-              userLevel === 'gerente') && (
+            {(userLevel === "admin" ||
+              userLevel === "administrador" ||
+              userLevel === "instructor" ||
+              userLevel === "gerente") && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 1 }}
                 className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
               >
-                {' '}
+                {" "}
                 <Link to="/dashboard/estadisticas">
                   <button className="btnstaff">Estadísticas</button>
                 </Link>
               </motion.div>
             )}
-            {userLevel !== 'imagenes' && (
+            {userLevel !== "imagenes" && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 1.2 }}
                 className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
               >
-                {' '}
+                {" "}
                 <Link to="/dashboard/quejas">
                   <button className="btnstaff">Quejas</button>
                 </Link>
               </motion.div>
             )}
-            {userLevel === 'instructor' ||
-              (userLevel !== 'imagenes' && (
+            {userLevel === "instructor" ||
+              (userLevel !== "imagenes" && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -234,7 +234,26 @@ const AdminPage = () => {
                   </Link>
                 </motion.div>
               ))}
-            {userLevel !== 'instructor' && userLevel !== 'imagenes' && (
+            {userLevel === "instructor" ||
+              (userLevel !== "imagenes" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.4 }}
+                  className="relative overflow-visible bg-white font-bignoodle
+                 w-[250px] h-[100px] text-[20px]
+                 lg:w-[400px] lg:h-[150px] lg:text-[30px]
+                 mx-auto flex justify-center items-center
+                 rounded-tr-xl rounded-bl-xl"
+                >
+                  <Link to="/dashboard/pilates/gestion">
+                    <button className="btnstaff flex items-center gap-2">
+                      Pilates
+                    </button>
+                  </Link>
+                </motion.div>
+              ))}
+            {userLevel !== "instructor" && userLevel !== "imagenes" && (
               <CardRecaptacion
                 userLevel={userLevel}
                 userId={userId}
@@ -242,14 +261,14 @@ const AdminPage = () => {
                 anio={anioActual}
               />
             )}
-            {userLevel === 'imagenes' && (
+            {userLevel === "imagenes" && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
               >
-                {' '}
+                {" "}
                 <Link to="/dashboard/imagenes">
                   <button className="btnstaff">imagenes</button>
                 </Link>
@@ -263,10 +282,10 @@ const AdminPage = () => {
               href="#"
               onClick={abrirModalPreguntas}
             >
-              {(userLevel === 'gerente' ||
-                userLevel === 'admin' ||
-                userLevel === 'vendedor' ||
-                userLevel === 'administrador') && (
+              {(userLevel === "gerente" ||
+                userLevel === "admin" ||
+                userLevel === "vendedor" ||
+                userLevel === "administrador") && (
                 <div>
                   <span className="absolute top-0 left-0 mt-1 ml-1 h-full w-full rounded bg-[#fc4b08]"></span>
                   <span className="fold-bold relative inline-block rounded border-2 border-[#343333] bg-white px-3 py-1 text-base font-bold text-[#fc4b08] transition duration-100 hover:bg-[#fc4b08] hover:text-white">

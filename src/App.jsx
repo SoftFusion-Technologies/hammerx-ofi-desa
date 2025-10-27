@@ -33,8 +33,11 @@ function HideOnPaths({ paths, children }) {
 }
 import Footer from './components/footer/Footer'; // Importa el componente del pie de página
 import LoginForm from './components/login/LoginForm';
+import LoginProfesorPilates from './components/login/LoginProfesorPilates.jsx';
 import { AuthProvider } from './AuthContext';
+import { AuthInstructorProvider } from './AuthInstructorContext.jsx';
 import ProtectedRoute from './ProtectedRoute';
+import ProtectedRoutePilates from "./ProtectedRoutePilates.jsx";
 import PreguntasFrecuentesGet from './pages/staff/MetodsGet/FrequentAsksGet';
 import UserDetails from './pages/staff/MetodsGet/UserGetId';
 import PostulanteDetails from './pages/staff/MetodsGet/PostulanteGetId';
@@ -204,6 +207,10 @@ import QuejasVist from './pages/Quejas/QuejasVist.jsx';
 import RecaptacionGet from './pages/staff/MetodsGet/RecaptacionGet.jsx';
 import VentasProspectosGet from './pages/staff/MetodsGet/VentasProspectosGet.jsx';
 
+//pilates
+import PilatesInstructores from "./pages/Pilates/PilatesInstructores.jsx";
+import PilatesGestion from "./pages/Pilates/PilatesGestion.jsx";
+
 import NotFound from './pages/NotFound.jsx';
 import LogsAuditoria from './pages/LogsAuditoria.jsx';
 import PromosDashboard from './pages/staff/MetodsGet/PromosDashboard.jsx';
@@ -258,6 +265,7 @@ const App = memo(() => {
 
   return (
     <AuthProvider>
+      <AuthInstructorProvider>
       {/* <div className="back_v2"> */}
       <Router>
         {/* Componente de Suspense para manejar la carga de componentes lazy */}
@@ -326,6 +334,7 @@ const App = memo(() => {
                 <Ruta path="/contacto" element={<Contacto />} />{' '}
                 {/* Página de Contacto */}
                 <Ruta path="/login" element={<LoginForm />} />{' '}
+                <Ruta path="/pilates" element={<LoginProfesorPilates />} />
                 {/* Página de Logeo */}
                 {/* <Ruta path="/form" element={<FormPostu />} /> Rutas de prueba para testear funcionamiento */}
                 <Ruta path="/formusers" element={<AltaUserForm />} />{' '}
@@ -502,6 +511,14 @@ const App = memo(() => {
                     </ProtectedRoute>
                   }
                 />{' '}
+                                  <Ruta
+                    path="/dashboard/pilates/gestion"
+                    element={
+                      <ProtectedRoute>
+                        <PilatesGestion />
+                      </ProtectedRoute>
+                    }
+                  />
                 {/* Rutas de prueba para testear funcionamiento */}
                 {/* <Ruta path="/dashboard/integrantes" element={<ProtectedRoute>  <IntegranteConveGet /> </ProtectedRoute> } /> Rutas de prueba para testear funcionamiento */}
                 <Ruta
@@ -823,7 +840,16 @@ const App = memo(() => {
                       <PreguntasIA />
                     </ProtectedRoute>
                   }
+                  
                 />{' '}
+                    <Ruta
+                    path="/pilates/instructor"
+                    element={
+                      <ProtectedRoutePilates>
+                        <PilatesInstructores />
+                      </ProtectedRoutePilates>
+                    }
+                  />{" "}
                 <Ruta path="/*" element={<NotFound />} />
               </Rutas>
               <TaskReminder2 tasks={tasks} />
@@ -835,6 +861,7 @@ const App = memo(() => {
         </HideOnPaths>{' '}
       </Router>
       {/* </div> */}
+           </AuthInstructorProvider>
     </AuthProvider>
   );
 });

@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
   const [userName, setUserName] = useState('');
   const [userLevel, setUserLevel] = useState('');
   const [userId, setUserId] = useState(null);
+  const [sedeName, setSedeName] = useState('');
 
   useEffect(() => {
     // Obtener el token y el nombre de usuario desde el localStorage
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }) => {
     const username = localStorage.getItem('userName');
     const level = localStorage.getItem('userLevel');
     const id = localStorage.getItem('userId');
+    const sede = localStorage.getItem('sedeName');
     // Si hay un token en el localStorage, establecerlo en el estado local
     if (token) {
       setAuthToken(token);
@@ -41,15 +43,19 @@ export const AuthProvider = ({ children }) => {
     }
     if (id) {
       setUserId(id);
+    }    
+    if(sede){
+      setSedeName(sede);
     }
   }, []); // El array vacío asegura que este efecto se ejecute solo una vez al montar el componente
 
-  const login = (token, username, level, id) => {
+  const login = (token, username, level, id, sede) => {
     // Establecer el token y el nombre de usuario en el estado local
     setAuthToken(token);
     setUserName(username);
     setUserLevel(level);
     setUserId(id);
+    setSedeName(sede);
 
     // Guardar el token y el nombre de usuario en el localStorage
     localStorage.setItem('authToken', token);
@@ -64,18 +70,20 @@ export const AuthProvider = ({ children }) => {
     setUserName('');
     setUserLevel('');
     setUserId(null);
+    setSedeName('');
 
     // Remover el token y el nombre de usuario del localStorage
     localStorage.removeItem('authToken');
     localStorage.removeItem('userName');
     localStorage.removeItem('userLevel');
     localStorage.removeItem('userId');
+    localStorage.removeItem('sedeName');
 
   };
 
   return (
     <AuthContext.Provider
-      value={{ authToken, userName, userLevel, userId, login, logout }}
+      value={{ authToken, userName, userLevel, userId, sedeName, login, logout }}
     >
       {children}
     </AuthContext.Provider>
