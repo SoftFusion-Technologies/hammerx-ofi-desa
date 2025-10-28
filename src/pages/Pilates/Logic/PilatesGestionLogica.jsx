@@ -52,7 +52,7 @@ const PilatesGestionLogica = () => {
 
   // --- Hooks Externos y de Contexto ---
   const { fecha } = ObtenerFechaInternet(); // Hook que trae la fecha actual desde una API para evitar desajustes de hora locales.
-  const { userId, sedeName } = useAuth(); // Hook que obtiene el ID y nombre de la sede del usuario logueado.
+  const { userId, sedeName, userLevel } = useAuth(); // Hook que obtiene el ID y nombre de la sede del usuario logueado.
 
   // --- Constantes y Variables Derivadas ---
   const rol = "GESTION"; // Define el rol del usuario para lógicas condicionales en la vista.
@@ -289,11 +289,41 @@ const PilatesGestionLogica = () => {
    * Cuando cambia el nombre de la sede en el contexto, actualiza el filtro de sede actual.
    */
   useEffect(() => {
-    if (sedeName && sedesData && Array.isArray(sedesData)) {
+    if (!sedesData || !Array.isArray(sedesData) || sedesData.length === 0)
+      return;
+
+    // Normalizamos el nombre de la sede del usuario para comparaciones
+    const sedeUser = String(sedeName || "")
+      .trim()
+      .toLowerCase();
+
+    // Si el usuario es 'multisede', seleccionamos por defecto la primera sede disponible
+    if (sedeUser === "multisede") {
+      if (sedesData[0] && (sedesData[0].id || sedesData[0].id === 0)) {
+        setSedeActualFiltro(String(sedesData[0].id));
+      }
+      return;
+    }
+
+    if (sedeName) {
       const sedeEncontrada = sedesData.find(
-        (sede) => sede.nombre.toUpperCase() === sedeName.toUpperCase()
+        (sede) =>
+          String(sede.nombre || "")
+            .trim()
+            .toLowerCase() === sedeUser
       );
-      setSedeActualFiltro(String(sedeEncontrada.id));
+
+      if (sedeEncontrada && (sedeEncontrada.id || sedeEncontrada.id === 0)) {
+        setSedeActualFiltro(String(sedeEncontrada.id));
+      } else {
+        // No se encontró match: dejamos la sede por defecto (primera) y logueamos para depuración
+        if (sedesData[0] && (sedesData[0].id || sedesData[0].id === 0)) {
+          setSedeActualFiltro(String(sedesData[0].id));
+        }
+        console.warn(
+          `No se encontró sede para sedeName='${sedeName}'. Se seleccionó la primera sede por defecto.`
+        );
+      }
     }
   }, [sedeName, sedesData]);
 
@@ -316,6 +346,11 @@ const PilatesGestionLogica = () => {
    * Retorna true solo si coinciden (permitiendo edición), false si no hay permisos.
    */
   const puedeEditarSede = useMemo(() => {
+    // Permitir edición global si el usuario es 'admin' o si su sedeName es 'multisede'
+    const nivel = String(userLevel || "").toLowerCase();
+    const sedeLower = String(sedeName || "").toLowerCase();
+    if (nivel === "admin" || sedeLower === "multisede") return true;
+
     if (!sedeActualFiltro || !Array.isArray(sedesData) || !sedeName)
       return false;
     const sedeSeleccionada = sedesData.find(
@@ -330,7 +365,7 @@ const PilatesGestionLogica = () => {
     return (
       normalizarTexto(nombreSedeSeleccionada) === normalizarTexto(sedeName)
     );
-  }, [sedeActualFiltro, sedesData, sedeName]);
+  }, [sedeActualFiltro, sedesData, sedeName, userLevel]);
 
   /**
    * UTILITY FUNCTION: Muestra un alert de error cuando faltan permisos de edición
@@ -372,7 +407,6 @@ const PilatesGestionLogica = () => {
       refetchListaEspera();
     }
   };
-
   /**
    * FUNCTION: Cambia el estado de contacto de un alumno en la lista de espera
    * Permite marcar como: pendiente, confirmado o rechazado/sin respuesta.
