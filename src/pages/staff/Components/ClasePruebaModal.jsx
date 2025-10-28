@@ -99,11 +99,25 @@ const ClasePruebaModal = ({
 
 
   useEffect(() => {
-    if (prospecto && prospecto.actividad === "Pilates" && tipoSeleccionado === "Clase de prueba" || tipoSeleccionado === "Visita programada") {
+    // Abrir el picker SOLO cuando:
+    // - hay prospecto
+    // - la actividad del prospecto es "Pilates"
+    // - y el tipo es "Clase de prueba" o "Visita programada"
+    const tipo = tipoSeleccionado;
+    const actividad = prospecto?.actividad;
+    const isTipoRelevant = tipo === "Clase de prueba" || tipo === "Visita programada";
+
+    if (prospecto && actividad === "Pilates" && isTipoRelevant) {
       setAbrirHorariosDisponibles(true);
       setNoEsPilates(false);
-    }else if(prospecto && prospecto.actividad != "Pilates" && tipoSeleccionado === "Clase de prueba" || tipoSeleccionado === "Visita programada"){
+    } else if (prospecto && actividad !== "Pilates" && isTipoRelevant) {
+      // Si el prospecto existe, el tipo es relevante pero la actividad NO es Pilates
+      setAbrirHorariosDisponibles(false);
       setNoEsPilates(true);
+    } else {
+      // En cualquier otro caso, no abrir y no marcar noEsPilates
+      setAbrirHorariosDisponibles(false);
+      setNoEsPilates(false);
     }
   }, [tipoSeleccionado, prospecto]);
 
