@@ -62,6 +62,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('userName', username);
     localStorage.setItem('userLevel', level);
     localStorage.setItem('userId', id);
+    localStorage.setItem('sedeName', sede);
   };
 
   const logout = () => {
