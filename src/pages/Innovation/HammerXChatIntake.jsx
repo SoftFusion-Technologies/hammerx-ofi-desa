@@ -116,6 +116,7 @@ export default function HammerXChatIntake({
   firstName = '',
   nombre,
   dni,
+  sede,
   onSubmit
 }) {
   const you = useMemo(() => {
@@ -224,20 +225,20 @@ export default function HammerXChatIntake({
     const fd = new FormData();
     files.forEach((f) => fd.append('fotos', f));
 
-    // 👇 añadimos nombre + dni
-    if (extras.nombre) fd.append('nombre', extras.nombre);
-    if (extras.dni) fd.append('dni', extras.dni);
+    // Datos de identidad
+    if (extras.nombre) fd.append('nombre', String(extras.nombre).trim());
+    if (extras.dni) fd.append('dni', String(extras.dni).replace(/\D/g, ''));
+    if (extras.sede) fd.append('sede', String(extras.sede).trim()); // ✅ NUEVO
 
-    // Opcionales (si los querés enviar ahora o más tarde):
-    // fd.append('cliente_id', extras.cliente_id ?? '');
-    // fd.append('informe_id', extras.informe_id ?? '');
-    // fd.append('fecha_captura', extras.fecha_captura ?? '');
-    // fd.append('notas', extras.notas ?? '');
+    // Opcionales
+    // if (extras.cliente_id)    fd.append('cliente_id', String(extras.cliente_id));
+    // if (extras.informe_id)    fd.append('informe_id', String(extras.informe_id));
+    // if (extras.fecha_captura) fd.append('fecha_captura', extras.fecha_captura); // YYYY-MM-DD
+    // if (extras.notas)         fd.append('notas', String(extras.notas));
 
     const resp = await fetch(API_UPLOAD_URL, {
       method: 'POST',
-      body: fd
-      // NO pongas Content-Type manualmente; fetch lo arma con boundary
+      body: fd // no setees Content-Type manualmente
     });
 
     const data = await resp.json().catch(() => ({}));
@@ -246,10 +247,108 @@ export default function HammerXChatIntake({
       const code = data?.code || 'UPLOAD_FAILED';
       throw new Error(`${code}: ${msg}`);
     }
-    return data; // { ok, batch_id, count, items[] }
+    return data; // { ok, batch_id, count, items[], cliente_resuelto?... }
   }
 
   // Ubicación: reemplazar la función send() actual
+  const apiBase = new URL(API_UPLOAD_URL).origin;
+
+  // helper: normaliza el objeto de n8n al formato que espera el POST /hx/informes/from-ocr
+  function toOCRPayload(n8nItem, { batch_id }) {
+    // n8n puede enviarlo con "–" (en-dash) en los rangos; no molesta pero limpiamos por las dudas
+    const cleanRange = (s) =>
+      typeof s === 'string' ? s.replace(/[–—]/g, '-').trim() : s;
+
+    const gender = n8nItem?.Gender || n8nItem?.gender || null;
+    // Height puede venir en cm (160) o ya en metros (1.60). Detectamos.
+    let altura_m = null;
+    const H = n8nItem?.Height;
+    if (typeof H === 'number') {
+      altura_m = H > 3 ? Number((H / 100).toFixed(2)) : H; // 160 -> 1.60
+    } else if (typeof H === 'string') {
+      const num = Number(H.replace(/[^\d.]/g, ''));
+      if (!Number.isNaN(num))
+        altura_m = num > 3 ? Number((num / 100).toFixed(2)) : num;
+    }
+
+    // armamos "content" con los bloques técnicos tal como esperás:
+    const content = {
+      Gender: gender ?? undefined,
+      Age: n8nItem?.Age ?? undefined,
+      Height: n8nItem?.Height ?? undefined,
+      body_shape_analysis: n8nItem?.body_shape_analysis ?? undefined,
+      body_composition: n8nItem?.body_composition ?? undefined,
+      physical_parameters: {
+        ...(n8nItem?.physical_parameters || {}),
+        // normalizamos r: "(18.0–28.0)" -> "(18.0-28.0)"
+        percent_body_fat: n8nItem?.physical_parameters?.percent_body_fat
+          ? {
+              ...n8nItem.physical_parameters.percent_body_fat,
+              r: cleanRange(n8nItem.physical_parameters.percent_body_fat.r)
+            }
+          : undefined,
+        visceral_fat_index: n8nItem?.physical_parameters?.visceral_fat_index
+          ? {
+              ...n8nItem.physical_parameters.visceral_fat_index,
+              r: cleanRange(n8nItem.physical_parameters.visceral_fat_index.r)
+            }
+          : undefined,
+        body_mass_index: n8nItem?.physical_parameters?.body_mass_index
+          ? {
+              ...n8nItem.physical_parameters.body_mass_index,
+              r: cleanRange(n8nItem.physical_parameters.body_mass_index.r)
+            }
+          : undefined,
+        // si vino "waist_hip_ratio" plano, lo metemos bajo indices.waist_hip_ratio
+        ...(n8nItem?.physical_parameters?.waist_hip_ratio
+          ? {
+              indices: {
+                waist_hip_ratio: {
+                  ...n8nItem.physical_parameters.waist_hip_ratio,
+                  r: cleanRange(n8nItem.physical_parameters.waist_hip_ratio.r)
+                }
+              }
+            }
+          : {})
+      }
+    };
+
+    // textos (todo opcional)
+    const textos = {
+      interpretacion: n8nItem?.interpretacion ?? undefined,
+      recomendaciones_entrenamiento:
+        n8nItem?.recomendaciones_entrenamiento ?? undefined,
+      recomendaciones_alimenticias:
+        n8nItem?.recomendaciones_alimenticias ?? undefined,
+      ejemplos_alimentacion: n8nItem?.ejemplos_alimentacion ?? undefined,
+      objetivo_final: n8nItem?.objetivo_final ?? undefined
+    };
+
+    // cliente (subobjeto) con dni/nombre + derivaciones si las tenés
+    const cliente = {
+      dni: n8nItem?.dni ? String(n8nItem.dni).replace(/\D/g, '') : undefined,
+      nombre: n8nItem?.nombre ?? undefined,
+      sexo: gender?.toUpperCase?.().startsWith('M')
+        ? 'M'
+        : gender?.toUpperCase?.().startsWith('F')
+        ? 'F'
+        : undefined,
+      altura_m: altura_m ?? undefined
+      // fecha_nacimiento: si alguna vez te llega y la querés pasar
+    };
+
+    return {
+      idempotency_key: n8nItem?.idempotency_key ?? undefined,
+      fecha: n8nItem?.fecha ?? new Date().toISOString().slice(0, 10),
+      batch_id, // 👈 importante para vincular imágenes
+      cliente,
+      _edad_anios_override: n8nItem?.Age ?? undefined,
+      content,
+      textos,
+      generate_pdf: true // queremos que genere/guarde PDF y nos devuelva meta
+    };
+  }
+
   const send = async () => {
     if (!isValidCount) {
       setError(
@@ -291,10 +390,9 @@ export default function HammerXChatIntake({
 
     try {
       setIsSubmitting(true);
-      const res = await postImagesToBackend(files, {
-        nombre, // 👈
-        dni // 👈
-      }); // éxito → bloquear nuevos envíos
+
+      // --- 1) Subir imágenes a TU backend ---
+      const res = await postImagesToBackend(files, { nombre, dni, sede });
       setUploadLocked(true);
       setLastBatch({
         batch_id: res.batch_id,
@@ -302,110 +400,122 @@ export default function HammerXChatIntake({
         items: res.items
       });
 
-      // 1) Enviar a n8n las MISMAS imágenes como "files" en el body,
-      //    y los headers: batchid, dni, nombre
+      // --- 2) Disparar n8n con binarios + headers mínimos ---
       const fdN8N = new FormData();
-      files.forEach((f) => fdN8N.append('files', f)); // 👈 clave EXACTA: "files"
-
+      files.forEach((f) => fdN8N.append('files', f));
       const n8nResult = await postToN8NWithRetry({
         url: N8N_WEBHOOK_URL,
         formData: fdN8N,
         headers: {
-          // No pongas Content-Type manualmente
-          batchid: res.batch_id, // 👈 del backend
+          batchid: res.batch_id,
           dni: String(dni || ''),
           nombre: String(nombre || '')
         },
-        tries: 3, // puedes ajustar
-        timeoutMs: 12000 // puedes ajustar
+        tries: 2,
+        timeoutMs: 20000
       });
 
-      // feedback UI según resultado n8n:
+      // --- 3) Mensaje de “Listo, generando informe…”
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === typingId
+            ? {
+                ...m,
+                typing: false,
+                text: `Listo ${firstName}. Ya tengo tus imágenes, generando tu informe…`
+              }
+            : m
+        )
+      );
+
       if (!n8nResult.ok) {
         console.error('[n8n] fallo:', n8nResult.error);
-
-        // Mostrar un mensaje “no bloqueante” al usuario:
         setMessages((prev) => [
           ...prev,
           {
             id: `warn-${Date.now()}`,
             side: 'bot',
-            text: 'Guardé tus imágenes, pero no pude conectar con el procesador. Reintentaré en segundo plano.'
+            text: 'Guardé tus imágenes, pero no pude conectar con el procesador.'
           }
         ]);
-      } else {
-        // opcional: si tu workflow devuelve algo útil
-        console.log('[n8n] ok:', n8nResult.status, n8nResult.data);
+        return;
       }
-      // hacer get de lo que trae n8n
-      // hacer un post /hx/informes/from-ocr
-      
-      // reemplazar bubble "typing" por confirmación (sin batch_id visible)
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === typingId
-            ? {
-                ...m,
-                typing: false,
-                text: `Listo ${firstName}. Logre recibir ${res.count} imagen${
-                  res.count > 1 ? 'es' : ''
-                }. En unos instantes te muestro el resultado.`
-              }
-            : m
-        )
-      );
-      // justo después del setMessages(...) que quita typing y pone “Listo. Logré recibir…”
-      setTimeout(() => {
-        // 1) Mensaje “este es tu informe…”
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `r-${Date.now()}`,
-            side: 'bot',
-            text: `${
-              firstName ? firstName + ',' : ''
-            } este es tu informe preliminar:`
-          }
-        ]);
 
-        // 2) File bubble con el PDF de prueba
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `f-${Date.now() + 1}`,
-            side: 'bot',
-            file: {
-              url: SAMPLE_REPORT_URL,
-              name: SAMPLE_REPORT_NAME
-            }
-          }
-        ]);
-      }, 1200); // pequeño delay “humano”
+      // --- 4) Formatear la respuesta de n8n al payload que espera tu backend ---
+      const payloadRaw = Array.isArray(n8nResult.data)
+        ? n8nResult.data[0]
+        : n8nResult.data || {};
+      const ocrPayload = toOCRPayload(payloadRaw, { batch_id: res.batch_id });
 
-      // Log interno para debugging / integraciones
-      console.log('[HX] Upload imágenes balanza OK:', {
-        batch_id: res.batch_id,
-        count: res.count,
-        items: res.items
+      // --- 5) POST /hx/informes/from-ocr (JSON) ---
+      const respOCR = await fetch(`${apiBase}/hx/informes/from-ocr`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ocrPayload)
       });
 
-      // Si querés notificar al padre:
-      onSubmit?.(files, res);
+      const dataOCR = await respOCR.json().catch(() => ({}));
+      if (!respOCR.ok || !dataOCR?.ok) {
+        console.error('[HX] OCR POST error:', respOCR.status, dataOCR);
+        throw new Error(
+          dataOCR?.message || `Error HTTP ${respOCR.status} al crear informe`
+        );
+      }
 
-      // opcional: limpiar previews pero mantener bloqueo
-      // previews.forEach((p) => URL.revokeObjectURL(p.url));
-      // setPreviews([]); setFiles([]);
+      const informeId = dataOCR?.informe_id;
+      let pdfUrl =
+        dataOCR?.pdf?.url ||
+        (informeId ? `/hx/informes/${informeId}/pdf` : null);
+
+      if (pdfUrl && !/^https?:\/\//i.test(pdfUrl)) {
+        pdfUrl = apiBase + pdfUrl; // absolutizamos
+      }
+
+      // --- 6) Feedback final + bubble PDF real ---
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `r-${Date.now()}`,
+          side: 'bot',
+          text: `${firstName ? firstName + ',' : ''} este es tu informe:`
+        },
+        ...(pdfUrl
+          ? [
+              {
+                id: `f-${Date.now() + 1}`,
+                side: 'bot',
+                file: {
+                  url: pdfUrl,
+                  name:
+                    dataOCR?.pdf?.filename ||
+                    `informe-${
+                      dataOCR?.fecha || new Date().toISOString().slice(0, 10)
+                    }-${informeId || 'descarga'}.pdf`
+                }
+              }
+            ]
+          : [
+              {
+                id: `warn-${Date.now() + 2}`,
+                side: 'bot',
+                text: 'Procesé todo, pero no pude generar el enlace del informe.'
+              }
+            ])
+      ]);
+
+      // log p/depurar
+      console.log('[n8n] ok:', n8nResult.status, payloadRaw);
+      console.log('[HX] Informe creado:', { informeId, pdf: dataOCR?.pdf });
+
+      // opcional: callback al padre
+      onSubmit?.(files, { ...res, informe_id: informeId, pdf: dataOCR?.pdf });
     } catch (e) {
-      const msg = e?.message || 'No se pudieron subir las imágenes.';
+      const msg = e?.message || 'No se pudo completar el proceso.';
       setError(msg);
       setMessages((prev) =>
         prev.map((m) =>
           m.id === typingId
-            ? {
-                ...m,
-                typing: false,
-                text: `Ocurrió un error al guardar: ${msg}`
-              }
+            ? { ...m, typing: false, text: `Ocurrió un error: ${msg}` }
             : m
         )
       );

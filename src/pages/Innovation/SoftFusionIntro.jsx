@@ -22,6 +22,7 @@ export default function SoftFusionIntro({ onReady, logoSrc }) {
   // Paso 1: nombre
   const [nombre, setNombre] = useState('');
   const [dni, setDni] = useState('');
+  const [sede, setSede] = useState('');
   const [savedNombre, setSavedNombre] = useState(false);
   const [firstName, setFirstName] = useState('');
 
@@ -37,23 +38,39 @@ export default function SoftFusionIntro({ onReady, logoSrc }) {
   useEffect(() => {
     const storedName = localStorage.getItem('sf_nombre');
     const storedDni = localStorage.getItem('sf_dni');
+    const storedSede = localStorage.getItem('sf_sede');
+
     if (storedName && !nombre) {
       setNombre(storedName);
       setFirstName(firstNameOf(storedName));
     }
-    if (storedDni && !dni) setDni(storedDni);
+    if (storedDni && !dni) {
+      setDni(storedDni);
+    }
+    if (storedSede && !sede) {
+      setSede(storedSede);
+    }
   }, []);
 
   const handleSubmitNombre = (e) => {
     e.preventDefault();
     const nom = (nombre || '').trim();
-    const ndni = (dni || '').replace(/\D/g, ''); // mantener solo números
-    if (!nom || !ndni) return;
+    const ndni = (dni || '').replace(/\D/g, ''); // solo números
+    const sSede = (sede || '').trim();
+
+    if (!nom || !ndni || !sSede) return; // ahora exige sede también
 
     setSavedNombre(true);
+
+    // Persistencia
     localStorage.setItem('sf_nombre', nom);
     localStorage.setItem('sf_dni', ndni);
+    localStorage.setItem('sf_sede', sSede);
+
     setFirstName(firstNameOf(nom));
+
+    // Si tu callback acepta parámetros extra, pasale la sede opcionalmente
+    // onReady?.({ nombre: nom, dni: ndni, sede: sSede });
     onReady?.(nom);
 
     setTimeout(() => setStep(1), 550);
@@ -115,6 +132,8 @@ export default function SoftFusionIntro({ onReady, logoSrc }) {
                 setNombre={setNombre}
                 dni={dni} /* NUEVO */
                 setDni={setDni} /* NUEVO */
+                sede={sede} /* NUEVO */
+                setSede={setSede} /* NUEVO */
                 onSubmit={handleSubmitNombre}
                 saved={savedNombre}
               />
@@ -136,6 +155,7 @@ export default function SoftFusionIntro({ onReady, logoSrc }) {
                 key="step-2"
                 fullName={nombre}
                 dni={dni} // 👈 PASAR DNI
+                sede={sede}
                 firstName={firstName}
                 perfil={perfil}
                 onConfirm={handleConfirmReview}
@@ -143,6 +163,7 @@ export default function SoftFusionIntro({ onReady, logoSrc }) {
                 onUpdatePerfil={(partial) =>
                   setPerfil((p) => ({ ...p, ...partial }))
                 }
+                onUpdateSede={(v) => setSede(v)}
               />
             )}
 
@@ -152,6 +173,7 @@ export default function SoftFusionIntro({ onReady, logoSrc }) {
                 firstName={firstName}
                 nombre={nombre} // 👈
                 dni={dni} // 👈
+                sede={sede}
                 onSubmit={(files) => {
                   console.log('Imagenes recibidas:', files);
                 }}
@@ -197,20 +219,37 @@ const itemUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: easeOut } }
 };
 
-function NombreForm({ nombre, setNombre, dni, setDni, onSubmit, saved }) {
+function NombreForm({
+  nombre,
+  setNombre,
+  dni,
+  setDni,
+  sede,
+  setSede,
+  onSubmit,
+  saved
+}) {
   const hasNombre = (nombre ?? '').trim().length > 0;
   const dniNum = (dni ?? '').replace(/\D/g, '');
-  const hasDni = dniNum.length >= 7; // ajustá la mínima que quieras (7–8)
-
-  const hasValue = (nombre ?? '').trim().length > 0;
+  const hasDni = dniNum.length >= 7;
+  const hasSede = (sede ?? '').length > 0;
 
   const subtitle = useMemo(() => {
     if (saved) return '¡Genial! Ya lo guardamos';
     if (!hasNombre && !hasDni) return 'Empecemos por definir tu nombre y DNI';
     if (hasNombre && !hasDni) return `Nombre: ${nombre} — ahora escribí tu DNI`;
-    if (hasNombre && hasDni) return `Se verá así: ${nombre} • DNI ${dniNum}`;
+    if (hasNombre && hasDni && !hasSede) return 'Elegí tu sede';
+    if (hasNombre && hasDni && hasSede)
+      return `Se verá así: ${nombre} • DNI ${dniNum} • ${sede}`;
     return 'Completá tus datos';
-  }, [hasNombre, hasDni, nombre, dniNum, saved]);
+  }, [hasNombre, hasDni, hasSede, nombre, dniNum, sede, saved]);
+
+  const SEDE_OPCIONES = [
+    'Monteros',
+    'Concepción',
+    'Barrio Norte',
+    'Barrio Sur'
+  ];
 
   return (
     <motion.form
@@ -221,11 +260,9 @@ function NombreForm({ nombre, setNombre, dni, setDni, onSubmit, saved }) {
       exit="exit"
       className="mx-auto w-full max-w-lg"
     >
-      {/* Marco blanco con acento naranja */}
       <div className="relative rounded-3xl p-[1px]">
         <div className="rounded-3xl bg-orange ring-1 ring-zinc-200">
           <div className="rounded-3xl p-6 transition-shadow duration-300 hover:shadow-[0_0_35px_-10px_rgba(251,146,60,0.45)]">
-            {/* Título */}
             <motion.h2
               variants={itemUp}
               className="uppercase text-center text-xl font-semibold tracking-tight text-zinc-900 md:text-2xl"
@@ -233,7 +270,6 @@ function NombreForm({ nombre, setNombre, dni, setDni, onSubmit, saved }) {
               Tu identidad primero
             </motion.h2>
 
-            {/* Subtítulo interactivo */}
             <motion.p
               variants={itemUp}
               className="mt-2 text-center text-sm text-zinc-600"
@@ -242,12 +278,10 @@ function NombreForm({ nombre, setNombre, dni, setDni, onSubmit, saved }) {
             </motion.p>
 
             <div className="mt-6 grid gap-4">
-              {/* Label */}
+              {/* Nombre */}
               <motion.label variants={itemUp} className="text-sm text-zinc-700">
                 Nombre completo
               </motion.label>
-
-              {/* Input claro, foco naranja */}
               <motion.input
                 variants={itemUp}
                 autoFocus
@@ -258,52 +292,104 @@ function NombreForm({ nombre, setNombre, dni, setDni, onSubmit, saved }) {
                            focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30"
               />
 
-              {/* NUEVO: DNI */}
+              {/* DNI */}
               <motion.label
                 variants={itemUp}
                 className="mt-4 text-sm text-zinc-700"
               >
                 Documento (DNI)
               </motion.label>
-
               <motion.input
                 variants={itemUp}
                 inputMode="numeric"
                 value={dni}
                 onChange={(e) =>
-                  setDni(
-                    e.target.value
-                      .replace(/\D/g, '') // solo dígitos
-                      .slice(0, 9) // opcional: limitar longitud
-                  )
+                  setDni(e.target.value.replace(/\D/g, '').slice(0, 9))
                 }
                 placeholder="Ej: 30123456"
                 className="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 outline-none placeholder:text-zinc-400
-             focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30"
+                           focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30"
               />
+
+              {/* SEDE — tarjetas responsive (mobile OK, desktop prolijo) */}
+              <motion.label
+                variants={itemUp}
+                className="ml-2 mt-4 text-sm text-zinc-700"
+              >
+                Sede
+              </motion.label>
+
+              <motion.fieldset variants={itemUp} className="mt-2 px-2 md:px-0">
+                <legend className="sr-only">Elegí una sede</legend>
+
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  {SEDE_OPCIONES.map((opt) => (
+                    <label
+                      key={opt}
+                      className="w-full cursor-pointer select-none"
+                    >
+                      {/* peer para poder estilizar el siguiente div */}
+                      <input
+                        type="radio"
+                        name="sede"
+                        value={opt}
+                        checked={sede === opt}
+                        onChange={() => setSede(opt)}
+                        className="peer sr-only"
+                      />
+
+                      {/* Tarjeta con SOLO borde que cambia a naranja al seleccionar */}
+                      <div
+                        className="
+            rounded-2xl border border-zinc-200 bg-white transition
+            hover:border-zinc-300 hover:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.25)]
+            peer-checked:border-orange-500
+          "
+                      >
+                        <div
+                          className="
+              inline-flex h-14 md:h-16 w-full items-center justify-center
+              px-4 text-sm md:text-base font-medium text-zinc-800
+              text-center md:whitespace-nowrap
+            "
+                        >
+                          {opt}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                <p className="mt-2 px-1 text-xs text-zinc-500">
+                  Elegí tu sede. Podrás cambiarla luego en la revisión.
+                </p>
+              </motion.fieldset>
 
               {/* Hint */}
               <motion.div
                 variants={itemUp}
                 initial={false}
-                animate={{ opacity: hasValue ? 1 : 0, y: hasValue ? 0 : 6 }}
+                animate={{
+                  opacity: hasNombre || hasDni || hasSede ? 1 : 0,
+                  y: hasNombre || hasDni || hasSede ? 0 : 6
+                }}
                 className="text-xs text-orange-600/90"
               >
                 Tip: presioná <span className="font-semibold">Enter</span> para
                 guardar.
               </motion.div>
 
-              {/* Botón naranja */}
+              {/* Botón */}
               <motion.button
                 variants={itemUp}
                 type="submit"
-                disabled={!(hasNombre && hasDni)}
+                disabled={!(hasNombre && hasDni && hasSede)}
                 className={`group relative mt-2 inline-flex items-center justify-center gap-2 overflow-hidden rounded-2xl px-5 py-3 font-medium text-white transition-all
-    ${
-      hasNombre && hasDni
-        ? 'bg-orange-600 hover:bg-orange-500 shadow-[0_8px_30px_-10px_rgba(251,146,60,0.55)] hover:shadow-[0_12px_45px_-10px_rgba(251,146,60,0.75)] focus:outline-none focus:ring-2 focus:ring-orange-500/60'
-        : 'bg-orange-600/40 cursor-not-allowed opacity-60'
-    }`}
+                  ${
+                    hasNombre && hasDni && hasSede
+                      ? 'bg-orange-600 hover:bg-orange-500 shadow-[0_8px_30px_-10px_rgba(251,146,60,0.55)] hover:shadow-[0_12px_45px_-10px_rgba(251,146,60,0.75)] focus:outline-none focus:ring-2 focus:ring-orange-500/60'
+                      : 'bg-orange-600/40 cursor-not-allowed opacity-60'
+                  }`}
               >
                 Guardar
               </motion.button>
@@ -317,7 +403,7 @@ function NombreForm({ nombre, setNombre, dni, setDni, onSubmit, saved }) {
                   animate="show"
                   className="text-center text-sm text-orange-600"
                 >
-                  ¡Listo! Guardamos tu nombre en el dispositivo.
+                  ¡Listo! Guardamos tus datos.
                 </motion.div>
               )}
             </div>

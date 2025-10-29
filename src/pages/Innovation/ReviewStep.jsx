@@ -23,17 +23,22 @@ const itemUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: easeOut } }
 };
 
+const SEDE_OPCIONES = ['Monteros', 'Concepción', 'Barrio Norte', 'Barrio Sur'];
+
 export default function ReviewStep({
   fullName,
   dni,
+  sede, // ✅ NUEVO
   onConfirm,
   onUpdateName,
-  onUpdateDni
+  onUpdateDni,
+  onUpdateSede // ✅ NUEVO
 }) {
-  const [edit, setEdit] = useState({ nombre: false, dni: false });
+  const [edit, setEdit] = useState({ nombre: false, dni: false, sede: false }); // ✅
   const [draft, setDraft] = useState({
     nombre: fullName || '',
-    dni: dni || ''
+    dni: dni || '',
+    sede: sede || '' // ✅
   });
 
   const toggle = (field, on = undefined) =>
@@ -53,6 +58,15 @@ export default function ReviewStep({
     onUpdateDni?.(v);
     localStorage.setItem('sf_dni', v);
     toggle('dni', false);
+  };
+
+  const saveSede = () => {
+    // ✅
+    const v = (draft.sede || '').trim();
+    if (!v) return;
+    onUpdateSede?.(v);
+    localStorage.setItem('sf_sede', v);
+    toggle('sede', false);
   };
 
   const EditBtn = ({ onClick }) => (
@@ -157,7 +171,7 @@ export default function ReviewStep({
                       setDraft((d) => ({ ...d, nombre: fullName || '' }));
                       toggle('nombre', false);
                     }}
-                    canSave={!!draft.nombre.trim()}
+                    canSave={!!(draft.nombre || '').trim()}
                   />
                 )}
               </motion.div>
@@ -210,6 +224,58 @@ export default function ReviewStep({
                       toggle('dni', false);
                     }}
                     canSave={!!draft.dni}
+                  />
+                )}
+              </motion.div>
+
+              {/* SEDE */}
+              <motion.div
+                variants={itemUp}
+                className="rounded-2xl border border-zinc-300 bg-white p-4 text-zinc-800"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <div className="text-xs uppercase text-zinc-500">Sede</div>
+                    {!edit.sede ? (
+                      <div className="mt-1 text-base">{sede || '—'}</div>
+                    ) : (
+                      <select
+                        autoFocus
+                        value={draft.sede}
+                        onChange={(e) =>
+                          setDraft((d) => ({ ...d, sede: e.target.value }))
+                        }
+                        className="mt-1  w-full appearance-none rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none
+                                   focus:border-orange-500 focus:ring-2 focus:ring-orange-500/25"
+                      >
+                        <option value="" disabled>
+                          Elegí una sede…
+                        </option>
+                        {SEDE_OPCIONES.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                  {!edit.sede ? (
+                    <EditBtn
+                      onClick={() => {
+                        setDraft((d) => ({ ...d, sede: sede || '' }));
+                        toggle('sede', true);
+                      }}
+                    />
+                  ) : null}
+                </div>
+                {edit.sede && (
+                  <ActionRow
+                    onSave={saveSede}
+                    onCancel={() => {
+                      setDraft((d) => ({ ...d, sede: sede || '' }));
+                      toggle('sede', false);
+                    }}
+                    canSave={!!(draft.sede || '').trim()}
                   />
                 )}
               </motion.div>
