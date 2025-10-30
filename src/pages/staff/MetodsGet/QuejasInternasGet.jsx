@@ -103,6 +103,8 @@ const QuejasInternasGet = () => {
 
   // ===================== Cargar sede/level desde /users =====================
   useEffect(() => {
+    if (!userName) return; // espera a tener el email
+
     const loadUserMeta = async () => {
       try {
         const { data: users } = await axios.get(`${API_BASE}/users`);
@@ -110,35 +112,27 @@ const QuejasInternasGet = () => {
           (u) =>
             (u?.email || '').toLowerCase() === (userName || '').toLowerCase()
         );
-        if (me) {
-          setUserSede(me.sede || '');
-          setUserLevelCanon(toCanonical(me.level || userLevel));
-          await obtenerQuejas(me?.sede || '');
-        } else {
-          setUserSede('');
-          setUserLevelCanon(toCanonical(userLevel));
-          await obtenerQuejas('');
-        }
+        if (me?.level) setUserLevelCanon(toCanonical(me.level));
       } catch (err) {
         console.log('Error al leer /users:', err);
-        await obtenerQuejas('');
+        setUserLevelCanon(toCanonical(userLevel));
+      } finally {
+        await obtenerQuejas(); // 👈 sin sede
       }
     };
+
     loadUserMeta();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userName]);
 
   // ===================== Obtener quejas (server filtra por headers) =====================
-  const obtenerQuejas = async (sedeActual = userSede) => {
+  const obtenerQuejas = async () => {
     setLoading(true);
     setError('');
     try {
-      const headers = {
-        'x-user-email': userName || '',
-        'x-user-level': userLevel || '',
-        'x-user-sede': sedeActual || ''
-      };
-      const response = await axios.get(URL, { headers });
+      const response = await axios.get(URL, {
+        params: { userLevel, userName } // ✅ se envía por query
+      });
       setQuejas(response.data || []);
     } catch (err) {
       console.error('Error al obtener las quejas:', err);
@@ -153,7 +147,8 @@ const QuejasInternasGet = () => {
   useEffect(() => {
     const fetchQuejaDetails = async () => {
       try {
-        const response = await fetch(`${URL}${id}`);
+        const qs = new URLSearchParams({ userLevel, userName }).toString();
+        const response = await fetch(`${URL}${id}?${qs}`);
         const data = await response.json();
         if (data) {
           setSelectedQueja(data);
@@ -175,6 +170,9 @@ const QuejasInternasGet = () => {
     'x-user-sede': userSede || ''
   };
 
+  const userParams = { userLevel, userName };
+  const userPayload = JSON.stringify({ userLevel, userName });
+
   const handleEliminarQueja = async (id) => {
     const confirm = await Swal.fire({
       title: '¿Eliminar queja?',
@@ -188,7 +186,7 @@ const QuejasInternasGet = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      await axios.delete(`${URL}${id}`, { headers: commonHeaders });
+      await axios.delete(`${URL}${id}`, { params: userParams }); // ✅ query
       setQuejas((prev) => prev.filter((q) => q.id !== id));
       toast('Queja eliminada', 'success');
     } catch (err) {
@@ -217,8 +215,8 @@ const QuejasInternasGet = () => {
     try {
       const resp = await fetch(`${API_BASE}/quejas/${id}/resolver`, {
         method: 'PUT',
-        headers: commonHeaders,
-        body: JSON.stringify({ resuelto_por: userName })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userLevel, userName, resuelto_por: userName }) // ✅ body
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
@@ -253,7 +251,8 @@ const QuejasInternasGet = () => {
     try {
       const resp = await fetch(`${API_BASE}/quejas/${id}/no-resuelto`, {
         method: 'PUT',
-        headers: commonHeaders
+        headers: { 'Content-Type': 'application/json' },
+        body: userPayload // ✅ { userLevel, userName }
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
