@@ -1,6 +1,7 @@
 // HammerXChatIntake.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import ProcessingModal from './Components/ProcessingModal';
 
 const API_UPLOAD_URL = 'http://localhost:8080/hx/imagenes-balanza';
 // debajo de otros const de arriba
@@ -148,6 +149,14 @@ export default function HammerXChatIntake({
   const [uploadLocked, setUploadLocked] = useState(false); // ← bloquea nuevos envíos tras éxito
   const [lastBatch, setLastBatch] = useState(null); // { batch_id, count, items[] }
 
+  const [showProcessing, setShowProcessing] = useState(false);
+  const processingTimerRef = useRef(null);
+
+  // Limpieza de timers al desmontar
+  useEffect(() => {
+    return () => clearTimeout(processingTimerRef.current);
+  }, []);
+
   // autoscroll
   const endRef = useRef(null);
   useEffect(() => {
@@ -253,64 +262,113 @@ export default function HammerXChatIntake({
   // Ubicación: reemplazar la función send() actual
   const apiBase = new URL(API_UPLOAD_URL).origin;
 
+  // --- helper para loguear sin romper la consola con blobs gigantes ---
+  function safePreview(obj, { maxLen = 800 } = {}) {
+    try {
+      const json = JSON.stringify(
+        obj,
+        (k, v) => {
+          // Evitá logs gigantes de binarios o arrays muy grandes
+          if (Array.isArray(v) && v.length > 20) return `[Array(${v.length})]`;
+          if (typeof v === 'string' && v.length > 200)
+            return v.slice(0, 200) + '…';
+          return v;
+        },
+        2
+      );
+      return json.length > maxLen
+        ? json.slice(0, maxLen) + ' …(truncado)'
+        : json;
+    } catch {
+      return String(obj);
+    }
+  }
   // helper: normaliza el objeto de n8n al formato que espera el POST /hx/informes/from-ocr
+
   function toOCRPayload(n8nItem, { batch_id }) {
-    // n8n puede enviarlo con "–" (en-dash) en los rangos; no molesta pero limpiamos por las dudas
+    // ⏺️ LOG DE ENTRADA
+    try {
+      console.groupCollapsed(
+        '%c[HX:UI] toOCRPayload IN',
+        'color:#8a2be2;font-weight:600'
+      );
+      console.log('batch_id:', batch_id);
+      console.log('raw n8nItem (preview):', safePreview(n8nItem));
+      console.groupEnd();
+    } catch {}
+
     const cleanRange = (s) =>
       typeof s === 'string' ? s.replace(/[–—]/g, '-').trim() : s;
+    const numOrNull = (x) => {
+      const n = Number(x);
+      return Number.isFinite(n) ? n : null;
+    };
 
     const gender = n8nItem?.Gender || n8nItem?.gender || null;
-    // Height puede venir en cm (160) o ya en metros (1.60). Detectamos.
+
+    // Height puede venir en cm (160) o ya en metros (1.60)
     let altura_m = null;
     const H = n8nItem?.Height;
     if (typeof H === 'number') {
-      altura_m = H > 3 ? Number((H / 100).toFixed(2)) : H; // 160 -> 1.60
+      altura_m = H > 3 ? Number((H / 100).toFixed(2)) : H;
     } else if (typeof H === 'string') {
       const num = Number(H.replace(/[^\d.]/g, ''));
       if (!Number.isNaN(num))
         altura_m = num > 3 ? Number((num / 100).toFixed(2)) : num;
     }
 
-    // armamos "content" con los bloques técnicos tal como esperás:
+    // Normalización profunda de physical_parameters
+    const ppIn = n8nItem?.physical_parameters || {};
+
+    // Normalizar r en métricas conocidas
+    const ppOut = {
+      ...ppIn,
+      percent_body_fat: ppIn.percent_body_fat
+        ? { ...ppIn.percent_body_fat, r: cleanRange(ppIn.percent_body_fat.r) }
+        : undefined,
+      visceral_fat_index: ppIn.visceral_fat_index
+        ? {
+            ...ppIn.visceral_fat_index,
+            r: cleanRange(ppIn.visceral_fat_index.r)
+          }
+        : undefined,
+      body_mass_index: ppIn.body_mass_index
+        ? { ...ppIn.body_mass_index, r: cleanRange(ppIn.body_mass_index.r) }
+        : undefined
+    };
+
+    // Deep-merge de indices (sin pisar lo existente) + mover waist_hip_ratio si vino plano
+    const indicesIn = ppIn.indices || {};
+    const whrIn = ppIn.waist_hip_ratio
+      ? {
+          waist_hip_ratio: {
+            ...ppIn.waist_hip_ratio,
+            r: cleanRange(ppIn.waist_hip_ratio.r)
+          }
+        }
+      : {};
+    const mergedIndices = { ...indicesIn, ...whrIn };
+    if (Object.keys(mergedIndices).length) ppOut.indices = mergedIndices;
+
+    // Ajustes sugeridos (kg) → números (pueden ser negativos)
+    const adjIn = ppIn.suggest_for_adjustments || {};
+    const suggest = {
+      fat_control: numOrNull(adjIn.fat_control),
+      muscle_control: numOrNull(adjIn.muscle_control),
+      weight_control: numOrNull(adjIn.weight_control)
+    };
+    if (Object.values(suggest).some((v) => v != null)) {
+      ppOut.suggest_for_adjustments = suggest;
+    }
+
+    // armamos "content" tal como espera el backend
     const content = {
       Gender: gender ?? undefined,
       Age: n8nItem?.Age ?? undefined,
       Height: n8nItem?.Height ?? undefined,
       body_shape_analysis: n8nItem?.body_shape_analysis ?? undefined,
       body_composition: n8nItem?.body_composition ?? undefined,
-      physical_parameters: {
-        ...(n8nItem?.physical_parameters || {}),
-        // normalizamos r: "(18.0–28.0)" -> "(18.0-28.0)"
-        percent_body_fat: n8nItem?.physical_parameters?.percent_body_fat
-          ? {
-              ...n8nItem.physical_parameters.percent_body_fat,
-              r: cleanRange(n8nItem.physical_parameters.percent_body_fat.r)
-            }
-          : undefined,
-        visceral_fat_index: n8nItem?.physical_parameters?.visceral_fat_index
-          ? {
-              ...n8nItem.physical_parameters.visceral_fat_index,
-              r: cleanRange(n8nItem.physical_parameters.visceral_fat_index.r)
-            }
-          : undefined,
-        body_mass_index: n8nItem?.physical_parameters?.body_mass_index
-          ? {
-              ...n8nItem.physical_parameters.body_mass_index,
-              r: cleanRange(n8nItem.physical_parameters.body_mass_index.r)
-            }
-          : undefined,
-        // si vino "waist_hip_ratio" plano, lo metemos bajo indices.waist_hip_ratio
-        ...(n8nItem?.physical_parameters?.waist_hip_ratio
-          ? {
-              indices: {
-                waist_hip_ratio: {
-                  ...n8nItem.physical_parameters.waist_hip_ratio,
-                  r: cleanRange(n8nItem.physical_parameters.waist_hip_ratio.r)
-                }
-              }
-            }
-          : {})
-      }
+      physical_parameters: ppOut
     };
 
     // textos (todo opcional)
@@ -324,7 +382,7 @@ export default function HammerXChatIntake({
       objetivo_final: n8nItem?.objetivo_final ?? undefined
     };
 
-    // cliente (subobjeto) con dni/nombre + derivaciones si las tenés
+    // cliente
     const cliente = {
       dni: n8nItem?.dni ? String(n8nItem.dni).replace(/\D/g, '') : undefined,
       nombre: n8nItem?.nombre ?? undefined,
@@ -334,20 +392,51 @@ export default function HammerXChatIntake({
         ? 'F'
         : undefined,
       altura_m: altura_m ?? undefined
-      // fecha_nacimiento: si alguna vez te llega y la querés pasar
     };
 
-    return {
+    const payload = {
       idempotency_key: n8nItem?.idempotency_key ?? undefined,
       fecha: n8nItem?.fecha ?? new Date().toISOString().slice(0, 10),
-      batch_id, // 👈 importante para vincular imágenes
+      batch_id, // vincula imágenes
       cliente,
       _edad_anios_override: n8nItem?.Age ?? undefined,
       content,
       textos,
-      generate_pdf: true // queremos que genere/guarde PDF y nos devuelva meta
+      generate_pdf: true
     };
+
+    // ⏺️ LOG DE SALIDA
+    try {
+      console.groupCollapsed(
+        '%c[HX:UI] toOCRPayload OUT',
+        'color:#2e8b57;font-weight:600'
+      );
+      console.log('payload (preview):', safePreview(payload));
+      console.groupEnd();
+    } catch {}
+
+    return payload;
   }
+
+  // abre a los 2s, reiniciando cualquier timer previo
+  const startProcessingDelay = () => {
+    if (processingTimerRef.current) clearTimeout(processingTimerRef.current);
+    processingTimerRef.current = setTimeout(() => {
+      setShowProcessing(true);
+    }, 2000);
+  };
+
+  // cierra SIEMPRE y cancela el timer pendiente (evita reabrir)
+  const finishProcessing = () => {
+    if (processingTimerRef.current) {
+      clearTimeout(processingTimerRef.current);
+      processingTimerRef.current = null;
+    }
+    setShowProcessing(false);
+  };
+
+  // limpieza al desmontar
+  useEffect(() => () => finishProcessing(), []);
 
   const send = async () => {
     if (!isValidCount) {
@@ -379,14 +468,15 @@ export default function HammerXChatIntake({
       {
         id: typingId,
         side: 'bot',
-        text: `Perfecto ${you}, recibí tus ${count} ${plural(
-          count,
-          'imagen',
-          'imágenes'
-        )}, las estoy procesando.`,
+        text: `Perfecto ${you}, recibí tus ${count} ${
+          count === 1 ? 'imagen' : 'imágenes'
+        }, las estoy procesando.`,
         typing: true
       }
     ]);
+
+    // ⭐ 3) Programar el modal “Procesando…” a los 2s
+    startProcessingDelay();
 
     try {
       setIsSubmitting(true);
@@ -440,7 +530,6 @@ export default function HammerXChatIntake({
         ]);
         return;
       }
-
       // --- 4) Formatear la respuesta de n8n al payload que espera tu backend ---
       const payloadRaw = Array.isArray(n8nResult.data)
         ? n8nResult.data[0]
@@ -520,6 +609,7 @@ export default function HammerXChatIntake({
         )
       );
     } finally {
+      finishProcessing();
       setIsSubmitting(false);
     }
   };
@@ -821,6 +911,7 @@ export default function HammerXChatIntake({
         Tip: asegurate de que el número de la balanza sea legible y esté bien
         iluminado.
       </motion.div>
+      <ProcessingModal open={showProcessing} />
     </motion.div>
   );
 }
