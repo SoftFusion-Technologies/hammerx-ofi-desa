@@ -790,12 +790,6 @@ const VentasProspectosGet = ({ currentUser }) => {
           clase_num: cambios.numeroClase,
           prospecto_id: cambios.idProspecto,
         };
-
-        /* console.log("Guardando clase de prueba con datos:", {
-          ...datosClasePrueba,
-          ...inscripcionData,
-          ...horarioSeleccionadoProspecto,
-        }); */
         if (!cambios.esModificacion) {
           // Verificar si existe cliente en clase de prueba
           const verificacion = await verificarClientePruebaPorNombre(
