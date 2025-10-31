@@ -3,7 +3,7 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:8080";
 
-const useModify = (endpoint) => {
+const useModify = (endpoint, patch = false) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -13,7 +13,10 @@ const useModify = (endpoint) => {
     try {
       const URL_COMPLETA = `${BASE_URL}${endpoint}${id ? `/${id}` : ""}`;
       console.log("La URL completa es:", URL_COMPLETA);
-      const response = await axios.put(URL_COMPLETA, data);
+      
+      const response = patch
+        ? await axios.patch(URL_COMPLETA, data)
+        : await axios.put(URL_COMPLETA, data);
       return response.data;
     } catch (err) {
       setError(err.message || "Error al modificar");

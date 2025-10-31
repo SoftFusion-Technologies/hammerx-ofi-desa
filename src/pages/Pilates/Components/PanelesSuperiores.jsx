@@ -102,7 +102,7 @@ const PanelesSuperiores = ({
             </h3>
             <div
               className={`${
-                allExpanded ? "h-80" : "h-40"
+                allExpanded ? "h-96" : "h-64"
               } overflow-y-auto transition-all duration-300 text-sm`}
             >
               {freeSlots.lmv.length > 0 || freeSlots.mj.length > 0 ? (
@@ -163,7 +163,7 @@ const PanelesSuperiores = ({
             </h3>
             <div
               className={`${
-                allExpanded ? "h-80" : "h-40"
+                allExpanded ? "h-96" : "h-64"
               } overflow-y-auto transition-all duration-300 text-sm`}
             >
               {expiredStudents.length > 0 ? (
@@ -201,7 +201,7 @@ const PanelesSuperiores = ({
             </div>
             <div
               className={`overflow-y-auto transition-all duration-300 text-sm ${
-                allExpanded ? "h-80" : "h-40"
+                allExpanded ? "h-96" : "h-64"
               }`}
             >
               {alumnosAusentes.length > 0 ? (
@@ -235,7 +235,7 @@ const PanelesSuperiores = ({
             </h3>
             <div
               className={`${
-                allExpanded ? "h-80" : "h-40"
+                allExpanded ? "h-96" : "h-64"
               } overflow-y-auto transition-all duration-300 text-sm`}
             >
               {waitingListMatches.length > 0 ? (

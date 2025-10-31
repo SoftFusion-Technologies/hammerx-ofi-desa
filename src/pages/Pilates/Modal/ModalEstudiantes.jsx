@@ -54,39 +54,6 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
   };
 
   /**
-   * UTILITY FUNCTION: Valida y ajusta fechas seleccionadas bloqueando fines de semana
-   * Muestra alertas al usuario si selecciona sábado o domingo.
-   * Ajusta automáticamente a viernes o lunes según corresponda.
-   */
-  const handleDateChange = (e, setDateState) => {
-    const selectedDate = new Date(e.target.value + "T00:00:00"); // Add T00:00:00 to avoid timezone issues
-    const dayOfWeek = selectedDate.getDay();
-    let newDate = e.target.value;
-    let alertMessage = "";
-
-    if (dayOfWeek === 0) {
-      // Sunday
-      alertMessage =
-        "No se pueden seleccionar domingos. La fecha se ha ajustado al lunes siguiente.";
-      selectedDate.setDate(selectedDate.getDate() + 1);
-    } else if (dayOfWeek === 6) {
-      // Saturday
-      alertMessage =
-        "No se pueden seleccionar sábados. La fecha se ha ajustado al viernes anterior.";
-      selectedDate.setDate(selectedDate.getDate() - 1);
-    }
-
-    if (alertMessage) {
-      alert(alertMessage);
-      const year = selectedDate.getFullYear();
-      const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
-      const day = String(selectedDate.getDate()).padStart(2, "0");
-      newDate = `${year}-${month}-${day}`;
-    }
-    setDateState(newDate);
-  };
-
-  /**
    * UTILITY FUNCTION: Calcula la diferencia en días entre dos fechas en formato YYYY-MM-DD
    * Convierte a UTC para evitar problemas de zona horaria.
    * Retorna la cantidad de días redondeados entre ambas fechas.
@@ -912,7 +879,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
               onClick={handleSave}
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             >
-              Guardar
+              {cellData?.student ? "Actualizar" : "Guardar"}
             </button>
             {cellData?.student && (
               <button

@@ -86,6 +86,7 @@ const ModalConfirmarListaEspera = ({
     const key = `${day}-${selectedHour}`;
 
     const studentData = {
+      id: personData.id || null,
       name,
       contact,
       status,
@@ -97,7 +98,6 @@ const ModalConfirmarListaEspera = ({
         endDate: planEndDate,
       },
     };
-
     try {
       // Esperamos a que la función principal de guardado termine.
       await onSave(key, studentData, "agregar", null);
@@ -106,18 +106,17 @@ const ModalConfirmarListaEspera = ({
       if (onConfirmationComplete && personData.id) {
         await onConfirmationComplete(personData.id);
       }
-
-      onClose(); // Cerramos el modal solo si todo fue exitoso.
     } catch (error) {
       // Si 'onSave' falla (por ejemplo, por un duplicado), el error ya se muestra
-      // y no cerramos el modal para que el usuario pueda corregir los datos.
       console.error("No se pudo inscribir al alumno:", error);
+    }finally{
+      onClose(); // Cerramos el modal
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-lg p-8 w-full max-w-2xl shadow-2xl">
+      <div className="bg-white rounded-lg p-8 w-full max-w-4xl shadow-2xl">
         <h2 className="text-2xl font-bold mb-2 text-gray-800">
           Confirmar e Inscribir Alumno
         </h2>
@@ -134,6 +133,9 @@ const ModalConfirmarListaEspera = ({
           </p>
           <p className="text-sm">
             Horarios deseados: <strong>{personData.hours.join(", ")}</strong>
+          </p>
+          <p className="text-sm">
+            tipo: <strong>{personData.type.toUpperCase()}</strong>
           </p>
         </div>
 
@@ -183,43 +185,55 @@ const ModalConfirmarListaEspera = ({
         </div>
 
         {/* --- Formulario del Plan --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Fecha de Contratación *
-            </label>
-            <DatePicker
-              selected={planStartDateObj}
-              onChange={(date) => {
-                setPlanStartDateObj(date);
-                setPlanStartDate(date.toISOString().slice(0, 10));
-              }}
-              dateFormat="dd/MM/yyyy"
-              className="shadow appearance-none border rounded w-full py-2 px-3"
-              locale={es}
-            />
+        {personData.type != "cambio" ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  Fecha de Contratación *
+                </label>
+                <DatePicker
+                  selected={planStartDateObj}
+                  onChange={(date) => {
+                    setPlanStartDateObj(date);
+                    setPlanStartDate(date.toISOString().slice(0, 10));
+                  }}
+                  dateFormat="dd/MM/yyyy"
+                  className="shadow appearance-none border rounded w-full py-2 px-3"
+                  locale={es}
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  Duración del Plan *
+                </label>
+                <select
+                  value={planDuration}
+                  onChange={(e) => setPlanDuration(e.target.value)}
+                  className="shadow border rounded w-full py-2 px-3"
+                >
+                  <option value="30">Mensual</option>
+                  <option value="90">Trimestral</option>
+                  <option value="180">Semestral</option>
+                  <option value="360">Anual</option>
+                </select>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 text-right mb-4">
+              Vence el:{" "}
+              {planEndDate &&
+                new Date(planEndDate + "T00:00:00").toLocaleDateString("es-ES")}
+            </p>
+          </>
+        ) : (
+          <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+            <p className="text-gray-800 font-medium mb-1">Cambio de plan</p>
+            <p className="text-sm text-gray-600">
+              No se requiere seleccionar fecha ni duración. El cliente se
+              trasladará al nuevo horario que se seleccione.
+            </p>
           </div>
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Duración del Plan *
-            </label>
-            <select
-              value={planDuration}
-              onChange={(e) => setPlanDuration(e.target.value)}
-              className="shadow border rounded w-full py-2 px-3"
-            >
-              <option value="30">Mensual</option>
-              <option value="90">Trimestral</option>
-              <option value="180">Semestral</option>
-              <option value="360">Anual</option>
-            </select>
-          </div>
-        </div>
-        <p className="text-sm text-gray-500 text-right mb-4">
-          Vence el:{" "}
-          {planEndDate &&
-            new Date(planEndDate + "T00:00:00").toLocaleDateString("es-ES")}
-        </p>
+        )}
 
         {/* --- Botones de Acción --- */}
         <div className="flex items-center justify-end mt-8 gap-4 border-t pt-6">

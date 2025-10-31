@@ -10,7 +10,7 @@ import sweetalert2 from 'sweetalert2';
 import useModify from '../ConsultaDb/Modificar';
 import ObtenerFechaInternet from '../utils/ObtenerFechaInternet';
 import { useAuth } from '../../../AuthContext';
-import { format } from 'date-fns';
+import { format, set } from 'date-fns';
 import { FaPencilAlt } from 'react-icons/fa';
 
 import Swal from 'sweetalert2';
@@ -48,6 +48,7 @@ const PilatesGestionLogica = () => {
   const [currentCell, setCurrentCell] = useState(null); // Guarda la información de la celda de la grilla que fue clickeada.
   const [horarioSeleccionado, setHorarioSeleccionado] = useState(null); // Almacena los datos del horario seleccionado para editar su profesor.
   const [personToConfirm, setPersonToConfirm] = useState(null); // Guarda los datos de la persona de la lista de espera que se va a inscribir.
+  const [tipoInscripcionListaEspera, setTipoInscripcionListaEspera] = useState(null); // Guarda el tipo de inscripción (cambio o espera).
 
   // --- Refs ---
   const refSedeUsuario = useRef(null); // Referencia para un elemento del DOM, probablemente un input.
@@ -122,6 +123,10 @@ const PilatesGestionLogica = () => {
     // Hook para crear o actualizar el registro de auditoría cuando se modifica una fecha de fin manualmente.
     '/auditoria-pilates/cliente'
   );
+  const { update: guardarCambioDeTurno } = useModify(
+    // Hook para actualizar cuando un alumno cambia de turno desde la lista de espera.
+    '/inscripciones-pilates/cambiar-turno', true
+  );
 
   // --- Hooks de Eliminación (DELETE) ---
   const { deleteCliente } = useDeleteClientePilates(); // Hook para eliminar un cliente y todos sus datos asociados.
@@ -139,11 +144,13 @@ const PilatesGestionLogica = () => {
         const normalizedKey = key.replace('MIERCOLES', 'MIÉRCOLES');
         normalizedData[normalizedKey] = {
           coach: horariosData[key].coach || '',
+          horarioId: horariosData[key].horarioId || null,
           coachId: horariosData[key].coachId || null,
           alumnos: Array.isArray(horariosData[key].alumnos)
             ? horariosData[key].alumnos
             : []
         };
+        console.log(normalizedData)
         setSchedule(normalizedData);
       });
     }
@@ -464,6 +471,7 @@ const PilatesGestionLogica = () => {
         const persona = waitingList.find((p) => p.id === id);
         if (persona) {
           setPersonToConfirm(persona); // Guarda los datos de la persona a confirmar.
+          setTipoInscripcionListaEspera(persona.type); // Guarda el tipo de inscripción (cambio o espera).
           setIsConfirmModalOpen(true); // Abre el modal de inscripción.
         } else {
           await sweetalert2.fire(
@@ -729,6 +737,85 @@ const PilatesGestionLogica = () => {
     }
   };
 
+/**
+ * Calcula la distancia de Levenshtein entre dos strings.
+ * No necesitas entender cómo funciona por dentro, solo saber que
+ * devuelve un número que representa qué tan diferentes son.
+ */
+function levenshteinDistance(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+
+    const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+
+    for (let i = 0; i <= a.length; i++) {
+        matrix[0][i] = i;
+    }
+    for (let j = 0; j <= b.length; j++) {
+        matrix[j][0] = j;
+    }
+
+    for (let j = 1; j <= b.length; j++) {
+        for (let i = 1; i <= a.length; i++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            matrix[j][i] = Math.min(
+                matrix[j][i - 1] + 1,      // Deletion
+                matrix[j - 1][i] + 1,      // Insertion
+                matrix[j - 1][i - 1] + cost // Substitution
+            );
+        }
+    }
+
+    return matrix[b.length][a.length];
+}
+
+// FUNCTION: Encuentra un alumno y sus horarios viejo y nuevo por nombre aproximado
+const encontrarAlumnoYHorario = useCallback((nombreBuscado, keyHorarioNuevo) => {
+    // 1. Validaciones iniciales de los parámetros.
+    if (!nombreBuscado || !keyHorarioNuevo) return null;
+    
+    // Define cuántos errores de tipeo se permiten en la búsqueda.
+    const UMBRAL_DE_SIMILITUD = 3;
+
+    // 2. Busca el ID del horario NUEVO usando la key que pasaste.
+    const horarioNuevoInfo = schedule[keyHorarioNuevo];
+    const horarioIdNuevo = horarioNuevoInfo ? horarioNuevoInfo.horarioId : null;
+
+    // Si la key del nuevo horario no existe en la grilla, no podemos continuar.
+    if (horarioIdNuevo === null) {
+        console.error(`La clave del horario nuevo "${keyHorarioNuevo}" no fue encontrada en el objeto 'schedule'.`);
+        return null;
+    }
+
+    // 3. Recorre todos los horarios para encontrar al alumno y su horario VIEJO.
+    const listaDeHorarios = Object.values(schedule);
+    for (const horario of listaDeHorarios) {
+        
+        // 4. Busca al alumno por su nombre con una coincidencia aproximada.
+        const alumnoEncontrado = horario.alumnos.find(alumno => {
+            const distancia = levenshteinDistance(
+                alumno.name.toLowerCase(), 
+                nombreBuscado.toLowerCase()
+            );
+            // Si la diferencia de letras es pequeña, lo consideramos una coincidencia.
+            return distancia <= UMBRAL_DE_SIMILITUD;
+        });
+
+        // 5. Si encontramos al alumno, armamos y devolvemos el objeto con los tres IDs.
+        if (alumnoEncontrado) {
+            return {
+                idEstudiante: alumnoEncontrado.id,     // ID del alumno
+                idHorarioAnterior: horario.horarioId,   // ID del horario donde estaba (viejo)
+                idHorarioNuevo: horarioIdNuevo       // ID del horario al que se va a mover (nuevo)
+            };
+        }
+    }
+
+    // 6. Si el bucle termina, significa que el alumno no fue encontrado en ningún horario.
+    return null;
+
+}, [schedule]); // La única dependencia de esta función es el estado 'schedule'.
+
   /**
    * FUNCTION: Abre el modal para agregar o editar un alumno en un horario específico
    * Valida que haya cupos disponibles antes de permitir agregar nuevos alumnos.
@@ -743,7 +830,7 @@ const PilatesGestionLogica = () => {
       return;
     }
     const key = `${day}-${time}`;
-    const studentsInSlot = schedule[key] || [];
+    const studentsInSlot = schedule[key]?.alumnos || [];
     if (!studentToEdit && studentsInSlot.length >= 10) {
       alert(`Este turno ya está completo (10/10).`);
       return;
@@ -815,7 +902,11 @@ const PilatesGestionLogica = () => {
       return;
     }
 
-    if (await validateNameDuplicates(studentData, accion)) return;
+    // Validar duplicados solo si no es un cambio desde lista de espera
+    if (tipoInscripcionListaEspera != 'cambio') {
+      const tieneDuplicado = await validateNameDuplicates(studentData, accion);
+      if (tieneDuplicado) throw new Error('Nombre duplicado detectado.');
+    }
     try {
       if (accion === 'eliminar') {
         const confirm = await sweetalert2.fire({
@@ -929,106 +1020,136 @@ const PilatesGestionLogica = () => {
 
       const formDataForDB = {
         id: studentData.id || null,
-        nombre: studentData.name || '',
-        telefono: studentData.contact || '',
-        observaciones: studentData.observation || 'SIN OBSERVACIONES',
+        nombre: studentData.name || "",
+        telefono: studentData.contact || "",
+        observaciones: studentData.observation || "SIN OBSERVACIONES",
         estado:
-          studentData.status === 'plan'
-            ? 'Plan'
-            : studentData.status === 'prueba'
-            ? 'Clase de prueba'
-            : studentData.status === 'programado'
-            ? 'Renovacion programada'
-            : 'Renovacion reprogramada',
+          studentData.status === "plan"
+            ? "Plan"
+            : studentData.status === "prueba"
+            ? "Clase de prueba"
+            : studentData.status === "programado"
+            ? "Renovacion programada"
+            : "Renovacion reprogramada",
         fecha_inicio:
-          planAContratado === 'De plan a programado'
+          planAContratado === "De plan a programado"
             ? planStartDateAux
             : fechaInicioStr,
 
         fecha_fin:
-          planAContratado === 'De plan a programado'
+          planAContratado === "De plan a programado"
             ? planEndDateAux
             : fechaFinStr,
         fecha_prometido_pago:
-          planAContratado === 'De plan a programado' ? fechaInicioStr : null
+          planAContratado === "De plan a programado" ? fechaInicioStr : null,
       };
-      if (accion === 'agregar') {
-        await insertCliente(formDataForDB, inscripcionData);
-
+      // Lógica específica para cambios desde la lista de espera
+      if (accion === "agregar" && tipoInscripcionListaEspera === "cambio") {
+        const alumno = encontrarAlumnoYHorario(studentData.name, key);
+        if (!alumno) {
+          throw new Error("Alumno no encontrado para cambio de turno.");
+        }
+        const alumnoCambio = {
+          id_estudiante: alumno.idEstudiante,
+          id_horario_anterior: alumno.idHorarioAnterior,
+          id_horario_nuevo: alumno.idHorarioNuevo,
+        };
+        const resultadoCambio = await guardarCambioDeTurno(null, alumnoCambio);
+        if (!resultadoCambio) {
+          throw new Error("No se pudo cambiar el turno del alumno.");
+        }
         await sweetalert2.fire({
-          icon: 'success',
-          title: 'Agregado',
-          text: 'El alumno fue agregado correctamente.',
+          icon: "success",
+          title: "Agregado",
+          text: "El alumno fue cambiado de turno correctamente.",
           timer: 1800,
-          showConfirmButton: false
+          showConfirmButton: false,
+        });
+        
+      } 
+      // Logica para agregar un nuevo alumno
+      else if (accion === "agregar") {
+        await insertCliente(formDataForDB, inscripcionData);
+        await sweetalert2.fire({
+          icon: "success",
+          title: "Agregado",
+          text: "El alumno fue agregado correctamente.",
+          timer: 1800,
+          showConfirmButton: false,
         });
       } else if (
-        accion === 'modificar' &&
-        (planAContratado === 'De plan a programado' ||
-          planAContratado === 'De programado a contratado')
+        // Modificaciones cuando hay cambio de plan entre programado y contratado
+        accion === "modificar" &&
+        (planAContratado === "De plan a programado" ||
+          planAContratado === "De programado a contratado")
       ) {
         const datosParaEnviar = {
           fecha_prometido_pago:
-            planAContratado === 'De plan a programado' ? fechaInicioStr : null,
+            planAContratado === "De plan a programado" ? fechaInicioStr : null,
           fecha_fin:
-            planAContratado === 'De plan a programado'
+            planAContratado === "De plan a programado"
               ? planEndDateAux
               : fechaFinStr,
           fecha_inicio:
-            planAContratado === 'De plan a programado'
+            planAContratado === "De plan a programado"
               ? planStartDateAux
               : fechaInicioStr,
           estado:
-            planAContratado === 'De plan a programado'
-              ? 'Renovacion programada'
-              : 'Plan'
+            planAContratado === "De plan a programado"
+              ? "Renovacion programada"
+              : "Plan",
         };
 
         await planAContratadoPeticion(studentData.id, datosParaEnviar);
         await sweetalert2.fire({
-          icon: 'success',
-          title: 'Modificado',
-          text: 'El alumno fue modificado correctamente.',
+          icon: "success",
+          title: "Modificado",
+          text: "El alumno fue modificado correctamente.",
           timer: 1800,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
       } else if (
-        accion === 'modificar' &&
+        // Modificaciones cuando solo se actualiza la fecha prometida
+        accion === "modificar" &&
         studentData?.scheduledDetails?.promisedDate
       ) {
         const datosParaEnviar = {
           fecha_prometido_pago: fechaInicioStr,
-          estado: 'Reprogramado'
+          estado: "Reprogramado",
         };
         await planAContratadoPeticion(studentData.id, datosParaEnviar);
         await sweetalert2.fire({
-          icon: 'success',
-          title: 'Modificado',
-          text: 'La fecha prometida fue actualizada correctamente.',
+          icon: "success",
+          title: "Modificado",
+          text: "La fecha prometida fue actualizada correctamente.",
           timer: 1800,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
-      } else if (accion === 'modificar') {
+      } 
+      // Modificaciones generales sin cambio de plan
+      else if (accion === "modificar") {
         await insertCliente(formDataForDB, inscripcionData, true);
         await sweetalert2.fire({
-          icon: 'success',
-          title: 'Modificado',
-          text: 'El alumno fue modificado correctamente.',
+          icon: "success",
+          title: "Modificado",
+          text: "El alumno fue modificado correctamente.",
           timer: 1800,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
       }
-      refetch();
-      refetchReporteAsistencia();
     } catch (error) {
       console.error('Error al guardar el alumno:', error);
-
+      
       await sweetalert2.fire({
         icon: 'error',
         title: 'Error',
         text: 'Ocurrió un error al guardar el cliente en la base de datos.'
       });
-      return;
+      throw error; // Re-lanza el error para que el modal lo capture
+    }finally{
+      refetch();
+      refetchReporteAsistencia();
+      setTipoInscripcionListaEspera(null);
     }
   };
 
