@@ -12,6 +12,35 @@ const SAMPLE_REPORT_NAME = 'informe-2025-10-07-5.pdf';
 const N8N_WEBHOOK_URL =
   'https://hammer-n8n.e3n0qp.easypanel.host/webhook/dfb8cf0c-ba87-4eaa-bfcc-6d98f6c2c594';
 
+// Abre en nueva pestaña sin exponer la URL en el markup
+function openInNewTab(url) {
+  try {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } catch (e) {
+    console.error('No se pudo abrir la vista:', e);
+  }
+}
+
+// Descarga con fetch -> blob -> link virtual (oculta la URL)
+async function downloadViaBlob(url, filename = 'archivo.pdf') {
+  try {
+    const resp = await fetch(url, { credentials: 'include' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const blob = await resp.blob();
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  } catch (e) {
+    console.error('Descarga falló:', e);
+    alert('No se pudo descargar el PDF.');
+  }
+}
+
 // utils fetch → n8n con timeout + retries
 async function postToN8NWithRetry({
   url,
@@ -552,13 +581,19 @@ export default function HammerXChatIntake({
       }
 
       const informeId = dataOCR?.informe_id;
-      let pdfUrl =
+
+      let viewUrl =
+        dataOCR?.pdf?.inline_url ||
+        (informeId ? `/hx/informes/${informeId}/pdf?view=1` : null);
+      let downloadUrl =
         dataOCR?.pdf?.url ||
         (informeId ? `/hx/informes/${informeId}/pdf` : null);
 
-      if (pdfUrl && !/^https?:\/\//i.test(pdfUrl)) {
-        pdfUrl = apiBase + pdfUrl; // absolutizamos
-      }
+      // si vienen relativas, absolutizá con tu apiBase (cuando FE y BE son dominios distintos)
+      if (viewUrl && !/^https?:\/\//i.test(viewUrl))
+        viewUrl = apiBase + viewUrl;
+      if (downloadUrl && !/^https?:\/\//i.test(downloadUrl))
+        downloadUrl = apiBase + downloadUrl;
 
       // --- 6) Feedback final + bubble PDF real ---
       setMessages((prev) => [
@@ -568,13 +603,14 @@ export default function HammerXChatIntake({
           side: 'bot',
           text: `${firstName ? firstName + ',' : ''} este es tu informe:`
         },
-        ...(pdfUrl
+        ...(downloadUrl
           ? [
               {
                 id: `f-${Date.now() + 1}`,
                 side: 'bot',
                 file: {
-                  url: pdfUrl,
+                  viewUrl,
+                  downloadUrl,
                   name:
                     dataOCR?.pdf?.filename ||
                     `informe-${
@@ -684,21 +720,25 @@ export default function HammerXChatIntake({
                         {m.file.name || 'archivo.pdf'}
                       </div>
                       <div className="mt-1 flex gap-3 text-[11px]">
-                        <a
-                          href={m.file.url}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          type="button"
+                          onClick={() => openInNewTab(m.file.viewUrl)}
                           className="underline"
                         >
                           Ver
-                        </a>
-                        <a
-                          href={m.file.url}
-                          download={m.file.name || 'archivo.pdf'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            downloadViaBlob(
+                              m.file.downloadUrl,
+                              m.file.name || 'archivo.pdf'
+                            )
+                          }
                           className="underline"
                         >
                           Descargar
-                        </a>
+                        </button>
                       </div>
                     </div>
                   </div>
