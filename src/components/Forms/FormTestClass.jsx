@@ -249,6 +249,7 @@ const FormTestClass = ({ isOpen, onClose }) => {
                       <option value="Monteros">Monteros</option>
                       <option value="Concepción">Concepción</option>
                       <option value="SanMiguel">SMT - BARRIO SUR</option> 
+                      <option value="SanMiguel">SMT - BARRIO NORTE</option> 
                     </Field>
                     {errors.sede && touched.sede ? (
                       <Alerta>{errors.sede}</Alerta>
