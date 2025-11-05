@@ -12,7 +12,7 @@
 
 import { FaWhatsapp, FaTimes } from "react-icons/fa";
 
-const ModalContactoSede = ({ showModal, closeModal }) => {
+const ModalContactoSede = ({ showModal, closeModal, sede = "Todas" }) => {
   const handleWhatsAppClick = (numero) => {
     const mensaje = "Hola! Quiero hacer una consulta";
     const url = `https://wa.me/549${numero}?text=${encodeURIComponent(
@@ -33,6 +33,7 @@ const ModalContactoSede = ({ showModal, closeModal }) => {
     { nombre: "Monteros", numero: "3863564651" },
     { nombre: "Concepción", numero: "3865855100" },
     { nombre: "Barrio Sur", numero: "3813988383" },
+    { nombre: "Barrio norte", numero: "3815584172" },
   ];
 
   if (!showModal) return null;
@@ -63,30 +64,61 @@ const ModalContactoSede = ({ showModal, closeModal }) => {
         </p>
 
         <div className="flex flex-col gap-4">
-          {sedes.map((sede) => (
-            <button
-              key={sede.numero}
-              onClick={() => handleWhatsAppClick(sede.numero)}
-              className="group relative bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl py-5 px-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-green-200"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white bg-opacity-20 rounded-full p-2">
-                    <FaWhatsapp size={24} />
-                  </div>
-                  <div className="text-left">
-                    <span className="font-bold text-xl font-messina">{sede.nombre}</span>
-                    <div className="text-green-100 text-sm font-mono tracking-wider">
-                      {formatTelefonoArg(sede.numero)}
+          {sede === "Todas"
+            ? sedes.map((sede) => (
+                <button
+                  key={sede.numero}
+                  onClick={() => handleWhatsAppClick(sede.numero)}
+                  className="group relative bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl py-5 px-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-green-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-white bg-opacity-20 rounded-full p-2">
+                        <FaWhatsapp size={24} />
+                      </div>
+                      <div className="text-left">
+                        <span className="font-bold text-xl font-messina">
+                          {sede.nombre}
+                        </span>
+                        <div className="text-green-100 text-sm font-mono tracking-wider">
+                          {formatTelefonoArg(sede.numero)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-white opacity-70 group-hover:opacity-100 transition-opacity">
+                      →
                     </div>
                   </div>
-                </div>
-                <div className="text-white opacity-70 group-hover:opacity-100 transition-opacity">
-                  →
-                </div>
-              </div>
-            </button>
-          ))}
+                </button>
+              ))
+            : sedes
+                .filter((s) => s.nombre.toLowerCase() === sede.toLowerCase())
+                .map((sede) => (
+                  <button
+                    key={sede.numero}
+                    onClick={() => handleWhatsAppClick(sede.numero)}
+                    className="group relative bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl py-5 px-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-green-200"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="bg-white bg-opacity-20 rounded-full p-2">
+                          <FaWhatsapp size={24} />
+                        </div>
+                        <div className="text-left">
+                          <span className="font-bold text-xl font-messina">
+                            {sede.nombre}
+                          </span>
+                          <div className="text-green-100 text-sm font-mono tracking-wider">
+                            {formatTelefonoArg(sede.numero)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-white opacity-70 group-hover:opacity-100 transition-opacity">
+                        →
+                      </div>
+                    </div>
+                  </button>
+                ))}
         </div>
 
         <button

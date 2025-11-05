@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Footer from "../components/footer/Footer";
 import { logo } from "../images/svg/index";
@@ -11,9 +11,10 @@ import Cardio_1 from "../images/sedes/Barrio Norte/Cardio1.webp";
 // import Sala_Principal from "../images/sedes/Barrio Norte/Sala principal.webp";
 // import Sala_Principal_1 from "../images/sedes/Barrio Norte/Sala principal 2.webp";
 import Clase_grupales from "../images/sedes/Barrio Norte/Clase_grupales.webp";
-// import PlantaB_Sala_Pesos_Libres from "../images/sedes/Barrio Norte/PlantaB_Sala_Pesos_Libres.webp";
+import PlantaB_Sala_Pesos_Libres from "../images/sedes/Barrio Norte/PlantaB_Sala_Pesos_Libres.png";
 import Musculacion from "../images/sedes/Barrio Norte/Musculacion.webp";
 import BalanzaIA from "../images/sedes/SedeBarrioNorte1.png";
+import Terraza from "../images/sedes/Barrio Norte/Terraza.webp";
 import FormTestClass_v2 from "../components/Forms/FormTestClass_v2";
 import "../styles/clients/newsede.css";
 import ModalContactoSede from "../components/ModalContactoSede";
@@ -33,7 +34,7 @@ import {
   FaWhatsapp,
   FaWeight,
   FaChair,
-  FaHammer, // Icono de martillo
+  FaHammer, 
 } from "react-icons/fa";
 
 const SedeBarrioNorte = () => {
@@ -45,40 +46,46 @@ const SedeBarrioNorte = () => {
   const abrirModalTestClass = () => setModalTestClass(true);
   const cerrarModalTestClass = () => setModalTestClass(false);
 
+  // Scroll suave hacia la sección "Instalaciones por Piso" con offset responsive
+  const scrollToInstalaciones = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const id = "instalaciones-por-piso";
+    const el = document.getElementById(id);
+    if (!el) return;
+    const headerOffset = window.innerWidth < 768 ? 72 : 120;
+    const elementPosition = el.getBoundingClientRect().top + window.pageYOffset;
+    const offsetPosition = elementPosition - headerOffset;
+    window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+  };
+
   // --- Datos para las instalaciones de la Planta Baja ---
   const classNameImg = "rounded-2xl";
 
   const groundFloorFeatures = [
     {
+      id: 1,
       icon: FaDumbbell,
       title: "Sala de Musculación",
-      description:
-        "+70 equipos de última generación para que entrenes sin esperas.",
+      description: "+70 equipos importados de ultima generación.", 
       image: Musculacion,
       isFullWidth: true,
       className: classNameImg,
     },
     {
-      icon: FaShower,
-      title: "Baños y Vestuarios",
-      description:
-        "Duchas y vestuarios con lockers individuales para tu comodidad después de cada entrenamiento.",
-    },
-    {
-      icon: FaHeartbeat,
-      title: "Sector Cardio",
-      description:
-        "+10 cintas inteligentes, bicis elípticas y otros equipos para tu entrenamiento cardiovascular.",
-      image: Cardio_1,
+      id: 2,
+      icon: FaWeight, 
+      title: "Sala de pesos libres", 
+      description: "Para que entrenes sin espera.",
+      image: PlantaB_Sala_Pesos_Libres,
       isFullWidth: true,
       className: classNameImg,
     },
-
     {
-      icon: FaWeight,
+      id: 3,
+      icon: FaWeight, 
       title: "Balanza con IA",
       description:
-        "¡Única en la provincia! Tecnología avanzada para un seguimiento preciso de tu progreso y composición corporal.",
+        "¡Única en la provincia! Tecnología avanzada para un seguimiento preciso de tu progreso, composición corporal, postura, entre muchos otros datos.", 
       image: BalanzaIA,
       isFullWidth: true,
     },
@@ -87,38 +94,57 @@ const SedeBarrioNorte = () => {
   // --- Datos para las instalaciones del Primer Piso ---
   const firstFloorFeatures = [
     {
+      icon: FaHeartbeat, 
+      title: "Sector Cardio",
+      description:
+        "+10 cintas inteligentes, bicis elípticas y otros equipos para tu entrenamiento cardiovascular.",
+      image: Cardio_1,
+      isFullWidth: true,
+      className: classNameImg,
+    },
+    {
       icon: FaSpa,
       title: "Sala de Pilates",
-      description:
-        "+8 camas y diferentes elementos para entrenar en la sala climatizada de pilates más grande de Tucumán.",
+      description: "La sala de pilates climatizada más grande de Tucumán.", 
     },
+    {
+      icon: FaShower, 
+      title: "Baños y vestuarios",
+      description:
+        "Duchas y vestuarios con lockers individuales para tu comodidad después de cada entrenamiento.",
+    },
+  ];
+
+  // --- NUEVO: Datos para las instalaciones del Segundo Piso ---
+  const secondFloorFeatures = [
     {
       icon: FaUsers,
       title: "Sala de Clases Grupales",
       description:
-        "Funcional, HIIT, Fullbody y otras clases para que elijas la que mejor se adapte a tu objetivo y ritmo.",
+        "Funcional, HIIT, Fullbody y otras clases para que elijas la que mejor se adapte a tu objetivo y ritmo, todas incluidas en tu mismo plan.", 
       image: Clase_grupales,
       isFullWidth: true,
       className: classNameImg,
     },
     {
       icon: FaSun,
-      title: "Sala de Relax y Solarium",
-      description:
-        "Sillones, sala de estar y cabina de bronceado para relajarte y descontracturarte con tus amig@s.",
-    },
-    {
-      icon: FaLeaf,
-      title: "Terraza",
-      description:
-        "Espacio al aire libre para complementar tus entrenamientos, estirar o simplemente descansar.",
+      title: "Solarium",
+      description: "Cabina de bronceado para relajarte.", 
     },
     {
       icon: FaChair,
-      title: "Sillas de Masajes",
+      title: "Sector de relax con sillas para masajes", 
       description:
         "Relaja tus músculos después de cada entrenamiento con nuestras modernas sillas de masaje, ¡un verdadero lujo!",
       image: SillaPilates,
+      isFullWidth: true,
+    },
+    {
+      icon: FaLeaf,
+      title: "Terraza al aire libre", 
+      description:
+        "Espacio al aire libre para complementar tus entrenamientos, estirar o simplemente descansar.",
+      image: Terraza,
       isFullWidth: true,
     },
   ];
@@ -156,20 +182,25 @@ const SedeBarrioNorte = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <div className="bg-white rounded-xl shadow-2xl px-6 py-3 md:px-10 md:py-5 text-center">
-              <p className="font-bignoodle uppercase text-3xl md:text-6xl text-gray-800 mb-2">
-                ¡Conocé nuestra nueva sede!
+            
+            <div className="bg-gradient-to-b from-[#ff8c00] via-[#5f1212] to-black rounded-xl shadow-2xl px-6 py-3 md:px-10 md:py-5 text-center">
+              {/* 1. Botón "Conocé mas" */}
+            <button
+              onClick={scrollToInstalaciones}
+              className="inline-block bg-[#ff7b00] border-[1px] border-[#cecece] text-white font-montserrat px-6 py-2 rounded-md mb-8 text-lg transition-transform hover:scale-105"
+            >
+              Conocé mas
+            </button>
+              <p className="font-montserrat text-3xl md:text-6xl text-gray-200 mb-2">
+                Conocé nuestra nueva sede
               </p>
               <img
                 src={logo}
                 alt="logo"
                 className="my-5 max-w-xs lg:max-w-md mx-auto"
               />
-              <p className="font-bignoodle uppercase text-3xl md:text-6xl text-[#fc4b08]">
+              <p className="font-bignoodle uppercase text-3xl md:text-6xl text-gray-200">
                 Barrio Norte
-              </p>
-              <p className="font-bignoodle uppercase text-xl md:text-4xl text-[#fc4b08] mt-1">
-                PARA VIVIR ¡SENSACIONES POSITIVAS!
               </p>
             </div>
           </motion.div>
@@ -211,11 +242,11 @@ const SedeBarrioNorte = () => {
               <p className="text-7xl font-bignoodle leading-none">3</p>
               <p className="text-2xl font-bignoodle uppercase">Plantas</p>
               <p className="uppercase text-sm font-messina mt-1">
-                De puro fitness y bienestar
+                                que van a cambiar tu forma de entrenar para
+                siempre
               </p>
             </div>
           </div>
-
           <div className="flex justify-center items-center relative py-8 overflow-hidden">
             <p className="absolute left-0 w-1/3 text-4xl font-bignoodle uppercase text-gray-300 opacity-60 text-right pr-4 hidden lg:block">
               Instalaciones por Piso
@@ -223,11 +254,10 @@ const SedeBarrioNorte = () => {
             <p className="absolute right-0 w-1/3 text-4xl font-bignoodle uppercase text-gray-300 opacity-60 text-left pl-4 hidden lg:block">
               Instalaciones por Piso
             </p>
-            <h2 className="text-4xl font-bignoodle text-center uppercase tracking-widest z-10 text-[#fc4b08]">
+            <h2 id="instalaciones-por-piso" className="text-4xl font-bignoodle text-center uppercase tracking-widest z-10 text-[#fc4b08]">
               Instalaciones por Piso
             </h2>
           </div>
-
           {/* --- BLOQUE PLANTA BAJA --- */}
           {/* VISTA CARRUSEL (Ahora visible en PC y Mobile) */}
           <div className="bg-white rounded-lg shadow-lg border-t-4 border-[#fc4b08] mb-12">
@@ -247,15 +277,17 @@ const SedeBarrioNorte = () => {
               {groundFloorFeatures.map((feature, index) => (
                 <div key={index} className="shrink-0 w-64 md:w-80">
                   <div
-                    className={`p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-orange-50 to-orange-400`}
+                    className={`p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-gray-700 to-orange-400`}
                   >
                     <div>
                       <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08]" />
-                      <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08] font-semibold">
+                      <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08] ">
                         {feature.title}
                       </h4>
-                      <p className="text-gray-600 text-sm md:text-base font-semibold">
+                      <p className="text-white text-sm md:text-base">
                         {feature.description}
+                        {feature.id === 2 && <span className="text-transparent">      SoftFusion  SoftFusion  </span>}
+                        
                       </p>
                     </div>
                     <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg">
@@ -282,7 +314,7 @@ const SedeBarrioNorte = () => {
                         </>
                       ) : (
                         <div className="w-full min-h-[200px] md:min-h-[250px] flex items-center justify-center overflow-hidden">
-                          <feature.icon className="text-9xl md:text-[10rem] text-[#fc4b08] opacity-80" />
+                          <feature.icon className="text-9xl md:text-[10rem] text-[#fc4b08]" />
                         </div>
                       )}
                     </div>
@@ -291,10 +323,9 @@ const SedeBarrioNorte = () => {
               ))}
             </div>
           </div>
-
           {/* --- BLOQUE PRIMER PISO --- */}
           {/* VISTA CARRUSEL (Ahora visible en PC y Mobile) */}
-          <div className="bg-white rounded-lg shadow-lg border-t-4 border-[#fc4b08]">
+          <div className="bg-white rounded-lg shadow-lg border-t-4 border-[#fc4b08] mb-12">
             <div className="p-6">
               {" "}
               <div className="flex items-center gap-3 mb-6">
@@ -302,7 +333,7 @@ const SedeBarrioNorte = () => {
                   1
                 </span>
                 <h3 className="text-2xl font-bignoodle uppercase text-[#fc4b08]">
-                  Primer Piso - Clases grupales y Relax
+                  Primer Piso - Resistencia y Contol
                 </h3>
               </div>
             </div>
@@ -310,13 +341,19 @@ const SedeBarrioNorte = () => {
               {" "}
               {firstFloorFeatures.map((feature, index) => (
                 <div key={index} className="shrink-0 w-64 md:w-80">
-                  <div className="p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-orange-50 to-orange-400">
+                  <div
+                    className={`p-4 border border-gray-200 rounded-lg h-full flex flex-col  ${
+                      feature.title === "Sala de Pilates"
+                        ? "bg-gradient-to-b from-gray-200 to-orange-200 "
+                        : "bg-gradient-to-b from-white to-orange-400" 
+                    }`}
+                  >
                     <div>
                       <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08]" />
-                      <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08] font-semibold">
+                      <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08]">
                         {feature.title}
                       </h4>
-                      <p className="text-gray-600 text-sm md:text-base font-semibold">
+                      <p className="text-gray-600 text-sm md:text-base">
                         {feature.description}
                       </p>
                     </div>
@@ -329,7 +366,65 @@ const SedeBarrioNorte = () => {
                             className={`${
                               feature.className ? feature.className : ""
                             } w-full h-full object-cover min-h-[200px] md:min-h-[250px]`}
-                            // Aplicar opacidad si no está en la lista de exclusión
+                            style={
+                              excludeHammerEffect.includes(feature.image)
+                                ? {}
+                                : { filter: "brightness(60%)" }
+                            }
+                          />
+                          {!excludeHammerEffect.includes(feature.image) && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <FaHammer className="text-6xl text-white opacity-80" />
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="w-full min-h-[200px] md:min-h-[250px] flex items-center justify-center overflow-hidden">
+                          <feature.icon className="text-9xl md:text-[10rem] text-[#fc4b08] opacity-80" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* --- BLOQUE SEGUNDO PISO --- */}
+          <div className="bg-white rounded-lg shadow-lg border-t-4 border-[#fc4b08] mb-12">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-white rounded-full h-8 w-8 flex items-center justify-center font-bold bg-[#fc4b08]">
+                  2
+                </span>
+                <h3 className="text-2xl font-bignoodle uppercase text-[#fc4b08]">
+                  Segundo Piso - Movimiento, energia y bienestar
+                </h3>
+              </div>
+            </div>
+
+            <div className="flex overflow-x-auto gap-4 pb-4 px-6">
+              {secondFloorFeatures.map((feature, index) => (
+                <div key={index} className="shrink-0 w-64 md:w-80">
+                  <div className="p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-orange-50 to-orange-400">
+                    <div>
+                      <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08]" />
+                      <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08]">
+                        {feature.title}
+                      </h4>
+                      <p className="text-gray-600 text-sm md:text-base">
+                        {feature.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg">
+                      {feature.image ? (
+                        <>
+                          <img
+                            src={feature.image}
+                            alt={feature.title}
+                            className={`${
+                              feature.className ? feature.className : ""
+                            } w-full h-full object-cover min-h-[200px] md:min-h-[250px]`}
                             style={
                               excludeHammerEffect.includes(feature.image)
                                 ? {}
@@ -390,9 +485,8 @@ const SedeBarrioNorte = () => {
           ¡Asegura tu lugar!
         </h2>
         {/* --- MODIFICADO: Ahora es un enlace a WhatsApp --- */}
-        <a
-          href="https://wa.me/5493815584172?text=%C2%A1Quiero%20conocer%20sobre%20la%20preventa%21"
-          target="_blank"
+        <button
+          onClick={() => setModalContacto(true)}
           rel="noopener noreferrer"
           className="inline-block mt-6 bg-white border-2 border-white rounded-lg px-8 py-4 transition-transform transform hover:scale-105"
         >
@@ -400,7 +494,7 @@ const SedeBarrioNorte = () => {
             ¡Quiero conocer sobre la preventa!
           </span>
           <FaWhatsapp className="inline-block text-4xl ml-3 text-[#fc4b08]" />
-        </a>
+        </button>
       </section>
 
       {/* Título de la sección del mapa */}
@@ -451,6 +545,7 @@ const SedeBarrioNorte = () => {
         <ModalContactoSede
           showModal={modalContacto}
           closeModal={cerrarModalContacto}
+          sede= "Barrio norte"
         />
         <FormTestClass isOpen={modalTestClass} onClose={cerrarModalTestClass} />
       </div>
