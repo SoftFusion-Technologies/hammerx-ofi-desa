@@ -25,17 +25,23 @@ import {
   FaMapMarkerAlt,
   FaRegBuilding,
   FaDumbbell,
-  FaSpa,
   FaHeartbeat,
   FaShower,
   FaUsers,
-  FaSun,
-  FaLeaf,
   FaWhatsapp,
   FaWeight,
   FaChair,
   FaHammer, 
+  FaWeightHanging
 } from "react-icons/fa";
+
+import {
+  FiSun,
+  FiWind, 
+} from "react-icons/fi";
+import { MdSelfImprovement } from "react-icons/md";
+
+
 
 const SedeBarrioNorte = () => {
   const [modalContacto, setModalContacto] = useState(false);
@@ -66,14 +72,14 @@ const SedeBarrioNorte = () => {
       id: 1,
       icon: FaDumbbell,
       title: "Sala de Musculación",
-      description: "+70 equipos importados de ultima generación.", 
+      description: "+70 equipos importados de última generación.", 
       image: Musculacion,
       isFullWidth: true,
       className: classNameImg,
     },
     {
       id: 2,
-      icon: FaWeight, 
+      icon: FaWeightHanging, 
       title: "Sala de pesos libres", 
       description: "Para que entrenes sin espera.",
       image: PlantaB_Sala_Pesos_Libres,
@@ -103,7 +109,7 @@ const SedeBarrioNorte = () => {
       className: classNameImg,
     },
     {
-      icon: FaSpa,
+      icon: MdSelfImprovement,
       title: "Sala de Pilates",
       description: "La sala de pilates climatizada más grande de Tucumán.", 
     },
@@ -127,9 +133,9 @@ const SedeBarrioNorte = () => {
       className: classNameImg,
     },
     {
-      icon: FaSun,
+      icon: FiSun,
       title: "Solarium",
-      description: "Cabina de bronceado para relajarte.", 
+      description: "Cabina de bronceado para adelantarse al verano.", 
     },
     {
       icon: FaChair,
@@ -140,7 +146,7 @@ const SedeBarrioNorte = () => {
       isFullWidth: true,
     },
     {
-      icon: FaLeaf,
+      icon: FiWind,
       title: "Terraza al aire libre", 
       description:
         "Espacio al aire libre para complementar tus entrenamientos, estirar o simplemente descansar.",
@@ -166,7 +172,7 @@ const SedeBarrioNorte = () => {
 
   return (
     <>
-      <div className="relative text-center overflow-hidden bg-gradient-to-r from-[#fc4b08] to-[#ff8c00] pb-12">
+      <div className="relative text-center overflow-hidden bg-gradient-to-r from-[#fc4b08] to-[#ff8c00] pb-0 md:pb-12">
         <div className="absolute inset-0 flex items-center justify-center gap-x-24 lg:gap-x-[32rem] mr-0 lg:mr-36 z-0 pointer-events-none">
           <span className="font-bignoodle text-8xl md:text-9xl lg:text-[18rem] leading-none opacity-70 text-transparent [-webkit-text-stroke:2px_white] lg:[-webkit-text-stroke:3px_white] whitespace-nowrap">
             ¡NUEVA
@@ -175,29 +181,27 @@ const SedeBarrioNorte = () => {
             SEDE!
           </span>
         </div>
-        <div className="relative z-10 flex items-center justify-center py-12 md:py-16">
+        <div className="relative z-10 flex items-center justify-center py-0 md:py-16">
           <motion.div
-            className="shrink-0"
+            className="w-full md:w-auto"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            
-            <div className="bg-gradient-to-b from-[#ff8c00] via-[#5f1212] to-black rounded-xl shadow-2xl px-6 py-3 md:px-10 md:py-5 text-center">
-              {/* 1. Botón "Conocé mas" */}
-            <button
-              onClick={scrollToInstalaciones}
-              className="inline-block bg-[#ff7b00] border-[1px] border-[#cecece] text-white font-montserrat px-6 py-2 rounded-md mb-8 text-lg transition-transform hover:scale-105"
-            >
-              Conocé mas
-            </button>
+            <div className="bg-gradient-to-b from-[#ff8c00] via-[#5f1212] to-black rounded-sm md:rounded-xl shadow-2xl px-6 py-5 md:px-10 md:py-5 text-center w-full">
+              <button
+                onClick={scrollToInstalaciones}
+                className="inline-block bg-[#ff7b00] border-[1px] border-[#cecece] text-white font-montserrat px-6 py-2 rounded-md mb-0 md:mb-8 text-lg transition-transform hover:scale-105"
+              >
+                Conocé mas
+              </button>
               <p className="font-montserrat text-3xl md:text-6xl text-gray-200 mb-2">
                 Conocé nuestra nueva sede
               </p>
               <img
                 src={logo}
                 alt="logo"
-                className="my-5 max-w-xs lg:max-w-md mx-auto"
+                className="my-0 md:my-5 max-w-xs lg:max-w-md mx-auto"
               />
               <p className="font-bignoodle uppercase text-3xl md:text-6xl text-gray-200">
                 Barrio Norte
@@ -208,7 +212,7 @@ const SedeBarrioNorte = () => {
       </div>
 
       {/* Sección de introducción y detalles de la sede */}
-      <section className="py-12 bg-gray-100">
+      <section className="py-2 md:py-12 bg-gray-100">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="bg-white rounded-lg shadow-lg p-6 mb-12 flex flex-col md:flex-row items-center justify-between gap-6 border">
             <div className="flex-1 space-y-4 text-left">
@@ -254,7 +258,10 @@ const SedeBarrioNorte = () => {
             <p className="absolute right-0 w-1/3 text-4xl font-bignoodle uppercase text-gray-300 opacity-60 text-left pl-4 hidden lg:block">
               Instalaciones por Piso
             </p>
-            <h2 id="instalaciones-por-piso" className="text-4xl font-bignoodle text-center uppercase tracking-widest z-10 text-[#fc4b08]">
+            <h2
+              id="instalaciones-por-piso"
+              className="text-4xl font-bignoodle text-center uppercase tracking-widest z-10 text-[#fc4b08]"
+            >
               Instalaciones por Piso
             </h2>
           </div>
@@ -277,17 +284,21 @@ const SedeBarrioNorte = () => {
               {groundFloorFeatures.map((feature, index) => (
                 <div key={index} className="shrink-0 w-64 md:w-80">
                   <div
-                    className={`p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-gray-700 to-orange-400`}
+                    className={`group p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-gray-700 to-orange-400`}
                   >
                     <div>
-                      <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08]" />
+                      <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08] animate-float" />
                       <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08] ">
                         {feature.title}
                       </h4>
                       <p className="text-white text-sm md:text-base">
                         {feature.description}
-                        {feature.id === 2 && <span className="text-transparent">      SoftFusion  SoftFusion  </span>}
-                        
+                        {feature.id === 2 && (
+                          <span className="text-transparent">
+                            {" "}
+                            SoftFusion SoftFusion{" "}
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg">
@@ -333,7 +344,7 @@ const SedeBarrioNorte = () => {
                   1
                 </span>
                 <h3 className="text-2xl font-bignoodle uppercase text-[#fc4b08]">
-                  Primer Piso - Resistencia y Contol
+                  Primer Piso - Resistencia y Control
                 </h3>
               </div>
             </div>
@@ -342,18 +353,24 @@ const SedeBarrioNorte = () => {
               {firstFloorFeatures.map((feature, index) => (
                 <div key={index} className="shrink-0 w-64 md:w-80">
                   <div
-                    className={`p-4 border border-gray-200 rounded-lg h-full flex flex-col  ${
+                    className={`group p-4 border border-gray-200 rounded-lg h-full flex flex-col  ${
                       feature.title === "Sala de Pilates"
-                        ? "bg-gradient-to-b from-gray-200 to-orange-200 "
-                        : "bg-gradient-to-b from-white to-orange-400" 
+                        ? "bg-gradient-to-b from-gray-100 to-orange-300 "
+                        : "bg-gradient-to-b from-gray-500 via-gray-700 to-orange-500"
                     }`}
                   >
                     <div>
-                      <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08]" />
+                      <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08] animate-float" />
                       <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08]">
                         {feature.title}
                       </h4>
-                      <p className="text-gray-600 text-sm md:text-base">
+                      <p
+                        className={`text-sm md:text-base ${
+                          feature.title === "Sala de Pilates"
+                            ? "text-gray-600 "
+                            : "text-white"
+                        }`}
+                      >
                         {feature.description}
                       </p>
                     </div>
@@ -397,7 +414,7 @@ const SedeBarrioNorte = () => {
                   2
                 </span>
                 <h3 className="text-2xl font-bignoodle uppercase text-[#fc4b08]">
-                  Segundo Piso - Movimiento, energia y bienestar
+                  Segundo Piso - Movimiento, energía y bienestar
                 </h3>
               </div>
             </div>
@@ -405,13 +422,13 @@ const SedeBarrioNorte = () => {
             <div className="flex overflow-x-auto gap-4 pb-4 px-6">
               {secondFloorFeatures.map((feature, index) => (
                 <div key={index} className="shrink-0 w-64 md:w-80">
-                  <div className="p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-orange-50 to-orange-400">
+                  <div className="group p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-gray-700  via-orange-300 to-orange-500 ">
                     <div>
-                      <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08]" />
+                      <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08] animate-float" />
                       <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08]">
                         {feature.title}
                       </h4>
-                      <p className="text-gray-600 text-sm md:text-base">
+                      <p className="text-white text-sm md:text-base ">
                         {feature.description}
                       </p>
                     </div>
@@ -486,7 +503,7 @@ const SedeBarrioNorte = () => {
         </h2>
         {/* --- MODIFICADO: Ahora es un enlace a WhatsApp --- */}
         <button
-          onClick={() => setModalContacto(true)}
+          onClick={abrirModalContacto}
           rel="noopener noreferrer"
           className="inline-block mt-6 bg-white border-2 border-white rounded-lg px-8 py-4 transition-transform transform hover:scale-105"
         >
@@ -510,7 +527,7 @@ const SedeBarrioNorte = () => {
 
       <div id="ubicacion" className="w-full">
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4223.568095001174!2d-65.20257459999999!3d-26.8210825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94225c22aac40d25%3A0xd5e93c92c00674bc!2s25%20de%20Mayo%20720%2C%20T4000%20San%20Miguel%20de%20Tucum%C3%A1n%2C%20Tucum%C3%A1n!5e1!3m2!1ses!2sar!4v1761148495178!5m2!1ses!2sar" // Tu URL del mapa
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4223.568095001174!2d-65.20257459999999!3d-26.8210825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94225c22aac40d25%3A0xd5e93c92c00674bc!2s25%20de%20Mayo%20720%2C%20T4000%20San%20Miguel%20de%20Tucum%C3%A1n%2C%20Tucum%C3%A1n!5e1!3m2!1ses!2sar!4v1761148495178!5m2!1ses!2sar" 
           width="100%"
           height="450"
           style={{ border: "0" }}
@@ -545,7 +562,7 @@ const SedeBarrioNorte = () => {
         <ModalContactoSede
           showModal={modalContacto}
           closeModal={cerrarModalContacto}
-          sede= "Barrio norte"
+          sede="Barrio norte"
         />
         <FormTestClass isOpen={modalTestClass} onClose={cerrarModalTestClass} />
       </div>

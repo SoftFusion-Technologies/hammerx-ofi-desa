@@ -49,7 +49,7 @@ const ModalContactoSede = ({ showModal, closeModal, sede = "Todas" }) => {
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="font-bignoodle text-3xl text-orange-600 tracking-wide">
-            SELECCIONA UNA SEDE
+            {sede === "Todas" ? "Contactanos por Sede" : `Contacto - ${sede}`}
           </h2>
           <button
             onClick={closeModal}
@@ -59,9 +59,11 @@ const ModalContactoSede = ({ showModal, closeModal, sede = "Todas" }) => {
           </button>
         </div>
 
-        <p className="text-gray-600 text-center mb-8 font-messina">
-          Elige la sede más cercana para contactarnos directamente por WhatsApp
-        </p>
+        {sede === "Todas" && (
+          <p className="text-gray-600 text-center mb-8 font-messina">
+            Elige la sede más cercana para contactarnos directamente por WhatsApp
+          </p>
+        )}
 
         <div className="flex flex-col gap-4">
           {sede === "Todas"
