@@ -31,29 +31,6 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
   };
 
   /**
-   * UTILITY FUNCTION: Calcula el próximo día hábil a partir de una fecha
-   * Si cae en sábado, mueve al viernes anterior.
-   * Si cae en domingo, mueve al lunes siguiente.
-   * Retorna el día hábil más cercano en formato YYYY-MM-DD.
-   */
-  const getNextWeekday = (dateString) => {
-    let date = toLocalDate(dateString);
-    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-
-    if (dayOfWeek === 0) {
-      // If Sunday, set to Monday
-      date.setDate(date.getDate() + 1);
-    } else if (dayOfWeek === 6) {
-      // If Saturday, set to Monday
-      date.setDate(date.getDate() + 2);
-    }
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  /**
    * UTILITY FUNCTION: Calcula la diferencia en días entre dos fechas en formato YYYY-MM-DD
    * Convierte a UTC para evitar problemas de zona horaria.
    * Retorna la cantidad de días redondeados entre ambas fechas.
@@ -82,15 +59,6 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
   };
 
   /**
-   * UTILITY FUNCTION: Valida si una fecha es un día hábil (no sábado ni domingo)
-   * Retorna true si es lunes a viernes, false si es fin de semana.
-   */
-  const isWeekday = (date) => {
-    const day = date.getDay();
-    return day !== 0 && day !== 6;
-  };
-
-  /**
    * ================================================================
    * SECCIÓN 1: ESTADOS DEL COMPONENTE
    * Estados principales para la información del alumno y configuraciones de fechas
@@ -104,8 +72,8 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
   const [status, setStatus] = useState("plan"); // Estado actual: plan, prueba o programado
   
   // ============ FECHAS Y DURACIONES DEL PLAN ============
-  const [planStartDate, setPlanStartDate] = useState(getNextWeekday(today)); // Fecha de inicio del plan (YYYY-MM-DD)
-  const [planStartDateAux, setPlanStartDateAux] = useState(getNextWeekday(today)); // Backup de fecha inicio original
+  const [planStartDate, setPlanStartDate] = useState(today); // Fecha de inicio del plan (YYYY-MM-DD)
+  const [planStartDateAux, setPlanStartDateAux] = useState(today); // Backup de fecha inicio original
   const [planDuration, setPlanDuration] = useState("30"); // Duración del plan en días
   const [planDurationAux, setPlanDurationAux] = useState("30"); // Backup de duración original
   const [planEndDate, setPlanEndDate] = useState(""); // Fecha fin calculada automáticamente
@@ -113,8 +81,8 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
   const [habilitarFechaFinPersonalizada, setHabilitarFechaFinPersonalizada] = useState(false); // Permite editar fecha fin manualmente
 
   // ============ FECHAS PARA PRUEBA Y RENOVACIÓN ============
-  const [trialDate, setTrialDate] = useState(getNextWeekday(today)); // Fecha de la clase de prueba
-  const [scheduledDate, setScheduledDate] = useState(getNextWeekday(today)); // Fecha de renovación programada
+  const [trialDate, setTrialDate] = useState(today); // Fecha de la clase de prueba
+  const [scheduledDate, setScheduledDate] = useState(today); // Fecha de renovación programada
   
   // ============ OBSERVACIONES Y AUDITORÍA ============
   const [observation, setObservation] = useState(""); // Notas adicionales del alumno (alergias, lesiones, etc.)
@@ -281,7 +249,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
         setPlanStartDate(`${año}-${mes}-${dia}`);
       } else {
         // fallback: siguiente día hábil a hoy
-        setPlanStartDate(getNextWeekday(today));
+        setPlanStartDate(today);
       }
     } else {
       setEsClientePlanParaProgramado(false);
@@ -342,10 +310,10 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
       setName("");
       setContact("");
       setStatus("plan");
-      setPlanStartDate(getNextWeekday(today));
+      setPlanStartDate(today);
       setPlanDuration("30");
-      setTrialDate(getNextWeekday(today));
-      setScheduledDate(getNextWeekday(today));
+      setTrialDate(today);
+      setScheduledDate(today);
       setObservation("");
     }
   }, [isOpen, cellData?.student]);
@@ -620,12 +588,10 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
                       setPlanStartDateObj(null);
                       return;
                     }
-                    if (!isWeekday(date)) return;
                     const iso = date.toISOString().slice(0, 10);
                     setPlanStartDate(iso);
                     setPlanStartDateObj(date);
                   }}
-                  filterDate={isWeekday}
                   dateFormat="dd/MM/yyyy"
                   placeholderText="Seleccioná una fecha"
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
@@ -782,12 +748,10 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
                     setTrialDateObj(null);
                     return;
                   }
-                  if (!isWeekday(date)) return;
                   const iso = date.toISOString().slice(0, 10);
                   setTrialDate(iso);
                   setTrialDateObj(date);
                 }}
-                filterDate={isWeekday}
                 dateFormat="dd/MM/yyyy"
                 placeholderText="Seleccioná una fecha"
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
@@ -812,12 +776,10 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
                       setScheduledDateObj(null);
                       return;
                     }
-                    if (!isWeekday(date)) return;
                     const iso = date.toISOString().slice(0, 10);
                     setScheduledDate(iso);
                     setScheduledDateObj(date);
                   }}
-                  filterDate={isWeekday}
                   dateFormat="dd/MM/yyyy"
                   placeholderText="Seleccioná una fecha"
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
