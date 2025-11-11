@@ -6,7 +6,7 @@ import { es } from "date-fns/locale";
 import { FaEye } from "react-icons/fa";
 import useConsultaDB from "../ConsultaDb/Consulta";
 
-const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
+const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambioTurno }) => {
   /**
    * UTILITY FUNCTION: Obtiene la fecha actual en formato YYYY-MM-DD local
    * Si la fecha desde la API (fechaHoy) está disponible, se usa esa.
@@ -503,14 +503,43 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy }) => {
       {!mostrarDetallesAuditoria ? (
         <div className="bg-white rounded-lg p-8 w-full max-w-4xl shadow-2xl">
           {/* VISTA PRINCIPAL: Formulario para agregar/editar alumno */}
-          
+
           {/* Encabezado del modal */}
           <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-            {cellData?.student ? "Editar Alumno" : "Agregar Alumno"}
+            {cellData?.student ? "Cambiar Alumno" : "Agregar Alumno"}
           </h2>
-          <p className="text-gray-600 mb-4 text-center">
-            {cellData?.day} a las {cellData?.time}
-          </p>
+          {cellData?.student ? (
+            <div className="flex justify-center items-center gap-5 ">
+              <p className="text-gray-600 text-center">
+                {cellData?.day} a las {cellData?.time}
+              </p>
+              <button
+                onClick={() => {
+                  if (onOpenCambioTurno) {
+                    const alumnoData = {
+                      id: cellData.student.id,
+                      name: cellData.student.name,
+                      contact: cellData.student.contact,
+                      currentDay: cellData.day,
+                      currentHour: cellData.time,
+                      status: cellData.student.status,
+                      observation: cellData.student.observation || "",
+                      planDetails: cellData.student.planDetails || null
+                    };
+                    onOpenCambioTurno(alumnoData);
+                    onClose();
+                  }
+                }}
+                className="bg-orange-500 text-white rounded-md p-2 font-semibold hover:bg-orange-600 transition-colors"
+              >
+                Cambiar turno
+              </button>
+            </div>
+          ) : (
+            <p className="text-gray-600 text-center">
+              {cellData?.day} a las {cellData?.time}
+            </p>
+          )}
 
           {/* SECCIÓN: Datos básicos del alumno (nombre y contacto) */}
           <div className="mb-4">

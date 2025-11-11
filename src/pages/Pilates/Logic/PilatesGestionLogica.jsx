@@ -31,6 +31,7 @@ const PilatesGestionLogica = () => {
 
   // --- Estados para Controlar la Interfaz (Modales, Paneles) ---
   const [isModalOpen, setIsModalOpen] = useState(false); // Controla la visibilidad del modal principal para agregar/editar alumnos.
+  const [isModalCambioTurno, setIsModalCambioTurno] = useState(false); // Controla la visibilidad del modal para cambiar turno.
   const [isModalProfesorOpen, setIsModalProfesorOpen] = useState(false); // Controla la visibilidad del modal para asignar profesores.
   const [isModalDetalleAusentes, setIsModalDetalleAusentes] = useState(false); // Controla la visibilidad del modal que muestra los alumnos ausentes.
   const [isModalAyuda, setIsModalAyuda] = useState(false); // Controla la visibilidad del modal de ayuda.
@@ -49,6 +50,8 @@ const PilatesGestionLogica = () => {
   const [horarioSeleccionado, setHorarioSeleccionado] = useState(null); // Almacena los datos del horario seleccionado para editar su profesor.
   const [personToConfirm, setPersonToConfirm] = useState(null); // Guarda los datos de la persona de la lista de espera que se va a inscribir.
   const [tipoInscripcionListaEspera, setTipoInscripcionListaEspera] = useState(null); // Guarda el tipo de inscripción (cambio o espera).
+  const [alumnoCambioTurno, setAlumnoCambioTurno] = useState(null); // Guarda los datos del alumno para cambiar turno.
+  const [horariosCambioTurno, setHorariosCambioTurno] = useState({}); // Almacena todos los horarios con información de cupos para el modal de cambio de turno.
 
   // --- Refs ---
   const refSedeUsuario = useRef(null); // Referencia para un elemento del DOM, probablemente un input.
@@ -150,7 +153,6 @@ const PilatesGestionLogica = () => {
             ? horariosData[key].alumnos
             : []
         };
-        console.log(normalizedData)
         setSchedule(normalizedData);
       });
     }
@@ -200,6 +202,7 @@ const PilatesGestionLogica = () => {
               }
             : null // Si el array está vacío o no existe, asignamos null
       }));
+      console.log(listaEsperaNormalizada)
       setWaitingList(listaEsperaNormalizada);
     } else {
       setWaitingList([]);
@@ -651,6 +654,200 @@ const PilatesGestionLogica = () => {
     }
   };
 
+  /**
+   * FUNCTION: Genera estructura de todos los horarios CON Y SIN cupos
+   * Similar a generarHorariosConCupos pero más robusto y reutilizable
+   * Estructura: { LUNES: [ {hour, count, maxCapacity, isFull} ], MARTES: [...], ... }
+   * @param {object} scheduleData - Datos del schedule completo
+   * @param {number} maxCapacity - Cupo máximo por clase
+   * @returns {object} Estructura de horarios agrupados por día con información de ocupación
+   */
+  const generarTodosLosHorariosConCupos = (scheduleData, maxCapacity) => {
+    const resultado = {};
+    const DAYS = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'];
+    const HORAS = [
+      '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
+      '13:00', '14:00', '15:00', '16:00', '17:00', '18:00',
+      '19:00', '20:00', '21:00', '22:00'
+    ];
+
+    // Inicializar
+    DAYS.forEach((day) => {
+      resultado[day] = [];
+    });
+
+    // Para cada día y hora, contar alumnos
+    DAYS.forEach((day) => {
+      HORAS.forEach((hour) => {
+        const key = `${day}-${hour}`;
+        const cellData = scheduleData[key];
+        const alumnosCount = cellData?.alumnos ? cellData.alumnos.length : 0;
+        
+        resultado[day].push({
+          hour,
+          count: alumnosCount,
+          maxCapacity,
+          isFull: alumnosCount >= maxCapacity
+        });
+      });
+    });
+
+    return resultado;
+  };
+
+  /**
+   * FUNCTION: Genera estructura de todos los horarios con información de cupos
+   * Se usa para el modal de cambio de turno, mostrando todos los horarios disponibles
+   * con información sobre cuántos alumnos tienen en cada clase.
+   * @param {object} scheduleData - Datos del schedule completo
+   * @param {number} maxCapacity - Cupo máximo por clase
+   * @returns {object} Estructura de horarios agrupados por día
+   */
+  const generarHorariosConCupos = (scheduleData, maxCapacity) => {
+    // Reutilizar la función más robusta
+    return generarTodosLosHorariosConCupos(scheduleData, maxCapacity);
+  };
+
+  /**
+   * FUNCTION: Guarda el cambio directo de turno de un alumno
+   * Se ejecuta cuando el usuario selecciona un horario con cupo disponible
+   * Usa la API de cambio de turno (guardarCambioDeTurno) para mover al alumno
+   * @param {string} key - Clave del horario en formato "DIA-HORA"
+   * @param {object} studentData - Datos del alumno para obtener nombre e ID
+   * @param {string} accion - Acción a realizar (ignorado, siempre es cambio directo)
+   * @param {object} extras - Información adicional (oldDay, oldHour, newDay, newHour)
+   */
+  const handleSaveCambioTurno = async (key, studentData, accion, extras) => {
+    if (!puedeEditarSede) {
+      await mostrarErrorPermisos();
+      return;
+    }
+
+    try {
+      console.log("🔍 handleSaveCambioTurno - Datos recibidos:", {
+        key,
+        studentData,
+        accion,
+        extras
+      });
+
+      // ✅ USAR LA FUNCIÓN encontrarAlumnoYHorario QUE YA EXISTE
+      // Esta función busca al alumno en TODOS los horarios, sin importar el día
+      // y devuelve todos los IDs que necesitamos
+      const alumnoYHorarios = encontrarAlumnoYHorario(studentData.name, key);
+      
+      if (!alumnoYHorarios) {
+        throw new Error(
+          `No se encontró al alumno "${studentData.name}" en la base de datos. ` +
+          `Verifica que el nombre sea correcto.`
+        );
+      }
+
+      console.log("✅ IDs encontrados usando encontrarAlumnoYHorario:", {
+        idEstudiante: alumnoYHorarios.idEstudiante,
+        idHorarioAnterior: alumnoYHorarios.idHorarioAnterior,
+        idHorarioNuevo: alumnoYHorarios.idHorarioNuevo
+      });
+
+      // Preparar datos para el cambio de turno
+      const alumnoCambio = {
+        id_estudiante: alumnoYHorarios.idEstudiante,
+        id_horario_anterior: alumnoYHorarios.idHorarioAnterior,
+        id_horario_nuevo: alumnoYHorarios.idHorarioNuevo,
+      };
+
+      console.log("📤 Enviando a guardarCambioDeTurno:", alumnoCambio);
+
+      // Realizar el cambio de turno a través de la API
+      // Con reintentos en caso de problemas intermitentes
+      const resultadoCambio = await guardarCambioDeTurno(null, alumnoCambio, 2); // 2 reintentos = 3 intentos totales
+      
+      console.log("📥 Respuesta exitosa de guardarCambioDeTurno:", resultadoCambio);
+
+      console.log("✅ Cambio de turno ejecutado exitosamente");
+
+      await sweetalert2.fire({
+        icon: 'success',
+        title: 'Cambio de turno realizado',
+        text: `${studentData.name} ha sido trasladado exitosamente al nuevo horario.`,
+        timer: 2000,
+        showConfirmButton: false
+      });
+
+      setIsModalCambioTurno(false);
+      refetch(); // Recargar la grilla para reflejar el cambio
+    } catch (error) {
+      console.error('❌ Error al cambiar turno:', {
+        mensaje: error.message,
+        stack: error.stack,
+        studentData,
+        extras,
+        errorCompleto: error
+      });
+      await sweetalert2.fire({
+        icon: 'error',
+        title: 'Error al cambiar turno',
+        text: error.message || 'No se pudo realizar el cambio de turno. Intenta nuevamente.',
+        timer: 3000,
+        showConfirmButton: false
+      });
+    }
+  };
+
+  /**
+   * FUNCTION: Guarda un cambio de turno en la lista de espera
+   * Se ejecuta cuando el usuario selecciona un horario sin cupo disponible
+   * Agrega automáticamente al alumno a la lista de espera en situación de "cambio"
+   * @param {object} personData - Datos de la persona para lista de espera
+   */
+ const handleSaveWaitingListCambio = async (personData) => {
+   if (!puedeEditarSede) {
+     await mostrarErrorPermisos();
+     return;
+   }
+
+   try {
+     const objetoParaBackend = {
+       nombre: personData.name,
+       contacto: personData.contact,
+       tipo: "Cambio de turno",
+       plan_interes: personData.plan,
+       horarios_preferidos: personData.hours.join(","),
+       observaciones: personData.obs ?? "", // enviar vacío si corresponde
+       id_sede: sedeActualFiltro,
+       id_usuario_cargado: userId,
+     };
+
+     // Inserta en la lista de espera (solo eso - sin crear contacto inicial)
+     const resultadoInsert = await insertarListaEspera(objetoParaBackend);
+
+     // Normalizar id retornado (puede venir como { id }, { insertId } o número)
+     const nuevaListaId =
+       (resultadoInsert && (resultadoInsert.id || resultadoInsert.insertId)) ||
+       (typeof resultadoInsert === "number" ? resultadoInsert : null);
+
+     await sweetalert2.fire({
+       icon: "success",
+       title: "Agregado a lista de espera",
+       text: `${personData.name} ha sido agregado a la lista de espera para cambio de turno.`,
+       timer: 1800,
+       showConfirmButton: false,
+     });
+
+     setIsModalCambioTurno(false);
+   } catch (error) {
+     console.error("Error al agregar a lista de espera:", error);
+     await sweetalert2.fire({
+       icon: "error",
+       title: "Error",
+       text: "No se pudo agregar a la lista de espera. Intenta nuevamente.",
+       timer: 2000,
+       showConfirmButton: false,
+     });
+   } finally {
+     refetchListaEspera();
+   }
+ };
   /**
    * FUNCTION: Agregar, modificar o eliminar una persona en la lista de espera
    * Maneja las tres operaciones CRUD (Create, Read, Update, Delete) para la lista de espera.
@@ -1176,7 +1373,7 @@ const encontrarAlumnoYHorario = useCallback((nombreBuscado, keyHorarioNuevo) => 
         case 'plan':
           const endDate = new Date(student.planDetails.endDate + 'T00:00:00');
 
-          isExpired = endDate < today;
+          isExpired = endDate <= today;
 
           style =
             student.planDetails?.type === 'L-M-V'
@@ -1251,7 +1448,7 @@ const encontrarAlumnoYHorario = useCallback((nombreBuscado, keyHorarioNuevo) => 
             student.scheduledDetails?.promisedDate ||
             student.scheduledDetails.date;
           const scheduledDate = new Date(fechaRelevante + 'T00:00:00');
-          isExpired = scheduledDate < today;
+          isExpired = scheduledDate <= today;
           style = 'bg-yellow-200';
           content = (
             <span>
@@ -1526,6 +1723,13 @@ const encontrarAlumnoYHorario = useCallback((nombreBuscado, keyHorarioNuevo) => 
     return diferenciaEnDias;
   };
 
+
+  const handleAbrirCambioTurno = (alumno) => {
+  setAlumnoCambioTurno(alumno);
+  setHorariosCambioTurno(generarHorariosConCupos(schedule, cupoMaximoPilates));
+  setIsModalCambioTurno(true);
+};
+
   return {
     states: {
       puedeEditarSede,
@@ -1550,9 +1754,13 @@ const encontrarAlumnoYHorario = useCallback((nombreBuscado, keyHorarioNuevo) => 
       isModalDetalleAusentes,
       contactarAlumno,
       isModalAyuda,
+      isModalCambioTurno,
       isConfirmModalOpen,
       personToConfirm,
-      freeSlots
+      freeSlots,
+      alumnoCambioTurno,
+      horariosCambioTurno,
+      
     },
     setters: {
       setSection,
@@ -1560,6 +1768,7 @@ const encontrarAlumnoYHorario = useCallback((nombreBuscado, keyHorarioNuevo) => 
       setIsModalProfesorOpen,
       setSearchTerm,
       setIsModalOpen,
+      setIsModalCambioTurno,
       setIsModalDetalleAusentes,
       setcontactarAlumno,
       setIsModalAyuda,
@@ -1579,9 +1788,15 @@ const encontrarAlumnoYHorario = useCallback((nombreBuscado, keyHorarioNuevo) => 
       handleOpenModalDetalleAusentes,
       handleContactAlumno,
       marcarEstadosAlumnoListaEspera,
-      handleConfirmationComplete
+      handleConfirmationComplete,
+      handleAbrirCambioTurno,
+      generarHorariosConCupos,
+      handleSaveCambioTurno,
+      handleSaveWaitingListCambio
     }
   };
 };
 
 export default PilatesGestionLogica;
+
+

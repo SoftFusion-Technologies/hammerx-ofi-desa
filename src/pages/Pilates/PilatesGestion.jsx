@@ -1,4 +1,9 @@
-import React from "react";
+/* 
+--Autor: Sergio Manrique
+--Fecha de creación: 2024-10-20
+--Descripción: Componente principal para la gestión de clases de Pilates, incluyendo selección de sede, navegación entre secciones, y modales para detalles y ayuda.
+*/
+
 import NavbarStaff from "../staff/NavbarStaff";
 import { FaSearch } from "react-icons/fa";
 import { VscDebugRestart } from "react-icons/vsc";
@@ -14,6 +19,7 @@ import PilatesGestionLogica from "./Logic/PilatesGestionLogica";
 import ModalDetalleAusentes from "./Modal/ModalDetalleAusentes";
 import ModalAyudaGrillaGestion from "./Modal/ModalAyudaGrillaGestion";
 import ModalConfirmarListaEspera from "./Modal/ModalConfirmarListaEspera";
+import ModalCambioTurno from "./Modal/ModalCambioTurno";
 import { FaQuestionCircle } from "react-icons/fa";
 
 const EyeIcon = ({ className }) => (
@@ -156,13 +162,14 @@ const PilatesGestion = () => {
                       functions.marcarEstadosAlumnoListaEspera
                     }
                     puedeEditar={states.puedeEditarSede}
+                    schedule={states.schedule}
                     isModalOpenListaEspera={states.isModalOpenListaEspera}
                   />
                   {states.isConfirmModalOpen && (
                     <ModalConfirmarListaEspera
                       isOpen={states.isConfirmModalOpen}
                       onClose={() => setters.setIsConfirmModalOpen(false)}
-                      onSave={functions.handleSaveStudent} // Reutilizamos la función de guardado principal
+                      onSave={functions.handleSaveStudent} 
                       personData={states.personToConfirm}
                       freeSlots={states.freeSlots}
                       onConfirmationComplete={
@@ -195,7 +202,6 @@ const PilatesGestion = () => {
                     </h1>
                     {/* --- CONTENEDOR PRINCIPAL MEJORADO --- */}
                     <div className="flex flex-col sm:flex-row items-center gap-4">
-                      {/* --- Barra de Búsqueda (sin cambios) --- */}
                       <div className="relative w-full max-w-lg">
                         <input
                           type="text"
@@ -223,7 +229,7 @@ const PilatesGestion = () => {
                           className="w-full sm:w-auto flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
                           onClick={() => setters.setIsModalAyuda(true)}
                         >
-                          <FaQuestionCircle /> {/* <-- Icono añadido */}
+                          <FaQuestionCircle /> 
                           Ayuda
                         </button>
                       </div>
@@ -252,6 +258,7 @@ const PilatesGestion = () => {
                       onSave={functions.handleSaveStudent}
                       cellData={states.currentCell}
                       fechaHoy={states.fechaHoy}
+                      onOpenCambioTurno={functions.handleAbrirCambioTurno}
                     />
                   )}
 
@@ -280,6 +287,18 @@ const PilatesGestion = () => {
                     <ModalAyudaGrillaGestion
                       isOpen={states.isModalAyuda}
                       onClose={() => setters.setIsModalAyuda(false)}
+                    />
+                  )}
+
+                  {states.isModalCambioTurno && states.alumnoCambioTurno && (
+                    <ModalCambioTurno
+                      isOpen={states.isModalCambioTurno}
+                      onClose={() => setters.setIsModalCambioTurno(false)}
+                      studentData={states.alumnoCambioTurno}
+                      allSchedules={states.horariosCambioTurno}
+                      onSaveDirect={functions.handleSaveCambioTurno}
+                      onSaveWaitingList={functions.handleSaveWaitingListCambio}
+                      maxCapacity={states.cupoMaximoPilates}
                     />
                   )}
                 </>

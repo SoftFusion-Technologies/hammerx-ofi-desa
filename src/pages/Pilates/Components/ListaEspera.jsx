@@ -1,371 +1,5 @@
-import React, { useState, useEffect } from "react";
-
-// --- Modal para Agregar/Editar en Lista de Espera ---
-const WaitingListModal = ({
-  isOpen,
-  onClose,
-  onSave,
-  personData,
-  allHours,
-  marcarEstadosAlumnoListaEspera,
-}) => {
-  const initialState = {
-    // Estado inicial para una nueva persona
-    name: "",
-    type: "espera",
-    contact: "",
-    plan: "L-M-V",
-    hours: [],
-    obs: "",
-  };
-
-  const [person, setPerson] = useState(initialState); // Estado para los datos de la persona
-  const [isModify, setModify] = useState(false); // Estado para saber si es modificación o nuevo
-
-  // Cuando se abre el modal, si hay datos de persona, los carga en el estado
-  useEffect(() => {
-    if (personData) {
-      setPerson(personData);
-      setModify(true);
-    } else {
-      setPerson(initialState);
-      setModify(false);
-    }
-  }, [isOpen, personData]);
-
-  if (!isOpen) return null;
-
-  // Maneja cambios en los campos del formulario
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setPerson((prev) => ({
-      ...prev,
-      [name]: name === "name" ? value.toUpperCase() : value,
-    }));
-  };
-
-  // Maneja la selección/deselección de horarios
-  const handleHourToggle = (hour) => {
-    setPerson((prev) => {
-      const newHours = prev.hours.includes(hour)
-        ? prev.hours.filter((h) => h !== hour)
-        : [...prev.hours, hour];
-      return { ...prev, hours: newHours.sort() };
-    });
-  };
-
-  // Validación - todos los campos requeridos excepto obs
-  const handleSave = () => {
-    // Validar nombre (obligatorio)
-    if (!person.name || person.name.trim() === "") {
-      alert("El nombre y apellido es obligatorio.");
-      return;
-    }
-
-    // Validar contacto (obligatorio)
-    if (!person.contact || person.contact.trim() === "") {
-      alert("El contacto es obligatorio.");
-      return;
-    }
-
-    // Validar plan (obligatorio)
-    if (!person.plan) {
-      alert("El plan de interés es obligatorio.");
-      return;
-    }
-
-    // Validar horarios (obligatorio - al menos uno)
-    if (!person.hours || person.hours.length === 0) {
-      alert("Debe seleccionar al menos un horario de interés.");
-      return;
-    }
-
-    // Validar tipo (obligatorio)
-    if (!person.type) {
-      alert("El tipo es obligatorio.");
-      return;
-    }
-
-    onSave(person);
-    onClose();
-  };
-
-  // Maneja la eliminación (solo en modo modificar)
-  const handleDelete = () => {
-    onSave(null);
-    onClose();
-  };
-
-  const gestionarEstadosAlumnoListaEspera = (tipo, id) => {
-    marcarEstadosAlumnoListaEspera(id, tipo);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg p-8 w-full max-w-5xl shadow-2xl">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">
-          {personData ? "Editar Persona" : "Agregar a Lista de Espera"}
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Nombre y Apellido *
-              </label>
-              <input
-                name="name"
-                value={person.name}
-                onChange={handleChange}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="Ingrese nombre y apellido"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Tipo / Prioridad *
-              </label>
-              <select
-                name="type"
-                value={person.type}
-                onChange={handleChange}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="espera">Lista de espera</option>
-                <option value="cambio">Lista de cambio</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Contacto (Tel, IG, etc.) *
-              </label>
-              <input
-                name="contact"
-                value={person.contact}
-                onChange={handleChange}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="Ingrese contacto"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                Plan de Interés *
-              </label>
-              <select
-                name="plan"
-                value={person.plan}
-                onChange={handleChange}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="L-M-V">Lunes-Miércoles-Viernes</option>
-                <option value="M-J">Martes-Jueves</option>
-                <option value="Cualquier día">Cualquier día</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Horarios de Interés * (Seleccione al menos uno)
-            </label>
-            <div className="grid grid-cols-3 gap-2 border rounded p-3 h-56 overflow-y-auto bg-gray-50">
-              {allHours.map((hour) => (
-                <label
-                  key={hour}
-                  className={`flex items-center justify-center space-x-2 p-1 rounded-md cursor-pointer transition-colors text-sm ${
-                    person.hours.includes(hour)
-                      ? "bg-purple-600 text-white shadow"
-                      : "bg-gray-200 hover:bg-gray-300"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={person.hours.includes(hour)}
-                    onChange={() => handleHourToggle(hour)}
-                    className="opacity-0 w-0 h-0"
-                  />
-                  <span>{hour}</span>
-                </label>
-              ))}
-            </div>
-            {person.hours.length === 0 && (
-              <p className="text-red-500 text-xs mt-1">
-                Debe seleccionar al menos un horario
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Observaciones
-          </label>
-          <textarea
-            name="obs"
-            value={person.obs}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500"
-            rows="2"
-            placeholder="Ingrese observaciones (opcional)"
-          ></textarea>
-        </div>
-        {isModify && (
-          <div className="mt-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Estados
-            </label>
-            <div className="border-2 rounded-lg p-4 bg-gray-50 flex flex-col items-center gap-3">
-              {/* Estado actual y detalles */}
-              {personData && personData.contacto_cliente ? (
-                <div className="mb-2 w-full flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-3 py-1 rounded-full font-bold text-xs shadow-md 
-                      ${
-                        personData.contacto_cliente.estado_contacto ===
-                        "Confirmado"
-                          ? "bg-green-500 text-white"
-                          : personData.contacto_cliente.estado_contacto ===
-                            "Pendiente"
-                          ? "bg-yellow-400 text-black"
-                          : personData.contacto_cliente.estado_contacto ===
-                            "Rechazado/Sin Respuesta"
-                          ? "bg-red-500 text-white"
-                          : "bg-gray-300 text-gray-700"
-                      }
-                    `}
-                    >
-                      {personData.contacto_cliente.estado_contacto ||
-                        "Sin estado"}
-                    </span>
-                    <span className="text-xs text-gray-500">Estado actual</span>
-                  </div>
-                  <div className="flex flex-col md:flex-row gap-2 text-xs text-gray-600 max-w-full">
-                    {personData.contacto_cliente.fecha_contacto && (
-                      <span
-                        className="truncate max-w-[180px]"
-                        title={new Date(
-                          personData.contacto_cliente.fecha_contacto
-                        ).toLocaleString("es-ES")}
-                      >
-                        <strong>Fecha contacto:</strong>{" "}
-                        {new Date(
-                          personData.contacto_cliente.fecha_contacto
-                        ).toLocaleDateString("es-ES")}
-                      </span>
-                    )}
-                    {personData.contacto_cliente.usuario_contacto_nombre && (
-                      <span
-                        className="truncate max-w-[180px]"
-                        title={
-                          personData.contacto_cliente.usuario_contacto_nombre
-                        }
-                      >
-                        <strong>Usuario:</strong>{" "}
-                        {personData.contacto_cliente.usuario_contacto_nombre}
-                      </span>
-                    )}
-                    {personData.contacto_cliente.notas && (
-                      <span
-                        className="truncate max-w-[180px]"
-                        title={personData.contacto_cliente.notas}
-                      >
-                        <strong>Notas:</strong>{" "}
-                        {personData.contacto_cliente.notas.length > 30
-                          ? personData.contacto_cliente.notas.slice(0, 30) +
-                            "..."
-                          : personData.contacto_cliente.notas}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="mb-2 w-full flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full font-bold text-xs shadow-md bg-gray-300 text-gray-700">
-                    Sin estado
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    Todavía no se ha cargado estado
-                  </span>
-                </div>
-              )}
-
-              {/* Botones de cambio de estado */}
-              <div className="flex gap-4 mt-2">
-                {/* Si no tiene estado, solo mostrar Pendiente */}
-                {!personData?.contacto_cliente?.estado_contacto && (
-                  <button
-                    onClick={() => {
-                      gestionarEstadosAlumnoListaEspera(
-                        "pendiente",
-                        personData.id
-                      );
-                    }}
-                    className="bg-yellow-400 hover:bg-yellow-600 text-black font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105"
-                  >
-                    Marcar como Pendiente
-                  </button>
-                )}
-                {/* Si está en pendiente, mostrar Confirmado y Rechazado */}
-                {personData?.contacto_cliente?.estado_contacto ===
-                  "Pendiente" && (
-                  <>
-                    <button
-                      onClick={() => {
-                        gestionarEstadosAlumnoListaEspera(
-                          "confirmado",
-                          personData.id
-                        );
-                      }}
-                      className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105"
-                    >
-                      Confirmar
-                    </button>
-                    <button
-                      onClick={() => {
-                        gestionarEstadosAlumnoListaEspera(
-                          "rechazado",
-                          personData.id
-                        );
-                      }}
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105"
-                    >
-                      Rechazar
-                    </button>
-                  </>
-                )}
-                {/* Si está en confirmado o rechazado, no mostrar más botones */}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between mt-8">
-          <button
-            onClick={handleSave}
-            className="bg-purple-600 hover:bg-purple-800 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105"
-          >
-            Guardar
-          </button>
-          {personData && (
-            <button
-              onClick={handleDelete}
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105"
-            >
-              Eliminar
-            </button>
-          )}
-          <button
-            onClick={onClose}
-            className="font-bold text-sm text-gray-600 hover:text-gray-800"
-          >
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+import React, { useState, useEffect, useMemo } from "react";
+import ModalListaEspera from "../Modal/ModalListaEspera";
 
 // --- Componente Principal de Lista de Espera ---
 const ListaEspera = ({
@@ -374,7 +8,11 @@ const ListaEspera = ({
   allHours,
   marcarEstadosAlumnoListaEspera,
   puedeEditar = true,
+  schedule = {},
 }) => {
+  // --- ESTADOS PARA LOS FILTROS ---
+  const [filtroTipo, setFiltroTipo] = useState("todos"); // 'todos', 'espera', 'cambio'
+  const [filtroEstado, setFiltroEstado] = useState("todos"); // 'todos', 'sin-estado', 'Pendiente', 'Confirmado', 'Rechazado'
   const [terminoDeBusqueda, setTerminoDeBusqueda] = useState(""); // Estado para el buscador
 
   const [isModalOpen, setIsModalOpen] = useState(false); // Controla la visibilidad del modal
@@ -394,6 +32,73 @@ const ListaEspera = ({
     "CARGADO POR",
     "ACCIONES",
   ];
+
+  // --- NUEVO: useEffect para resetear la paginación cuando cambian los filtros ---
+  useEffect(() => {
+    setPaginaActual(1); // Vuelve a la página 1 si cambia cualquier filtro
+  }, [filtroTipo, filtroEstado, terminoDeBusqueda]);
+
+  // --- LÓGICA DE FILTRADO MEJORADA CON useMemo ---
+  const listaFiltrada = useMemo(() => {
+    let filtrados = [...waitingList]; // Empezamos con la lista completa
+
+    // 1. Filtrar por Tipo
+    if (filtroTipo !== "todos") {
+      filtrados = filtrados.filter((person) => person.type === filtroTipo);
+    }
+
+    // 2. Filtrar por Estado de Contacto
+    if (filtroEstado !== "todos") {
+      filtrados = filtrados.filter((person) => {
+        const estado = person.contacto_cliente?.estado_contacto; // Estado actual
+
+        switch (filtroEstado) {
+          case "sin-estado":
+            return !estado; // Si no hay objeto 'contacto_cliente' o 'estado_contacto' es null/undefined
+          case "Pendiente":
+            return estado === "Pendiente";
+          case "Confirmado":
+            return estado === "Confirmado";
+          case "Rechazado":
+            return estado === "Rechazado/Sin Respuesta";
+          default:
+            return true;
+        }
+      });
+    }
+
+    // 3. Filtrar por Término de Búsqueda
+    const busqueda = terminoDeBusqueda.toLowerCase();
+    if (busqueda) {
+      filtrados = filtrados.filter((persona) => {
+        const nombre = persona.name?.toLowerCase() || "";
+        const tipo = persona.type?.toLowerCase() || "";
+        const contacto = persona.contact?.toLowerCase() || "";
+        return (
+          nombre.includes(busqueda) ||
+          tipo.includes(busqueda) ||
+          contacto.includes(busqueda)
+        );
+      });
+    }
+
+    // 1. Prioridad Alta: "Sin Estado" (null/undefined) y "Pendiente"
+    const prioridadAlta = filtrados.filter((p) => {
+      const estado = p.contacto_cliente?.estado_contacto;
+      return !estado || estado === "Pendiente";
+    }); // 2. Confirmados: (Van debajo de la prioridad alta)
+
+    const confirmados = filtrados.filter(
+      (p) => p.contacto_cliente?.estado_contacto === "Confirmado"
+    ); // 3. Rechazados: (Van al final de todo)
+
+    const rechazados = filtrados.filter(
+      (p) => p.contacto_cliente?.estado_contacto === "Rechazado/Sin Respuesta"
+    ); // Combinamos las listas en el nuevo orden
+
+    return [...prioridadAlta, ...confirmados, ...rechazados];
+  }, [waitingList, filtroTipo, filtroEstado, terminoDeBusqueda]);
+  // --- FIN DE LA LÓGICA DE FILTRADO ---
 
   // Maneja el clic en una fila
   const handleRowClick = (person) => {
@@ -418,45 +123,11 @@ const ListaEspera = ({
     }
   };
 
-  const resultadosFiltrados = waitingList.filter((persona) => {
-    const busqueda = terminoDeBusqueda.toLowerCase(); // Pasamos el texto a minúsculas para que no distinga mayúsculas
-
-    // Nos aseguramos que los campos existan antes de buscar en ellos
-    const nombre = persona.name?.toLowerCase() || "";
-    const tipo = persona.type?.toLowerCase() || "";
-    const contacto = persona.contact?.toLowerCase() || "";
-
-    if (!busqueda) {
-      return true; // Si no hay nada en el buscador, mostramos todo
-    }
-
-    // Devolvemos true si el texto de búsqueda está en cualquiera de los tres campos
-    return (
-      nombre.includes(busqueda) ||
-      tipo.includes(busqueda) ||
-      contacto.includes(busqueda)
-    );
-  });
-
-  // Para obtener una lista con solo los pendientes y confirmados
-  const filtrarPendientesYConfirmados = resultadosFiltrados.filter(
-    (person) =>
-      person.contacto_cliente?.estado_contacto !== "Rechazado/Sin Respuesta"
-  );
-
-  // Para obtener una lista con solo los rechazados
-  const filtrarBajas = resultadosFiltrados.filter(
-    (person) =>
-      person.contacto_cliente?.estado_contacto === "Rechazado/Sin Respuesta"
-  );
-
-  const listaConfirmada = [...filtrarPendientesYConfirmados, ...filtrarBajas]; // Concatenar ambas listas
-
-  //Logica de paginación
-  const indiceFinal = paginaActual * ELEMENTOS_POR_PAGINA; // 30 elementos por página
-  const indiceInicial = indiceFinal - ELEMENTOS_POR_PAGINA; // Índice inicial
-  const elementosPaginados = listaConfirmada.slice(indiceInicial, indiceFinal); // Elementos para la página actual
-  const totalPaginas = Math.ceil(listaConfirmada.length / ELEMENTOS_POR_PAGINA); // Total de páginas
+  //Logica de paginación (AHORA USA listaFiltrada)
+  const indiceFinal = paginaActual * ELEMENTOS_POR_PAGINA;
+  const indiceInicial = indiceFinal - ELEMENTOS_POR_PAGINA;
+  const elementosPaginados = listaFiltrada.slice(indiceInicial, indiceFinal);
+  const totalPaginas = Math.ceil(listaFiltrada.length / ELEMENTOS_POR_PAGINA);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -473,15 +144,58 @@ const ListaEspera = ({
           + Agregar a Lista de Espera
         </button>
       </div>
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Buscar por Nombre, Tipo o Contacto..."
-          value={terminoDeBusqueda}
-          onChange={(e) => setTerminoDeBusqueda(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
+
+      {/* --- SECCIÓN DE FILTROS Y BÚSQUEDA --- */}
+      <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Búsqueda */}
+        <div className="col-span-1">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Buscar
+          </label>
+          <input
+            type="text"
+            placeholder="Nombre, Tipo o Contacto..."
+            value={terminoDeBusqueda}
+            onChange={(e) => setTerminoDeBusqueda(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+        {/* Filtro 1: Tipo */}
+        <div className="col-span-1">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Filtrar por Tipo
+          </label>
+          <select
+            value={filtroTipo}
+            onChange={(e) => setFiltroTipo(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="todos">Todos los Tipos</option>
+            <option value="espera">Lista de Espera</option>
+            <option value="cambio">Lista de Cambio</option>
+          </select>
+        </div>
+
+        {/* Filtro 2: Estado */}
+        <div className="col-span-1">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Filtrar por Estado
+          </label>
+          <select
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="todos">Todos los Estados</option>
+            <option value="sin-estado">Sin Estado (Nuevos)</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Confirmado">Confirmado</option>
+            <option value="Rechazado">Rechazado / Sin Respuesta</option>
+          </select>
+        </div>
       </div>
+      {/* --- FIN DE FILTROS Y BÚSQUEDA --- */}
+
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead className="bg-purple-900">
@@ -562,7 +276,13 @@ const ListaEspera = ({
                   colSpan={HEADERS.length}
                   className="text-center p-8 text-gray-500 italic"
                 >
-                  La lista de espera está vacía.
+                  {/* Mensaje dinámico si no hay resultados */}
+                  {listaFiltrada.length === 0 &&
+                  (filtroTipo !== "todos" ||
+                    filtroEstado !== "todos" ||
+                    terminoDeBusqueda !== "")
+                    ? "No se encontraron resultados para los filtros aplicados."
+                    : "La lista de espera está vacía."}
                 </td>
               </tr>
             )}
@@ -579,7 +299,7 @@ const ListaEspera = ({
         </button>
 
         <span className="text-gray-700 font-semibold">
-          Página {paginaActual} de {totalPaginas}
+          Página {paginaActual} de {totalPaginas > 0 ? totalPaginas : 1}
         </span>
 
         <button
@@ -591,13 +311,14 @@ const ListaEspera = ({
         </button>
       </div>
       {isModalOpen && (
-        <WaitingListModal
+        <ModalListaEspera
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSave={handleSave}
           personData={selectedPerson}
           allHours={allHours}
           marcarEstadosAlumnoListaEspera={marcarEstadosAlumnoListaEspera}
+          schedule={schedule}
         />
       )}
     </div>
