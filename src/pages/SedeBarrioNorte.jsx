@@ -11,11 +11,13 @@ import Cardio_1 from "../images/sedes/Barrio Norte/Cardio1.webp";
 // import Sala_Principal from "../images/sedes/Barrio Norte/Sala principal.webp";
 // import Sala_Principal_1 from "../images/sedes/Barrio Norte/Sala principal 2.webp";
 import Clase_grupales from "../images/sedes/Barrio Norte/Clase_grupales.webp";
-import PlantaB_Sala_Pesos_Libres from "../images/sedes/Barrio Norte/PlantaB_Sala_Pesos_Libres.png";
+import PlantaB_Sala_Pesos_Libres from "../images/sedes/Barrio Norte/PlantaB_Sala_Pesos_Libres.webp";
 import Musculacion from "../images/sedes/Barrio Norte/Musculacion.webp";
+import Balanza_IA from "../images/sedes/Barrio Norte/BalanzaIA.webp";
+import Sala_Pilates from "../images/sedes/Barrio Norte/Sala_pilates.webp";
+import Silla_Masajes from "../images/sedes/Barrio Norte/Silla_Masajes.webp";
 import BalanzaIA from "../images/sedes/SedeBarrioNorte1.png";
 import Terraza from "../images/sedes/Barrio Norte/Terraza.webp";
-import FormTestClass_v2 from "../components/Forms/FormTestClass_v2";
 import "../styles/clients/newsede.css";
 import ModalContactoSede from "../components/ModalContactoSede";
 import FormTestClass from "../components/Forms/FormTestClass";
@@ -31,17 +33,12 @@ import {
   FaWhatsapp,
   FaWeight,
   FaChair,
-  FaHammer, 
-  FaWeightHanging
+  FaHammer,
+  FaWeightHanging,
 } from "react-icons/fa";
 
-import {
-  FiSun,
-  FiWind, 
-} from "react-icons/fi";
+import { FiSun, FiWind } from "react-icons/fi";
 import { MdSelfImprovement } from "react-icons/md";
-
-
 
 const SedeBarrioNorte = () => {
   const [modalContacto, setModalContacto] = useState(false);
@@ -72,15 +69,15 @@ const SedeBarrioNorte = () => {
       id: 1,
       icon: FaDumbbell,
       title: "Sala de Musculación",
-      description: "+70 equipos importados de última generación.", 
+      description: "+70 equipos importados de última generación.",
       image: Musculacion,
       isFullWidth: true,
       className: classNameImg,
     },
     {
       id: 2,
-      icon: FaWeightHanging, 
-      title: "Sala de pesos libres", 
+      icon: FaWeightHanging,
+      title: "Sala de pesos libres",
       description: "Para que entrenes sin espera.",
       image: PlantaB_Sala_Pesos_Libres,
       isFullWidth: true,
@@ -88,11 +85,11 @@ const SedeBarrioNorte = () => {
     },
     {
       id: 3,
-      icon: FaWeight, 
+      icon: FaWeight,
       title: "Balanza con IA",
       description:
-        "¡Única en la provincia! Tecnología avanzada para un seguimiento preciso de tu progreso, composición corporal, postura, entre muchos otros datos.", 
-      image: BalanzaIA,
+        "¡Única en la provincia! Tecnología avanzada para un seguimiento preciso de tu progreso, composición corporal, postura, entre muchos otros datos.",
+      image: Balanza_IA,
       isFullWidth: true,
     },
   ];
@@ -100,7 +97,8 @@ const SedeBarrioNorte = () => {
   // --- Datos para las instalaciones del Primer Piso ---
   const firstFloorFeatures = [
     {
-      icon: FaHeartbeat, 
+      id: 1,
+      icon: FaHeartbeat,
       title: "Sector Cardio",
       description:
         "+10 cintas inteligentes, bicis elípticas y otros equipos para tu entrenamiento cardiovascular.",
@@ -109,12 +107,17 @@ const SedeBarrioNorte = () => {
       className: classNameImg,
     },
     {
+      id: 2,
       icon: MdSelfImprovement,
       title: "Sala de Pilates",
-      description: "La sala de pilates climatizada más grande de Tucumán.", 
+      description: "La sala de pilates climatizada más grande de Tucumán.",
+      image: Sala_Pilates,
+      isFullWidth: true,
+      className: classNameImg,
     },
     {
-      icon: FaShower, 
+      id: 3,
+      icon: FaShower,
       title: "Baños y vestuarios",
       description:
         "Duchas y vestuarios con lockers individuales para tu comodidad después de cada entrenamiento.",
@@ -127,7 +130,7 @@ const SedeBarrioNorte = () => {
       icon: FaUsers,
       title: "Sala de Clases Grupales",
       description:
-        "Funcional, HIIT, Fullbody y otras clases para que elijas la que mejor se adapte a tu objetivo y ritmo, todas incluidas en tu mismo plan.", 
+        "Funcional, HIIT, Fullbody y otras clases para que elijas la que mejor se adapte a tu objetivo y ritmo, todas incluidas en tu mismo plan.",
       image: Clase_grupales,
       isFullWidth: true,
       className: classNameImg,
@@ -135,19 +138,19 @@ const SedeBarrioNorte = () => {
     {
       icon: FiSun,
       title: "Solarium",
-      description: "Cabina de bronceado para adelantarse al verano.", 
+      description: "Cabina de bronceado para adelantarse al verano.",
     },
     {
       icon: FaChair,
-      title: "Sector de relax con sillas para masajes", 
+      title: "Sector de relax con sillas para masajes",
       description:
         "Relaja tus músculos después de cada entrenamiento con nuestras modernas sillas de masaje, ¡un verdadero lujo!",
-      image: SillaPilates,
+      image: Silla_Masajes,
       isFullWidth: true,
     },
     {
       icon: FiWind,
-      title: "Terraza al aire libre", 
+      title: "Terraza al aire libre",
       description:
         "Espacio al aire libre para complementar tus entrenamientos, estirar o simplemente descansar.",
       image: Terraza,
@@ -280,9 +283,9 @@ const SedeBarrioNorte = () => {
               </div>
             </div>
             {/* Contenedor del carrusel*/}
-            <div className="flex overflow-x-auto gap-4 pb-4 px-6">
+            <div className="flex overflow-x-auto gap-4 pb-4 px-6 ">
               {groundFloorFeatures.map((feature, index) => (
-                <div key={index} className="shrink-0 w-64 md:w-80">
+                <div key={index} className="shrink-0 w-64 md:w-80 ">
                   <div
                     className={`group p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-gray-700 to-orange-400`}
                   >
@@ -294,10 +297,10 @@ const SedeBarrioNorte = () => {
                       <p className="text-white text-sm md:text-base">
                         {feature.description}
                         {feature.id === 2 && (
-                          <span className="text-transparent">
-                            {" "}
-                            SoftFusion SoftFusion{" "}
-                          </span>
+                          <>
+                            <br />
+                            <br />
+                          </>
                         )}
                       </p>
                     </div>
@@ -348,14 +351,15 @@ const SedeBarrioNorte = () => {
                 </h3>
               </div>
             </div>
+            {/* Contenedor del carrusel*/}
             <div className="flex overflow-x-auto gap-4 pb-4 px-6">
               {" "}
               {firstFloorFeatures.map((feature, index) => (
                 <div key={index} className="shrink-0 w-64 md:w-80">
                   <div
-                    className={`group p-4 border border-gray-200 rounded-lg h-full flex flex-col  ${
+                    className={`group p-4 border border-gray-200 rounded-lg h-full min-h-[500px] md:min-h-[580px] flex flex-col ${
                       feature.title === "Sala de Pilates"
-                        ? "bg-gradient-to-b from-gray-100 to-orange-300 "
+                        ? "bg-gradient-to-b from-gray-100 to-orange-300"
                         : "bg-gradient-to-b from-gray-500 via-gray-700 to-orange-500"
                     }`}
                   >
@@ -372,6 +376,12 @@ const SedeBarrioNorte = () => {
                         }`}
                       >
                         {feature.description}
+                        {feature.id === 2 && (
+                          <>
+                            <br />
+                            <br />
+                          </>
+                        )}
                       </p>
                     </div>
                     <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg">
@@ -430,6 +440,12 @@ const SedeBarrioNorte = () => {
                       </h4>
                       <p className="text-white text-sm md:text-base ">
                         {feature.description}
+                        {index >= 2 && (
+                          <>
+                            <br />
+                            <br />
+                          </>
+                        )}
                       </p>
                     </div>
 
@@ -527,7 +543,7 @@ const SedeBarrioNorte = () => {
 
       <div id="ubicacion" className="w-full">
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4223.568095001174!2d-65.20257459999999!3d-26.8210825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94225c22aac40d25%3A0xd5e93c92c00674bc!2s25%20de%20Mayo%20720%2C%20T4000%20San%20Miguel%20de%20Tucum%C3%A1n%2C%20Tucum%C3%A1n!5e1!3m2!1ses!2sar!4v1761148495178!5m2!1ses!2sar" 
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4223.568095001174!2d-65.20257459999999!3d-26.8210825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94225c22aac40d25%3A0xd5e93c92c00674bc!2s25%20de%20Mayo%20720%2C%20T4000%20San%20Miguel%20de%20Tucum%C3%A1n%2C%20Tucum%C3%A1n!5e1!3m2!1ses!2sar!4v1761148495178!5m2!1ses!2sar"
           width="100%"
           height="450"
           style={{ border: "0" }}
