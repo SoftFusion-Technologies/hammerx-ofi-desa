@@ -202,7 +202,6 @@ const PilatesGestionLogica = () => {
               }
             : null // Si el array está vacío o no existe, asignamos null
       }));
-      console.log(listaEsperaNormalizada)
       setWaitingList(listaEsperaNormalizada);
     } else {
       setWaitingList([]);
@@ -724,17 +723,11 @@ const PilatesGestionLogica = () => {
     }
 
     try {
-      console.log("🔍 handleSaveCambioTurno - Datos recibidos:", {
-        key,
-        studentData,
-        accion,
-        extras
-      });
 
       // ✅ USAR LA FUNCIÓN encontrarAlumnoYHorario QUE YA EXISTE
       // Esta función busca al alumno en TODOS los horarios, sin importar el día
       // y devuelve todos los IDs que necesitamos
-      const alumnoYHorarios = encontrarAlumnoYHorario(studentData.name, key);
+      const alumnoYHorarios = encontrarAlumnoYHorario(studentData.name, studentData.id, key);
       
       if (!alumnoYHorarios) {
         throw new Error(
@@ -743,12 +736,6 @@ const PilatesGestionLogica = () => {
         );
       }
 
-      console.log("✅ IDs encontrados usando encontrarAlumnoYHorario:", {
-        idEstudiante: alumnoYHorarios.idEstudiante,
-        idHorarioAnterior: alumnoYHorarios.idHorarioAnterior,
-        idHorarioNuevo: alumnoYHorarios.idHorarioNuevo
-      });
-
       // Preparar datos para el cambio de turno
       const alumnoCambio = {
         id_estudiante: alumnoYHorarios.idEstudiante,
@@ -756,13 +743,9 @@ const PilatesGestionLogica = () => {
         id_horario_nuevo: alumnoYHorarios.idHorarioNuevo,
       };
 
-      console.log("📤 Enviando a guardarCambioDeTurno:", alumnoCambio);
-
       // Realizar el cambio de turno a través de la API
       // Con reintentos en caso de problemas intermitentes
       const resultadoCambio = await guardarCambioDeTurno(null, alumnoCambio, 2); // 2 reintentos = 3 intentos totales
-      
-      console.log("📥 Respuesta exitosa de guardarCambioDeTurno:", resultadoCambio);
 
       console.log("✅ Cambio de turno ejecutado exitosamente");
 
@@ -966,52 +949,56 @@ function levenshteinDistance(a, b) {
     return matrix[b.length][a.length];
 }
 
-// FUNCTION: Encuentra un alumno y sus horarios viejo y nuevo por nombre aproximado
-const encontrarAlumnoYHorario = useCallback((nombreBuscado, keyHorarioNuevo) => {
-    // 1. Validaciones iniciales de los parámetros.
-    if (!nombreBuscado || !keyHorarioNuevo) return null;
-    
-    // Define cuántos errores de tipeo se permiten en la búsqueda.
-    const UMBRAL_DE_SIMILITUD = 3;
+// FUNCTION: Encuentra un alumno y sus horarios viejo y nuevo por ID (prioridad) o nombre
+const encontrarAlumnoYHorario = useCallback(
+  (nombreBuscado, idBuscado, keyHorarioNuevo) => {
+    if (!keyHorarioNuevo) return null;
 
-    // 2. Busca el ID del horario NUEVO usando la key que pasaste.
+    const puedeBuscarPorId =
+      idBuscado !== undefined && idBuscado !== null && idBuscado !== "";
+    const puedeBuscarPorNombre =
+      typeof nombreBuscado === "string" && nombreBuscado.trim() !== "";
+
+    if (!puedeBuscarPorId && !puedeBuscarPorNombre) return null;
+
     const horarioNuevoInfo = schedule[keyHorarioNuevo];
     const horarioIdNuevo = horarioNuevoInfo ? horarioNuevoInfo.horarioId : null;
 
-    // Si la key del nuevo horario no existe en la grilla, no podemos continuar.
     if (horarioIdNuevo === null) {
-        console.error(`La clave del horario nuevo "${keyHorarioNuevo}" no fue encontrada en el objeto 'schedule'.`);
-        return null;
+      console.error(
+        `No se encontró el ID del nuevo horario para la clave'`
+      );
+      return null;
     }
 
-    // 3. Recorre todos los horarios para encontrar al alumno y su horario VIEJO.
+    const normalizarNombre = (valor) =>
+      typeof valor === "string" ? valor.trim().toLowerCase() : "";
+    const nombreNormalizado = normalizarNombre(nombreBuscado);
+
     const listaDeHorarios = Object.values(schedule);
     for (const horario of listaDeHorarios) {
-        
-        // 4. Busca al alumno por su nombre con una coincidencia aproximada.
-        const alumnoEncontrado = horario.alumnos.find(alumno => {
-            const distancia = levenshteinDistance(
-                alumno.name.toLowerCase(), 
-                nombreBuscado.toLowerCase()
-            );
-            // Si la diferencia de letras es pequeña, lo consideramos una coincidencia.
-            return distancia <= UMBRAL_DE_SIMILITUD;
-        });
-
-        // 5. Si encontramos al alumno, armamos y devolvemos el objeto con los tres IDs.
-        if (alumnoEncontrado) {
-            return {
-                idEstudiante: alumnoEncontrado.id,     // ID del alumno
-                idHorarioAnterior: horario.horarioId,   // ID del horario donde estaba (viejo)
-                idHorarioNuevo: horarioIdNuevo       // ID del horario al que se va a mover (nuevo)
-            };
+      const alumnoEncontrado = horario.alumnos.find((alumno) => {
+        if (puedeBuscarPorId && alumno.id !== undefined && alumno.id !== null) {
+          if (String(alumno.id) === String(idBuscado)) return true;
         }
+        if (puedeBuscarPorNombre && alumno.name) {
+          return normalizarNombre(alumno.name) === nombreNormalizado;
+        }
+        return false;
+      });
+
+      if (alumnoEncontrado) {
+        return {
+          idEstudiante: alumnoEncontrado.id,
+          idHorarioAnterior: horario.horarioId,
+          idHorarioNuevo: horarioIdNuevo,
+        };
+      }
     }
-
-    // 6. Si el bucle termina, significa que el alumno no fue encontrado en ningún horario.
     return null;
-
-}, [schedule]); // La única dependencia de esta función es el estado 'schedule'.
+  },
+  [schedule]
+);
 
   /**
    * FUNCTION: Abre el modal para agregar o editar un alumno en un horario específico
@@ -1242,8 +1229,8 @@ const encontrarAlumnoYHorario = useCallback((nombreBuscado, keyHorarioNuevo) => 
       };
       // Lógica específica para cambios desde la lista de espera
       if (accion === "agregar" && tipoInscripcionListaEspera === "cambio") {
-        const alumno = encontrarAlumnoYHorario(studentData.name, key);
-        if (!alumno) {
+        const alumno = encontrarAlumnoYHorario(studentData.name,null, key);
+        if (alumno === null) {
           throw new Error("Alumno no encontrado para cambio de turno.");
         }
         const alumnoCambio = {
