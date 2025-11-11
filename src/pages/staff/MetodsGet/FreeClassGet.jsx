@@ -23,7 +23,6 @@ import { useAuth } from '../../../AuthContext';
 import { FaWhatsapp } from 'react-icons/fa';
 import SimpleModal from '../../../components/SimpleModal';
 import { motion } from 'framer-motion';
-
 const FreeClassGet = () => {
   const { userLevel, userId } = useAuth();
 
@@ -248,6 +247,10 @@ const FreeClassGet = () => {
     return u ? u.name : '';
   };
 
+  const sede2Barrio = {
+    SanMiguelBN: 'Barrio Norte',
+    SanMiguel: 'Barrio sur'
+  };
   return (
     <>
       <NavbarStaff />
@@ -344,7 +347,9 @@ const FreeClassGet = () => {
                           {personClass.celular}
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-700">
-                          {personClass.sede}
+                          {sede2Barrio[personClass?.sede] ??
+                            personClass?.sede ??
+                            '-'}
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-700">
                           {personClass.objetivo}
@@ -390,7 +395,6 @@ const FreeClassGet = () => {
                             >
                               <FaWhatsapp className="text-white" /> WhatsApp
                             </button>
-
                             <button
                               disabled={personClass.movido_a_ventas}
                               onClick={() => handleOpenMoverModal(personClass)}
@@ -506,7 +510,6 @@ const FreeClassGet = () => {
           </div>
         </div>
       </SimpleModal>
-
       <Footer />
     </>
   );

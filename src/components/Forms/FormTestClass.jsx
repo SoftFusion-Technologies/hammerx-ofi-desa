@@ -23,6 +23,13 @@ import ModalError from './ModalError';
 import Alerta from '../Error';
 import '../../styles/Forms/FormPostulante.css';
 
+const ACTIVIDADES = [
+  'Musculacion (instructores incluidos en tu plan)',
+  'Clases grupales (funcional - hit - Fullbody - Calistenia)',
+  'Pilates',
+  'Pase full'
+];
+
 // isOpen y onCLose son los metodos que recibe para abrir y cerrar el modal
 const FormTestClass = ({ isOpen, onClose }) => {
   const [showModal, setShowModal] = useState(false);
@@ -31,7 +38,7 @@ const FormTestClass = ({ isOpen, onClose }) => {
   // nueva variable para administrar el contenido de formulario para saber cuando limpiarlo
   const formikRef = useRef(null);
   const textoModal =
-    'Hola, hemos recibimos tu información, ya puedes pasar por nuestras Sedes, a probar tu clase!';
+    '¡Gracias!, recibimos tu solicitud correctamente, nos contactaremos proximamente.';
   // yup sirve para validar formulario este ya trae sus propias sentencias
   // este esquema de cliente es para utilizar su validacion en los inputs
   const nuevoTestClassSchema = Yup.object().shape({
@@ -52,7 +59,9 @@ const FormTestClass = ({ isOpen, onClose }) => {
       .max(15, 'El número de celular es muy largo')
       .required('El Celular es obligatorio'),
     sede: Yup.string().required('La Sede es obligatoria'),
-    objetivo: Yup.string().required('El Objetivo es obligatorio'),
+    objetivo: Yup.string()
+      .oneOf(ACTIVIDADES, 'Seleccioná una actividad válida')
+      .required('El Objetivo es obligatorio'),
     user: Yup.string().max(255, 'Usuario demasiado largo'),
     observaciones: Yup.string().max(255, 'Observaciones demasiado largas'),
     state: Yup.boolean().required(),
@@ -73,13 +82,16 @@ const FormTestClass = ({ isOpen, onClose }) => {
         // Realizamos la solicitud POST al servidor
         // URL DESARROLLO DESCOMENTAR CUANDO SE UTILICE DESARROLLO
         // const respuesta = await fetch("http://localhost:8080/testclass/", {
-        const respuesta = await fetch('http://localhost:8080/testclass/', {
-          method: 'POST',
-          body: JSON.stringify(valores),
-          headers: {
-            'Content-Type': 'application/json'
+        const respuesta = await fetch(
+          'http://localhost:8080/testclass/',
+          {
+            method: 'POST',
+            body: JSON.stringify(valores),
+            headers: {
+              'Content-Type': 'application/json'
+            }
           }
-        });
+        );
 
         // Verificamos si la solicitud fue exitosa
         if (!respuesta.ok) {
@@ -248,8 +260,8 @@ const FormTestClass = ({ isOpen, onClose }) => {
                       </option>
                       <option value="Monteros">Monteros</option>
                       <option value="Concepción">Concepción</option>
-                      <option value="SanMiguel">SMT - BARRIO SUR</option> 
-                      <option value="SanMiguelBN">SMT - BARRIO NORTE</option> 
+                      <option value="SanMiguel">SMT - BARRIO SUR</option>
+                      <option value="SanMiguelBN">SMT - BARRIO NORTE</option>
                     </Field>
                     {errors.sede && touched.sede ? (
                       <Alerta>{errors.sede}</Alerta>
@@ -265,37 +277,14 @@ const FormTestClass = ({ isOpen, onClose }) => {
                       required
                     >
                       <option value="" disabled>
-                        Selecciona tu objetivo
+                        Selecciona actividad
                       </option>
-                      <option value="Quiero ganar masa muscular">
-                        Quiero ganar masa muscular
-                      </option>
-                      <option value="Quiero bajar la panza y marcar el abdomen">
-                        Quiero bajar la panza y marcar el abdomen
-                      </option>
-                      <option value="Quiero bajar de peso y tonificar">
-                        Quiero bajar de peso y tonificar
-                      </option>
-                      <option value="Quiero combinar con mi deporte">
-                        Quiero combinar con mi deporte
-                      </option>
-                      <option value="Quiero ganar fuerza">
-                        Quiero ganar fuerza
-                      </option>
-                      <option value="Quiero bajar el estrés">
-                        Quiero bajar el estrés
-                      </option>
-                      <option value="Me aburro fácil">Me aburro fácil</option>
-                      <option value="Quiero entrenar sin impacto">
-                        Quiero entrenar sin impacto
-                      </option>
-                      <option value="Quiero quemar calorías">
-                        Quiero quemar calorías
-                      </option>
-                      <option value="Quiero una clase para mi niño">
-                        Quiero una clase para mi niño
-                      </option>
-                      <option value="Otros">Otros</option>
+
+                      {ACTIVIDADES.map((label) => (
+                        <option key={label} value={label}>
+                          {label}
+                        </option>
+                      ))}
                     </Field>
                     {errors.objetivo && touched.objetivo ? (
                       <Alerta>{errors.objetivo}</Alerta>
