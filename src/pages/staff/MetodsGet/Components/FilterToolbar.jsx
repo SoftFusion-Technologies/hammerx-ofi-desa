@@ -397,9 +397,11 @@ export default function FilterToolbar({
               className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
             >
               <option value="">Todas</option>
-              <option value="monteros">Monteros</option>
-              <option value="concepcion">Concepción</option>
-              <option value="smt">Barrio Sur</option>
+              <option value="Multisede">MULTI SEDE</option>
+              <option value="Monteros">MONTEROS</option>
+              <option value="Concepción">CONCEPCIÓN</option>
+              <option value="SMT">TUCUMÁN - BARRIO SUR</option>
+              <option value="SanMiguelBN">TUCUMÁN - BARRIO NORTE</option>
             </select>
           </div>
 
@@ -507,8 +509,6 @@ export default function FilterToolbar({
               <option value="rechazado">Rechazadas (rojo)</option>
             </select>
           </div>
-
-          
 
           {/* Alertas */}
           <div>

@@ -429,9 +429,11 @@ const PostulanteGetV2 = () => {
                     className="border border-gray-300 rounded-md p-2 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
                     <option value="">Todas</option>
-                    <option value="SanMiguel">SMT</option>
-                    <option value="Monteros">Monteros</option>
-                    <option value="Concepción">Concepción</option>
+                    <option value="Multisede">MULTI SEDE</option>
+                    <option value="Monteros">MONTEROS</option>
+                    <option value="Concepción">CONCEPCIÓN</option>
+                    <option value="SMT">TUCUMÁN - BARRIO SUR</option>
+                    <option value="SanMiguelBN">TUCUMÁN - BARRIO NORTE</option>
                   </select>
                 </div>
 

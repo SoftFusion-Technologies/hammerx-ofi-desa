@@ -216,9 +216,12 @@ const FormTestClass_v2 = ({ isOpen, onClose }) => {
                       <option value="" disabled>
                         ¿En qué HAMMER querés entrenar?
                       </option>
-                      <option value="SanMiguel">SMT - BARRIO SUR</option>
-                      <option value="Monteros">Monteros</option>
-                      <option value="Concepción">Concepción</option>
+                      <option value="Monteros">MONTEROS</option>
+                      <option value="Concepción">CONCEPCIÓN</option>
+                      <option value="SMT">TUCUMÁN - BARRIO SUR</option>
+                      <option value="SanMiguelBN">
+                        TUCUMÁN - BARRIO NORTE
+                      </option>
                     </Field>
                     {errors.sede && touched.sede ? (
                       <Alerta>{errors.sede}</Alerta>

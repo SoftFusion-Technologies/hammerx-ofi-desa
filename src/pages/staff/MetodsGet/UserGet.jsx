@@ -11,27 +11,37 @@
  * Capa: Frontend
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
-import axios from "axios";
-import React, { useEffect, useState } from "react";
-import NavbarStaff from "../NavbarStaff";
-import { Link } from "react-router-dom";
-import "../../../styles/MetodsGet/Tabla.css";
-import "../../../styles/staff/background.css";
-import Footer from "../../../components/footer/Footer";
-import FormAltaUser from "../../../components/Forms/FormAltaUser";
-import UserDetails from "./UserGetId";
-import { useAuth } from "../../../AuthContext";
-import UserGetPilates from "./UserGetPilates";
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import NavbarStaff from '../NavbarStaff';
+import { Link } from 'react-router-dom';
+import '../../../styles/MetodsGet/Tabla.css';
+import '../../../styles/staff/background.css';
+import Footer from '../../../components/footer/Footer';
+import FormAltaUser from '../../../components/Forms/FormAltaUser';
+import UserDetails from './UserGetId';
+import { useAuth } from '../../../AuthContext';
+import UserGetPilates from './UserGetPilates';
+import {
+  Users,
+  Dumbbell,
+  ArrowLeft,
+  Search,
+  Filter,
+  UserPlus,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 
 // Componente funcional que maneja la lógica relacionada con los Users
 const UserGet = () => {
   // useState que controla el modal de nuevo usuario
   const [modalNewUser, setModalNewUser] = useState(false);
-  const [sectionUserShow, setSectionUserShow] = useState("Usuarios"); // Estado para controlar la sección visible (todos, pilates)
+  const [sectionUserShow, setSectionUserShow] = useState('Usuarios'); // Estado para controlar la sección visible (todos, pilates)
   const [selectedUser, setSelectedUser] = useState(null); // Estado para el usuario seleccionado
   const [modalUserDetails, setModalUserDetails] = useState(false); // Estado para controlar el modal de detalles del usuario
-  const [filterSede, setFilterSede] = useState(""); // Estado para el filtro de sede
-  const [filterLevel, setFilterLevel] = useState(""); // Estado para el filtro de level (ROL)
+  const [filterSede, setFilterSede] = useState(''); // Estado para el filtro de sede
+  const [filterLevel, setFilterLevel] = useState(''); // Estado para el filtro de level (ROL)
   const { userLevel } = useAuth();
 
   const abrirModal = () => {
@@ -43,7 +53,7 @@ const UserGet = () => {
   };
 
   //URL estatica, luego cambiar por variable de entorno
-  const URL = "http://localhost:8080/users/";
+  const URL = 'http://localhost:8080/users/';
 
   // Estado para almacenar la lista de users
   const [users, setUsers] = useState([]);
@@ -51,7 +61,7 @@ const UserGet = () => {
   //------------------------------------------------------
   // 1.3 Relacion al Filtrado - Inicio - Benjamin Orellana
   //------------------------------------------------------
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   //Funcion de busqueda, en el cuadro
   const searcher = (e) => {
@@ -90,17 +100,17 @@ const UserGet = () => {
       const response = await axios.get(URL);
       setUsers(response.data);
     } catch (error) {
-      console.log("Error al obtener los usuarios:", error);
+      console.log('Error al obtener los usuarios:', error);
     }
   };
 
   const handleEliminarUser = async (id) => {
-    const confirmacion = window.confirm("¿Seguro que desea eliminar?");
+    const confirmacion = window.confirm('¿Seguro que desea eliminar?');
     if (confirmacion) {
       try {
         const url = `${URL}${id}`;
         const respuesta = await fetch(url, {
-          method: "DELETE",
+          method: 'DELETE'
         });
         await respuesta.json();
         const arrayUsers = users.filter((user) => user.id !== id);
@@ -120,7 +130,7 @@ const UserGet = () => {
       setSelectedUser(resultado);
       setModalUserDetails(true); // Abre el modal de detalles del usuario
     } catch (error) {
-      console.log("Error al obtener el usuario:", error);
+      console.log('Error al obtener el usuario:', error);
     }
   };
 
@@ -133,7 +143,7 @@ const UserGet = () => {
     if (!filterSede) {
       return true; // Si no hay filtro de sede seleccionado, mostrar todos los usuarios
     }
-    const sede = user.sede || ""; // Asignar una cadena vacía si `user.sede` es `null` o `undefined`
+    const sede = user.sede || ''; // Asignar una cadena vacía si `user.sede` es `null` o `undefined`
     return sede.toLowerCase().includes(filterSede.toLowerCase());
   };
 
@@ -153,8 +163,8 @@ const UserGet = () => {
   // Función para ordenar los integrantes de forma alfabética basado en el nombre
   const ordenarIntegranteAlfabeticamente = (user) => {
     return [...user].sort((a, b) => {
-      const sedeA = a.sede || ""; // Reemplaza null o undefined por una cadena vacía
-      const sedeB = b.sede || "";
+      const sedeA = a.sede || ''; // Reemplaza null o undefined por una cadena vacía
+      const sedeB = b.sede || '';
       return sedeA.localeCompare(sedeB);
     });
   };
@@ -191,218 +201,359 @@ const UserGet = () => {
     setSelectedUser(user);
     setModalNewUser(true);
   };
-  return (
-    <>
-      <NavbarStaff />
-      <div className="flex justify-center gap-4 my-6">
-        <button
-          className={`px-6 py-2 rounded-full ${
-            sectionUserShow === "Usuarios"
-              ? "bg-orange-500 text-white"
-              : "bg-gray-300 text-black"
-          } font-semibold shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400`}
-          onClick={() => setSectionUserShow("Usuarios")}
-        >
-          Usuarios
-        </button>
-        <button
-          className={`px-6 py-2 rounded-full ${
-            sectionUserShow === "Pilates"
-              ? "bg-orange-500 text-white"
-              : "bg-gray-300 text-black"
-          }  font-semibold shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400`}
-          onClick={() => setSectionUserShow("Pilates")}
-        >
-          Pilates
-        </button>
-      </div>
-      {sectionUserShow === "Pilates" ? (
-        <UserGetPilates />
-      ) : (
-        <>
-          <div className="dashboardbg h-contain pt-10 pb-10">
-            <div className="bg-white rounded-lg w-11/12 mx-auto pb-2">
-              <div className="pl-5 pt-5">
-                <Link to="/dashboard">
-                  <button className="py-2 px-5 bg-[#fc4b08] rounded-lg text-sm text-white hover:bg-orange-500">
-                    Volver
-                  </button>
-                </Link>
-              </div>
-              <div className="flex justify-center">
-                <h1 className="pb-5">
-                  Listado de Usuarios: &nbsp;
-                  <span className="text-center">
-                    Cantidad de registros: {results.length}
-                  </span>
-                </h1>
-              </div>
 
-              {/* formulario de busqueda */}
-              <form className="flex justify-center pb-5">
-                <input
-                  value={search}
-                  onChange={searcher}
-                  type="text"
-                  placeholder="Buscar usuarios"
-                  className="border rounded-sm"
-                />
-                <select
-                  value={filterSede}
-                  onChange={handleFilterSedeChange}
-                  className="border rounded-sm ml-3"
+  const sede2Barrio = {
+    SanMiguelBN: 'Tucumán - Barrio Norte',
+    smt: 'Tucumán - Barrio sur',
+    SMT: 'Tucumán - Barrio sur'
+  };
+return (
+  <>
+    <NavbarStaff />
+
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* HEADER */}
+        <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
+          <div className="space-y-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#fc4b08]">
+              Gestión de usuarios
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="uppercase font-bignoodle text-2xl md:text-4xl font-semibold text-slate-900">
+                Panel de usuarios
+              </h1>
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 border border-slate-200">
+                {results.length} registros
+              </span>
+            </div>
+            <p className="text-sm text-slate-600 max-w-xl">
+              Administra el equipo, los roles y las sedes desde una vista clara
+              y ordenada. Cambiá entre usuarios generales y el módulo de
+              Pilates.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-start md:justify-end">
+            <Link to="/dashboard">
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 transition"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Volver al dashboard
+              </button>
+            </Link>
+          </div>
+        </header>
+
+        {/* TOGGLE USUARIOS / PILATES */}
+        <div className="w-full flex justify-center mb-6">
+          <div className="inline-flex items-center rounded-full bg-white p-1 border border-orange-200 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setSectionUserShow('Usuarios')}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition ${
+                sectionUserShow === 'Usuarios'
+                  ? 'bg-[#fc4b08] text-white shadow-sm'
+                  : 'text-slate-700 hover:bg-orange-50'
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              Usuarios
+            </button>
+            <button
+              type="button"
+              onClick={() => setSectionUserShow('Pilates')}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition ${
+                sectionUserShow === 'Pilates'
+                  ? 'bg-[#fc4b08] text-white shadow-sm'
+                  : 'text-slate-700 hover:bg-orange-50'
+              }`}
+            >
+              <Dumbbell className="h-4 w-4" />
+              Pilates
+            </button>
+          </div>
+        </div>
+
+        {/* CONTENIDO SEGÚN SECCIÓN */}
+        {sectionUserShow === 'Pilates' ? (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+            <UserGetPilates />
+          </div>
+        ) : (
+          <>
+            {/* CARD PRINCIPAL USUARIOS */}
+            <section className="rounded-2xl bg-white border border-slate-200 shadow-sm">
+              {/* FILA SUPERIOR: FILTROS + CTA */}
+              <div className="flex flex-col gap-4 border-b border-slate-200 px-4 sm:px-6 pt-4 pb-5 md:flex-row md:items-center md:justify-between">
+                {/* FORM FILTROS */}
+                <form
+                  className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap"
+                  onSubmit={(e) => e.preventDefault()}
                 >
-                  <option value="">Todas las sedes</option>
-                  <option value="SMT">SMT</option>
-                  <option value="Monteros">Monteros</option>
-                  <option value="Concepción">Concepción</option>
-                  {/* Agrega más opciones según tus necesidades */}
-                </select>
+                  {/* Buscar */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-slate-700">
+                      Buscar
+                    </label>
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <input
+                        value={search}
+                        onChange={searcher}
+                        type="text"
+                        placeholder="Nombre, email o ID…"
+                        className="w-full sm:w-64 rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#fc4b08] focus:border-[#fc4b08]"
+                      />
+                    </div>
+                  </div>
 
-                <select
-                  value={filterLevel}
-                  onChange={handleFilterLevelChange}
-                  className="border rounded-sm ml-3"
-                >
-                  <option value="">Todos los roles</option>
-                  <option value="admin">Administrador</option>
-                  <option value="vendedor">Vendedor</option>
-                  <option value="gerente">Gerente</option>
-                  <option value="instructor">Instructor</option>
-                  {/* Agrega más opciones según tus necesidades */}
-                </select>
-              </form>
-              {/* formulario de busqueda */}
+                  {/* Sede */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-slate-700">
+                      Sede
+                    </label>
+                    <div className="relative">
+                      <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <select
+                        value={filterSede}
+                        onChange={handleFilterSedeChange}
+                        className="w-full sm:w-56 appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#fc4b08] focus:border-[#fc4b08]"
+                      >
+                        <option value="">Todas las sedes</option>
+                        <option value="Monteros">MONTEROS</option>
+                        <option value="Concepción">CONCEPCIÓN</option>
+                        <option value="SMT">TUCUMÁN - BARRIO SUR</option>
+                        <option value="SanMiguelBN">
+                          TUCUMÁN - BARRIO NORTE
+                        </option>
+                      </select>
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        ▼
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="flex justify-center pb-10">
-                <Link to="#">
+                  {/* Rol */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-slate-700">
+                      Rol
+                    </label>
+                    <div className="relative">
+                      <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <select
+                        value={filterLevel}
+                        onChange={handleFilterLevelChange}
+                        className="w-full sm:w-48 appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#fc4b08] focus:border-[#fc4b08]"
+                      >
+                        <option value="">Todos los roles</option>
+                        <option value="admin">Administrador</option>
+                        <option value="vendedor">Vendedor</option>
+                        <option value="gerente">Gerente</option>
+                        <option value="instructor">Instructor</option>
+                      </select>
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        ▼
+                      </span>
+                    </div>
+                  </div>
+                </form>
+
+                {/* CTA NUEVO USUARIO */}
+                <div className="flex justify-start md:justify-end">
                   <button
+                    type="button"
                     onClick={abrirModal}
-                    className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#58b35e] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#4e8a52] transition"
                   >
-                    Nuevo Usuario
+                    <UserPlus className="h-4 w-4" />
+                    Nuevo usuario
                   </button>
-                </Link>
+                </div>
               </div>
 
-              {Object.keys(results).length === 0 ? (
-                <p className="text-center pb-10">
-                  El Usuario NO Existe ||{" "}
-                  <span className="text-span"> Usuario: {results.length}</span>
-                </p>
-              ) : (
-                <>
-                  <table className="w-11/12 mx-auto">
-                    <thead className="text-white bg-[#fc4b08] ">
-                      <tr key={users.id}>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Rol</th>
-                        <th>Sede</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {records
-                        .filter(applySedeFilter)
-                        .filter(applyLevelFilter)
-                        .map((user) => (
-                          <tr key={user.id}>
-                            <td onClick={() => obtenerUser(user.id)}>
-                              {user.id}
-                            </td>
-                            <td onClick={() => obtenerUser(user.id)}>
-                              {user.name}
-                            </td>
-                            <td onClick={() => obtenerUser(user.id)}>
-                              {user.email}
-                            </td>
-                            <td onClick={() => obtenerUser(user.id)}>
-                              {user.level}
-                            </td>
-                            <td onClick={() => obtenerUser(user.id)}>
-                              {user.sede}
-                            </td>
-                            {/* ACCIONES */}
-                            {(userLevel === "admin" ||
-                              userLevel === "administrador") && (
-                              <td className="">
-                                <button
-                                  onClick={() => handleEliminarUser(user.id)}
-                                  type="button"
-                                  className="py-2 px-4 my-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+              {/* CONTENIDO PRINCIPAL */}
+              <div className="px-4 sm:px-6 py-4">
+                {Object.keys(results).length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center gap-2">
+                    <p className="text-sm sm:text-base font-semibold text-slate-800">
+                      No encontramos usuarios con esos filtros
+                    </p>
+                    <p className="text-xs sm:text-sm text-slate-500">
+                      Probá limpiando la búsqueda o cambiando la sede/rol.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* TABLA */}
+                    <div className="overflow-hidden rounded-xl border border-slate-200">
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full text-sm text-left">
+                          <thead className="bg-[#fc4b08] text-white text-xs uppercase tracking-wide">
+                            <tr>
+                              <th className="px-4 py-3 font-semibold">ID</th>
+                              <th className="px-4 py-3 font-semibold">
+                                Nombre
+                              </th>
+                              <th className="px-4 py-3 font-semibold">Email</th>
+                              <th className="px-4 py-3 font-semibold">Rol</th>
+                              <th className="px-4 py-3 font-semibold">Sede</th>
+                              {(userLevel === 'admin' ||
+                                userLevel === 'administrador') && (
+                                <th className="px-4 py-3 font-semibold text-right">
+                                  Acciones
+                                </th>
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 bg-white">
+                            {records
+                              .filter(applySedeFilter)
+                              .filter(applyLevelFilter)
+                              .map((user) => (
+                                <tr
+                                  key={user.id}
+                                  className="hover:bg-orange-50/60 transition-colors"
                                 >
-                                  Eliminar
-                                </button>
-                                <button
-                                  onClick={() => handleEditarUser(user)} // (NUEVO)
-                                  type="button"
-                                  className="py-2 px-4 my-1 ml-5 bg-yellow-500 text-black rounded-md hover:bg-red-600"
-                                >
-                                  Editar
-                                </button>
-                              </td>
-                            )}
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                  <nav className="flex justify-center items-center my-10">
-                    <ul className="pagination">
-                      <li className="page-item">
-                        <a href="#" className="page-link" onClick={prevPage}>
-                          Prev
-                        </a>
-                      </li>
-                      {numbers.map((number, index) => (
-                        <li
-                          className={`page-item ${
-                            currentPage === number ? "active" : ""
-                          }`}
-                          key={index}
+                                  <td
+                                    className="px-4 py-2.5 text-slate-800 cursor-pointer"
+                                    onClick={() => obtenerUser(user.id)}
+                                  >
+                                    #{user.id}
+                                  </td>
+                                  <td
+                                    className="px-4 py-2.5 text-slate-900 cursor-pointer"
+                                    onClick={() => obtenerUser(user.id)}
+                                  >
+                                    {user.name}
+                                  </td>
+                                  <td
+                                    className="px-4 py-2.5 text-slate-700 cursor-pointer"
+                                    onClick={() => obtenerUser(user.id)}
+                                  >
+                                    {user.email}
+                                  </td>
+                                  <td
+                                    className="px-4 py-2.5 text-slate-700 capitalize cursor-pointer"
+                                    onClick={() => obtenerUser(user.id)}
+                                  >
+                                    {user.level}
+                                  </td>
+                                  <td
+                                    className="px-4 py-2.5 text-slate-700 uppercase cursor-pointer"
+                                    onClick={() => obtenerUser(user.id)}
+                                  >
+                                    {sede2Barrio[user?.sede] ??
+                                      user?.sede ??
+                                      '-'}
+                                  </td>
+
+                                  {(userLevel === 'admin' ||
+                                    userLevel === 'administrador') && (
+                                    <td className="px-4 py-2.5 text-right space-x-2 whitespace-nowrap">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleEditarUser(user)}
+                                        className="inline-flex items-center gap-1 rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-yellow-300 transition"
+                                      >
+                                        Editar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleEliminarUser(user.id)
+                                        }
+                                        className="inline-flex items-center gap-1 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-400 transition"
+                                      >
+                                        Eliminar
+                                      </button>
+                                    </td>
+                                  )}
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* PAGINACIÓN */}
+                    <div className="mt-6 flex justify-center">
+                      <nav
+                        className="inline-flex items-center gap-1 rounded-full bg-white border border-slate-200 px-1.5 py-1 shadow-sm"
+                        aria-label="Paginación"
+                      >
+                        <button
+                          type="button"
+                          onClick={prevPage}
+                          className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent"
+                          disabled={currentPage === 1}
                         >
-                          <a
-                            href="#"
-                            className="page-link"
+                          <ChevronLeft className="h-4 w-4" />
+                          Prev
+                        </button>
+
+                        {numbers.map((number) => (
+                          <button
+                            key={number}
+                            type="button"
                             onClick={() => changeCPage(number)}
+                            className={`inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                              currentPage === number
+                                ? 'bg-[#fc4b08] text-white'
+                                : 'text-slate-700 hover:bg-slate-100'
+                            }`}
                           >
                             {number}
-                          </a>
-                        </li>
-                      ))}
-                      <li className="page-item">
-                        <a href="#" className="page-link" onClick={nextPage}>
+                          </button>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={nextPage}
+                          className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent"
+                          disabled={
+                            numbers.length === 0 ||
+                            currentPage === numbers[numbers.length - 1]
+                          }
+                        >
                           Next
-                        </a>
-                      </li>
-                    </ul>
-                  </nav>
-                </>
-              )}
-              {/* Modal para abrir formulario de clase gratis */}
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </nav>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Modal alta / edición */}
               <FormAltaUser
                 isOpen={modalNewUser}
                 onClose={cerarModal}
                 user={selectedUser}
                 setSelectedUser={setSelectedUser}
               />
-            </div>
-          </div>
-          {selectedUser && (
-            <UserDetails
-              user={selectedUser}
-              setSelectedUser={setSelectedUser}
-              isOpen={modalUserDetails}
-              onClose={() => setModalUserDetails(false)}
-            />
-          )}
-        </>
-      )}
+            </section>
 
-      <Footer />
-    </>
-  );
+            {/* Detalle lateral / modal */}
+            {selectedUser && (
+              <UserDetails
+                user={selectedUser}
+                setSelectedUser={setSelectedUser}
+                isOpen={modalUserDetails}
+                onClose={() => setModalUserDetails(false)}
+              />
+            )}
+          </>
+        )}
+      </div>
+    </div>
+
+    <Footer />
+  </>
+);
+
 };
 
 export default UserGet;

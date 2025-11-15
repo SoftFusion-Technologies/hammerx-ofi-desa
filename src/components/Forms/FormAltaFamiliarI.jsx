@@ -35,7 +35,7 @@ const FormAltaFamiliarI = ({
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
   const { id_integrante } = useParams(); // Obtener el id_integrante de la URL
-  
+
   // const textoModal = 'Familiar creado correctamente.'; se elimina el texto
   // nuevo estado para gestionar dinámicamente según el método (PUT o POST)
   const [textoModal, setTextoModal] = useState('');
@@ -56,8 +56,8 @@ const FormAltaFamiliarI = ({
     // sede: Yup.string()
   });
 
-      // ? `http://localhost:8080/integrantesfam/${integrante.id}`
-      //     : 'http://localhost:8080/integrantesfam/';
+  // ? `http://localhost:8080/integrantesfam/${integrante.id}`
+  //     : 'http://localhost:8080/integrantesfam/';
   const handleSubmitFamIntegrante = async (valores) => {
     try {
       // Verificamos si los campos obligatorios están vacíos
@@ -77,12 +77,12 @@ const FormAltaFamiliarI = ({
             'Content-Type': 'application/json'
           }
         });
-          if (method === 'PUT') {
-            // setName(null); // una vez que sale del metodo PUT, limpiamos el campo descripcion
-            setTextoModal('Familiar actualizado correctamente.');
-          } else {
-            setTextoModal('Familiar creado correctamente.');
-          }
+        if (method === 'PUT') {
+          // setName(null); // una vez que sale del metodo PUT, limpiamos el campo descripcion
+          setTextoModal('Familiar actualizado correctamente.');
+        } else {
+          setTextoModal('Familiar creado correctamente.');
+        }
         // Verificamos si la solicitud fue exitosa
         if (!respuesta.ok) {
           throw new Error('Error en la solicitud POST: ' + respuesta.status);
@@ -113,13 +113,13 @@ const FormAltaFamiliarI = ({
     }
   };
 
-    const handleClose = () => {
-      if (formikRef.current) {
-        formikRef.current.resetForm();
-        setSelectedUser(null);
-      }
-      onClose();
-    };
+  const handleClose = () => {
+    if (formikRef.current) {
+      formikRef.current.resetForm();
+      setSelectedUser(null);
+    }
+    onClose();
+  };
   return (
     <div
       className={`h-screen w-screen mt-16 fixed inset-0 flex pt-10 justify-center ${
@@ -249,8 +249,13 @@ const FormAltaFamiliarI = ({
                       <option value="" disabled>
                         Sede:
                       </option>
-                      <option value="Monteros">Monteros</option>
-                      <option value="Concepción">Concepción</option>
+                      <option value="Multisede">MULTI SEDE</option>
+                      <option value="Monteros">MONTEROS</option>
+                      <option value="Concepción">CONCEPCIÓN</option>
+                      <option value="SMT">TUCUMÁN - BARRIO SUR</option>
+                      <option value="SanMiguelBN">
+                        TUCUMÁN - BARRIO NORTE
+                      </option>
                     </Field>
                     {errors.sede && touched.sede ? (
                       <Alerta>{errors.sede}</Alerta>

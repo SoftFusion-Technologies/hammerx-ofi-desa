@@ -82,16 +82,13 @@ const FormTestClass = ({ isOpen, onClose }) => {
         // Realizamos la solicitud POST al servidor
         // URL DESARROLLO DESCOMENTAR CUANDO SE UTILICE DESARROLLO
         // const respuesta = await fetch("http://localhost:8080/testclass/", {
-        const respuesta = await fetch(
-          'http://localhost:8080/testclass/',
-          {
-            method: 'POST',
-            body: JSON.stringify(valores),
-            headers: {
-              'Content-Type': 'application/json'
-            }
+        const respuesta = await fetch('http://localhost:8080/testclass/', {
+          method: 'POST',
+          body: JSON.stringify(valores),
+          headers: {
+            'Content-Type': 'application/json'
           }
-        );
+        });
 
         // Verificamos si la solicitud fue exitosa
         if (!respuesta.ok) {
@@ -258,10 +255,12 @@ const FormTestClass = ({ isOpen, onClose }) => {
                       <option value="" disabled>
                         ¿En qué HAMMER querés entrenar?
                       </option>
-                      <option value="Monteros">Monteros</option>
-                      <option value="Concepción">Concepción</option>
-                      <option value="SanMiguel">SMT - BARRIO SUR</option>
-                      <option value="SanMiguelBN">SMT - BARRIO NORTE</option>
+                      <option value="Monteros">MONTEROS</option>
+                      <option value="Concepción">CONCEPCIÓN</option>
+                      <option value="SanMiguel">TUCUMÁN - BARRIO SUR</option>
+                      <option value="SanMiguelBN">
+                        TUCUMÁN - BARRIO NORTE
+                      </option>
                     </Field>
                     {errors.sede && touched.sede ? (
                       <Alerta>{errors.sede}</Alerta>

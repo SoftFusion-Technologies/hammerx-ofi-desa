@@ -368,6 +368,12 @@ const QuejasInternasGet = () => {
   const prevPage = () => currentPage > 1 && setCurrentPage((p) => p - 1);
   const nextPage = () => currentPage < nPage && setCurrentPage((p) => p + 1);
 
+  const sede2Barrio = {
+    SanMiguelBN: 'Tucumán - Barrio Norte',
+    smt: 'Tucumán - Barrio sur',
+    SMT: 'Tucumán - Barrio sur',
+    Concepción: 'Concepción'
+  };
   // ===================== UI =====================
   return (
     <>
@@ -644,8 +650,8 @@ const QuejasInternasGet = () => {
                               </div>
                             </td>
 
-                            <td className="px-3 py-3 text-zinc-700">
-                              {queja.sede}
+                            <td className="px-3 py-3 text-zinc-700 uppercase">
+                              {sede2Barrio[queja?.sede] ?? queja?.sede ?? '-'}
                             </td>
                             <td className="px-3 py-3">
                               {Number(queja.resuelto) === 1 ? (

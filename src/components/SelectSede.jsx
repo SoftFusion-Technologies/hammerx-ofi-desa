@@ -17,10 +17,11 @@ const SelectSede = ({ setFieldValue, errors, touched }) => {
         <option value="" disabled>
           Sede:
         </option>
-        <option value="Multisede">Multi Sede</option>
-        <option value="SMT">SMT</option>
-        <option value="Monteros">Monteros</option>
-        <option value="Concepción">Concepción</option>
+        <option value="Multisede">MULTI SEDE</option>
+        <option value="Monteros">MONTEROS</option>
+        <option value="Concepción">CONCEPCIÓN</option>
+        <option value="SMT">TUCUMÁN - BARRIO SUR</option>
+        <option value="SanMiguelBN">TUCUMÁN - BARRIO NORTE</option>
       </Field>
       {errors.sede && touched.sede ? <Alerta>{errors.sede}</Alerta> : null}
     </div>

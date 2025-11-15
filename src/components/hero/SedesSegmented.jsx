@@ -9,7 +9,7 @@ export default function SedesButtons({ mostrarBotonesSedes = true }) {
     { path: '/Sedes/Concepcion', label: 'CONCEPCIÓN' },
     { path: '/Sedes/Monteros', label: 'MONTEROS' },
     { path: '/Sedes/BarrioSur', label: 'BARRIO SUR' },
-    { path: '/nueva_sede_hammerx', label: 'BARRIO NORTE' } // ruta especial
+    { path: '/nueva_sede_hammerx_barrio_norte', label: 'BARRIO NORTE' } // ruta especial
   ];
 
   const baseBtn =

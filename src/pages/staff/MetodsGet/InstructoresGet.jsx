@@ -174,9 +174,11 @@ const InstructoresGet = () => {
                   className="border border-gray-300 rounded-xl px-4 py-2 w-full sm:w-48 focus:outline-none focus:ring-2 focus:ring-[#fc4b08] transition-all shadow-sm"
                 >
                   <option value="">Todas las sedes</option>
-                  <option value="SMT">SMT</option>
-                  <option value="Monteros">Monteros</option>
-                  <option value="Concepción">Concepción</option>
+                  <option value="Multisede">MULTI SEDE</option>
+                  <option value="Monteros">MONTEROS</option>
+                  <option value="Concepción">CONCEPCIÓN</option>
+                  <option value="SMT">TUCUMÁN - BARRIO SUR</option>
+                  <option value="SanMiguelBN">TUCUMÁN - BARRIO NORTE</option>
                 </select>
               )}
               {userLevel === 'instructor' && filterSede && (

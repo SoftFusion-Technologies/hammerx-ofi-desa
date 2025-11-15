@@ -10,16 +10,23 @@ import axios from 'axios';
 const Footer = () => {
   const location = useLocation();
   const path = location.pathname;
+
+  // Cualquier ruta de dashboard
   const isDashboard = path.startsWith('/dashboard');
+
+  // SOLO el dashboard principal (home)
+  const isDashboardRoot = path === '/dashboard' || path === '/dashboard/';
+
   const { userLevel } = useAuth();
   const URL = 'http://localhost:8080/';
 
   const [imagenes, setImagenes] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Sólo traer imágenes si estoy en /dashboard
+  // Sólo traer imágenes si estoy en /dashboard (home)
   useEffect(() => {
-    if (!isDashboard) return;
+    if (!isDashboardRoot) return;
+
     const fetchImages = async () => {
       setLoading(true);
       try {
@@ -31,16 +38,17 @@ const Footer = () => {
         setLoading(false);
       }
     };
+
     fetchImages();
-  }, [isDashboard, URL]);
+  }, [isDashboardRoot, URL]);
 
   return (
     <>
-      {/* Si NO es dashboard, podés mostrar Marcas u otros elementos del footer */}
-      {!isDashboard && <Marcas_v2 />}
+      {/* En cualquier ruta que NO sea dashboard, muestro Marcas */}
+      {/* {!isDashboard && <Marcas_v2 />} */}
 
-      {/* ====== BLOQUE IMÁGENES: SOLO EN DASHBOARD ====== */}
-      {isDashboard && (
+      {/* ====== BLOQUE IMÁGENES: SOLO EN /dashboard ====== */}
+      {isDashboardRoot && (
         <div className="my-4">
           {/* Manager visible sólo para admin o rol 'imagenes' */}
           {(userLevel === 'admin' || userLevel === 'imagenes') && (
@@ -49,21 +57,18 @@ const Footer = () => {
             </div>
           )}
 
-          {/* Loader solo si es dashboard */}
           {loading && (
             <div className="flex justify-center py-8">
               <span className="animate-spin h-7 w-7 border-2 border-orange-500 border-t-transparent rounded-full" />
             </div>
           )}
 
-          {/* Estado vacío solo en dashboard */}
           {!loading && imagenes.length === 0 && (
             <div className="text-center text-gray-400 py-8">
               No hay imágenes cargadas aún.
             </div>
           )}
 
-          {/* Galería solo en dashboard */}
           {!loading && imagenes.length > 0 && (
             <div className="flex flex-col items-center gap-4 my-4">
               {imagenes.map((img) => (
@@ -136,7 +141,7 @@ const Footer = () => {
 
           <span className="block text-sm text-gray-500 sm:text-center dark:text-gray-400 max-sm:select-none">
             <a href="#" className="hover:underline max-sm:select-none">
-              HAMMERX © Copyright 2024 | Todos los derechos reservados.
+              HAMMERX © Copyright 2026 | Todos los derechos reservados.
             </a>
           </span>
         </div>

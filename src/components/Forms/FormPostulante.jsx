@@ -186,7 +186,7 @@ const FormPostulante = ({ isOpen, onClose }) => {
           {({ setFieldValue, errors, touched }) => {
             return (
               <div className="py-0 max-h-[85%]  overflow-y-auto bg-white rounded-xl mx-5">
-                {" "}
+                {' '}
                 {/* Cuando se haga el modal, sacarle el padding o ponerle uno de un solo digito */}
                 <Form className="w-full lg:w-[1000px] mx-auto p-2 sm:px-6 bg-white shadow-xl rounded-2xl">
                   <div className="flex justify-between">
@@ -203,7 +203,8 @@ const FormPostulante = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="sm:hidden font-bignoodle text-lg font-bold text-center py-4">
-                        Deslize hacia abajo para completar el formulario, todos los campos son obligatorios.
+                        Deslize hacia abajo para completar el formulario, todos
+                        los campos son obligatorios.
                       </p>
                     </div>
                     <div
@@ -344,9 +345,13 @@ const FormPostulante = ({ isOpen, onClose }) => {
                         <option value="" disabled>
                           Sede:
                         </option>
-                        <option value="SanMiguel">SMT - BARRIO SUR</option>
-                        <option value="Monteros">Monteros</option>
-                        <option value="Concepción">Concepción</option>
+                        <option value="Multisede">MULTI SEDE</option>
+                        <option value="Monteros">MONTEROS</option>
+                        <option value="Concepción">CONCEPCIÓN</option>
+                        <option value="SMT">TUCUMÁN - BARRIO SUR</option>
+                        <option value="SanMiguelBN">
+                          TUCUMÁN - BARRIO NORTE
+                        </option>
                       </Field>
                       {errors.sede && touched.sede ? (
                         <Alerta>{errors.sede}</Alerta>
@@ -374,7 +379,7 @@ const FormPostulante = ({ isOpen, onClose }) => {
                       <input
                         type="file"
                         name="cv" // Esto debe coincidir con lo que Multer espera en el backend
-                        onChange={(e) => setFieldValue("cv", e.target.files[0])}
+                        onChange={(e) => setFieldValue('cv', e.target.files[0])}
                         accept=".pdf,.jpg,.jpeg" // Esto limita los tipos de archivo que se pueden seleccionar
                         className="block w-full text-gray-700 border rounded-xl cursor-pointer bg-gray-100 p-3"
                       />
@@ -402,11 +407,11 @@ const FormPostulante = ({ isOpen, onClose }) => {
                     <button
                       type="submit"
                       className={`mt-2 block w-full p-3 text-white rounded-xl ${
-                        isSubmitting ? "bg-gray-400" : "bg-orange-500"
+                        isSubmitting ? 'bg-gray-400' : 'bg-orange-500'
                       } hover:bg-orange-600`}
                       disabled={isSubmitting}
                     >
-                      {isSubmitting ? "Enviando..." : "Enviar"}
+                      {isSubmitting ? 'Enviando...' : 'Enviar'}
                     </button>
                   </div>
                 </Form>

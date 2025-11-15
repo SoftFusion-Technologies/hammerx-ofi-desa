@@ -84,13 +84,6 @@ const Navbar = () => {
               ¡Probar una clase!
             </button>
           </Link>
-
-          <img
-            onClick={toggleDarkMode}
-            className="h-7 mt-2 cursor-pointer dark:invert hidden xl:flex"
-            src={theme}
-            alt="Theme"
-          />
         </div>
 
         <div className="lg:hidden">
@@ -145,15 +138,6 @@ const Navbar = () => {
           <Link onClick={abrirModal} to="#form" className="block py-2 px-4 ">
             Prueba una clase gratis
           </Link>
-          <div className="ml-4 flex items-center gap-2 py-2">
-            <h1> Dark Mode</h1>
-            <img
-              onClick={toggleDarkMode}
-              className="h-7 cursor-pointer dark:invert"
-              src={theme}
-              alt="Theme"
-            />
-          </div>
         </div>
       )}
 
