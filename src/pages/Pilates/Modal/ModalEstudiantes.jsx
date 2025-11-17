@@ -646,7 +646,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
                 <option value="prueba">Clase de Prueba</option>
               )}
             </select>
-            {cellData?.student && (status === "plan" || status === "programado") && (
+            {cellData?.student && status === "plan" && (
               <button
                 type="button" // Importante para que no envíe el formulario
                 onClick={handleRenovacionDirecta}
