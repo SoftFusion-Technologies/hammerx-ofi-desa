@@ -96,6 +96,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
   const [habilitarClasePrueba, setHabilitarClasePrueba] = useState(true); // Permite seleccionar opción "Clase de prueba"
   const [esClienteParaRenovar, setEsClienteParaRenovar] = useState(false); // Indica si hay plan anterior vencido pendiente de renovación
   const [alumnoNuevo, setAlumnoNuevo] = useState(false); // Diferencia entre agregar nuevo alumno vs editar existente
+  const [renovacionDirectaActiva, setRenovacionDirectaActiva] = useState(false); // Toggle para atajo Renovación Directa
 
   // ============ OBJETOS DATE PARA REACT-DATEPICKER ============
   const [planStartDateObj, setPlanStartDateObj] = useState(null); // Objeto Date para selector de inicio del plan
@@ -295,6 +296,8 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
         setPlanStartDate(student.planDetails.startDate);
         setPlanDuration(duracion_dias ? String(duracion_dias) : "30");
         setPlanDurationAux(duracion_dias ? String(duracion_dias) : "30");
+        // reset toggle cuando cargamos datos del alumno
+        setRenovacionDirectaActiva(false);
       } else if (student.status === "prueba" && student.trialDetails) {
         setTrialDate(student.trialDetails.date);
       } else if (student.status === "programado" && student.scheduledDetails) {
@@ -315,6 +318,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
       setTrialDate(today);
       setScheduledDate(today);
       setObservation("");
+      setRenovacionDirectaActiva(false);
     }
   }, [isOpen, cellData?.student]);
 
@@ -475,6 +479,49 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
   };
 
   /**
+  * FUNCTION: Maneja el atajo de "Renovación Directa"
+  * Toma la fecha de fin del plan actual, le suma 1 día y prepara
+  * el formulario para una renovación en estado "plan".
+  */
+  const handleRenovacionDirecta = () => {
+    // Toggle: si ya está activo, deshacer la renovación directa
+    if (renovacionDirectaActiva) {
+      // Restaurar fecha de inicio original si existe
+      const originalStart = planStartDateAux || today;
+      setPlanStartDate(originalStart);
+      // Restaurar estado previo
+      setStatus(statusAux || 'plan');
+      // Resetear flags
+      setEsClienteProgramadoAContratado(false);
+      setEsClientePlanParaProgramado(false);
+      setEsClienteParaRenovar(false);
+      setRenovacionDirectaActiva(false);
+      return;
+    }
+
+    // Aplicar renovación directa
+    const ultimoVencimiento = cellData?.student?.planDetails?.endDate;
+    if (ultimoVencimiento) {
+      const [y, m, d] = ultimoVencimiento.split("-").map(Number);
+      const fecha = new Date(y, m - 1, d);
+      fecha.setDate(fecha.getDate() + 1); // sumar 1 día
+      const año = fecha.getFullYear();
+      const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+      const dia = String(fecha.getDate()).padStart(2, "0");
+      const newStartDate = `${año}-${mes}-${dia}`;
+
+      setPlanStartDate(newStartDate);
+      setStatus("plan");
+      setEsClienteProgramadoAContratado(true);
+      setEsClientePlanParaProgramado(false);
+      setEsClienteParaRenovar(true);
+      setRenovacionDirectaActiva(true);
+    } else {
+      alert("Error: No se encontró un plan anterior para renovar directamente.");
+    }
+  };
+
+  /**
    * UTILITY FUNCTION: Convierte fecha en formato YYYY-MM-DD a DD/MM/YYYY
    * Utilizado para mostrar fechas en formato amigable en la interfaz
    */
@@ -524,7 +571,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
                       currentHour: cellData.time,
                       status: cellData.student.status,
                       observation: cellData.student.observation || "",
-                      planDetails: cellData.student.planDetails || null
+                      planDetails: cellData.student.planDetails || null,
                     };
                     onOpenCambioTurno(alumnoData);
                     onClose();
@@ -599,6 +646,19 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
                 <option value="prueba">Clase de Prueba</option>
               )}
             </select>
+            {cellData?.student && (status === "plan" || status === "programado") && (
+              <button
+                type="button" // Importante para que no envíe el formulario
+                onClick={handleRenovacionDirecta}
+                className={`w-full mt-3 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors ${
+                  renovacionDirectaActiva
+                    ? 'bg-gray-300 text-gray-800 hover:bg-gray-400'
+                    : 'bg-orange-500 text-white hover:bg-orange-700'
+                }`}
+              >
+                {renovacionDirectaActiva ? 'Anular Renovación Directa' : 'Renovación Directa'}
+              </button>
+            )}
           </div>
 
           {/* SECCIÓN: Formulario de PLAN CONTRATADO */}
