@@ -6,6 +6,7 @@ import { useAuth } from '../../AuthContext';
 import DashboardImagesManager from './DashboardImagesManager';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { LinkIcon } from 'lucide-react'; 
 
 const Footer = () => {
   const location = useLocation();
@@ -18,7 +19,31 @@ const Footer = () => {
   const isDashboardRoot = path === '/dashboard' || path === '/dashboard/';
 
   const { userLevel } = useAuth();
-  const URL = 'http://localhost:8080/';
+  const API_BASE = 'http://localhost:8080/';
+
+    // Helper para descargar instructivos (fetch -> blob -> descarga cliente)
+  const descargarArchivo = async (instructivoPath) => {
+    if (!instructivoPath) return;
+    try {
+      const filePath = String(instructivoPath).replace(/^uploads\//, 'public/');
+      const fullUrl = `${API_BASE}${filePath}`;
+      const resp = await fetch(fullUrl);
+      if (!resp.ok) throw new Error('Error de red');
+      const blob = await resp.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const filename = (filePath.split('/').pop() || 'instructivo').replace(/\?.*$/, '');
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(objectUrl);
+    } catch (e) {
+      console.error('Error descargando instructivo', e);
+      alert('No se pudo descargar el instructivo');
+    }
+  };
 
   const [imagenes, setImagenes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +55,7 @@ const Footer = () => {
     const fetchImages = async () => {
       setLoading(true);
       try {
-        const { data } = await axios.get(`${URL}dashboard-images`);
+        const { data } = await axios.get(`${API_BASE}dashboard-images`);
         setImagenes(Array.isArray(data) ? data : []);
       } catch {
         setImagenes([]);
@@ -40,7 +65,7 @@ const Footer = () => {
     };
 
     fetchImages();
-  }, [isDashboardRoot, URL]);
+  }, [isDashboardRoot, API_BASE]);
 
   return (
     <>
@@ -51,7 +76,7 @@ const Footer = () => {
       {isDashboardRoot && (
         <div className="my-4">
           {/* Manager visible sólo para admin o rol 'imagenes' */}
-          {(userLevel === 'admin' || userLevel === 'imagenes') && (
+          {(userLevel === "admin" || userLevel === "imagenes") && (
             <div className="mb-4">
               <DashboardImagesManager />
             </div>
@@ -69,19 +94,81 @@ const Footer = () => {
             </div>
           )}
 
+          {/* --- 2. GALERÍA MODIFICADA --- */}
           {!loading && imagenes.length > 0 && (
-            <div className="flex flex-col items-center gap-4 my-4">
-              {imagenes.map((img) => (
-                <img
-                  key={img.id}
-                  src={`${URL}${String(img.url || '').replace(
-                    /^uploads\//,
-                    'public/'
-                  )}`}
-                  alt={img.titulo || 'Imagen Dashboard'}
-                  style={{ display: 'block', margin: '0 auto' }}
-                  loading="lazy"
-                />
+            <div className="flex flex-col items-center gap-6 my-4 px-4">
+              {imagenes.map((elemento) => (
+                <div
+                  key={elemento.id}
+                  className="w-full max-w-7xl bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-4"
+                >
+                  {/* --- Título (si existe) --- */}
+                  {elemento.titulo && (
+                    <h2 className="text-2xl font-bold text-center text-[#fc4b08] mb-4">
+                      {elemento.titulo}
+                    </h2>
+                  )}
+
+                  {/* --- Imagen Principal (Banner o Título de Grupo) --- */}
+                  {elemento.url && (
+                    <img
+                      src={`${API_BASE}${String(elemento.url || "").replace(
+                        /^uploads\//,
+                        "public/"
+                      )}`}
+                      alt={elemento.titulo || "Imagen Principal"}
+                      className="w-full h-auto object-contain rounded-md"
+                      loading="lazy"
+                    />
+                  )}
+
+                  {/* --- 3. SI ES GRUPO DE PROMO, RENDERIZAR TARJETITAS --- */}
+                  {elemento.tipo === "GRUPO_PROMOCION" && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {/* Mapear las tarjetitas hijas */}
+                        {elemento.tarjetas?.map((tarjeta) => (
+                          <div
+                            key={tarjeta.id}
+                            className="relative bg-gray-50 dark:bg-zinc-700 p-2 rounded-lg shadow-sm flex flex-col"
+                          >
+                            <img
+                              src={`${API_BASE}${tarjeta.imagen_tarjeta_url.replace(
+                                /^uploads\//,
+                                "public/"
+                              )}`}
+                              alt="Tarjeta de promoción"
+                              className="w-full rounded-md"
+                            />
+
+                            {/* Link al instructivo (si existe) */}
+                            {tarjeta.instructivo_url ? (
+                              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-zinc-600">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    descargarArchivo(tarjeta.instructivo_url)
+                                  }
+                                  className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1.5"
+                                >
+                                  <LinkIcon size={14} />
+                                  Ver Instructivo
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-zinc-600">
+                                {" "}
+                                <span className="text-xs text-red-500 font-semibold">
+                                  Sin Instructivo
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -107,7 +194,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:underline text-blue-500"
-                  style={{ textDecoration: 'none', color: 'inherit' }}
+                  style={{ textDecoration: "none", color: "inherit" }}
                 >
                   &nbsp;SOFT FUSION
                 </a>
