@@ -20,7 +20,7 @@ const ModalConfirmarListaEspera = ({
   const [planStartDate, setPlanStartDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
-  const [planDuration, setPlanDuration] = useState("30");
+  const [planDuration, setPlanDuration] = useState("29");
   const [observation, setObservation] = useState("");
   const [planEndDate, setPlanEndDate] = useState("");
   const [selectedPlan, setSelectedPlan] = useState("L-M-V");
@@ -212,10 +212,10 @@ const ModalConfirmarListaEspera = ({
                   onChange={(e) => setPlanDuration(e.target.value)}
                   className="shadow border rounded w-full py-2 px-3"
                 >
-                  <option value="30">Mensual</option>
-                  <option value="90">Trimestral</option>
-                  <option value="180">Semestral</option>
-                  <option value="360">Anual</option>
+                  <option value="29">Mensual</option>
+                  <option value="89">Trimestral</option>
+                  <option value="179">Semestral</option>
+                  <option value="359">Anual</option>
                 </select>
               </div>
             </div>

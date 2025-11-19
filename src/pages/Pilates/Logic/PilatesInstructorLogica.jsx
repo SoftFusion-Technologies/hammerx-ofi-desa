@@ -132,7 +132,7 @@ const PilatesInstructorLogica = () => {
       case "plan":
         const startDate = new Date(student.planDetails.startDate + "T00:00:00");
         const expiryDate = new Date(
-          startDate.getTime() + 30 * 24 * 60 * 60 * 1000
+          startDate.getTime() + 29 * 24 * 60 * 60 * 1000
         );
         isExpired = expiryDate < today;
         style =

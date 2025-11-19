@@ -1385,7 +1385,7 @@ const encontrarAlumnoYHorario = useCallback(
                 </span>
 
                 {/* Badge "Modificado" (solo si la duración no es estándar) */}
-                {duracion && ![30, 90, 180, 360].includes(Number(duracion)) && (
+                {duracion && ![29, 89, 179, 359].includes(Number(duracion)) && (
                   <span className="not-italic font-bold bg-orange-200 text-orange-800 text-[10px] p-2 rounded-full">
                     <FaPencilAlt />
                   </span>

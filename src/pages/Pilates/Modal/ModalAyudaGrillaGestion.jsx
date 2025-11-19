@@ -19,7 +19,7 @@ const ModalAyudaGrillaGestion = ({ isOpen, onClose }) => {
         { 
           icon: FaPencilAlt, 
           nombre: 'Plan con Fecha Fin Personalizada', 
-          descripcion: 'Aparece la etiqueta "MODIFICADO" cuando la duración del plan no es estándar (30, 90, 180 días), indicando que la fecha de fin fue editada manualmente. El sistema registra qué usuario realizó esta modificación para mayor control.' 
+          descripcion: 'Aparece la etiqueta "MODIFICADO" cuando la duración del plan no es estándar (29, 89, 179, 359 días), indicando que la fecha de fin fue editada manualmente. El sistema registra qué usuario realizó esta modificación para mayor control.' 
         },
       ]
     },

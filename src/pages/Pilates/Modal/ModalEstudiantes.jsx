@@ -74,8 +74,8 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
   // ============ FECHAS Y DURACIONES DEL PLAN ============
   const [planStartDate, setPlanStartDate] = useState(today); // Fecha de inicio del plan (YYYY-MM-DD)
   const [planStartDateAux, setPlanStartDateAux] = useState(today); // Backup de fecha inicio original
-  const [planDuration, setPlanDuration] = useState("30"); // Duración del plan en días
-  const [planDurationAux, setPlanDurationAux] = useState("30"); // Backup de duración original
+  const [planDuration, setPlanDuration] = useState("29"); // Duración del plan en días
+  const [planDurationAux, setPlanDurationAux] = useState("29"); // Backup de duración original
   const [planEndDate, setPlanEndDate] = useState(""); // Fecha fin calculada automáticamente
   const [planEndDateAux, setPlanEndDateAux] = useState(""); // Backup de fecha fin original
   const [habilitarFechaFinPersonalizada, setHabilitarFechaFinPersonalizada] = useState(false); // Permite editar fecha fin manualmente
@@ -136,16 +136,16 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
    * ================================================================
    */
 
-  const { data: auditoriaData } = useConsultaDB(
-    idAlumno && ![30, 60, 90, 180].includes(planDurationAux)
+const { data: auditoriaData } = useConsultaDB(
+    idAlumno && ![29, 89, 179, 359].includes(Number(planDurationAux))
       ? `/auditoria-pilates/cliente/${idAlumno}`
       : null
-  );
+  );;
 
   /**
    * ================================================================
    * SECCIÓN 4: EFFECTS - CARGA DE DATOS DESDE API
-   * Cargan información de auditoría y datos iniciales del alumno
+   * Cargan información de auditoría y datos iniciales del alumno 
    * ================================================================
    */
 
@@ -196,7 +196,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
         planStartDate,
         planEndDateAux
       );
-      setPlanDuration(duracion_dias ? String(duracion_dias) : "30");
+      setPlanDuration(duracion_dias ? String(duracion_dias) : "29");
     }
   }, [habilitarFechaFinPersonalizada]);
 
@@ -207,7 +207,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
   useEffect(() => {
     if (planEndDate && habilitarFechaFinPersonalizada) {
       const duracion_dias = calcularDiasEntreFechas(planStartDate, planEndDate);
-      setPlanDuration(duracion_dias ? String(duracion_dias) : "30");
+      setPlanDuration(duracion_dias ? String(duracion_dias) : "29");
     }
   }, [planEndDate]);
 
@@ -294,8 +294,8 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
           student.planDetails.endDate
         );
         setPlanStartDate(student.planDetails.startDate);
-        setPlanDuration(duracion_dias ? String(duracion_dias) : "30");
-        setPlanDurationAux(duracion_dias ? String(duracion_dias) : "30");
+        setPlanDuration(duracion_dias ? String(duracion_dias) : "29");
+        setPlanDurationAux(duracion_dias ? String(duracion_dias) : "29");
         // reset toggle cuando cargamos datos del alumno
         setRenovacionDirectaActiva(false);
       } else if (student.status === "prueba" && student.trialDetails) {
@@ -314,7 +314,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
       setContact("");
       setStatus("plan");
       setPlanStartDate(today);
-      setPlanDuration("30");
+      setPlanDuration("29");
       setTrialDate(today);
       setScheduledDate(today);
       setObservation("");
@@ -696,7 +696,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
                     Duración del Plan
                   </label>
                   {!alumnoNuevo &&
-                    !["360", "180", "90", "30"].includes(planDurationAux) && (
+                    !["359", "179", "89", "29"].includes(planDurationAux) && (
                       <button
                         type="button"
                         onClick={() => setMostrarDetallesAuditoria(true)}
@@ -715,14 +715,14 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
                       onChange={(e) => setPlanDuration(e.target.value)}
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="30">Mensual</option>
-                      <option value="90">Trimestral</option>
-                      <option value="180">Semestral</option>
-                      <option value="360">Anual</option>
+                      <option value="29">Mensual</option>
+                      <option value="89">Trimestral</option>
+                      <option value="179">Semestral</option>
+                      <option value="359">Anual</option>
                       {!alumnoNuevo &&
-                        planDuration !== "360" &&
-                        planDuration !== "180" &&
-                        planDuration !== "30" && (
+                        planDuration !== "359" &&
+                        planDuration !== "179" &&
+                        planDuration !== "29" && (
                           <option value={planDuration}>Personalizado</option>
                         )}
                     </select>
