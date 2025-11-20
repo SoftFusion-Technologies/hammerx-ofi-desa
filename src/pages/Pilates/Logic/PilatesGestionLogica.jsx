@@ -308,6 +308,11 @@ const PilatesGestionLogica = () => {
       .trim()
       .toLowerCase();
 
+    // Si el usuario tiene "smt", lo forzamos a buscar "barrio sur" en la lista de sedes.
+    if (sedeUser === 'smt') {
+      sedeUser = 'barrio sur';
+    } 
+
     // Si el usuario es 'multisede', seleccionamos por defecto la primera sede disponible
     if (sedeUser === 'multisede') {
       if (sedesData[0] && (sedesData[0].id || sedesData[0].id === 0)) {
