@@ -121,13 +121,41 @@ const FormAltaNovedad = ({
     }
   };
 
-  const formatSedeValue = (selectedSede) => {
-    return selectedSede.length === 3 ? 'todas' : selectedSede.join(', ');
-  };
+// Función para formatear el valor de la sede para la visualización de usuario
+const formatSedeValue = (selectedSede) => {
+  if (!Array.isArray(selectedSede)) {
+    selectedSede = [selectedSede];
+  }
+
+  const valorFormateado = selectedSede
+    .map((sede) => {
+      switch (sede) {
+        case "SMT":
+          return "T.Barrio Sur";
+        case "SanMiguelBN":
+          return "T.Barrio Norte";
+        default:
+          return sede;
+      }
+    })
+    .join(", ");
+  if (selectedSede.length === 4) {
+    return "todas";
+  }
+  console.log(valorFormateado);
+  return valorFormateado;
+};
+
+// Función para formatear el valor de la sede para el backend
+const mapSedesToApiValue = (selectedSede) => {
+  return selectedSede.length === 4 ? "todas" : selectedSede.join(", ");
+};
+
+
 
   const handleSubmitNovedad = async (valores) => {
     try {
-      valores.sede = formatSedeValue(selectedSede);
+      valores.sede = mapSedesToApiValue(selectedSede);
       const data = {
         sede: valores.sede,
         titulo: valores.titulo,
@@ -197,7 +225,7 @@ const FormAltaNovedad = ({
   return (
     <div
       className={`h-screen w-screen p-2 sm:px-0 mt-16 fixed inset-0 flex pt-10 justify-center ${
-        isOpen ? 'block' : 'hidden'
+        isOpen ? "block" : "hidden"
       } bg-gray-800 bg-opacity-75 z-50`}
     >
       <div className="container-inputs">
@@ -205,11 +233,11 @@ const FormAltaNovedad = ({
           innerRef={formikRef}
           initialValues={{
             sede: selectedSede,
-            titulo: novedad ? novedad.titulo : '',
-            mensaje: novedad ? novedad.mensaje : '',
-            vencimiento: novedad ? novedad.vencimiento : '',
+            titulo: novedad ? novedad.titulo : "",
+            mensaje: novedad ? novedad.mensaje : "",
+            vencimiento: novedad ? novedad.vencimiento : "",
             estado: 1,
-            userName: userName || ''
+            userName: userName || "",
           }}
           enableReinitialize
           onSubmit={async (values, { resetForm }) => {
@@ -241,45 +269,69 @@ const FormAltaNovedad = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mx-2">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mx-2">
+                  {/* Botón Monteros */}
                   <button
                     type="button"
-                    className={`w-full py-2 px-5 rounded-xl text-white text-sm font-bold transition ${
-                      selectedSede.includes('monteros')
-                        ? 'bg-[#fc4b08]'
-                        : 'bg-orange-500 hover:bg-[#fc4b08]'
-                    } focus:outline-orange-100`}
-                    onClick={() => handleSedeSelection('monteros')}
+                    className={`w-full py-2 **px-2** rounded-xl text-xs font-bold transition flex items-center justify-center whitespace-nowrap 
+                  ${
+                    selectedSede.includes("monteros")
+                      ? "bg-[#fc4b08] text-white border-none"
+                      : "bg-white text-orange-500 border-2 border-orange-500 hover:bg-orange-50 hover:border-[#fc4b08]"
+                  } focus:outline-orange-100`}
+                    onClick={() => handleSedeSelection("monteros")}
                   >
-                    {selectedSede.includes('monteros')
-                      ? 'Monteros✅'
-                      : 'Monteros'}
+                    {selectedSede.includes("monteros")
+                      ? "Monteros✅"
+                      : "Monteros"}
                   </button>
 
+                  {/* Botón Concepción */}
                   <button
                     type="button"
-                    className={`w-full py-2 px-5 rounded-xl text-white text-sm font-bold transition ${
-                      selectedSede.includes('concepcion')
-                        ? 'bg-[#fc4b08]'
-                        : 'bg-orange-500 hover:bg-[#fc4b08]'
-                    } focus:outline-orange-100`}
-                    onClick={() => handleSedeSelection('concepcion')}
+                    className={`w-full py-2 **px-2** rounded-xl text-xs font-bold transition flex items-center justify-center whitespace-nowrap 
+                  ${
+                    selectedSede.includes("concepcion")
+                      ? "bg-[#fc4b08] text-white border-none"
+                      : "bg-white text-orange-500 border-2 border-orange-500 hover:bg-orange-50 hover:border-[#fc4b08]"
+                  } focus:outline-orange-100`}
+                    onClick={() => handleSedeSelection("concepcion")}
                   >
-                    {selectedSede.includes('concepcion')
-                      ? 'Concepción✅'
-                      : 'Concepción'}
+                    {selectedSede.includes("concepcion")
+                      ? "Concepción✅"
+                      : "Concepción"}
                   </button>
 
+                  {/* Botón T.Barrio Sur (SMT) */}
                   <button
                     type="button"
-                    className={`w-full py-2 px-5 rounded-xl text-white text-sm font-bold transition ${
-                      selectedSede.includes('SMT')
-                        ? 'bg-[#fc4b08]'
-                        : 'bg-orange-500 hover:bg-[#fc4b08]'
-                    } focus:outline-orange-100`}
-                    onClick={() => handleSedeSelection('SMT')}
+                    className={`w-full py-2 **px-2** rounded-xl text-xs font-bold transition flex items-center justify-center whitespace-nowrap 
+                  ${
+                    selectedSede.includes("SMT")
+                      ? "bg-[#fc4b08] text-white border-none"
+                      : "bg-white text-orange-500 border-2 border-orange-500 hover:bg-orange-50 hover:border-[#fc4b08]"
+                  } focus:outline-orange-100`}
+                    onClick={() => handleSedeSelection("SMT")}
                   >
-                    {selectedSede.includes('SMT') ? 'SMT✅' : 'SMT'}
+                    {selectedSede.includes("SMT")
+                      ? "T.Barrio Sur✅"
+                      : "T.Barrio Sur"}
+                  </button>
+
+                  {/* Botón T.Barrio Norte (SanMiguelBN) */}
+                  <button
+                    type="button"
+                    className={`w-full py-2 **px-2** rounded-xl text-xs font-bold transition flex items-center justify-center whitespace-nowrap 
+                  ${
+                    selectedSede.includes("SanMiguelBN")
+                      ? "bg-[#fc4b08] text-white border-none"
+                      : "bg-white text-orange-500 border-2 border-orange-500 hover:bg-orange-50 hover:border-[#fc4b08]" 
+                  } focus:outline-orange-100`}
+                    onClick={() => handleSedeSelection("SanMiguelBN")}
+                  >
+                    {selectedSede.includes("SanMiguelBN")
+                      ? "T.Barrio Norte✅"
+                      : "T.Barrio Norte"}
                   </button>
                 </div>
 
@@ -299,7 +351,7 @@ const FormAltaNovedad = ({
                             htmlFor="select-all-users"
                             className="ml-2 text-sm font-medium text-gray-700 cursor-pointer"
                           >
-                            Seleccionar todos los usuarios de{' '}
+                            Seleccionar todos los usuarios de{" "}
                             <p className="font-bold uppercase">
                               {formatSedeValue(selectedSede)}
                             </p>
@@ -322,7 +374,7 @@ const FormAltaNovedad = ({
                               <label
                                 htmlFor={`user-${user.id}`}
                                 className="ml-3 text- text-gray-800 cursor-pointer truncate"
-                                style={{ fontSize: '0.775rem' }}
+                                style={{ fontSize: "0.775rem" }}
                               >
                                 {user.name}
                               </label>
@@ -372,7 +424,7 @@ const FormAltaNovedad = ({
                   <ReactQuill
                     theme="snow"
                     value={values.mensaje}
-                    onChange={(content) => setFieldValue('mensaje', content)}
+                    onChange={(content) => setFieldValue("mensaje", content)}
                     placeholder="Ingrese el mensaje"
                     className="mt-2 block w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
                   />
@@ -384,7 +436,7 @@ const FormAltaNovedad = ({
                 <div className="sticky bottom-0 bg-white py-3 px-4">
                   <input
                     type="submit"
-                    value={novedad ? 'Actualizar' : 'Crear Novedad'}
+                    value={novedad ? "Actualizar" : "Crear Novedad"}
                     className="w-full bg-orange-500 py-2 px-5 rounded-xl text-white font-bold hover:bg-[#fc4b08] focus:outline-orange-100"
                   />
                 </div>
