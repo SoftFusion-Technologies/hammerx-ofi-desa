@@ -304,13 +304,15 @@ const PilatesGestionLogica = () => {
       return;
 
     // Normalizamos el nombre de la sede del usuario para comparaciones
-    const sedeUser = String(sedeName || '')
+    let sedeUser = String(sedeName || '')
       .trim()
       .toLowerCase();
 
-    // Si el usuario tiene "smt", lo forzamos a buscar "barrio sur" en la lista de sedes.
+    // Si el usuario tiene "smt" o "sanmiguelbn", lo forzamos a buscar "barrio sur" en la lista de sedes.
     if (sedeUser === 'smt') {
       sedeUser = 'barrio sur';
+    } else if (sedeUser === 'sanmiguelbn') {
+      sedeUser = 'barrio norte';
     } 
 
     // Si el usuario es 'multisede', seleccionamos por defecto la primera sede disponible
@@ -364,7 +366,15 @@ const PilatesGestionLogica = () => {
   const puedeEditarSede = useMemo(() => {
     // Permitir edición global si el usuario es 'admin' o si su sedeName es 'multisede'
     const nivel = String(userLevel || '').toLowerCase();
-    const sedeLower = String(sedeName || '').toLowerCase();
+    let sedeLower = String(sedeName || '').toLowerCase();
+
+    // Si el usuario es 'smt', lo convertimos manualmente a 'barrio sur'
+    if (sedeLower === 'smt') {
+      sedeLower = 'barrio sur';
+    } else if (sedeLower === 'sanmiguelbn') {
+      sedeLower = 'barrio norte';
+    }
+    
     if (nivel === 'admin' || sedeLower === 'multisede') return true;
 
     if (!sedeActualFiltro || !Array.isArray(sedesData) || !sedeName)
@@ -379,7 +389,7 @@ const PilatesGestionLogica = () => {
       sedeSeleccionada.sede ||
       '';
     return (
-      normalizarTexto(nombreSedeSeleccionada) === normalizarTexto(sedeName)
+      normalizarTexto(nombreSedeSeleccionada) === normalizarTexto(sedeLower)
     );
   }, [sedeActualFiltro, sedesData, sedeName, userLevel]);
 
@@ -1566,7 +1576,7 @@ const encontrarAlumnoYHorario = useCallback(
         default:
           return;
       }
-      if (expiryDate < today) {
+      if (expiryDate <= today) {
         calculatedExpiredStudents.push({
           name: student.name,
           type: type,
