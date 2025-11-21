@@ -4,6 +4,8 @@ import useConsultaDB from "../ConsultaDb/Consulta";
 import useModify from "../ConsultaDb/Modificar";
 import ObtenerFechaInternet from "../utils/ObtenerFechaInternet";
 import { format, set } from "date-fns";
+import Swal from "sweetalert2";
+import useInsertar from "../ConsultaDb/Insertar";
 
 const PilatesInstructorLogica = () => {
   const [isModalAsistencia, setIsModalAsistencia] = useState(false); // Estado que abre el modal que marca la asistencia
@@ -14,7 +16,7 @@ const PilatesInstructorLogica = () => {
   const [hoy, setHoy] = useState(""); // Día actual en formato de texto (LUNES, MARTES, etc.)
   const [fechaHoy, setFechaHoy] = useState(null); // Fecha actual obtenida de la API de internet
   const [asistenciasHoy, setAsistenciasHoy] = useState({}); // Asistencias registradas para la fecha actual
-  const { sedeId } = useInstructorAuth(); // Obtener el ID de la sede del contexto de autenticación del instructor
+  const { sedeId, instructorName} = useInstructorAuth(); // Obtener el ID de la sede del contexto de autenticación del instructor
   const { fecha } = ObtenerFechaInternet(); // Obtener la fecha actual de una API de internet
 
   // Consulta para obtener los horarios y alumnos asignados a la sede
@@ -22,8 +24,13 @@ const PilatesInstructorLogica = () => {
     sedeId ? `/clientes-pilates/horarios?sedeId=${sedeId}` : null
   );
 
+  const {insert} = useInsertar("/quejas-pilates", true);
+
   // Función para modificar la asistencia de un alumno
   const { update } = useModify("/asistencias-pilates/marcar");
+
+  // Función para modificar la observacion de un alumno
+  const { update: updateObservacion, error: errorObs} = useModify("/clientesPilates", true);
 
   // Consulta para obtener el cupo máximo de la sede
   const { data: sedesData } = useConsultaDB(`/sedes/ciudad`);
@@ -204,6 +211,87 @@ const PilatesInstructorLogica = () => {
     setIsModalAsistencia(false);
   };
 
+
+const cambiarObservaciones = async (studentId, newObservaciones) => {
+  if (!studentId) {
+    Swal.fire("Error", "ID de estudiante no proporcionado.", "error");
+    return;
+  }
+  const datos = {
+    observaciones: newObservaciones.toUpperCase().trim(),
+  };
+  const subRoute = `${studentId}/observaciones`;
+  const success = await updateObservacion(subRoute, datos);
+  if (success) {
+    await refetchHorarios();
+    setIsModalAsistencia(false);
+    Swal.fire({
+      icon: "success",
+      title: "¡Guardado!",
+      text: "Observaciones actualizadas correctamente.",
+      showConfirmButton: false,
+      timer: 1500,
+    });
+  } else {
+    const errorMessage = errorObs
+      ? errorObs
+      : "Ocurrió un error al intentar guardar.";
+    Swal.fire({
+      icon: "error",
+      title: "Error al Guardar",
+      text: errorMessage,
+      confirmButtonText: "Aceptar",
+    });
+  }
+};
+
+  const agregarQuejas = async (student, newQuejas) => {
+    if (newQuejas === "" || newQuejas === null) {
+      Swal.fire({
+        icon: "error",
+        title: "¡Por favor complete todos los campos!",
+        text: "",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      return;
+    }
+
+    const datos = {
+      cargado_por: instructorName,
+      nombre: student.name,
+      motivo: newQuejas,
+      sede: sedeId,
+      contacto: student.contact || null,
+      cliente_pilates_id: student.id,
+      tipo_usuario: "cliente",
+      resuelto: 0,
+    };
+    console.log(datos);
+    const respuesta = await insert(datos);
+    if (respuesta) {
+      await refetchHorarios();
+      setIsModalAsistencia(false);
+      Swal.fire({
+        icon: "success",
+        title: "¡Guardado!",
+        text: "Las quejas se han guardado correctamente.",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } else {
+      const errorMessage = errorObs
+        ? errorObs
+        : "Ocurrió un error al intentar enviar la queja";
+      Swal.fire({
+        icon: "error",
+        title: "Error al enviar la queja",
+        text: errorMessage,
+        confirmButtonText: "Aceptar",
+      });
+    }
+  };
+
   return {
     states: {
       isModalAsistencia,
@@ -227,6 +315,8 @@ const PilatesInstructorLogica = () => {
       refetchHorarios,
       refetchAsistencias,
       cambiarAsistencia,
+      cambiarObservaciones,
+      agregarQuejas,
     },
   };
 };

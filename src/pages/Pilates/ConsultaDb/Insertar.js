@@ -3,7 +3,7 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:8080";
 
-const useInsertar = (endpoint) => {
+const useInsertar = (endpoint, post = false) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -11,6 +11,10 @@ const useInsertar = (endpoint) => {
     setIsLoading(true);
     setError(null);
     try {
+      if (post) {
+        const response = await axios.post(`${BASE_URL}${endpoint}`, data);
+        return response.data;
+      }
       const response = await axios.put(`${BASE_URL}${endpoint}`, data);
       return response.data;
     } catch (err) {

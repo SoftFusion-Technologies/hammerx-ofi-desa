@@ -99,7 +99,15 @@ const QuejasInternasGet = () => {
 
   // URL base (mover a .env si preferís)
   const API_BASE = 'http://localhost:8080';
+
+  const getQuejaEndpoint = (tipoUsuario) => {
+/*     console.log("El tipo de usuario es: ", tipoUsuario); */
+    return (tipoUsuario || "").toLowerCase() === "cliente pilates"
+      ? `${API_BASE}/quejas-pilates`
+      : `${API_BASE}/quejas`;
+  };
   const URL = `${API_BASE}/quejas/`;
+
 
   // ===================== Cargar sede/level desde /users =====================
   useEffect(() => {
@@ -173,7 +181,7 @@ const QuejasInternasGet = () => {
   const userParams = { userLevel, userName };
   const userPayload = JSON.stringify({ userLevel, userName });
 
-  const handleEliminarQueja = async (id) => {
+  const handleEliminarQueja = async (id, tipoUsuario) => {
     const confirm = await Swal.fire({
       title: '¿Eliminar queja?',
       text: 'Esta acción no se puede deshacer.',
@@ -186,7 +194,8 @@ const QuejasInternasGet = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      await axios.delete(`${URL}${id}`, { params: userParams }); // ✅ query
+      const endpointBase = getQuejaEndpoint(tipoUsuario);
+      await axios.delete(`${endpointBase}/${id}`, { params: userParams }); // ✅ query
       setQuejas((prev) => prev.filter((q) => q.id !== id));
       toast('Queja eliminada', 'success');
     } catch (err) {
@@ -200,7 +209,7 @@ const QuejasInternasGet = () => {
     setModalNewQueja(true);
   };
 
-  const handleResolverQueja = async (id) => {
+  const handleResolverQueja = async (id, tipoUsuario) => {
     const confirm = await Swal.fire({
       title: 'Marcar como resuelta',
       text: '¿Confirmás que la queja está resuelta?',
@@ -213,7 +222,8 @@ const QuejasInternasGet = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const resp = await fetch(`${API_BASE}/quejas/${id}/resolver`, {
+      const endpointBase = getQuejaEndpoint(tipoUsuario);
+      const resp = await fetch(`${endpointBase}/${id}/resolver`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userLevel, userName, resuelto_por: userName }) // ✅ body
@@ -236,7 +246,7 @@ const QuejasInternasGet = () => {
     }
   };
 
-  const handleNoResueltoQueja = async (id) => {
+  const handleNoResueltoQueja = async (id, tipoUsuario) => {
     const confirm = await Swal.fire({
       title: 'Reabrir queja',
       text: 'La queja volverá a estado pendiente.',
@@ -249,7 +259,7 @@ const QuejasInternasGet = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const resp = await fetch(`${API_BASE}/quejas/${id}/no-resuelto`, {
+      const resp = await fetch(`${getQuejaEndpoint(tipoUsuario)}/${id}/no-resuelto`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: userPayload // ✅ { userLevel, userName }
@@ -334,7 +344,6 @@ const QuejasInternasGet = () => {
       data = data.filter((d) => new Date(d.fecha) <= to);
     }
     // orden desc por id
-    data.sort((a, b) => (b?.id || 0) - (a?.id || 0));
     return data;
   }, [
     quejas,
@@ -582,14 +591,14 @@ const QuejasInternasGet = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100 bg-white">
-                      {pageRecords.map((queja) => {
+                      {pageRecords.map((queja, i) => {
                         const puedeEliminar = isCoordinator(userLevelCanon);
                         const puedeResolver =
                           isCoordinator(userLevelCanon) ||
                           (queja.cargado_por || '').toLowerCase() ===
                             (userName || '').toLowerCase();
                         return (
-                          <tr key={queja.id} className="hover:bg-orange-500 ">
+                          <tr key={i} className="hover:bg-orange-500 ">
                             <td
                               className="px-3 py-3 font-medium text-zinc-800 cursor-pointer"
                               onClick={() => {
@@ -687,7 +696,7 @@ const QuejasInternasGet = () => {
                                 {puedeEliminar && (
                                   <button
                                     onClick={() =>
-                                      handleEliminarQueja(queja.id)
+                                      handleEliminarQueja(queja.id, queja.tipo_usuario)
                                     }
                                     className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600"
                                     title="Eliminar queja"
@@ -696,7 +705,7 @@ const QuejasInternasGet = () => {
                                   </button>
                                 )}
                                 <button
-                                  onClick={() => handleEditarQueja(queja)}
+                                  onClick={() => handleEditarQueja(queja, queja.tipo_usuario)}
                                   className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600"
                                   title="Editar queja"
                                 >
@@ -706,7 +715,7 @@ const QuejasInternasGet = () => {
                                   <button
                                     disabled={!puedeResolver}
                                     onClick={() =>
-                                      handleResolverQueja(queja.id)
+                                      handleResolverQueja(queja.id, queja.tipo_usuario)
                                     }
                                     className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
                                       puedeResolver
@@ -725,7 +734,7 @@ const QuejasInternasGet = () => {
                                   <button
                                     disabled={!puedeResolver}
                                     onClick={() =>
-                                      handleNoResueltoQueja(queja.id)
+                                      handleNoResueltoQueja(queja.id, queja.tipo_usuario)
                                     }
                                     className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
                                       puedeResolver

@@ -71,6 +71,8 @@ const PilatesInstructores = () => {
                 cellData={states.currentCell}
                 onAsistenciaGuardada={functions.refetch}
                 cambiarAsistencia={functions.cambiarAsistencia}
+                cambiarObservaciones={functions.cambiarObservaciones}
+                agregarQuejas={functions.agregarQuejas}
               />
             )}
           </>

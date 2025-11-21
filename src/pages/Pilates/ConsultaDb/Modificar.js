@@ -12,8 +12,6 @@ const useModify = (endpoint, patch = false) => {
     setError(null);
     try {
       const URL_COMPLETA = `${BASE_URL}${endpoint}${id ? `/${id}` : ""}`;
-      console.log("La URL completa es:", URL_COMPLETA);
-      
       const response = patch
         ? await axios.patch(URL_COMPLETA, data)
         : await axios.put(URL_COMPLETA, data);

@@ -55,7 +55,7 @@ const FormAltaQueja = ({
       .max(100, 'El nombre es muy largo')
       .required('El Nombre es obligatorio'),
     tipo_usuario: Yup.string()
-      .oneOf(['socio', 'colaborador', 'cliente'], 'Tipo de usuario inválido')
+      .oneOf(['socio', 'colaborador', 'cliente', 'cliente pilates'], 'Tipo de usuario inválido')
       .required('El Tipo de Usuario es obligatorio'),
     contacto: Yup.string().max(30, 'El contacto es muy largo').nullable(true),
     motivo: Yup.string()
@@ -70,33 +70,41 @@ const FormAltaQueja = ({
 
   const handleSubmitQueja = async (valores) => {
     try {
-      if (valores.nombre === '' || valores.motivo === '') {
-        alert('Por favor, complete todos los campos obligatorios.');
+      if (valores.nombre === "" || valores.motivo === "") {
+        alert("Por favor, complete todos los campos obligatorios.");
       } else {
+        const esClientePilates = valores.tipo_usuario === "cliente pilates";
+        /* console.log(valores) */
+
+        const baseEndpoint = esClientePilates ? "quejas-pilates" : "quejas";
+
+        /* console.log(baseEndpoint)
+        console.log(`http://localhost:8080/${baseEndpoint}`) */
+
         const url = queja
-          ? `http://localhost:8080/quejas/${queja.id}`
-          : 'http://localhost:8080/quejas/';
-        const method = queja ? 'PUT' : 'POST';
+          ? `http://localhost:8080/${baseEndpoint}/${queja.id}` // PUT para ambos tipos
+          : `http://localhost:8080/${baseEndpoint}`; // POST para ambos tipos
+        const method = queja ? "PUT" : "POST";
 
         const respuesta = await fetch(url, {
           method: method,
           body: JSON.stringify({ ...valores }),
           headers: {
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         });
 
-        if (method === 'PUT') {
-          setTextoModal('Queja actualizada correctamente.');
+        if (method === "PUT") {
+          setTextoModal("Queja actualizada correctamente.");
         } else {
-          setTextoModal('Queja creada correctamente.');
+          setTextoModal("Queja creada correctamente.");
         }
 
         if (!respuesta.ok) {
-          throw new Error('Error en la solicitud: ' + respuesta.status);
+          throw new Error("Error en la solicitud: " + respuesta.status);
         }
         const data = await respuesta.json();
-        console.log('Registro insertado correctamente:', data);
+        console.log("Registro insertado correctamente:", data);
         setShowModal(true);
         setTimeout(() => {
           obtenerQuejas();
@@ -105,7 +113,7 @@ const FormAltaQueja = ({
         }, 1500);
       }
     } catch (error) {
-      console.error('Error al insertar el registro:', error.message);
+      console.error("Error al insertar el registro:", error.message);
       setErrorModal(true);
       setTimeout(() => {
         setErrorModal(false);
@@ -229,6 +237,7 @@ const FormAltaQueja = ({
                       <option value="socio">Socio</option>
                       <option value="colaborador">Colaborador</option>
                       <option value="cliente">Cliente</option>
+                      <option value="cliente pilates">Cliente pilates</option>
                     </Field>
                     {errors.tipo_usuario && touched.tipo_usuario ? (
                       <Alerta>{errors.tipo_usuario}</Alerta>

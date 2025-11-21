@@ -640,7 +640,7 @@ const { data: auditoriaData } = useConsultaDB(
             >
               <option value="plan">Plan Contratado</option>
               {habilitarRenovacionProgramanda && (
-                <option value="programado">Renovación Programada</option>
+                <option value="programado">Visita o Renovación programada</option>
               )}
               {habilitarClasePrueba && (
                 <option value="prueba">Clase de Prueba</option>
@@ -899,7 +899,7 @@ const { data: auditoriaData } = useConsultaDB(
                         cellData.student.planDetails.endDate
                       )}
                     </strong>
-                    . Al colocarlo en <strong>“Renovación programada”</strong>,
+                    . Al colocarlo en <strong>“Visita o renovación programada”</strong>,
                     se respetará su última fecha de vencimiento y se conservará
                     su lugar en la clase hasta que confirme el pago.
                   </p>

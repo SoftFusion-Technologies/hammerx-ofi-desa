@@ -308,7 +308,7 @@ const PilatesGestionLogica = () => {
       .trim()
       .toLowerCase();
 
-    // Si el usuario tiene "smt" o "sanmiguelbn", lo forzamos a buscar "barrio sur" en la lista de sedes.
+    // Si el usuario tiene "smt" o "sanmiguelbn", lo forzamos a buscar "barrio sur" o "barrio norte" en la lista de sedes.
     if (sedeUser === 'smt') {
       sedeUser = 'barrio sur';
     } else if (sedeUser === 'sanmiguelbn') {
