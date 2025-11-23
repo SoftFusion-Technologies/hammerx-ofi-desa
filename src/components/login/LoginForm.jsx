@@ -1,14 +1,15 @@
 /*
  * Programador: Emir Segovia
- * Fecha Cración: 05 / 06 / 2024
- * Versión: 1.0
+ * Fecha Creación: 05 / 06 / 2024
+ * Fecha Refactor: 23 / 11 / 2025
+ * Versión: 1.1
  *
  * Descripción:
- * Este archivo (LoginForm.jsx) es el componente el cual realiza el logeo de los usuarios mendiante una validacion de la base de datos y un token de sesion.
+ * Login de usuarios contra la API HammerX, con validación de la base de datos
+ * y token de sesión. Ahora incluye intro SoftFusion antes de entrar al sistema.
  *
- * Tema: Renderizacion
+ * Tema: Renderización
  * Capa: Frontend
- * Contacto: emirvalles90f@gmail.com || 3865761910
  */
 
 import React, { useState } from 'react';
@@ -22,6 +23,8 @@ import { useAuth } from '../../AuthContext';
 
 import { motion } from 'framer-motion';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import SoftFusionIntroModal from './SoftFusionIntroModal';
+
 Modal.setAppElement('#root');
 
 const LoginForm = () => {
@@ -36,11 +39,17 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  // Modal de error clásico
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
 
+  // Intro SoftFusion
+  const [showIntro, setShowIntro] = useState(false);
+  const [postLoginRoute, setPostLoginRoute] = useState(null);
+
   const toggleShowPassword = () => {
-    setShowPassword(!showPassword);
+    setShowPassword((prev) => !prev);
   };
 
   const handleInput = (event) => {
@@ -61,9 +70,24 @@ const LoginForm = () => {
       axios
         .post('http://localhost:8080/login', values)
         .then((res) => {
+          setLoading(false);
+
           if (res.data.message === 'Success') {
-            login(res.data.token, values.email, res.data.level, res.data.id, res.data.sede);
-            navigate('/dashboard');
+            // Guardar datos en contexto EXACTO como antes
+            login(
+              res.data.token,
+              values.email,
+              res.data.level,
+              res.data.id,
+              res.data.sede
+            );
+
+            // Ruta posterior (podés customizar si querés según level)
+            const route = '/dashboard';
+            setPostLoginRoute(route);
+
+            // Mostrar intro antes de navegar
+            setShowIntro(true);
           } else {
             setModalMessage('Usuario o Contraseña incorrectos');
             setIsModalOpen(true);
@@ -72,15 +96,26 @@ const LoginForm = () => {
         .catch((err) => {
           setLoading(false);
           console.log(err);
+          setModalMessage('Error al conectar con el servidor');
+          setIsModalOpen(true);
         });
     }
   };
 
+  // Si está el intro, mostramos SOLO el intro y esperamos el onFinish
+  if (showIntro) {
+    return (
+      <SoftFusionIntroModal
+        onFinish={() => {
+          setShowIntro(false);
+          navigate(postLoginRoute || '/dashboard');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="h-screen w-full loginbg flex items-center justify-center bg-cover bg-center relative">
-      {/* Botón Dark Mode opcional */}
-      {/* <button className="absolute top-5 right-5 text-white">🌙</button> */}
-
       {/* Tarjeta animada */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -161,9 +196,10 @@ const LoginForm = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit"
-              className="bg-orange-500 text-white w-full py-3 rounded-lg font-semibold text-lg shadow-md hover:bg-[#fc4b08] transition-all"
+              disabled={loading}
+              className="bg-orange-500 text-white w-full py-3 rounded-lg font-semibold text-lg shadow-md hover:bg-[#fc4b08] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Iniciar Sesión
+              {loading ? 'Cargando...' : 'Iniciar Sesión'}
             </motion.button>
           </div>
         </form>
