@@ -1,3 +1,4 @@
+// src/Pages/Staff/MetodsGet/Details/BadgeAgendaVentas.jsx
 import { useEffect, useState } from 'react';
 
 function BadgeAgendaVentas({ userId, userLevel, size = 'lg', className = '' }) {
@@ -6,16 +7,22 @@ function BadgeAgendaVentas({ userId, userLevel, size = 'lg', className = '' }) {
   const load = async () => {
     try {
       const qs = new URLSearchParams();
-      if (userLevel === 'admin') {
-        qs.set('level', 'admin'); // admin: todas las sedes
+      const nivel = String(userLevel || '').toLowerCase();
+
+      if (
+        nivel === 'admin' ||
+        nivel === 'administrador' ||
+        nivel === 'gerente'
+      ) {
+        qs.set('level', 'admin'); // ve todo
       } else {
-        qs.set('level', 'vendedor'); // vendedor: backend deduce sede por usuario
+        qs.set('level', 'vendedor'); // backend deduce sede por usuario
         qs.set('usuario_id', String(userId));
       }
 
       const base = 'http://localhost:8080';
 
-      // 🔴 Ventas: usar contador del backend (solo pendientes)
+      // 🔹 Ventas: contador directo del backend
       const ventasCountRes = await fetch(
         `${base}/ventas/agenda/hoy/count?${qs.toString()}`,
         { cache: 'no-store' }
@@ -25,7 +32,7 @@ function BadgeAgendaVentas({ userId, userLevel, size = 'lg', className = '' }) {
         : { count: 0 };
       const ventasPendientes = Number(ventasCountJson?.count ?? 0);
 
-      // 🟡 Clases: traemos el listado de hoy y contamos solo las pendientes (n_contacto_2 = 0)
+      // 🔹 Clases prueba: solo pendientes (n_contacto_2 = 0)
       const clasesRes = await fetch(
         `${base}/notifications/clases-prueba/${userId}`,
         { cache: 'no-store' }
@@ -46,9 +53,9 @@ function BadgeAgendaVentas({ userId, userLevel, size = 'lg', className = '' }) {
     load();
     const id = setInterval(load, 60_000);
 
-    // Permite refrescar el badge cuando se marcan realizados en otros componentes
     const onVentasUpdate = () => load();
     const onClasesUpdate = () => load();
+
     window.addEventListener('ventas-agenda-updated', onVentasUpdate);
     window.addEventListener('clases-prueba-updated', onClasesUpdate);
 
@@ -59,18 +66,25 @@ function BadgeAgendaVentas({ userId, userLevel, size = 'lg', className = '' }) {
     };
   }, [userId, userLevel]);
 
-  const sizes = {
-    lg: 'text-[20px] lg:text-[28px] px-3.5 py-2 lg:px-4 lg:py-2.5',
-    xl: 'text-[24px] lg:text-[32px] px-4 py-2.5 lg:px-5 lg:py-3'
-  };
+  // ⚠️ Ocultamos el badge si no hay pendientes
+  if (!Number.isFinite(count) || count <= 0) {
+    return null;
+  }
+
+  const sizeClasses =
+    size === 'xl'
+      ? 'min-w-[2.2rem] h-8 text-[14px]'
+      : 'min-w-[2rem] h-7 text-[12px]';
 
   return (
     <span
       className={[
-        'absolute top-0 right-0 translate-x-1/3 -translate-y-1/3',
-        'bg-red-500 text-white rounded-full font-extrabold tabular-nums',
-        'shadow-2xl ring-4 ring-white select-none pointer-events-none',
-        sizes[size] ?? sizes.lg,
+        'absolute top-2 right-3',
+        'flex items-center justify-center',
+        'rounded-full bg-[#fc4b08] text-white font-bold tabular-nums',
+        'shadow-lg border border-white/80',
+        'px-2',
+        sizeClasses,
         className
       ].join(' ')}
       aria-label={`Agendas pendientes de hoy: ${count}`}

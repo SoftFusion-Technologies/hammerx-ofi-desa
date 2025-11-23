@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// src/Pages/AdminPage.jsx
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import NavbarStaff from './NavbarStaff';
@@ -8,296 +9,454 @@ import Footer from '../../components/footer/Footer';
 import TituloPreguntasModal from './MetodsGet/TituloPreguntasModal';
 import PreguntaDetalleModal from './MetodsGet/PreguntaDetalleModal';
 import { useAuth } from '../../AuthContext';
+import { toast } from 'react-toastify';
 import ModalTareasDiarias from './ModalTareasDiarias';
 import { motion } from 'framer-motion';
 import CardRecaptacion from './Components/CardRecaptacion';
 import BadgeAgendaVentas from './MetodsGet/Details/BadgeAgendaVentas';
+import {
+  MessageCircle,
+  Megaphone,
+  Users,
+  BarChart2,
+  ClipboardList,
+  FileText,
+  ShoppingBag,
+  Image as ImageIcon,
+  Activity,
+  HelpCircle,
+  Dumbbell,
+  Target
+} from 'lucide-react';
+
+// ---------- Tile genérico ----------
+const DashboardTile = ({
+  title,
+  description,
+  to,
+  onClick,
+  icon: Icon,
+  delay = 0,
+  badgeSlot,
+  children
+}) => {
+  const Wrapper = to ? Link : 'button';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.45, delay }}
+      className="relative"
+    >
+      <Wrapper
+        to={to}
+        onClick={onClick}
+        className="group block h-full text-left focus:outline-none"
+        type={to ? undefined : 'button'}
+      >
+        <div className="relative h-full overflow-hidden rounded-2xl border border-slate-100 bg-white/95 shadow-[0_18px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_24px_60px_rgba(15,23,42,0.2)]">
+          {/* halo suave */}
+          <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-orange-500/6 via-pink-500/6 to-emerald-400/6" />
+
+          <div className="relative z-10 p-5 flex flex-col gap-3 h-full">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-3">
+                {Icon && (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-colors duration-300">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                )}
+                <h3 className="font-bignoodle text-xl tracking-wide text-slate-900 group-hover:text-slate-900">
+                  {title}
+                </h3>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {badgeSlot ? (
+                  <div className="scale-90 md:scale-100">{badgeSlot}</div>
+                ) : (
+                  <span className="text-[11px] uppercase tracking-widest text-slate-400">
+                    Abrir
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {description && (
+              <p className="text-xs text-slate-500 leading-snug">
+                {description}
+              </p>
+            )}
+
+            {children && <div className="mt-2">{children}</div>}
+          </div>
+        </div>
+      </Wrapper>
+    </motion.div>
+  );
+};
 
 const AdminPage = () => {
   const [modalPreguntasOpen, setModalPreguntasOpen] = useState(false);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
-  const [modalTareasOpen, setModalTareasOpen] = useState(false);
-  const [tareasDiarias, setTareasDiarias] = useState([]); // <- acá guardamos las tareas
-
   const [preguntas, setPreguntas] = useState([]);
   const [preguntaSeleccionada, setPreguntaSeleccionada] = useState(null);
   const URL = 'http://localhost:8080/ask/';
 
   const URL_TAREAS = 'http://localhost:8080/tareasdiarias'; // ejemplo, tu endpoint para tareas
 
-  const { userId, userLevel, userName } = useAuth();
+  const { userId, userLevel, userName, nomyape } = useAuth();
+  const navigate = useNavigate();
 
-  console.log(userId);
-
-  // opcional: mes/año actual
   const now = new Date();
   const mesActual = now.getMonth() + 1;
   const anioActual = now.getFullYear();
 
+  // ---------- Normalización de roles ----------
+  const nivel = String(userLevel || '').toLowerCase();
+  const isAdmin =
+    nivel === 'admin' || nivel === 'administrador' || nivel === 'gerente';
+  const isVendedor = nivel === 'vendedor';
+  const isInstructor = nivel === 'instructor';
+  const isImagenes = nivel === 'imagenes';
+
+  const nivelLabel =
+    nivel === 'admin' || nivel === 'administrador'
+      ? 'Administrador'
+      : nivel === 'gerente'
+      ? 'Gerente'
+      : nivel === 'vendedor'
+      ? 'Vendedor'
+      : nivel === 'instructor'
+      ? 'Instructor'
+      : nivel === 'imagenes'
+      ? 'Módulo Imágenes'
+      : 'Staff';
+
+  // ---------- Nombre bonito en el saludo ----------
+  const displayName = useMemo(() => {
+    if (nomyape && nomyape.trim() !== '') {
+      return nomyape.trim();
+    }
+
+    if (!userName) return '';
+
+    if (!userName.includes('@')) {
+      const clean = userName.toLowerCase();
+      return clean
+        .split(' ')
+        .filter(Boolean)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+
+    const localPart = userName.split('@')[0];
+    const withoutNumbers = localPart.replace(/\d+$/, '');
+    const clean = withoutNumbers.toLowerCase().replace(/[._]/g, ' ');
+
+    return clean
+      .split(' ')
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }, [userName, nomyape]);
+
+  // ---------- FAQs ----------
   const abrirModalPreguntas = async () => {
     try {
       const response = await axios.get(URL);
-      setPreguntas(response.data);
-      setModalPreguntasOpen(true);
+      if (response.status === 200 && response.data) {
+        setPreguntas(response.data);
+        setModalPreguntasOpen(true);
+      } else {
+        toast.error('No se pudieron cargar las preguntas. Intenta nuevamente.');
+      }
     } catch (error) {
-      console.log('Error al obtener las preguntas:', error);
+      console.error('Error al obtener las preguntas:', error);
+      toast.error('Ocurrió un problema al obtener las preguntas.');
     }
   };
 
-  const cerrarModalPreguntas = () => {
-    setModalPreguntasOpen(false);
-  };
+  const cerrarModalPreguntas = () => setModalPreguntasOpen(false);
 
   const abrirModalDetalle = (pregunta) => {
     setPreguntaSeleccionada(pregunta);
     setModalDetalleOpen(true);
   };
 
-  const cerrarModalDetalle = () => {
-    setModalDetalleOpen(false);
-  };
+  const cerrarModalDetalle = () => setModalDetalleOpen(false);
 
-  // Control apertura/cierre modal tareas
-  const cerrarModalTareas = () => {
-    setModalTareasOpen(false);
-  };
-  const navigate = useNavigate();
+  const cerrarModalTareas = () => setModalTareasOpen(false);
 
-  const handleButtonClick = () => {
+  const handleButtonClickInstructores = () => {
     navigate('/dashboard/instructores');
   };
 
+  // ---------- Loading de sesión ----------
+  if (!userLevel) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen text-center bg-slate-950 text-slate-100">
+        <p className="text-lg font-semibold">Cargando sesión...</p>
+        <p className="text-sm text-slate-400 mt-2">
+          Si esto tarda demasiado, recargá la página.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition"
+        >
+          Recargar
+        </button>
+        <p className="text-xs text-slate-500 mt-3">
+          Si el problema continúa, contactá a{' '}
+          <span className="font-semibold text-orange-400">SoftFusion</span>.
+        </p>
+      </div>
+    );
+  }
+
+  // ---------- Tareas diarias (modal automático) ----------
   useEffect(() => {
     const fetchTareasDiarias = async () => {
       try {
-        // Abrir modal solo si hay tareas asignadas
         const response = await axios.get(`${URL_TAREAS}?userId=${userId}`);
         setTareasDiarias(response.data);
-
         if (response.data.length > 0) {
           setTimeout(() => {
             setModalTareasOpen(true);
-          }, 1700); // ⏱️ 1.5 segundos
+          }, 1700);
         }
       } catch (error) {
         console.error('Error al obtener tareas diarias:', error);
       }
     };
 
-    fetchTareasDiarias();
+    if (userId) {
+      fetchTareasDiarias();
+    }
   }, [userId]);
 
   return (
     <>
-      {/* Navbar section */}
       <NavbarStaff />
 
-      {/* Hero section*/}
-      <section className="relative w-full h-contain mx-auto bg-white">
-        <div className="dashboardbg">
-          <div className="xl:px-0 sm:px-16 px-6 max-w-7xl mx-auto grid grid-cols-2 max-sm:grid-cols-1 max-md:gap-y-10 md:gap-10 py-28 sm:pt-44 lg:pt-28 md:w-5/6 ">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
-            >
-              <Link to="/dashboard/preguntas-ia">
-                <button className="btnstaff">Preguntale a la IA</button>
-              </Link>
-            </motion.div>{" "}
-            {(userLevel === "admin" ||
-              userLevel === "administrador" ||
-              userLevel === "gerente" ||
-              userLevel === "vendedor") && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
-              >
-                <Link to="/dashboard/novedades">
-                  <button className="btnstaff">Foro de Novedades</button>
-                </Link>
-              </motion.div>
-            )}
-            {(userLevel === "gerente" ||
-              userLevel === "admin" ||
-              userLevel === "vendedor" ||
-              userLevel === "administrador") && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
-              >
-                {" "}
-                <Link to="/dashboard/testclass">
-                  <button className="btnstaff">Leads y Prospectos</button>
-                </Link>
-              </motion.div>
-            )}
-            {/* {(userLevel === 'gerente' ||
-              userLevel === 'admin' ||
-              userLevel === 'administrador') && (
-              <div className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tl-xl rounded-br-xl">
-                <Link to="/dashboard/postulantes_v2">
-                  <button className="btnstaff">CV's Recibidos Nueva Versión</button>
-                </Link>
+      {/* CONTENEDOR PRINCIPAL */}
+      <section className="relative w-full min-h-[calc(100vh-80px)]">
+        <div className="dashboardbg min-h-[calc(100vh-80px)]">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-14">
+            {/* ENCABEZADO */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-2xl sm:text-3xl lg:text-4xl font-bignoodle tracking-[.18em] uppercase text-white"
+                >
+                  Panel del Staff
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                  className="mt-1 text-sm text-slate-200/80 max-w-xl"
+                >
+                  Hola
+                  {displayName ? (
+                    <>
+                      {' '}
+                      <span className="font-semibold">{displayName}</span>
+                    </>
+                  ) : (
+                    ''
+                  )}
+                  , elegí una sección para gestionar el día a día del gimnasio.
+                </motion.p>
               </div>
-            )} */}
-            {(userLevel === "gerente" ||
-              userLevel === "admin" ||
-              userLevel === "vendedor" ||
-              userLevel === "" ||
-              userLevel === "administrador") && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
-              >
-                {" "}
-                <Link to="/dashboard/admconvenios">
-                  <button className="btnstaff">Convenios</button>
-                </Link>
-              </motion.div>
-            )}
-            {(userLevel === "gerente" ||
-              userLevel === "admin" ||
-              userLevel === "instructor" ||
-              userLevel === "administrador") && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
-                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
-              >
-                {" "}
-                <button className="btnstaff" onClick={handleButtonClick}>
-                  Instructores
-                </button>
-              </motion.div>
-            )}
-            {(userLevel === "admin" ||
-              userLevel === "administrador" ||
-              userLevel === "instructor" ||
-              userLevel === "gerente") && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 1 }}
-                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
-              >
-                {" "}
-                <Link to="/dashboard/estadisticas">
-                  <button className="btnstaff">Estadísticas</button>
-                </Link>
-              </motion.div>
-            )}
-            {userLevel !== "imagenes" && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 1.2 }}
-                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
-              >
-                {" "}
-                <Link to="/dashboard/quejas">
-                  <button className="btnstaff">Quejas</button>
-                </Link>
-              </motion.div>
-            )}
-            {userLevel === "instructor" ||
-              (userLevel !== "imagenes" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 1.4 }}
-                  className="relative overflow-visible bg-white font-bignoodle
-                 w-[250px] h-[100px] text-[20px]
-                 lg:w-[400px] lg:h-[150px] lg:text-[30px]
-                 mx-auto flex justify-center items-center
-                 rounded-tr-xl rounded-bl-xl"
-                >
-                  {/* 🔔 grande y pegado al borde */}
-                  <BadgeAgendaVentas
-                    userId={userId}
-                    userLevel={userLevel}
-                    size="lg"
-                  />
 
-                  <Link to="/dashboard/ventas">
-                    <button className="btnstaff flex items-center gap-2">
-                      Ventas
-                    </button>
-                  </Link>
-                </motion.div>
-              ))}
-            {userLevel === "instructor" ||
-              (userLevel !== "imagenes" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 1.4 }}
-                  className="relative overflow-visible bg-white font-bignoodle
-                 w-[250px] h-[100px] text-[20px]
-                 lg:w-[400px] lg:h-[150px] lg:text-[30px]
-                 mx-auto flex justify-center items-center
-                 rounded-tr-xl rounded-bl-xl"
-                >
-                  <Link to="/dashboard/pilates/gestion">
-                    <button className="btnstaff flex items-center gap-2">
-                      Pilates
-                    </button>
-                  </Link>
-                </motion.div>
-              ))}
-            {userLevel !== "instructor" && userLevel !== "imagenes" && (
-              <CardRecaptacion
-                userLevel={userLevel}
-                userId={userId}
-                mes={mesActual}
-                anio={anioActual}
-              />
-            )}
-            {userLevel === "imagenes" && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="bg-white font-bignoodle w-[250px] h-[100px] text-[20px] lg:w-[400px] lg:h-[150px] lg:text-[30px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+                className="flex items-center gap-3"
               >
-                {" "}
-                <Link to="/dashboard/imagenes">
-                  <button className="btnstaff">imagenes</button>
-                </Link>
-              </motion.div>
-            )}
-          </div>
-
-          <div className="flex justify-end p-5">
-            <a
-              className="relative inline-block"
-              href="#"
-              onClick={abrirModalPreguntas}
-            >
-              {(userLevel === "gerente" ||
-                userLevel === "admin" ||
-                userLevel === "vendedor" ||
-                userLevel === "administrador") && (
-                <div>
-                  <span className="absolute top-0 left-0 mt-1 ml-1 h-full w-full rounded bg-[#fc4b08]"></span>
-                  <span className="fold-bold relative inline-block rounded border-2 border-[#343333] bg-white px-3 py-1 text-base font-bold text-[#fc4b08] transition duration-100 hover:bg-[#fc4b08] hover:text-white">
-                    VER FAQs
-                  </span>
+                <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-md">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-200/70">
+                    Rol actual
+                  </p>
+                  <p className="text-sm font-semibold text-white">
+                    {nivelLabel}
+                  </p>
                 </div>
+              </motion.div>
+            </div>
+
+            {/* GRID DE TARJETAS */}
+            <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {/* Pregúntale a la IA - todos */}
+              <DashboardTile
+                title="Preguntale a la IA"
+                description="Consultá dudas frecuentes del staff, procedimientos y sugerencias inteligentes."
+                to="/dashboard/preguntas-ia"
+                icon={MessageCircle}
+                delay={0.1}
+              />
+
+              {/* Foro de Novedades */}
+              {(isAdmin || isVendedor) && (
+                <DashboardTile
+                  title="Foro de Novedades"
+                  description="Publicá y revisá novedades internas para todo el equipo."
+                  to="/dashboard/novedades"
+                  icon={Megaphone}
+                  delay={0.12}
+                />
               )}
-            </a>
+
+              {/* Leads y Prospectos */}
+              {(isAdmin || isVendedor) && (
+                <DashboardTile
+                  title="Leads y Prospectos"
+                  description="Gestioná leads, prospectos y oportunidades comerciales."
+                  to="/dashboard/testclass"
+                  icon={ClipboardList}
+                  delay={0.14}
+                />
+              )}
+
+              {/* Convenios */}
+              {(isAdmin || isVendedor) && (
+                <DashboardTile
+                  title="Convenios"
+                  description="Seguimiento de convenios activos y beneficios asociados."
+                  to="/dashboard/admconvenios"
+                  icon={FileText}
+                  delay={0.16}
+                />
+              )}
+
+              {/* Instructores */}
+              {(isAdmin || isInstructor) && (
+                <DashboardTile
+                  title="Instructores"
+                  description="Gestión de instructores, alumnos y coordinación de asistencias."
+                  onClick={handleButtonClickInstructores}
+                  icon={Users}
+                  delay={0.18}
+                />
+              )}
+
+              {/* Estadísticas */}
+              {(isAdmin || isInstructor) && (
+                <DashboardTile
+                  title="Estadísticas"
+                  description="Visualizá estadísticas de los instructores de HammerX."
+                  to="/dashboard/estadisticas"
+                  icon={BarChart2}
+                  delay={0.2}
+                />
+              )}
+
+              {/* Quejas */}
+              {!isImagenes && (
+                <DashboardTile
+                  title="Quejas"
+                  description="Registrá y gestioná quejas internas para mejorar la experiencia de los socios."
+                  to="/dashboard/quejas"
+                  icon={HelpCircle}
+                  delay={0.22}
+                />
+              )}
+
+              {/* Ventas */}
+              {(isAdmin || isVendedor) && !isImagenes && (
+                <DashboardTile
+                  title="Ventas"
+                  description="Accedé al módulo de ventas, agenda y seguimiento de clientes."
+                  to="/dashboard/ventas"
+                  icon={ShoppingBag}
+                  delay={0.24}
+                  badgeSlot={
+                    <BadgeAgendaVentas
+                      userId={userId}
+                      userLevel={userLevel}
+                      size="sm"
+                    />
+                  }
+                />
+              )}
+
+              {/* Pilates */}
+              {(isAdmin || isVendedor) && !isImagenes && (
+                <DashboardTile
+                  title="Pilates"
+                  description="Gestión de alumnos, clases y administración del módulo Pilates."
+                  to="/dashboard/pilates/gestion"
+                  icon={Dumbbell}
+                  delay={0.26}
+                />
+              )}
+
+              {/* Imágenes */}
+              {isImagenes && (
+                <DashboardTile
+                  title="Imágenes"
+                  description="Subí y gestioná las imágenes oficiales del gimnasio."
+                  to="/dashboard/imagenes"
+                  icon={ImageIcon}
+                  delay={0.28}
+                />
+              )}
+
+              {/* Recaptación como tile normal */}
+              {(isAdmin || isVendedor) && !isImagenes && (
+                <DashboardTile
+                  title="Recaptación de clientes"
+                  description="Seguimiento de contactos leads y reactivación de socios."
+                  to="/dashboard/recaptacion"
+                  icon={Target}
+                  delay={0.3}
+                />
+              )}
+            </div>
+
+            {/* {(isAdmin || isVendedor) && !isImagenes && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.35 }}
+                className="mt-8"
+              >
+                <div className="rounded-2xl border border-slate-100 bg-white/95 shadow-[0_18px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl p-5">
+                  <CardRecaptacion
+                    userLevel={userLevel}
+                    userId={userId}
+                    mes={mesActual}
+                    anio={anioActual}
+                  />
+                </div>
+              </motion.div>
+            )} */}
+
+            {/* CTA FAQs */}
+            {(isAdmin || isVendedor) && (
+              <div className="mt-10 flex justify-end">
+                <button
+                  onClick={abrirModalPreguntas}
+                  className="relative inline-flex items-center gap-2 rounded-2xl border border-white/30 bg-white/90 px-4 py-2 text-sm font-semibold text-[#fc4b08] shadow-md backdrop-blur hover:bg-[#fc4b08] hover:text-white hover:shadow-lg transition-all"
+                >
+                  <Activity className="h-4 w-4" />
+                  VER FAQs
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
-      <Footer></Footer>
+
+      <Footer />
+
+      {/* Modal tareas diarias */}
       {modalTareasOpen && tareasDiarias.length > 0 && (
         <ModalTareasDiarias
           onClose={cerrarModalTareas}
@@ -307,7 +466,7 @@ const AdminPage = () => {
         />
       )}
 
-      {/* Modals */}
+      {/* Modals FAQs */}
       <TituloPreguntasModal
         isOpen={modalPreguntasOpen}
         onClose={cerrarModalPreguntas}
