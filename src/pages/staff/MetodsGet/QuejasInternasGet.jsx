@@ -101,13 +101,12 @@ const QuejasInternasGet = () => {
   const API_BASE = 'http://localhost:8080';
 
   const getQuejaEndpoint = (tipoUsuario) => {
-/*     console.log("El tipo de usuario es: ", tipoUsuario); */
-    return (tipoUsuario || "").toLowerCase() === "cliente pilates"
+    /*     console.log("El tipo de usuario es: ", tipoUsuario); */
+    return (tipoUsuario || '').toLowerCase() === 'cliente pilates'
       ? `${API_BASE}/quejas-pilates`
       : `${API_BASE}/quejas`;
   };
   const URL = `${API_BASE}/quejas/`;
-
 
   // ===================== Cargar sede/level desde /users =====================
   useEffect(() => {
@@ -259,11 +258,14 @@ const QuejasInternasGet = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const resp = await fetch(`${getQuejaEndpoint(tipoUsuario)}/${id}/no-resuelto`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: userPayload // ✅ { userLevel, userName }
-      });
+      const resp = await fetch(
+        `${getQuejaEndpoint(tipoUsuario)}/${id}/no-resuelto`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: userPayload // ✅ { userLevel, userName }
+        }
+      );
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         Swal.fire('Error', err.mensajeError || 'No se pudo reabrir', 'error');
@@ -517,7 +519,8 @@ const QuejasInternasGet = () => {
             <div className="p-6">
               {/* Loading / Error / Empty */}
               <AnimatePresence initial={false}>
-                {loading && (
+                {/* Skeleton SOLO cuando no hay datos aún */}
+                {showSkeleton && (
                   <motion.div
                     key="loading"
                     initial={{ opacity: 0 }}
@@ -525,7 +528,6 @@ const QuejasInternasGet = () => {
                     exit={{ opacity: 0 }}
                     className="space-y-3"
                   >
-                    {/* skeleton rows */}
                     {[...Array(6)].map((_, i) => (
                       <div
                         key={i}
@@ -696,7 +698,10 @@ const QuejasInternasGet = () => {
                                 {puedeEliminar && (
                                   <button
                                     onClick={() =>
-                                      handleEliminarQueja(queja.id, queja.tipo_usuario)
+                                      handleEliminarQueja(
+                                        queja.id,
+                                        queja.tipo_usuario
+                                      )
                                     }
                                     className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600"
                                     title="Eliminar queja"
@@ -705,7 +710,9 @@ const QuejasInternasGet = () => {
                                   </button>
                                 )}
                                 <button
-                                  onClick={() => handleEditarQueja(queja, queja.tipo_usuario)}
+                                  onClick={() =>
+                                    handleEditarQueja(queja, queja.tipo_usuario)
+                                  }
                                   className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600"
                                   title="Editar queja"
                                 >
@@ -715,7 +722,10 @@ const QuejasInternasGet = () => {
                                   <button
                                     disabled={!puedeResolver}
                                     onClick={() =>
-                                      handleResolverQueja(queja.id, queja.tipo_usuario)
+                                      handleResolverQueja(
+                                        queja.id,
+                                        queja.tipo_usuario
+                                      )
                                     }
                                     className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
                                       puedeResolver
@@ -734,7 +744,10 @@ const QuejasInternasGet = () => {
                                   <button
                                     disabled={!puedeResolver}
                                     onClick={() =>
-                                      handleNoResueltoQueja(queja.id, queja.tipo_usuario)
+                                      handleNoResueltoQueja(
+                                        queja.id,
+                                        queja.tipo_usuario
+                                      )
                                     }
                                     className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
                                       puedeResolver
