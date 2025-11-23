@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'; // (NUEVO)
 import axios from 'axios';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
@@ -34,14 +33,8 @@ const FormAltaRecaptacion = ({
 
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
-
-  // const textoModal = 'Usuario creado correctamente.'; se elimina el texto
-  // nuevo estado para gestionar dinámicamente según el método (PUT o POST)
   const [textoModal, setTextoModal] = useState('');
 
-  const [mostrarOtro, setMostrarOtro] = useState(false);
-
-  // nueva variable para administrar el contenido de formulario para saber cuando limpiarlo
   const formikRef = useRef(null);
 
   const nuevoRecSchema = Yup.object().shape({
@@ -53,13 +46,12 @@ const FormAltaRecaptacion = ({
       .required('El nombre es obligatorio')
       .max(255, 'El nombre no puede superar los 255 caracteres'),
     tipo_contacto: Yup.string()
-      .oneOf(tiposContacto, 'Tipo de contacto inválido')
+      .oneOf(tiposContacto.concat('Otro'), 'Tipo de contacto inválido')
       .required('El tipo de contacto es obligatorio')
   });
 
   useEffect(() => {
     if (Rec) {
-      // Si viene con usuarios asignados, mapear los IDs
       const ids = Rec.taskUsers?.map((tu) => tu.user.id) || [];
       setSelectedUsers(ids);
     } else {
@@ -87,7 +79,6 @@ const FormAltaRecaptacion = ({
               params: { sede }
             });
 
-      // Filtrar los usuarios para excluir aquellos con level = 'instructor'
       const usuariosFiltrados = response.data.filter(
         (user) => user.level !== 'instructor'
       );
@@ -115,8 +106,37 @@ const FormAltaRecaptacion = ({
     setFieldValue('user', updated);
   };
 
-  const formatSedeValue = (selectedSede) => {
-    return selectedSede.length === 3 ? 'todas' : selectedSede.join(', ');
+  // Igual que en FormAltaNovedad
+  const formatSedeValue = (selectedSedeLocal) => {
+    let sedes = selectedSedeLocal;
+    if (!Array.isArray(sedes)) {
+      sedes = [sedes];
+    }
+
+    const valorFormateado = sedes
+      .map((sede) => {
+        switch (sede) {
+          case 'SMT':
+            return 'T.Barrio Sur';
+          case 'SanMiguelBN':
+            return 'T.Barrio Norte';
+          default:
+            return sede;
+        }
+      })
+      .join(', ');
+
+    if (sedes.length === 4) {
+      return 'todas';
+    }
+
+    return valorFormateado;
+  };
+
+  const mapSedesToApiValue = (selectedSedeLocal) => {
+    return selectedSedeLocal.length === 4
+      ? 'todas'
+      : selectedSedeLocal.join(', ');
   };
 
   const handleSubmitRecaptacion = async (valores) => {
@@ -141,7 +161,6 @@ const FormAltaRecaptacion = ({
 
       const method = valores.id ? 'PUT' : 'POST';
 
-      // Para PUT envías directamente el objeto, no como array
       const bodyData =
         method === 'PUT' ? recaptacionData : { registros: [recaptacionData] };
 
@@ -157,7 +176,7 @@ const FormAltaRecaptacion = ({
         throw new Error(`Error en la solicitud ${method}: ${response.status}`);
       }
 
-      const result = await response.json();
+      await response.json();
 
       setTextoModal(
         method === 'PUT'
@@ -182,6 +201,7 @@ const FormAltaRecaptacion = ({
   };
 
   const handleSedeSelection = (sede) => {
+    // misma lógica que en FormAltaNovedad
     if (selectedSede.length === 1 && selectedSede.includes(sede)) return;
     setSelectedSede((prev) =>
       prev.includes(sede)
@@ -201,11 +221,11 @@ const FormAltaRecaptacion = ({
           innerRef={formikRef}
           initialValues={{
             id: Rec ? Rec.id : null,
-            usuario_id: Rec ? Rec.usuario_id : '', // ID del usuario relacionado
+            usuario_id: Rec ? Rec.usuario_id : '',
             nombre: Rec ? Rec.nombre : '',
-            tipo_contacto: Rec ? Rec.tipo_contacto : '', // Debe ser uno de los valores ENUM
-            canal_contacto: Rec ? Rec.canal_contacto || '' : '', // nuevo campo
-            detalle_contacto: Rec ? Rec.detalle_contacto || '' : '', // nuevo campo
+            tipo_contacto: Rec ? Rec.tipo_contacto : '',
+            canal_contacto: Rec ? Rec.canal_contacto || '' : '',
+            detalle_contacto: Rec ? Rec.detalle_contacto || '' : '',
             enviado: Rec ? Rec.enviado : false,
             respondido: Rec ? Rec.respondido : false,
             agendado: Rec ? Rec.agendado : false,
@@ -216,7 +236,7 @@ const FormAltaRecaptacion = ({
             await handleSubmitRecaptacion(values);
             resetForm();
           }}
-          validationSchema={null}
+          validationSchema={null} // si querés activar Yup, poné: nuevoRecSchema
         >
           {({ errors, touched, setFieldValue, values }) => (
             <div className="-mt-20 max-h-screen w-full max-w-xl overflow-y-auto bg-white rounded-xl p-5">
@@ -241,14 +261,17 @@ const FormAltaRecaptacion = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mx-2">
+                {/* SEDES - mis masma que FormAltaNovedad */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mx-2">
+                  {/* Monteros */}
                   <button
                     type="button"
-                    className={`w-full py-2 px-5 rounded-xl text-white text-sm font-bold transition ${
-                      selectedSede.includes('monteros')
-                        ? 'bg-[#fc4b08]'
-                        : 'bg-orange-500 hover:bg-[#fc4b08]'
-                    } focus:outline-orange-100`}
+                    className={`w-full py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center whitespace-nowrap 
+                  ${
+                    selectedSede.includes('monteros')
+                      ? 'bg-[#fc4b08] text-white border-none'
+                      : 'bg-white text-orange-500 border-2 border-orange-500 hover:bg-orange-50 hover:border-[#fc4b08]'
+                  } focus:outline-orange-100`}
                     onClick={() => handleSedeSelection('monteros')}
                   >
                     {selectedSede.includes('monteros')
@@ -256,13 +279,15 @@ const FormAltaRecaptacion = ({
                       : 'Monteros'}
                   </button>
 
+                  {/* Concepción */}
                   <button
                     type="button"
-                    className={`w-full py-2 px-5 rounded-xl text-white text-sm font-bold transition ${
-                      selectedSede.includes('concepcion')
-                        ? 'bg-[#fc4b08]'
-                        : 'bg-orange-500 hover:bg-[#fc4b08]'
-                    } focus:outline-orange-100`}
+                    className={`w-full py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center whitespace-nowrap 
+                  ${
+                    selectedSede.includes('concepcion')
+                      ? 'bg-[#fc4b08] text-white border-none'
+                      : 'bg-white text-orange-500 border-2 border-orange-500 hover:bg-orange-50 hover:border-[#fc4b08]'
+                  } focus:outline-orange-100`}
                     onClick={() => handleSedeSelection('concepcion')}
                   >
                     {selectedSede.includes('concepcion')
@@ -270,50 +295,69 @@ const FormAltaRecaptacion = ({
                       : 'Concepción'}
                   </button>
 
+                  {/* T. Barrio Sur (SMT) */}
                   <button
                     type="button"
-                    className={`w-full py-2 px-5 rounded-xl text-white text-sm font-bold transition ${
-                      selectedSede.includes('SMT')
-                        ? 'bg-[#fc4b08]'
-                        : 'bg-orange-500 hover:bg-[#fc4b08]'
-                    } focus:outline-orange-100`}
+                    className={`w-full py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center whitespace-nowrap 
+                  ${
+                    selectedSede.includes('SMT')
+                      ? 'bg-[#fc4b08] text-white border-none'
+                      : 'bg-white text-orange-500 border-2 border-orange-500 hover:bg-orange-50 hover:border-[#fc4b08]'
+                  } focus:outline-orange-100`}
                     onClick={() => handleSedeSelection('SMT')}
                   >
-                    {selectedSede.includes('SMT') ? 'SMT✅' : 'SMT'}
+                    {selectedSede.includes('SMT')
+                      ? 'T.Barrio Sur✅'
+                      : 'T.Barrio Sur'}
+                  </button>
+
+                  {/* T. Barrio Norte (SanMiguelBN) */}
+                  <button
+                    type="button"
+                    className={`w-full py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center whitespace-nowrap 
+                  ${
+                    selectedSede.includes('SanMiguelBN')
+                      ? 'bg-[#fc4b08] text-white border-none'
+                      : 'bg-white text-orange-500 border-2 border-orange-500 hover:bg-orange-50 hover:border-[#fc4b08]'
+                  } focus:outline-orange-100`}
+                    onClick={() => handleSedeSelection('SanMiguelBN')}
+                  >
+                    {selectedSede.includes('SanMiguelBN')
+                      ? 'T.Barrio Norte✅'
+                      : 'T.Barrio Norte'}
                   </button>
                 </div>
 
+                {/* Usuarios por sede */}
                 <div className="mb-6 px-6 py-4 bg-white rounded-lg shadow-md">
                   <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200">
                     {Array.isArray(users) && users.length > 0 ? (
-                      <>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {users.map((user) => (
-                            <div
-                              key={user.id}
-                              className="flex items-center rounded-lg border border-gray-200 px-4 py-2 hover:bg-gray-100"
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {users.map((user) => (
+                          <div
+                            key={user.id}
+                            className="flex items-center rounded-lg border border-gray-200 px-4 py-2 hover:bg-gray-100"
+                          >
+                            <input
+                              type="radio"
+                              name="usuario_id"
+                              value={user.id}
+                              checked={values.usuario_id === user.id}
+                              onChange={() =>
+                                setFieldValue('usuario_id', user.id)
+                              }
+                              className="form-radio"
+                            />
+                            <label
+                              htmlFor={`user-${user.id}`}
+                              className="ml-3 text-gray-800 cursor-pointer truncate"
+                              style={{ fontSize: '0.775rem' }}
                             >
-                              <input
-                                type="radio"
-                                name="usuario_id"
-                                value={user.id}
-                                checked={values.usuario_id === user.id}
-                                onChange={() =>
-                                  setFieldValue('usuario_id', user.id)
-                                }
-                                className="form-radio"
-                              />
-                              <label
-                                htmlFor={`user-${user.id}`}
-                                className="ml-3 text- text-gray-800 cursor-pointer truncate"
-                                style={{ fontSize: '0.775rem' }}
-                              >
-                                {user.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </>
+                              {user.name}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                     ) : (
                       <p className="text-sm text-gray-500">
                         No hay usuarios disponibles
@@ -322,6 +366,7 @@ const FormAltaRecaptacion = ({
                   </div>
                 </div>
 
+                {/* Resto del formulario igual */}
                 <div className="mb-3 px-4">
                   <label
                     htmlFor="nombre"
@@ -343,6 +388,7 @@ const FormAltaRecaptacion = ({
                     <Alerta>{errors.nombre}</Alerta>
                   )}
                 </div>
+
                 <div className="mb-3 px-4">
                   <label
                     htmlFor="tipo_contacto"
@@ -360,7 +406,6 @@ const FormAltaRecaptacion = ({
                     onChange={(e) => {
                       const value = e.target.value;
                       setFieldValue('tipo_contacto', value);
-                      setMostrarOtro(value === 'Otro');
                     }}
                   >
                     <option value="">Seleccione un tipo</option>
@@ -388,7 +433,7 @@ const FormAltaRecaptacion = ({
 
                   <div className="mt-3">
                     <label
-                      htmlFor="tipo_contacto"
+                      htmlFor="canal_contacto"
                       className="block font-medium left-0 mb-1"
                     >
                       <span className="text-black text-base pl-1">
@@ -404,7 +449,7 @@ const FormAltaRecaptacion = ({
 
                   <div className="mt-3">
                     <label
-                      htmlFor="tipo_contacto"
+                      htmlFor="detalle_contacto"
                       className="block font-medium left-0 mb-1"
                     >
                       <span className="text-black text-base pl-1">
