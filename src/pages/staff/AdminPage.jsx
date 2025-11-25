@@ -102,9 +102,11 @@ const AdminPage = () => {
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [preguntas, setPreguntas] = useState([]);
   const [preguntaSeleccionada, setPreguntaSeleccionada] = useState(null);
-  const URL = 'http://localhost:8080/ask/';
+  const [modalTareasOpen, setModalTareasOpen] = useState(false);
+  const [tareasDiarias, setTareasDiarias] = useState([]);
 
-  const URL_TAREAS = 'http://localhost:8080/tareasdiarias'; // ejemplo, tu endpoint para tareas
+  const URL = 'http://localhost:8080/ask/';
+  const URL_TAREAS = 'http://localhost:8080/tareasdiarias';
 
   const { userId, userLevel, userName, nomyape } = useAuth();
   const navigate = useNavigate();
