@@ -41,7 +41,8 @@ const esComision = (v) => v === true || v === 1 || v === '1';
 const SEDES = [
   { value: 'monteros', label: 'Monteros' },
   { value: 'concepcion', label: 'Concepción' },
-  { value: 'barrio sur', label: 'Barrio Sur' }
+  { value: 'barrio sur', label: 'Barrio Sur' },
+  { key: 'barrio norte', label: 'Tucumán Barrio Norte' }
 ];
 
 const normalizeSede = (sede) => {
@@ -200,7 +201,7 @@ const VentasProspectosGet = ({ currentUser }) => {
 
   const [page, setPage] = useState(0);
   const rowsPerPage = 20;
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   const { userLevel, userId, userName } = useAuth(); // suponiendo que tienes userId también
 
@@ -212,9 +213,9 @@ const VentasProspectosGet = ({ currentUser }) => {
   const [selectedSede, setSelectedSede] = useState(null); // null = todas o ninguna sede seleccionada
 
   // relacion al filtrado
-  const [tipoFiltro, setTipoFiltro] = React.useState("");
-  const [canalFiltro, setCanalFiltro] = React.useState("");
-  const [actividadFiltro, setActividadFiltro] = React.useState("");
+  const [tipoFiltro, setTipoFiltro] = React.useState('');
+  const [canalFiltro, setCanalFiltro] = React.useState('');
+  const [actividadFiltro, setActividadFiltro] = React.useState('');
 
   const [showStats, setShowStats] = useState(false);
 
@@ -229,26 +230,26 @@ const VentasProspectosGet = ({ currentUser }) => {
 
   const [alertasSegundoContacto, setAlertasSegundoContacto] = useState({});
 
-  const [mes, setMes] = useState("");
-  const [anio, setAnio] = useState("");
+  const [mes, setMes] = useState('');
+  const [anio, setAnio] = useState('');
 
   const [openAgenda, setOpenAgenda] = useState(false);
 
   // const [soloConvertidos, setSoloConvertidos] = useState(false);
-  const [alertaFiltro, setAlertaFiltro] = useState("");
-  const [convertidoFiltro, setConvertidoFiltro] = useState("");
+  const [alertaFiltro, setAlertaFiltro] = useState('');
+  const [convertidoFiltro, setConvertidoFiltro] = useState('');
 
   // Evita clicks dobles mientras se procesa
   const [savingIds, setSavingIds] = useState(new Set());
 
-  const [comisionFiltro, setComisionFiltro] = useState("");
+  const [comisionFiltro, setComisionFiltro] = useState('');
   // '' | 'con' | 'sin'
 
   const { insertCliente } = useInsertClientePilates();
 
   const [showComisiones, setShowComisiones] = useState(false);
 
-  const [comisionEstadoFiltro, setComisionEstadoFiltro] = useState("");
+  const [comisionEstadoFiltro, setComisionEstadoFiltro] = useState('');
   // valores: '', 'en_revision', 'aprobado', 'rechazado'
 
   const [currentUser2, setCurrentUser] = useState(null);
@@ -260,9 +261,9 @@ const VentasProspectosGet = ({ currentUser }) => {
   const userFromAuth = useMemo(
     () => ({
       id: userId ?? null,
-      name: userName ?? "",
-      level: userLevel ?? "",
-      sede: "", // lo completamos desde la API si está
+      name: userName ?? '',
+      level: userLevel ?? '',
+      sede: '' // lo completamos desde la API si está
     }),
     [userId, userName, userLevel]
   );
@@ -291,7 +292,7 @@ const VentasProspectosGet = ({ currentUser }) => {
             id: data.id,
             name: data.name,
             level: data.level,
-            sede: data.sede ?? "",
+            sede: data.sede ?? ''
           });
           setUserLoading(false);
           return;
@@ -313,7 +314,7 @@ const VentasProspectosGet = ({ currentUser }) => {
               id: found.id,
               name: found.name,
               level: found.level,
-              sede: found.sede ?? "",
+              sede: found.sede ?? ''
             });
           } else {
             // Último fallback: nos quedamos con lo que vino del Auth
@@ -338,7 +339,7 @@ const VentasProspectosGet = ({ currentUser }) => {
   useEffect(() => {
     const obs = {};
     prospectos.forEach((p) => {
-      obs[p.id] = p.observacion || "";
+      obs[p.id] = p.observacion || '';
     });
     setObservaciones(obs);
   }, [prospectos]);
@@ -369,8 +370,8 @@ const VentasProspectosGet = ({ currentUser }) => {
       const normalize = (str) =>
         str
           .toString()
-          .normalize("NFD") // descompone caracteres con acentos
-          .replace(/\p{Diacritic}/gu, "") // elimina diacríticos
+          .normalize('NFD') // descompone caracteres con acentos
+          .replace(/\p{Diacritic}/gu, '') // elimina diacríticos
           .toLowerCase()
           .trim();
 
@@ -381,7 +382,7 @@ const VentasProspectosGet = ({ currentUser }) => {
       if (sedeEncontrada) {
         setSedeId(sedeEncontrada.id);
       } else {
-        console.log("No se encontró la sede");
+        console.log('No se encontró la sede');
       }
     }
   }, [sedesEsCiudad, selectedSede]);
@@ -409,9 +410,9 @@ const VentasProspectosGet = ({ currentUser }) => {
     const loadAgendaVentasCount = async () => {
       try {
         const qs = new URLSearchParams({
-          level: userLevel === "admin" ? "admin" : "vendedor",
-          ...(userLevel !== "admin" ? { usuario_id: String(userId) } : {}),
-          with_prospect: "1",
+          level: userLevel === 'admin' ? 'admin' : 'vendedor',
+          ...(userLevel !== 'admin' ? { usuario_id: String(userId) } : {}),
+          with_prospect: '1'
         });
         const r = await fetch(
           `http://localhost:8080/ventas/agenda/hoy?${qs.toString()}`
@@ -428,7 +429,7 @@ const VentasProspectosGet = ({ currentUser }) => {
   useEffect(() => {
     // Pedí todas las alertas
     axios
-      .get("http://localhost:8080/prospectos-alertas")
+      .get('http://localhost:8080/prospectos-alertas')
       .then((res) => {
         // armamos objeto: { [id]: 'rojo'/'amarillo'/'ninguno' }
         const obj = {};
@@ -442,22 +443,23 @@ const VentasProspectosGet = ({ currentUser }) => {
 
   const normalizeString = (str) => {
     return str
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
-      .replace(/\s+/g, "");
+      .replace(/\s+/g, '');
   };
 
   const normalizeSede2 = (sede) => {
-    if (!sede) return "";
-    const normalized = sede.toLowerCase().replace(/\s/g, "");
-    return normalized === "smt" ? "barrio sur" : normalized;
+    if (!sede) return '';
+    const normalized = sede.toLowerCase().replace(/\s/g, '');
+    return normalized === 'smt' ? 'barrio sur' : normalized;
   };
 
   const sedes = [
-    { key: "monteros", label: "Monteros" },
-    { key: "concepcion", label: "Concepción" },
-    { key: "smt", label: "SMT / Barrio Sur" },
+    { key: 'monteros', label: 'Monteros' },
+    { key: 'concepcion', label: 'Concepción' },
+    { key: 'smt', label: 'Tucumán Barrio Sur' },
+    { key: 'barrio norte', label: 'Tucumán Barrio Norte' }
   ];
 
   const URL = 'http://localhost:8080/ventas_prospectos';
@@ -474,11 +476,11 @@ const VentasProspectosGet = ({ currentUser }) => {
       try {
         const response = await fetch(`http://localhost:8080/users/${userId}`);
         if (!response.ok)
-          throw new Error("No se pudo obtener la info del usuario");
+          throw new Error('No se pudo obtener la info del usuario');
         const data = await response.json();
-        setUserSede(normalizeString(data.sede || ""));
+        setUserSede(normalizeString(data.sede || ''));
       } catch (error) {
-        console.error("Error cargando sede del usuario:", error);
+        console.error('Error cargando sede del usuario:', error);
       }
     };
 
@@ -512,13 +514,13 @@ const VentasProspectosGet = ({ currentUser }) => {
           usuario_id: currentUser?.id,
           level: currentUser?.level,
           mes, // <--- Nuevo
-          anio, // <--- Nuevo
-        },
+          anio // <--- Nuevo
+        }
       });
       setProspectos(response.data);
       dataLoaded.current = true;
     } catch (error) {
-      console.error("Error al obtener prospectos:", error);
+      console.error('Error al obtener prospectos:', error);
     }
   };
 
@@ -527,11 +529,11 @@ const VentasProspectosGet = ({ currentUser }) => {
     if (dataLoaded.current && prospectoIdToScroll) {
       const row = document.getElementById(`prospecto-${prospectoIdToScroll}`);
       if (row) {
-        row.scrollIntoView({ behavior: "smooth", block: "center" });
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
         // Opcional: resaltá la fila un rato
-        row.classList.add("bg-yellow-200", "animate-pulse");
+        row.classList.add('bg-yellow-200', 'animate-pulse');
         setTimeout(
-          () => row.classList.remove("animate-pulse", "bg-yellow-200"),
+          () => row.classList.remove('animate-pulse', 'bg-yellow-200'),
           1500
         );
       }
@@ -548,11 +550,11 @@ const VentasProspectosGet = ({ currentUser }) => {
       const nuevoValor = !prospecto[field];
 
       await axios.put(`${URL}/${id}`, {
-        [field]: nuevoValor,
+        [field]: nuevoValor
       });
       fetchProspectos();
     } catch (error) {
-      console.error("Error al actualizar:", error);
+      console.error('Error al actualizar:', error);
     }
   };
 
@@ -565,7 +567,7 @@ const VentasProspectosGet = ({ currentUser }) => {
               ...p,
               canal_contacto: nuevoCanal,
               campania_origen:
-                nuevoCanal === "Campaña" ? p.campania_origen || "" : "", // si no es campaña, lo limpia
+                nuevoCanal === 'Campaña' ? p.campania_origen || '' : '' // si no es campaña, lo limpia
             }
           : p
       )
@@ -578,10 +580,10 @@ const VentasProspectosGet = ({ currentUser }) => {
       await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
         canal_contacto: nuevoCanal,
         campania_origen:
-          nuevoCanal === "Campaña" ? prospecto?.campania_origen || "" : "",
+          nuevoCanal === 'Campaña' ? prospecto?.campania_origen || '' : ''
       });
     } catch (error) {
-      console.error("Error al actualizar canal:", error);
+      console.error('Error al actualizar canal:', error);
     }
   };
 
@@ -590,7 +592,7 @@ const VentasProspectosGet = ({ currentUser }) => {
       await axios.put(`${URL}/${id}`, { [field]: value });
       fetchProspectos(); // recarga la lista después de actualizar
     } catch (error) {
-      console.error("Error al actualizar:", error);
+      console.error('Error al actualizar:', error);
     }
   };
 
@@ -598,11 +600,11 @@ const VentasProspectosGet = ({ currentUser }) => {
     if (!nuevaActividad) return;
 
     const valoresValidos = [
-      "No especifica",
-      "Musculacion",
-      "Pilates",
-      "Clases grupales",
-      "Pase full",
+      'No especifica',
+      'Musculacion',
+      'Pilates',
+      'Clases grupales',
+      'Pase full'
     ];
 
     if (!valoresValidos.includes(nuevaActividad)) return;
@@ -615,24 +617,24 @@ const VentasProspectosGet = ({ currentUser }) => {
     // Actualiza en el backend de inmediato
     try {
       await axios.put(`${URL}/${id}`, {
-        actividad: nuevaActividad,
+        actividad: nuevaActividad
       });
     } catch (error) {
-      console.error("Error al actualizar actividad:", error);
+      console.error('Error al actualizar actividad:', error);
     }
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "-";
+    if (!dateString) return '-';
     // Solo tomar los primeros 10 caracteres "YYYY-MM-DD"
-    const [year, month, day] = dateString.slice(0, 10).split("-");
+    const [year, month, day] = dateString.slice(0, 10).split('-');
     return `${day}/${month}/${year}`;
   };
 
   // Filtrar prospectos
   const filtered = prospectos?.length
     ? prospectos.filter((p) => {
-        const nombreMatch = (p.nombre || "")
+        const nombreMatch = (p.nombre || '')
           .toLowerCase()
           .includes(search.toLowerCase());
         if (!nombreMatch) return false;
@@ -649,21 +651,21 @@ const VentasProspectosGet = ({ currentUser }) => {
         if (actividadFiltro && p.actividad !== actividadFiltro) return false;
 
         // 🔹 NUEVO: filtro por convertido
-        if (convertidoFiltro === "si" && !p.convertido) return false;
-        if (convertidoFiltro === "no" && p.convertido) return false;
+        if (convertidoFiltro === 'si' && !p.convertido) return false;
+        if (convertidoFiltro === 'no' && p.convertido) return false;
         // 🔹 NUEVO FILTRO: sólo los que tienen alerta amarilla o roja
-        if (alertaFiltro === "con-alerta") {
+        if (alertaFiltro === 'con-alerta') {
           const color = alertasSegundoContacto[p.id];
-          if (color !== "amarillo" && color !== "rojo") return false;
+          if (color !== 'amarillo' && color !== 'rojo') return false;
         }
 
         // 🔹 NUEVO: filtro comisión
-        if (comisionFiltro === "con" && !esComision(p.comision)) return false;
-        if (comisionFiltro === "sin" && esComision(p.comision)) return false;
+        if (comisionFiltro === 'con' && !esComision(p.comision)) return false;
+        if (comisionFiltro === 'sin' && esComision(p.comision)) return false;
 
         // NUEVO: Estado de comisión (amarillo/azul/rojo)
         if (comisionEstadoFiltro) {
-          if ((p.comision_estado || "") !== comisionEstadoFiltro) return false;
+          if ((p.comision_estado || '') !== comisionEstadoFiltro) return false;
         }
         return true;
       })
@@ -696,27 +698,27 @@ const VentasProspectosGet = ({ currentUser }) => {
           `prospecto-${visibleProspectos[0].id}`
         );
         if (firstRow) {
-          firstRow.scrollIntoView({ behavior: "smooth", block: "start" });
+          firstRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
           // Opcional: resalta la fila un segundo
           firstRow.classList.add(
-            "ring-2",
-            "ring-[#fc4b08]",
-            "ring-offset-2",
-            "animate-pulse"
+            'ring-2',
+            'ring-[#fc4b08]',
+            'ring-offset-2',
+            'animate-pulse'
           );
           setTimeout(() => {
             firstRow.classList.remove(
-              "ring-2",
-              "ring-[#fc4b08]",
-              "ring-offset-2",
-              "animate-pulse"
+              'ring-2',
+              'ring-[#fc4b08]',
+              'ring-offset-2',
+              'animate-pulse'
             );
           }, 900);
         }
       } else {
-        const listTop = document.getElementById("prospectos-lista-top");
+        const listTop = document.getElementById('prospectos-lista-top');
         if (listTop) {
-          listTop.scrollIntoView({ behavior: "smooth", block: "start" });
+          listTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
     }, 80); // Pequeño delay para que la tabla ya esté renderizada
@@ -742,98 +744,98 @@ const VentasProspectosGet = ({ currentUser }) => {
     setModalClaseOpen(true);
   };
 
-    const verificarClientePruebaPorNombre = async (nombre) => {
-      try {
-        const response = await axios.get(
-          `http://localhost:8080/clientes-pilates/existe-prueba-por-nombre?nombre=${nombre}`
+  const verificarClientePruebaPorNombre = async (nombre) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/clientes-pilates/existe-prueba-por-nombre?nombre=${nombre}`
+      );
+      console.log(response.data);
+      return response.data;
+    } catch (error) {
+      return { existe: false };
+    }
+  };
+
+  const insertarModificarClaseDePrueba = async (id, cambios, tipo) => {
+    console.log(cambios);
+    try {
+      const fechaInicio = new Date(cambios.fecha);
+      // Clonar y sumar un día
+      const fechaFin = new Date(fechaInicio);
+      fechaFin.setDate(fechaFin.getDate() + 1);
+
+      // Formatear fechaFin a YYYY-MM-DD
+      const fechaFinStr = fechaFin.toISOString().split('T')[0];
+
+      const datosClasePrueba = {
+        id: cambios.idProspecto || null,
+        nombre: cambios.nombre,
+        telefono: cambios.contacto,
+        fecha_inicio: cambios.fecha,
+        fecha_fin: fechaFinStr,
+        estado:
+          cambios.tipo === 'Clase de prueba'
+            ? 'Clase de prueba'
+            : 'Renovacion programada'
+      };
+
+      const inscripcionData = {
+        dia: cambios.diaSeleccionado,
+        horario: cambios.horarioSeleccionado.hhmm,
+        fecha_inscripcion: cambios.fecha,
+        id_sede: sedeId
+      };
+
+      const horarioSeleccionadoProspecto = {
+        hhmm: cambios.horarioSeleccionado.hhmm,
+        grp: cambios.horarioSeleccionado.grp,
+        clase_num: cambios.numeroClase,
+        prospecto_id: cambios.idProspecto
+      };
+      if (!cambios.esModificacion) {
+        // Verificar si existe cliente en clase de prueba
+        const verificacion = await verificarClientePruebaPorNombre(
+          cambios.nombre
         );
-        console.log(response.data);
-        return response.data;
-      } catch (error) {
-        return { existe: false };
-      }
-    };
+        console.log(verificacion.id);
 
-    const insertarModificarClaseDePrueba = async (id, cambios, tipo) => {
-      console.log(cambios);
-      try {
-        const fechaInicio = new Date(cambios.fecha);
-        // Clonar y sumar un día
-        const fechaFin = new Date(fechaInicio);
-        fechaFin.setDate(fechaFin.getDate() + 1);
+        console.log('verificacion', verificacion.existe);
 
-        // Formatear fechaFin a YYYY-MM-DD
-        const fechaFinStr = fechaFin.toISOString().split("T")[0];
-
-        const datosClasePrueba = {
-          id: cambios.idProspecto || null,
-          nombre: cambios.nombre,
-          telefono: cambios.contacto,
-          fecha_inicio: cambios.fecha,
-          fecha_fin: fechaFinStr,
-          estado:
-            cambios.tipo === "Clase de prueba"
-              ? "Clase de prueba"
-              : "Renovacion programada",
-        };
-
-        const inscripcionData = {
-          dia: cambios.diaSeleccionado,
-          horario: cambios.horarioSeleccionado.hhmm,
-          fecha_inscripcion: cambios.fecha,
-          id_sede: sedeId,
-        };
-
-        const horarioSeleccionadoProspecto = {
-          hhmm: cambios.horarioSeleccionado.hhmm,
-          grp: cambios.horarioSeleccionado.grp,
-          clase_num: cambios.numeroClase,
-          prospecto_id: cambios.idProspecto,
-        };
-        if (!cambios.esModificacion) {
-          // Verificar si existe cliente en clase de prueba
-          const verificacion = await verificarClientePruebaPorNombre(
-            cambios.nombre
-          );
-          console.log(verificacion.id);
-
-          console.log("verificacion", verificacion.existe);
-
-          // Si existe, eliminar antes de insertar
-          if (verificacion.existe && verificacion.id) {
-            try {
-              await axios.delete(
-                `http://localhost:8080/clientes-pilates/con-inscripciones/${verificacion.id}`
-              );
-            } catch (error) {
-              throw new Error(
-                `No se pudo eliminar el cliente existente con id ${verificacion.id}: ${error.message}`
-              );
-            }
+        // Si existe, eliminar antes de insertar
+        if (verificacion.existe && verificacion.id) {
+          try {
+            await axios.delete(
+              `http://localhost:8080/clientes-pilates/con-inscripciones/${verificacion.id}`
+            );
+          } catch (error) {
+            throw new Error(
+              `No se pudo eliminar el cliente existente con id ${verificacion.id}: ${error.message}`
+            );
           }
-          await insertCliente(datosClasePrueba, inscripcionData);
-          await axios.post(
-            `http://localhost:8080/ventas-prospectos-horarios`,
-            horarioSeleccionadoProspecto
-          );
-          traerHorariosDisponibles();
-        } else {
-          await axios.put(
-            `http://localhost:8080/ventas-prospectos-horarios/modificar-por-prospecto`,
-            horarioSeleccionadoProspecto
-          );
-          console.log("Se ha modificado el horario del prospecto en ventas");
         }
-      } catch (error) {
-        console.error("Error al insertar/modificar clase de prueba:", error);
+        await insertCliente(datosClasePrueba, inscripcionData);
+        await axios.post(
+          `http://localhost:8080/ventas-prospectos-horarios`,
+          horarioSeleccionadoProspecto
+        );
+        traerHorariosDisponibles();
+      } else {
+        await axios.put(
+          `http://localhost:8080/ventas-prospectos-horarios/modificar-por-prospecto`,
+          horarioSeleccionadoProspecto
+        );
+        console.log('Se ha modificado el horario del prospecto en ventas');
       }
-    };
+    } catch (error) {
+      console.error('Error al insertar/modificar clase de prueba:', error);
+    }
+  };
 
   const handleClasePruebaSave = async (id, cambios) => {
     try {
       if (
-        cambios.tipo === "Clase de prueba" ||
-        cambios.tipo === "Visita programada"
+        cambios.tipo === 'Clase de prueba' ||
+        cambios.tipo === 'Visita programada'
       ) {
         insertarModificarClaseDePrueba(id, cambios);
       }
@@ -843,13 +845,13 @@ const VentasProspectosGet = ({ currentUser }) => {
         prev.map((p) => (p.id === id ? { ...p, ...cambios } : p))
       );
     } catch (error) {
-      console.error("Error al guardar clase de prueba:", error);
+      console.error('Error al guardar clase de prueba:', error);
     }
   };
 
   const handleEliminarProc = async (id) => {
     const confirmacion = window.confirm(
-      "¿Seguro que desea eliminar esta recaptación?"
+      '¿Seguro que desea eliminar esta recaptación?'
     );
     if (confirmacion) {
       try {
@@ -885,11 +887,11 @@ const VentasProspectosGet = ({ currentUser }) => {
 
     try {
       await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
-        canal_contacto: "Campaña", // siempre es campaña acá
-        campania_origen: value,
+        canal_contacto: 'Campaña', // siempre es campaña acá
+        campania_origen: value
       });
     } catch (error) {
-      console.error("Error al actualizar origen de campaña:", error);
+      console.error('Error al actualizar origen de campaña:', error);
     }
   };
 
@@ -907,17 +909,17 @@ const VentasProspectosGet = ({ currentUser }) => {
       await axios.put(
         `http://localhost:8080/ventas_prospectos/${prospectoId}`,
         {
-          sede: nuevaSede,
+          sede: nuevaSede
         }
       );
 
       // ✅ Éxito
       Swal.fire({
-        title: "Sede actualizada",
+        title: 'Sede actualizada',
         text: `El prospecto "${prospecto?.nombre}" fue cambiado de "${sedeAnterior}" a "${nuevaSede}".`,
-        icon: "success",
-        confirmButtonColor: "#10b981", // Tailwind green-500
-        confirmButtonText: "OK",
+        icon: 'success',
+        confirmButtonColor: '#10b981', // Tailwind green-500
+        confirmButtonText: 'OK'
       });
     } catch (e) {
       // rollback si falla
@@ -929,35 +931,35 @@ const VentasProspectosGet = ({ currentUser }) => {
 
       // ❌ Error
       Swal.fire({
-        title: "Error",
+        title: 'Error',
         text: `No se pudo actualizar la sede de "${prospecto?.nombre}". Inténtalo de nuevo.`,
-        icon: "error",
-        confirmButtonColor: "#ef4444", // Tailwind red-500
-        confirmButtonText: "Cerrar",
+        icon: 'error',
+        confirmButtonColor: '#ef4444', // Tailwind red-500
+        confirmButtonText: 'Cerrar'
       });
     }
   };
 
   // === Constantes ===
   const PLANES = [
-    "Mensual",
-    "Trimestre",
-    "Semestre",
-    "Anual",
-    "Débitos automáticos",
-    "Otros",
+    'Mensual',
+    'Trimestre',
+    'Semestre',
+    'Anual',
+    'Débitos automáticos',
+    'Otros'
   ];
 
   // === Helper: select de plan + input "Otros" en un solo modal ===
   async function promptTipoPlanConOtros(PLANES) {
     return Swal.fire({
-      title: "Tipo de plan",
+      title: 'Tipo de plan',
       html: `
       <div style="text-align:left">
         <label for="swal-plan" style="display:block;margin-bottom:6px">Seleccioná un plan</label>
         <select id="swal-plan" class="swal2-input" style="width:100%;box-sizing:border-box">
           <option value="">-- Seleccionar --</option>
-          ${PLANES.map((p) => `<option value="${p}">${p}</option>`).join("")}
+          ${PLANES.map((p) => `<option value="${p}">${p}</option>`).join('')}
         </select>
         <div id="swal-otros-wrap" style="display:none;margin-top:8px">
           <label for="swal-otros" style="display:block;margin-bottom:6px">Detalle (si elegiste “Otros”)</label>
@@ -967,31 +969,31 @@ const VentasProspectosGet = ({ currentUser }) => {
     `,
       focusConfirm: false,
       showCancelButton: true,
-      confirmButtonText: "Continuar",
-      cancelButtonText: "Cancelar",
+      confirmButtonText: 'Continuar',
+      cancelButtonText: 'Cancelar',
       didOpen: () => {
-        const sel = document.getElementById("swal-plan");
-        const otrosWrap = document.getElementById("swal-otros-wrap");
-        sel.addEventListener("change", () => {
-          otrosWrap.style.display = sel.value === "Otros" ? "block" : "none";
+        const sel = document.getElementById('swal-plan');
+        const otrosWrap = document.getElementById('swal-otros-wrap');
+        sel.addEventListener('change', () => {
+          otrosWrap.style.display = sel.value === 'Otros' ? 'block' : 'none';
         });
       },
       preConfirm: () => {
         const sel = /** @type {HTMLSelectElement} */ (
-          document.getElementById("swal-plan")
+          document.getElementById('swal-plan')
         );
         const otros = /** @type {HTMLInputElement}  */ (
-          document.getElementById("swal-otros")
+          document.getElementById('swal-otros')
         );
-        const tipo_plan = (sel.value || "").trim();
-        const tipo_plan_custom = (otros?.value || "").trim();
+        const tipo_plan = (sel.value || '').trim();
+        const tipo_plan_custom = (otros?.value || '').trim();
 
         if (!tipo_plan) {
-          Swal.showValidationMessage("Debés seleccionar un plan");
+          Swal.showValidationMessage('Debés seleccionar un plan');
           return false;
         }
-        if (tipo_plan === "Otros" && !tipo_plan_custom) {
-          Swal.showValidationMessage("Completá el detalle para “Otros”");
+        if (tipo_plan === 'Otros' && !tipo_plan_custom) {
+          Swal.showValidationMessage('Completá el detalle para “Otros”');
           return false;
         }
 
@@ -999,9 +1001,9 @@ const VentasProspectosGet = ({ currentUser }) => {
         return {
           tipo_plan: tipo_plan.slice(0, 80),
           tipo_plan_custom:
-            tipo_plan === "Otros" ? tipo_plan_custom.slice(0, 120) : null,
+            tipo_plan === 'Otros' ? tipo_plan_custom.slice(0, 120) : null
         };
-      },
+      }
     }).then((r) => (r.isConfirmed ? r.value : null));
   }
 
@@ -1036,7 +1038,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                 convertido: false,
                 comision: false,
                 comision_estado: null,
-                comision_id: null,
+                comision_id: null
               }
             : p
         )
@@ -1047,14 +1049,14 @@ const VentasProspectosGet = ({ currentUser }) => {
           {
             convertido: false,
             comision: false,
-            comision_usuario_id: userId,
+            comision_usuario_id: userId
           }
         );
         await Swal.fire({
-          title: "Actualizado",
+          title: 'Actualizado',
           text: `Se anuló la conversión y comisión de "${prospecto.nombre}".`,
-          icon: "success",
-          confirmButtonColor: "#10b981",
+          icon: 'success',
+          confirmButtonColor: '#10b981'
         });
       } catch (e) {
         // Rollback
@@ -1062,10 +1064,10 @@ const VentasProspectosGet = ({ currentUser }) => {
           arr.map((p) => (p.id === prospectoId ? prev : p))
         );
         await Swal.fire({
-          title: "Error",
-          text: "No se pudo anular la conversión/comisión.",
-          icon: "error",
-          confirmButtonColor: "#ef4444",
+          title: 'Error',
+          text: 'No se pudo anular la conversión/comisión.',
+          icon: 'error',
+          confirmButtonColor: '#ef4444'
         });
       } finally {
         setSavingIds((s) => {
@@ -1080,16 +1082,16 @@ const VentasProspectosGet = ({ currentUser }) => {
     // Caso 2: Tildan => primero preguntar si es comisión
     try {
       const { isConfirmed, isDenied, dismiss } = await Swal.fire({
-        title: "¿Es comisión?",
+        title: '¿Es comisión?',
         text: `Vas a marcar convertido a "${prospecto.nombre}". ¿Corresponde comisión?`,
-        icon: "question",
+        icon: 'question',
         showDenyButton: true,
         showCancelButton: true,
-        confirmButtonText: "Sí, es comisión",
-        denyButtonText: "No",
-        confirmButtonColor: "#10b981",
-        denyButtonColor: "#6b7280",
-        cancelButtonText: "Cancelar",
+        confirmButtonText: 'Sí, es comisión',
+        denyButtonText: 'No',
+        confirmButtonColor: '#10b981',
+        denyButtonColor: '#6b7280',
+        cancelButtonText: 'Cancelar'
       });
 
       if (dismiss === Swal.DismissReason.cancel) {
@@ -1127,16 +1129,16 @@ const VentasProspectosGet = ({ currentUser }) => {
                   ...data?.prospecto,
                   comision: false,
                   comision_estado: null,
-                  comision_id: null,
+                  comision_id: null
                 }
               : p
           )
         );
         await Swal.fire({
-          title: "Convertido",
+          title: 'Convertido',
           text: `El prospecto "${prospecto.nombre}" fue marcado como convertido.`,
-          icon: "success",
-          confirmButtonColor: "#10b981",
+          icon: 'success',
+          confirmButtonColor: '#10b981'
         });
         return;
       }
@@ -1161,9 +1163,9 @@ const VentasProspectosGet = ({ currentUser }) => {
       const payload = {
         esComision: true,
         tipo_plan,
-        ...(tipo_plan === "Otros" ? { tipo_plan_custom } : {}),
-        observacion: "", // opcional
-        actor_id: userId,
+        ...(tipo_plan === 'Otros' ? { tipo_plan_custom } : {}),
+        observacion: '', // opcional
+        actor_id: userId
       };
 
       const { data } = await axios.post(
@@ -1180,29 +1182,29 @@ const VentasProspectosGet = ({ currentUser }) => {
                 ...data?.prospecto,
                 convertido: true,
                 comision: true,
-                comision_estado: "en_revision",
+                comision_estado: 'en_revision',
                 comision_id: data?.comision?.id ?? p.comision_id,
                 comision_usuario_id: userId,
-                comision_registrada_at: new Date().toISOString(),
+                comision_registrada_at: new Date().toISOString()
               }
             : p
         )
       );
 
       await Swal.fire({
-        title: "Comisión enviada",
-        text: "Tu comisión quedó en revisión. Un coordinador la aprobará o rechazará.",
-        icon: "success",
-        confirmButtonColor: "#10b981",
+        title: 'Comisión enviada',
+        text: 'Tu comisión quedó en revisión. Un coordinador la aprobará o rechazará.',
+        icon: 'success',
+        confirmButtonColor: '#10b981'
       });
     } catch (e) {
       // Rollback
       setProspectos((arr) => arr.map((p) => (p.id === prospectoId ? prev : p)));
       await Swal.fire({
-        title: "Error",
-        text: "No se pudo convertir/registrar la comisión.",
-        icon: "error",
-        confirmButtonColor: "#ef4444",
+        title: 'Error',
+        text: 'No se pudo convertir/registrar la comisión.',
+        icon: 'error',
+        confirmButtonColor: '#ef4444'
       });
     } finally {
       setSavingIds((s) => {
@@ -1214,7 +1216,7 @@ const VentasProspectosGet = ({ currentUser }) => {
   };
 
   const patchComision = async (p, body) => {
-    if (!p?.comision_id) throw new Error("comision_id no definido");
+    if (!p?.comision_id) throw new Error('comision_id no definido');
     const res = await axios.patch(
       `http://localhost:8080/ventas-comisiones/${p.comision_id}`,
       { actor_id: userId, ...body } // SIEMPRE actor_id
@@ -1229,7 +1231,7 @@ const VentasProspectosGet = ({ currentUser }) => {
           ? {
               ...px,
               comision_estado: nextEstado,
-              comision_id: comisionId ?? px.comision_id,
+              comision_id: comisionId ?? px.comision_id
             }
           : px
       )
@@ -1240,9 +1242,9 @@ const VentasProspectosGet = ({ currentUser }) => {
     try {
       if (!prospecto?.comision_id) {
         await Swal.fire({
-          icon: "error",
-          title: "Sin comisión",
-          text: "No hay comisión vinculada a este prospecto.",
+          icon: 'error',
+          title: 'Sin comisión',
+          text: 'No hay comisión vinculada a este prospecto.'
         });
         return;
       }
@@ -1254,10 +1256,10 @@ const VentasProspectosGet = ({ currentUser }) => {
       const defaultSellerId = String(userId); // por defecto: el actor actual
       const sellerOptions = sellers
         .map((u) => `<option value="${u.id}">${u.name} (#${u.id})</option>`)
-        .join("");
+        .join('');
 
       const { isConfirmed, value } = await Swal.fire({
-        title: "Aprobar comisión",
+        title: 'Aprobar comisión',
         html: `
         <div style="text-align:left">
           <label style="display:block;margin-bottom:6px">Monto de la comisión</label>
@@ -1271,62 +1273,62 @@ const VentasProspectosGet = ({ currentUser }) => {
         </div>
       `,
         didOpen: () => {
-          const $monto = document.getElementById("swal-monto");
-          const $vend = document.getElementById("swal-vendedor");
+          const $monto = document.getElementById('swal-monto');
+          const $vend = document.getElementById('swal-vendedor');
           if ($vend) $vend.value = defaultSellerId;
           if ($monto) $monto.focus();
         },
         focusConfirm: false,
         showCancelButton: true,
-        confirmButtonText: "Aprobar",
-        cancelButtonText: "Cancelar",
-        confirmButtonColor: "#10b981",
-        background: "#0f172a",
-        color: "#e5e7eb",
+        confirmButtonText: 'Aprobar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#10b981',
+        background: '#0f172a',
+        color: '#e5e7eb',
         preConfirm: () => {
-          const $monto = document.getElementById("swal-monto");
-          const $vend = document.getElementById("swal-vendedor");
-          const monto = Number(String($monto?.value || "").replace(",", "."));
+          const $monto = document.getElementById('swal-monto');
+          const $vend = document.getElementById('swal-vendedor');
+          const monto = Number(String($monto?.value || '').replace(',', '.'));
           const vendedor_id = Number($vend?.value);
 
           if (!Number.isFinite(monto) || monto < 0) {
-            Swal.showValidationMessage("Ingresá un monto válido");
+            Swal.showValidationMessage('Ingresá un monto válido');
             return;
           }
           if (!vendedor_id) {
-            Swal.showValidationMessage("Seleccioná un vendedor");
+            Swal.showValidationMessage('Seleccioná un vendedor');
             return;
           }
           return { monto, vendedor_id };
-        },
+        }
       });
 
       if (!isConfirmed || !value) return;
       const { monto, vendedor_id } = value;
 
       // Optimista → aprobado (azul)
-      applyProspectoEstado(prospecto.id, "aprobado", prospecto.comision_id);
+      applyProspectoEstado(prospecto.id, 'aprobado', prospecto.comision_id);
 
       await patchComision(prospecto, {
-        estado: "aprobado",
+        estado: 'aprobado',
         monto_comision: monto,
-        moneda: "ARS",
-        vendedor_id, // << puede ser el actor o uno distinto (FEDE, SOL, LOURDES)
+        moneda: 'ARS',
+        vendedor_id // << puede ser el actor o uno distinto (FEDE, SOL, LOURDES)
       });
 
       await Swal.fire({
-        icon: "success",
-        title: "Aprobada",
-        text: "Comisión aprobada correctamente.",
+        icon: 'success',
+        title: 'Aprobada',
+        text: 'Comisión aprobada correctamente.'
       });
     } catch (e) {
       // Rollback a en_revision
-      applyProspectoEstado(prospecto.id, "en_revision", prospecto.comision_id);
+      applyProspectoEstado(prospecto.id, 'en_revision', prospecto.comision_id);
       await Swal.fire({
-        icon: "error",
-        title: "Error",
+        icon: 'error',
+        title: 'Error',
         text:
-          e?.response?.data?.mensajeError || "No se pudo aprobar la comisión.",
+          e?.response?.data?.mensajeError || 'No se pudo aprobar la comisión.'
       });
     }
   };
@@ -1335,45 +1337,45 @@ const VentasProspectosGet = ({ currentUser }) => {
     try {
       if (!prospecto?.comision_id) {
         await Swal.fire({
-          icon: "error",
-          title: "Sin comisión",
-          text: "No hay comisión vinculada a este prospecto.",
+          icon: 'error',
+          title: 'Sin comisión',
+          text: 'No hay comisión vinculada a este prospecto.'
         });
         return;
       }
 
       const { value: motivo, isConfirmed } = await Swal.fire({
-        title: "Motivo de rechazo",
-        input: "text",
-        inputPlaceholder: "Ej: Falta comprobante de pago",
+        title: 'Motivo de rechazo',
+        input: 'text',
+        inputPlaceholder: 'Ej: Falta comprobante de pago',
         inputValidator: (v) =>
-          !v || !v.trim() ? "Ingresá un motivo" : undefined,
+          !v || !v.trim() ? 'Ingresá un motivo' : undefined,
         showCancelButton: true,
-        confirmButtonText: "Rechazar",
-        cancelButtonText: "Cancelar",
+        confirmButtonText: 'Rechazar',
+        cancelButtonText: 'Cancelar'
       });
       if (!isConfirmed) return;
 
       // Optimista → rojo
-      applyProspectoEstado(prospecto.id, "rechazado", prospecto.comision_id);
+      applyProspectoEstado(prospecto.id, 'rechazado', prospecto.comision_id);
 
       await patchComision(prospecto, {
-        estado: "rechazado",
-        motivo_rechazo: motivo.trim(),
+        estado: 'rechazado',
+        motivo_rechazo: motivo.trim()
       });
 
       await Swal.fire({
-        icon: "success",
-        title: "Rechazada",
-        text: "Comisión rechazada.",
+        icon: 'success',
+        title: 'Rechazada',
+        text: 'Comisión rechazada.'
       });
     } catch (e) {
-      applyProspectoEstado(prospecto.id, "en_revision", prospecto.comision_id);
+      applyProspectoEstado(prospecto.id, 'en_revision', prospecto.comision_id);
       await Swal.fire({
-        icon: "error",
-        title: "Error",
+        icon: 'error',
+        title: 'Error',
         text:
-          e?.response?.data?.mensajeError || "No se pudo rechazar la comisión.",
+          e?.response?.data?.mensajeError || 'No se pudo rechazar la comisión.'
       });
     }
   };
@@ -1381,25 +1383,25 @@ const VentasProspectosGet = ({ currentUser }) => {
   const handleMenuCambiarDesdeAprobado = async (prospecto) => {
     if (!prospecto?.comision_id) {
       await Swal.fire({
-        icon: "error",
-        title: "Sin comisión",
-        text: "No hay comisión vinculada a este prospecto.",
+        icon: 'error',
+        title: 'Sin comisión',
+        text: 'No hay comisión vinculada a este prospecto.'
       });
       return;
     }
 
     const { value: next, isConfirmed } = await Swal.fire({
-      title: "Cambiar estado",
-      input: "radio",
+      title: 'Cambiar estado',
+      input: 'radio',
       inputOptions: {
-        en_revision: "Volver a revisión (amarillo)",
-        rechazado: "Rechazado (rojo)",
+        en_revision: 'Volver a revisión (amarillo)',
+        rechazado: 'Rechazado (rojo)'
       },
-      inputValidator: (v) => (!v ? "Seleccioná un estado" : undefined),
+      inputValidator: (v) => (!v ? 'Seleccioná un estado' : undefined),
       showCancelButton: true,
-      confirmButtonText: "Cambiar",
-      confirmButtonColor: "#10b981",
-      cancelButtonText: "Cancelar",
+      confirmButtonText: 'Cambiar',
+      confirmButtonColor: '#10b981',
+      cancelButtonText: 'Cancelar'
     });
     if (!isConfirmed) return;
 
@@ -1408,38 +1410,37 @@ const VentasProspectosGet = ({ currentUser }) => {
 
     try {
       // si eligen rechazado y querés pedir motivo:
-      if (next === "rechazado") {
+      if (next === 'rechazado') {
         const { value: motivo, isConfirmed: conf } = await Swal.fire({
-          title: "Motivo de rechazo",
-          input: "text",
-          inputPlaceholder: "Opcional",
+          title: 'Motivo de rechazo',
+          input: 'text',
+          inputPlaceholder: 'Opcional',
           showCancelButton: true,
-          confirmButtonText: "Rechazar",
+          confirmButtonText: 'Rechazar'
         });
         if (!conf) {
           applyProspectoEstado(prospecto.id, prev, prospecto.comision_id);
           return;
         }
         await patchComision(prospecto, {
-          estado: "rechazado",
-          motivo_rechazo: (motivo || "").trim(),
+          estado: 'rechazado',
+          motivo_rechazo: (motivo || '').trim()
         });
       } else {
         // volver a revisión
-        await patchComision(prospecto, { estado: "en_revision" });
+        await patchComision(prospecto, { estado: 'en_revision' });
       }
       await Swal.fire({
-        icon: "success",
-        title: "Actualizado",
-        text: `Estado cambiado a ${next.replace("_", " ")}.`,
+        icon: 'success',
+        title: 'Actualizado',
+        text: `Estado cambiado a ${next.replace('_', ' ')}.`
       });
     } catch (e) {
       applyProspectoEstado(prospecto.id, prev, prospecto.comision_id);
       await Swal.fire({
-        icon: "error",
-        title: "Error",
-        text:
-          e?.response?.data?.mensajeError || "No se pudo cambiar el estado.",
+        icon: 'error',
+        title: 'Error',
+        text: e?.response?.data?.mensajeError || 'No se pudo cambiar el estado.'
       });
     }
   };
@@ -1459,7 +1460,7 @@ const VentasProspectosGet = ({ currentUser }) => {
 
     if (yaTieneDatos) {
       // 👉 Abre modal directo con lo que ya tiene (tipo preseleccionado)
-      setTipoSeleccionado(prospecto?.[tipoKey] || "");
+      setTipoSeleccionado(prospecto?.[tipoKey] || '');
       setModalClaseOpen(true);
       return;
     }
@@ -1467,18 +1468,18 @@ const VentasProspectosGet = ({ currentUser }) => {
     // 👉 No tiene datos → primero picker de tipo
     Swal.fire({
       title: `Clase #${num}`,
-      text: "¿Qué querés agendar?",
-      input: "select",
+      text: '¿Qué querés agendar?',
+      input: 'select',
       inputOptions: {
-        Agenda: "Agenda",
-        "Visita programada": "Visita programada",
-        "Clase de prueba": "Clase de prueba",
+        Agenda: 'Agenda',
+        'Visita programada': 'Visita programada',
+        'Clase de prueba': 'Clase de prueba'
       },
-      inputPlaceholder: "Seleccioná una opción",
+      inputPlaceholder: 'Seleccioná una opción',
       showCancelButton: true,
-      confirmButtonText: "Continuar",
-      confirmButtonColor: "#10b981",
-      cancelButtonText: "Cancelar",
+      confirmButtonText: 'Continuar',
+      confirmButtonColor: '#10b981',
+      cancelButtonText: 'Cancelar'
     }).then((res) => {
       if (res.isConfirmed && res.value) {
         setTipoSeleccionado(res.value);
@@ -1491,7 +1492,7 @@ const VentasProspectosGet = ({ currentUser }) => {
     prospectoId,
     estado,
     comisionId,
-    monto,
+    monto
   }) => {
     setProspectos((arr) =>
       arr.map((p) =>
@@ -1500,7 +1501,7 @@ const VentasProspectosGet = ({ currentUser }) => {
               ...p,
               comision: true,
               comision_id: comisionId ?? p.comision_id,
-              comision_estado: estado, // 'aprobado' | 'rechazado' | 'en_revision'
+              comision_estado: estado // 'aprobado' | 'rechazado' | 'en_revision'
             }
           : p
       )
@@ -1511,18 +1512,18 @@ const VentasProspectosGet = ({ currentUser }) => {
   const ALLOWED_IDS = new Set([66, 92, 81]);
   const ALLOWED_EMAILS = new Set(
     [
-      "fedekap@hotmail.com",
-      "solciruiz098@gmail.com.ar",
-      "lourdesbsoraire@gmail.com",
+      'fedekap@hotmail.com',
+      'solciruiz098@gmail.com.ar',
+      'lourdesbsoraire@gmail.com'
     ].map((e) => e.toLowerCase())
   );
 
   // Normalizaciones
   const isVendedor =
-    String(currentUser2?.level || "").toLowerCase() === "vendedor";
+    String(currentUser2?.level || '').toLowerCase() === 'vendedor';
 
   // Si tu auth carga el email en userName, lo usamos como fallback
-  const emailLower = String(currentUser2?.email || userName || "")
+  const emailLower = String(currentUser2?.email || userName || '')
     .trim()
     .toLowerCase();
 
@@ -1531,8 +1532,8 @@ const VentasProspectosGet = ({ currentUser }) => {
     ((currentUser2?.id && ALLOWED_IDS.has(Number(currentUser2.id))) ||
       (emailLower && ALLOWED_EMAILS.has(emailLower)));
 
-  const isManager = ["admin", "gerente"].includes(
-    String(currentUser2?.level || "").toLowerCase()
+  const isManager = ['admin', 'gerente'].includes(
+    String(currentUser2?.level || '').toLowerCase()
   );
 
   const canSeeComisionesBtn =
@@ -1553,7 +1554,7 @@ const VentasProspectosGet = ({ currentUser }) => {
   };
   const loadAllowedSellers = async () => {
     if (vendedoresAllowed.length) return vendedoresAllowed;
-    const res = await fetch("http://localhost:8080/users");
+    const res = await fetch('http://localhost:8080/users');
     const data = await res.json();
     const list = (Array.isArray(data) ? data : []).filter(isAllowedUser);
     // Orden por nombre
@@ -1598,7 +1599,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                 tipoFiltro,
                 canalFiltro,
                 actividadFiltro,
-                formatDate, // tu helper
+                formatDate // tu helper
               })
             }
             className="ml-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-500"
@@ -1639,7 +1640,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                 convertidoFiltro,
                 alertaFiltro,
                 comisionFiltro,
-                formatDate,
+                formatDate
               })
             }
             comisionEstadoFiltro={comisionEstadoFiltro} // NUEVO
@@ -1649,18 +1650,18 @@ const VentasProspectosGet = ({ currentUser }) => {
               convertidos: prospectos.filter((p) => p.convertido).length,
               comision: prospectos.filter((p) => p.comision).length,
               alerta: prospectos.filter((p) =>
-                ["amarillo", "rojo"].includes(alertasSegundoContacto[p.id])
+                ['amarillo', 'rojo'].includes(alertasSegundoContacto[p.id])
               ).length,
               // opcional: contadores por estado de comisión
               comiEnRev: prospectos.filter(
-                (p) => p.comision_estado === "en_revision"
+                (p) => p.comision_estado === 'en_revision'
               ).length,
               comiAprob: prospectos.filter(
-                (p) => p.comision_estado === "aprobado"
+                (p) => p.comision_estado === 'aprobado'
               ).length,
               comiRecha: prospectos.filter(
-                (p) => p.comision_estado === "rechazado"
-              ).length,
+                (p) => p.comision_estado === 'rechazado'
+              ).length
             }}
           />
 
@@ -1717,7 +1718,7 @@ const VentasProspectosGet = ({ currentUser }) => {
           <div className="w-full flex justify-center mb-10 px-2">
             <div
               className="flex gap-2 md:gap-4 flex-wrap md:flex-nowrap overflow-x-auto scrollbar-hide py-2"
-              style={{ WebkitOverflowScrolling: "touch", maxWidth: "100vw" }}
+              style={{ WebkitOverflowScrolling: 'touch', maxWidth: '100vw' }}
             >
               {sedes.map(({ key, label }) => {
                 const normalizedKey = normalizeString(key);
@@ -1736,15 +1737,15 @@ const VentasProspectosGet = ({ currentUser }) => {
         transition-all duration-150
         ${
           isSelected
-            ? "bg-green-800 text-white shadow-md scale-105 border border-green-900"
-            : "bg-green-600 text-white hover:bg-green-700 border border-green-700"
+            ? 'bg-green-800 text-white shadow-md scale-105 border border-green-900'
+            : 'bg-green-600 text-white hover:bg-green-700 border border-green-700'
         }
       `}
                     style={{
                       minWidth: 120,
                       marginBottom: 4,
                       marginTop: 4,
-                      letterSpacing: ".02em",
+                      letterSpacing: '.02em'
                     }}
                     onClick={() => {
                       setSelectedSede(
@@ -1766,7 +1767,7 @@ const VentasProspectosGet = ({ currentUser }) => {
 
           <div className="text-center pt-4">
             {/* Botón visible solo para gerente/admin */}
-            {(userLevel === "gerente" || userLevel === "admin") && (
+            {(userLevel === 'gerente' || userLevel === 'admin') && (
               <div className="w-full flex justify-center mb-3">
                 <button
                   onClick={() => setShowComisiones(true)}
@@ -1786,7 +1787,7 @@ const VentasProspectosGet = ({ currentUser }) => {
               <VendedorComisionesPanel
                 user={{
                   ...currentUser2,
-                  email: currentUser2?.email ?? userName,
+                  email: currentUser2?.email ?? userName
                 }}
               />
             ) : null}
@@ -1829,8 +1830,8 @@ const VentasProspectosGet = ({ currentUser }) => {
                     <button
                       className={`rounded-full px-3 py-1 font-bold border-2 ${
                         n === safePage
-                          ? "bg-[#fc4b08] text-white border-[#fc4b08] scale-110 shadow-lg"
-                          : "bg-white/90 text-[#fc4b08] border-[#fc4b08] hover:bg-[#fc4b08] hover:text-white"
+                          ? 'bg-[#fc4b08] text-white border-[#fc4b08] scale-110 shadow-lg'
+                          : 'bg-white/90 text-[#fc4b08] border-[#fc4b08] hover:bg-[#fc4b08] hover:text-white'
                       } shadow-sm transition`}
                       onClick={() => handleChangePage(n)}
                     >
@@ -1856,9 +1857,9 @@ const VentasProspectosGet = ({ currentUser }) => {
               </button>
             </div>
             <span className="text-sm text-gray-500 mt-1">
-              Página <span className="font-bold">{safePage}</span> de{" "}
-              <span className="font-bold">{totalPages}</span> &bull; Mostrando{" "}
-              <span className="font-bold">{visibleProspectos.length}</span> de{" "}
+              Página <span className="font-bold">{safePage}</span> de{' '}
+              <span className="font-bold">{totalPages}</span> &bull; Mostrando{' '}
+              <span className="font-bold">{visibleProspectos.length}</span> de{' '}
               <span className="font-bold">{sorted.length}</span> prospectos
             </span>
           </div>
@@ -1884,7 +1885,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                   </th>
                   <th className="border border-gray-200 px-3 py-2 text-left min-w-[140px]">
                     Nombre
-                  </th>{" "}
+                  </th>{' '}
                   <th className="border border-gray-200 px-3 py-2 text-left min-w-[140px]">
                     Sede
                   </th>
@@ -1943,10 +1944,10 @@ const VentasProspectosGet = ({ currentUser }) => {
                     key={p.id}
                     className={`${
                       prospectosConAgendaHoy.includes(Number(p.id))
-                        ? "bg-yellow-100 font-semibold"
-                        : ""
+                        ? 'bg-yellow-100 font-semibold'
+                        : ''
                     } hover:bg-orange-600 transition-colors duration-300 cursor-pointer text-gray-800`}
-                    style={{ minHeight: "48px" }}
+                    style={{ minHeight: '48px' }}
                   >
                     <td
                       className={`border border-gray-300 px-4 py-3 min-w-[50px] ${getBgClass(
@@ -1968,7 +1969,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                       )}`}
                     >
                       <div className="flex items-center gap-2">
-                        {alertasSegundoContacto[p.id] === "amarillo" && (
+                        {alertasSegundoContacto[p.id] === 'amarillo' && (
                           <span
                             title="Pendiente segundo contacto"
                             className="text-yellow-400 text-xl font-bold"
@@ -1978,12 +1979,12 @@ const VentasProspectosGet = ({ currentUser }) => {
                           </span>
                         )}
 
-                        {alertasSegundoContacto[p.id] === "rojo" && (
+                        {alertasSegundoContacto[p.id] === 'rojo' && (
                           <AlertTriangle
                             title="Segundo contacto URGENTE"
                             className="text-red-500 inline-block"
                             size={22}
-                            style={{ verticalAlign: "middle", marginRight: 4 }}
+                            style={{ verticalAlign: 'middle', marginRight: 4 }}
                           />
                         )}
 
@@ -1991,7 +1992,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                           type="text"
                           value={p.nombre}
                           onChange={(e) =>
-                            handleChange(p.id, "nombre", e.target.value)
+                            handleChange(p.id, 'nombre', e.target.value)
                           }
                           className="
         w-full
@@ -2021,7 +2022,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                     >
                       {/* Sede */}
                       <select
-                        value={(p.sede || "").toLowerCase()}
+                        value={(p.sede || '').toLowerCase()}
                         onChange={(e) => handleSedeChange(p.id, e.target.value)}
                         className="
       w-full
@@ -2051,7 +2052,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                         type="text"
                         value={p.dni}
                         onChange={(e) =>
-                          handleChange(p.id, "dni", e.target.value)
+                          handleChange(p.id, 'dni', e.target.value)
                         }
                         className="
       w-full
@@ -2081,7 +2082,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                       <select
                         value={p.tipo_prospecto}
                         onChange={(e) =>
-                          handleChange(p.id, "tipo_prospecto", e.target.value)
+                          handleChange(p.id, 'tipo_prospecto', e.target.value)
                         }
                         className="
       w-full
@@ -2144,9 +2145,9 @@ const VentasProspectosGet = ({ currentUser }) => {
                       </select>
 
                       {/* Select para origen de campaña (solo si el canal es "Campaña") */}
-                      {p.canal_contacto === "Campaña" && (
+                      {p.canal_contacto === 'Campaña' && (
                         <select
-                          value={p.campania_origen || ""}
+                          value={p.campania_origen || ''}
                           onChange={(e) =>
                             handleOrigenChange(p.id, e.target.value)
                           }
@@ -2169,7 +2170,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                         type="text"
                         value={p.contacto}
                         onChange={(e) =>
-                          handleChange(p.id, "contacto", e.target.value)
+                          handleChange(p.id, 'contacto', e.target.value)
                         }
                         className="
       w-full
@@ -2197,7 +2198,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                       )}`}
                     >
                       <select
-                        value={p.actividad || ""}
+                        value={p.actividad || ''}
                         onChange={(e) =>
                           handleActividadChange(p.id, e.target.value)
                         }
@@ -2254,7 +2255,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                         type="checkbox"
                         checked={!!p.n_contacto_2}
                         onChange={() =>
-                          handleCheckboxChange(p.id, "n_contacto_2")
+                          handleCheckboxChange(p.id, 'n_contacto_2')
                         }
                         className="mx-auto cursor-default transform scale-150"
                       />
@@ -2268,7 +2269,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                         type="checkbox"
                         checked={!!p.n_contacto_3}
                         onChange={() =>
-                          handleCheckboxChange(p.id, "n_contacto_3")
+                          handleCheckboxChange(p.id, 'n_contacto_3')
                         }
                         className="mx-auto cursor-default transform scale-150"
                       />
@@ -2287,7 +2288,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                           title="Click para elegir tipo y editar fecha/observaciones"
                         >
                           <div className="text-sm">
-                            {fecha ? formatDate(fecha) : "-"}
+                            {fecha ? formatDate(fecha) : '-'}
                           </div>
                           {tipo && (
                             <div className="mt-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-orange-100 text-orange-800">
@@ -2304,16 +2305,16 @@ const VentasProspectosGet = ({ currentUser }) => {
                       )}`}
                     >
                       <ObservacionField
-                        value={observaciones[p.id] ?? p.observacion ?? ""}
+                        value={observaciones[p.id] ?? p.observacion ?? ''}
                         onSave={async (nuevo) => {
                           // actualiza estado local
                           setObservaciones((prev) => ({
                             ...prev,
-                            [p.id]: nuevo,
+                            [p.id]: nuevo
                           }));
                           // persiste si cambió
                           if (nuevo !== p.observacion) {
-                            await handleChange(p.id, "observacion", nuevo);
+                            await handleChange(p.id, 'observacion', nuevo);
                           }
                         }}
                       />
@@ -2333,8 +2334,8 @@ const VentasProspectosGet = ({ currentUser }) => {
                         }
                         className={`mx-auto transform scale-150 ${
                           savingIds.has(p.id)
-                            ? "cursor-not-allowed opacity-60"
-                            : "cursor-pointer"
+                            ? 'cursor-not-allowed opacity-60'
+                            : 'cursor-pointer'
                         }`}
                       />
                     </td>
@@ -2346,24 +2347,24 @@ const VentasProspectosGet = ({ currentUser }) => {
                       {p.comision_estado ? (
                         <>
                           <span>
-                            {p.comision_estado === "en_revision" &&
-                              "En revisión"}
-                            {p.comision_estado === "aprobado" && "Aprobado"}
-                            {p.comision_estado === "rechazado" && "Rechazado"}
+                            {p.comision_estado === 'en_revision' &&
+                              'En revisión'}
+                            {p.comision_estado === 'aprobado' && 'Aprobado'}
+                            {p.comision_estado === 'rechazado' && 'Rechazado'}
                           </span>
                           {/* Si cargás la comisión al traer la grilla, podés mostrar tipo_plan */}
                           {p.comision_tipo_plan && (
                             <span className="block text-xs text-zinc-500">
                               Plan: {p.comision_tipo_plan}
-                              {p.comision_tipo_plan === "Otros" &&
+                              {p.comision_tipo_plan === 'Otros' &&
                               p.comision_tipo_plan_custom
                                 ? ` (${p.comision_tipo_plan_custom})`
-                                : ""}
+                                : ''}
                             </span>
                           )}
                         </>
                       ) : (
-                        "-"
+                        '-'
                       )}
                     </td>
 
@@ -2395,15 +2396,15 @@ const VentasProspectosGet = ({ currentUser }) => {
                         <td className="border border-gray-300 px-4 py-3">
                           {(() => {
                             const canManage =
-                              (userLevel === "gerente" ||
-                                userLevel === "admin") &&
+                              (userLevel === 'gerente' ||
+                                userLevel === 'admin') &&
                               p.convertido === true &&
                               p.comision === true &&
                               !!p.comision_id;
 
                             if (!canManage) return null;
 
-                            if (p.comision_estado === "en_revision") {
+                            if (p.comision_estado === 'en_revision') {
                               return (
                                 <div className="flex items-center gap-2">
                                   <button
@@ -2422,7 +2423,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                               );
                             }
 
-                            if (p.comision_estado === "aprobado") {
+                            if (p.comision_estado === 'aprobado') {
                               return (
                                 <button
                                   onClick={() =>
@@ -2494,8 +2495,8 @@ const VentasProspectosGet = ({ currentUser }) => {
                   <button
                     className={`rounded-full px-3 py-1 font-bold border-2 ${
                       n === safePage
-                        ? "bg-[#fc4b08] text-white border-[#fc4b08] scale-110 shadow-lg"
-                        : "bg-white/90 text-[#fc4b08] border-[#fc4b08] hover:bg-[#fc4b08] hover:text-white"
+                        ? 'bg-[#fc4b08] text-white border-[#fc4b08] scale-110 shadow-lg'
+                        : 'bg-white/90 text-[#fc4b08] border-[#fc4b08] hover:bg-[#fc4b08] hover:text-white'
                     } shadow-sm transition`}
                     onClick={() => handleChangePage(n)}
                   >
@@ -2521,9 +2522,9 @@ const VentasProspectosGet = ({ currentUser }) => {
             </button>
           </div>
           <span className="text-sm text-gray-500 mt-1">
-            Página <span className="font-bold">{safePage}</span> de{" "}
-            <span className="font-bold">{totalPages}</span> &bull; Mostrando{" "}
-            <span className="font-bold">{visibleProspectos.length}</span> de{" "}
+            Página <span className="font-bold">{safePage}</span> de{' '}
+            <span className="font-bold">{totalPages}</span> &bull; Mostrando{' '}
+            <span className="font-bold">{visibleProspectos.length}</span> de{' '}
             <span className="font-bold">{sorted.length}</span> prospectos
           </span>
         </div>

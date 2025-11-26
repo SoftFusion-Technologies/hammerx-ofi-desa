@@ -97,8 +97,8 @@ const QuejasInternasGet = () => {
 
   const { id } = useParams(); // para abrir detalle por URL
 
-  // URL base (mover a .env si preferís)
   const API_BASE = 'http://localhost:8080';
+  const showSkeleton = loading && quejas?.length === 0;
 
   const getQuejaEndpoint = (tipoUsuario) => {
     /*     console.log("El tipo de usuario es: ", tipoUsuario); */
