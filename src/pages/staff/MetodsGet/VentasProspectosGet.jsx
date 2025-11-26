@@ -21,6 +21,7 @@ import ComisionesModal from './Components/ComisionesModal';
 import VendedorComisionesPanel from './Components/VendedorComisionesPanel';
 import ComisionesVigentesModal from '../Components/ComisionesVigentesModal';
 import useInsertClientePilates from '../../Pilates/ConsultaDb/Insertar_ModificarCliente';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const getBgClass = (p) => {
   if (p.comision_estado === 'en_revision') return 'bg-amber-400';
@@ -303,7 +304,9 @@ const VentasProspectosGet = ({ currentUser }) => {
 
       try {
         // 2) Fallback: /users y filtramos por id
-        const { data: list } = await axios.get(`http://localhost:8080/users`);
+        const { data: list } = await axios.get(
+          `http://localhost:8080/users`
+        );
         const found = Array.isArray(list)
           ? list.find((u) => Number(u.id) === Number(userId))
           : null;
@@ -347,7 +350,9 @@ const VentasProspectosGet = ({ currentUser }) => {
   // Traer prospectos con clase de prueba hoy
   useEffect(() => {
     axios
-      .get(`http://localhost:8080/notifications/clases-prueba/${userId}`)
+      .get(
+        `http://localhost:8080/notifications/clases-prueba/${userId}`
+      )
       .then((res) =>
         setProspectosConAgendaHoy(res.data.map((p) => p.prospecto_id))
       )
@@ -474,7 +479,9 @@ const VentasProspectosGet = ({ currentUser }) => {
 
     const fetchUserSede = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/users/${userId}`);
+        const response = await fetch(
+          `http://localhost:8080/users/${userId}`
+        );
         if (!response.ok)
           throw new Error('No se pudo obtener la info del usuario');
         const data = await response.json();
@@ -577,11 +584,14 @@ const VentasProspectosGet = ({ currentUser }) => {
     const prospecto = prospectos.find((p) => p.id === id);
 
     try {
-      await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
-        canal_contacto: nuevoCanal,
-        campania_origen:
-          nuevoCanal === 'Campaña' ? prospecto?.campania_origen || '' : ''
-      });
+      await axios.put(
+        `http://localhost:8080/ventas_prospectos/${id}`,
+        {
+          canal_contacto: nuevoCanal,
+          campania_origen:
+            nuevoCanal === 'Campaña' ? prospecto?.campania_origen || '' : ''
+        }
+      );
     } catch (error) {
       console.error('Error al actualizar canal:', error);
     }
@@ -792,6 +802,7 @@ const VentasProspectosGet = ({ currentUser }) => {
         clase_num: cambios.numeroClase,
         prospecto_id: cambios.idProspecto
       };
+
       if (!cambios.esModificacion) {
         // Verificar si existe cliente en clase de prueba
         const verificacion = await verificarClientePruebaPorNombre(
@@ -886,10 +897,13 @@ const VentasProspectosGet = ({ currentUser }) => {
     );
 
     try {
-      await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
-        canal_contacto: 'Campaña', // siempre es campaña acá
-        campania_origen: value
-      });
+      await axios.put(
+        `http://localhost:8080/ventas_prospectos/${id}`,
+        {
+          canal_contacto: 'Campaña', // siempre es campaña acá
+          campania_origen: value
+        }
+      );
     } catch (error) {
       console.error('Error al actualizar origen de campaña:', error);
     }
@@ -1478,8 +1492,19 @@ const VentasProspectosGet = ({ currentUser }) => {
       inputPlaceholder: 'Seleccioná una opción',
       showCancelButton: true,
       confirmButtonText: 'Continuar',
-      confirmButtonColor: '#10b981',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+
+      // 👇 clave: usa tus clases (Tailwind) y desactiva el styling por defecto
+      buttonsStyling: false,
+      customClass: {
+        confirmButton:
+          'swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium ' +
+          'bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400',
+        cancelButton:
+          'swal2-cancel ml-2 inline-flex items-center px-4 py-2 rounded-md font-medium ' +
+          'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400',
+        popup: 'rounded-xl'
+      }
     }).then((res) => {
       if (res.isConfirmed && res.value) {
         setTipoSeleccionado(res.value);
@@ -1778,7 +1803,7 @@ const VentasProspectosGet = ({ currentUser }) => {
               </div>
             )}
             {/* Panel solo para VENDEDOR (filtrado por lista blanca) */}
-            {userLoading ? (
+            {/* {userLoading ? (
               <div className="max-w-5xl mx-auto my-6">
                 <div className="h-40 rounded-2xl bg-neutral-200 animate-pulse" />
               </div>
@@ -1790,7 +1815,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                   email: currentUser2?.email ?? userName
                 }}
               />
-            ) : null}
+            ) : null} */}
             <h1>
               Registros de Prospectos - Cantidad: {visibleProspectos.length}
             </h1>
