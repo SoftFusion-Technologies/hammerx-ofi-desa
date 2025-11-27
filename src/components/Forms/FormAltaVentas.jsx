@@ -371,6 +371,9 @@ const FormAltaVentas = ({
                         <option value="Comentarios/Stickers">
                           Comentarios/Stickers
                         </option>
+                        <option value="Desde pilates">
+                          Desde pilates
+                        </option>
                       </Field>
                       {errors.canal_contacto && touched.canal_contacto && (
                         <div className="mt-1">

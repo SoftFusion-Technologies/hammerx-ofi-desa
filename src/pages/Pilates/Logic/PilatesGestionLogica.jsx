@@ -1,20 +1,20 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import useConsultaDB from '../ConsultaDb/Consulta';
-import useInsertClientePilates from '../ConsultaDb/Insertar_ModificarCliente';
-import useDeleteClientePilates from '../ConsultaDb/Eliminar';
-import useInsertDataListaEspera from '../ConsultaDb/InsertarListaEspera';
-import useUpdateDataListaEspera from '../ConsultaDb/ModificarListaEspera';
-import useDeleteListaEspera from '../ConsultaDb/EliminarListaEspera';
-import useInsertar from '../ConsultaDb/Insertar';
-import sweetalert2 from 'sweetalert2';
-import useModify from '../ConsultaDb/Modificar';
-import ObtenerFechaInternet from '../utils/ObtenerFechaInternet';
-import { useAuth } from '../../../AuthContext';
-import { format, set } from 'date-fns';
-import { FaPencilAlt } from 'react-icons/fa';
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import useConsultaDB from "../ConsultaDb/Consulta";
+import useInsertClientePilates from "../ConsultaDb/Insertar_ModificarCliente";
+import useDeleteClientePilates from "../ConsultaDb/Eliminar";
+import useInsertDataListaEspera from "../ConsultaDb/InsertarListaEspera";
+import useUpdateDataListaEspera from "../ConsultaDb/ModificarListaEspera";
+import useDeleteListaEspera from "../ConsultaDb/EliminarListaEspera";
+import useInsertar from "../ConsultaDb/Insertar";
+import sweetalert2 from "sweetalert2";
+import useModify from "../ConsultaDb/Modificar";
+import ObtenerFechaInternet from "../utils/ObtenerFechaInternet";
+import { useAuth } from "../../../AuthContext";
+import { format, set } from "date-fns";
+import { FaPencilAlt } from "react-icons/fa";
 
-import Swal from 'sweetalert2';
-import 'sweetalert2/dist/sweetalert2.min.css';
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 const PilatesGestionLogica = () => {
   // --- Estados de Datos Principales ---
   const [schedule, setSchedule] = useState([]); // Almacena el horario completo de la grilla con sus alumnos.
@@ -23,10 +23,10 @@ const PilatesGestionLogica = () => {
   const [asistenciaPruebasMap, setAsistenciaPruebasMap] = useState({}); // Objeto para consulta rápida (`{ id: true/false }`) del estado de asistencia de las clases de prueba.
 
   // --- Estados de Configuración y Filtros ---
-  const [section, setSection] = useState('GESTION'); // Controla la vista actual ('GESTION' o 'LISTA_ESPERA').
+  const [section, setSection] = useState("GESTION"); // Controla la vista actual ('GESTION' o 'LISTA_ESPERA').
   const [sedeActualFiltro, setSedeActualFiltro] = useState(); // Guarda el ID de la sede seleccionada para filtrar los datos.
   const [cupoMaximoPilates, setCupoMaximoPilates] = useState(0); // Almacena el cupo máximo de la sede actual.
-  const [searchTerm, setSearchTerm] = useState(''); // Guarda el texto del campo de búsqueda para filtrar alumnos en la grilla.
+  const [searchTerm, setSearchTerm] = useState(""); // Guarda el texto del campo de búsqueda para filtrar alumnos en la grilla.
   const [fechaHoy, setFechaHoy] = useState(null); // Almacena la fecha actual obtenida de una API externa.
 
   // --- Estados para Controlar la Interfaz (Modales, Paneles) ---
@@ -42,14 +42,15 @@ const PilatesGestionLogica = () => {
     freeSlots: true,
     expiredStudents: true,
     absentStudents: true,
-    waitingListMatches: true
+    waitingListMatches: true,
   });
 
   // --- Estados para Datos Temporales de Interacción ---
   const [currentCell, setCurrentCell] = useState(null); // Guarda la información de la celda de la grilla que fue clickeada.
   const [horarioSeleccionado, setHorarioSeleccionado] = useState(null); // Almacena los datos del horario seleccionado para editar su profesor.
   const [personToConfirm, setPersonToConfirm] = useState(null); // Guarda los datos de la persona de la lista de espera que se va a inscribir.
-  const [tipoInscripcionListaEspera, setTipoInscripcionListaEspera] = useState(null); // Guarda el tipo de inscripción (cambio o espera).
+  const [tipoInscripcionListaEspera, setTipoInscripcionListaEspera] =
+    useState(null); // Guarda el tipo de inscripción (cambio o espera).
   const [alumnoCambioTurno, setAlumnoCambioTurno] = useState(null); // Guarda los datos del alumno para cambiar turno.
   const [horariosCambioTurno, setHorariosCambioTurno] = useState({}); // Almacena todos los horarios con información de cupos para el modal de cambio de turno.
 
@@ -58,11 +59,11 @@ const PilatesGestionLogica = () => {
 
   // --- Hooks Externos y de Contexto ---
   const { fecha } = ObtenerFechaInternet(); // Hook que trae la fecha actual desde una API para evitar desajustes de hora locales.
-  const { userId, sedeName, userLevel } = useAuth(); // Hook que obtiene el ID y nombre de la sede del usuario logueado.
+  const { userId, sedeName, userLevel, name: nombreAsesor } = useAuth(); // Hook que obtiene el ID y nombre de la sede del usuario logueado.
 
   // --- Constantes y Variables Derivadas ---
-  const rol = 'GESTION'; // Define el rol del usuario para lógicas condicionales en la vista.
-  const fechaParaConsulta = fechaHoy || format(new Date(), 'yyyy-MM-dd'); // Determina la fecha a usar en las consultas, priorizando la de la API externa.
+  const rol = "GESTION"; // Define el rol del usuario para lógicas condicionales en la vista.
+  const fechaParaConsulta = fechaHoy || format(new Date(), "yyyy-MM-dd"); // Determina la fecha a usar en las consultas, priorizando la de la API externa.
 
   // ----------------------------------------------------------------
   // --- HOOKS DE PETICIONES A LA API ---
@@ -88,7 +89,7 @@ const PilatesGestionLogica = () => {
   const { data: reporteAsistenciaData, refetch: refetchReporteAsistencia } =
     useConsultaDB(
       // Trae el reporte de asistencia de las clases de prueba.
-      '/asistencias-pilates/reportes/asistencia-clases-prueba'
+      "/asistencias-pilates/reportes/asistencia-clases-prueba"
     );
   const { data: instructoresData } = useConsultaDB(`/usuarios-pilates/nombres`); // Trae la lista de todos los instructores disponibles.
   const { data: sedesData } = useConsultaDB(`/sedes/ciudad`); // Trae la lista de todas las sedes que tienen Pilates.
@@ -97,43 +98,53 @@ const PilatesGestionLogica = () => {
   const { insertCliente } = useInsertClientePilates(); // Hook para crear un nuevo cliente y su inscripción asociada.
   const { insert: insertarContactoListaEspera } = useInsertDataListaEspera(
     // Hook para registrar un nuevo contacto en la lista de espera.
-    '/contactos-lista-espera'
+    "/contactos-lista-espera"
   );
   const { insert: insertarListaEspera } = useInsertDataListaEspera(
     // Hook para agregar una nueva persona a la tabla de lista de espera.
-    '/lista-espera-pilates'
+    "/lista-espera-pilates"
   );
   const { insert: insertarHorario } = useInsertar(
     // Hook para asignar o cambiar el instructor de un horario específico.
-    '/horarios-pilates/cambiar-instructor'
+    "/horarios-pilates/cambiar-instructor"
+  );
+
+  const {
+    insert: insertarVentasProspectosCompleto,
+    error: errorInsertarVentasProspectosCompleto,
+  } = useInsertar(
+    // Hook para asignar o cambiar el instructor de un horario específico.
+    "/ventas-prospectos/sincronizar-completo",
+    true
   );
 
   // --- Hooks de Actualización (PUT / PATCH) ---
   const { update: planAContratadoPeticion } = useModify(
     // Hook para manejar las transiciones de estado de un plan (ej: de programado a contratado).
-    '/clientes-pilates/plan-renovacion'
+    "/clientes-pilates/plan-renovacion"
   );
   const { update: modificarAlumnoContactado } = useModify(
     // Hook para marcar a un alumno como contactado por inasistencias.
-    '/clientes-pilates/contactar'
+    "/clientes-pilates/contactar"
   );
   const { update: modificarContactoListaEspera } = useModify(
     // Hook para actualizar el estado de un contacto en la lista de espera (pendiente, confirmado, etc.).
-    '/contactos-lista-espera'
+    "/contactos-lista-espera"
   );
-  const { update } = useUpdateDataListaEspera('/lista-espera-pilates'); // Hook para modificar los datos de una persona en la lista de espera.
+  const { update } = useUpdateDataListaEspera("/lista-espera-pilates"); // Hook para modificar los datos de una persona en la lista de espera.
   const { update: guardarAuditoria } = useModify(
     // Hook para crear o actualizar el registro de auditoría cuando se modifica una fecha de fin manualmente.
-    '/auditoria-pilates/cliente'
+    "/auditoria-pilates/cliente"
   );
   const { update: guardarCambioDeTurno } = useModify(
     // Hook para actualizar cuando un alumno cambia de turno desde la lista de espera.
-    '/inscripciones-pilates/cambiar-turno', true
+    "/inscripciones-pilates/cambiar-turno",
+    true
   );
 
   // --- Hooks de Eliminación (DELETE) ---
   const { deleteCliente } = useDeleteClientePilates(); // Hook para eliminar un cliente y todos sus datos asociados.
-  const { remove } = useDeleteListaEspera('/lista-espera-pilates'); // Hook para eliminar a una persona de la lista de espera.
+  const { remove } = useDeleteListaEspera("/lista-espera-pilates"); // Hook para eliminar a una persona de la lista de espera.
 
   /**
    * EFFECT: Normaliza los datos de horarios de la API
@@ -144,14 +155,14 @@ const PilatesGestionLogica = () => {
     if (horariosData && Object.keys(horariosData).length > 0) {
       const normalizedData = {};
       Object.keys(horariosData).forEach((key) => {
-        const normalizedKey = key.replace('MIERCOLES', 'MIÉRCOLES');
+        const normalizedKey = key.replace("MIERCOLES", "MIÉRCOLES");
         normalizedData[normalizedKey] = {
-          coach: horariosData[key].coach || '',
+          coach: horariosData[key].coach || "",
           horarioId: horariosData[key].horarioId || null,
           coachId: horariosData[key].coachId || null,
           alumnos: Array.isArray(horariosData[key].alumnos)
             ? horariosData[key].alumnos
-            : []
+            : [],
         };
         setSchedule(normalizedData);
       });
@@ -173,18 +184,18 @@ const PilatesGestionLogica = () => {
       const listaEsperaNormalizada = listaEsperaData.map((item) => ({
         id: item.id,
         name: item.nombre,
-        type: item.tipo.toLowerCase().includes('cambio') ? 'cambio' : 'espera',
+        type: item.tipo.toLowerCase().includes("cambio") ? "cambio" : "espera",
         contact: item.contacto,
         nombre_usuario_cargado: item.nombre_usuario_cargado,
         plan: item.plan_interes,
         hours: item.horarios_preferidos
-          ? item.horarios_preferidos.split(',').map((h) => h.trim())
+          ? item.horarios_preferidos.split(",").map((h) => h.trim())
           : [],
         obs: item.observaciones,
-        date: item.fecha_carga ? item.fecha_carga.split('T')[0] : '',
+        date: item.fecha_carga ? item.fecha_carga.split("T")[0] : "",
         hour: item.fecha_carga
-          ? item.fecha_carga.split('T')[1].split('.')[0]
-          : '',
+          ? item.fecha_carga.split("T")[1].split(".")[0]
+          : "",
 
         // CORRECCIÓN: Se añade la comprobación '&& item.contacto_cliente.length > 0'
         contacto_cliente:
@@ -198,9 +209,9 @@ const PilatesGestionLogica = () => {
                 estado_contacto: item.contacto_cliente[0].estado_contacto,
                 notas: item.contacto_cliente[0].notas,
                 usuario_contacto_nombre:
-                  item.contacto_cliente[0].nombre_usuario_contacto
+                  item.contacto_cliente[0].nombre_usuario_contacto,
               }
-            : null // Si el array está vacío o no existe, asignamos null
+            : null, // Si el array está vacío o no existe, asignamos null
       }));
       setWaitingList(listaEsperaNormalizada);
     } else {
@@ -265,9 +276,9 @@ const PilatesGestionLogica = () => {
           name: alumno.nombre,
           cantidad: alumno.cantidad_ausentes,
           contacto: alumno.telefono,
-          contactado: alumno.contactado ? 'SI' : 'NO',
-          fecha_ultimo_contacto: alumno.fecha_contacto || 'N/A',
-          contacto_nombre: alumno.contacto_usuario_nombre || 'N/A'
+          contactado: alumno.contactado ? "SI" : "NO",
+          fecha_ultimo_contacto: alumno.fecha_contacto || "N/A",
+          contacto_nombre: alumno.contacto_usuario_nombre || "N/A",
         }));
       setAusentesAlumnos(formatear);
     }
@@ -304,19 +315,19 @@ const PilatesGestionLogica = () => {
       return;
 
     // Normalizamos el nombre de la sede del usuario para comparaciones
-    let sedeUser = String(sedeName || '')
+    let sedeUser = String(sedeName || "")
       .trim()
       .toLowerCase();
 
     // Si el usuario tiene "smt" o "sanmiguelbn", lo forzamos a buscar "barrio sur" o "barrio norte" en la lista de sedes.
-    if (sedeUser === 'smt') {
-      sedeUser = 'barrio sur';
-    } else if (sedeUser === 'sanmiguelbn') {
-      sedeUser = 'barrio norte';
-    } 
+    if (sedeUser === "smt") {
+      sedeUser = "barrio sur";
+    } else if (sedeUser === "sanmiguelbn") {
+      sedeUser = "barrio norte";
+    }
 
     // Si el usuario es 'multisede', seleccionamos por defecto la primera sede disponible
-    if (sedeUser === 'multisede') {
+    if (sedeUser === "multisede") {
       if (sedesData[0] && (sedesData[0].id || sedesData[0].id === 0)) {
         setSedeActualFiltro(String(sedesData[0].id));
       }
@@ -326,7 +337,7 @@ const PilatesGestionLogica = () => {
     if (sedeName) {
       const sedeEncontrada = sedesData.find(
         (sede) =>
-          String(sede.nombre || '')
+          String(sede.nombre || "")
             .trim()
             .toLowerCase() === sedeUser
       );
@@ -351,10 +362,10 @@ const PilatesGestionLogica = () => {
    * Útil para comparaciones case-insensitive y sin acentos (ej: búsquedas).
    */
   const normalizarTexto = (valor) =>
-    (valor ?? '')
+    (valor ?? "")
       .toString()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .trim()
       .toLowerCase();
 
@@ -365,17 +376,17 @@ const PilatesGestionLogica = () => {
    */
   const puedeEditarSede = useMemo(() => {
     // Permitir edición global si el usuario es 'admin' o si su sedeName es 'multisede'
-    const nivel = String(userLevel || '').toLowerCase();
-    let sedeLower = String(sedeName || '').toLowerCase();
+    const nivel = String(userLevel || "").toLowerCase();
+    let sedeLower = String(sedeName || "").toLowerCase();
 
     // Si el usuario es 'smt', lo convertimos manualmente a 'barrio sur'
-    if (sedeLower === 'smt') {
-      sedeLower = 'barrio sur';
-    } else if (sedeLower === 'sanmiguelbn') {
-      sedeLower = 'barrio norte';
+    if (sedeLower === "smt") {
+      sedeLower = "barrio sur";
+    } else if (sedeLower === "sanmiguelbn") {
+      sedeLower = "barrio norte";
     }
-    
-    if (nivel === 'admin' || sedeLower === 'multisede') return true;
+
+    if (nivel === "admin" || sedeLower === "multisede") return true;
 
     if (!sedeActualFiltro || !Array.isArray(sedesData) || !sedeName)
       return false;
@@ -387,7 +398,7 @@ const PilatesGestionLogica = () => {
       sedeSeleccionada.nombre ||
       sedeSeleccionada.ciudad ||
       sedeSeleccionada.sede ||
-      '';
+      "";
     return (
       normalizarTexto(nombreSedeSeleccionada) === normalizarTexto(sedeLower)
     );
@@ -399,11 +410,11 @@ const PilatesGestionLogica = () => {
    */
   const mostrarErrorPermisos = () =>
     sweetalert2.fire({
-      icon: 'error',
-      title: 'Acceso denegado',
-      text: 'No tenés permisos para editar esta sede.',
+      icon: "error",
+      title: "Acceso denegado",
+      text: "No tenés permisos para editar esta sede.",
       timer: 2000,
-      showConfirmButton: false
+      showConfirmButton: false,
     });
 
   /**
@@ -415,18 +426,18 @@ const PilatesGestionLogica = () => {
   const handleConfirmationComplete = async (listaEsperaId) => {
     try {
       const datosParaEnviar = {
-        estado_contacto: 'Confirmado',
+        estado_contacto: "Confirmado",
         id_usuario_contacto: userId,
-        notas: 'Contacto confirmado'
+        notas: "Contacto confirmado",
       };
       // Llama al hook que actualiza el estado del contacto
       await modificarContactoListaEspera(listaEsperaId, datosParaEnviar);
     } catch (error) {
       console.error("Error al actualizar el estado a 'Confirmado':", error);
       await sweetalert2.fire({
-        icon: 'error',
-        title: 'Paso final fallido',
-        text: 'El alumno fue inscrito, pero no se pudo actualizar su estado en la lista de espera.'
+        icon: "error",
+        title: "Paso final fallido",
+        text: "El alumno fue inscrito, pero no se pudo actualizar su estado en la lista de espera.",
       });
     } finally {
       // Refresca la lista de espera para que el cambio se vea reflejado.
@@ -447,44 +458,44 @@ const PilatesGestionLogica = () => {
       return;
     }
     try {
-      if (tipo === 'pendiente') {
+      if (tipo === "pendiente") {
         const confirm = await sweetalert2.fire({
-          title: '¿Está seguro que quiere marcar como pendiente?',
-          icon: 'question',
+          title: "¿Está seguro que quiere marcar como pendiente?",
+          icon: "question",
           showCancelButton: true,
-          confirmButtonText: 'Sí, marcar como pendiente',
-          cancelButtonText: 'Cancelar',
-          reverseButtons: true
+          confirmButtonText: "Sí, marcar como pendiente",
+          cancelButtonText: "Cancelar",
+          reverseButtons: true,
         });
         if (!confirm.isConfirmed) return;
         const datosParaEnviar = {
           id_lista_espera: id,
-          estado_contacto: 'Pendiente',
-          notas: 'Pendiente de contacto',
-          id_usuario_contacto: userId
+          estado_contacto: "Pendiente",
+          notas: "Pendiente de contacto",
+          id_usuario_contacto: userId,
         };
         try {
           await insertarContactoListaEspera(datosParaEnviar);
           await sweetalert2.fire({
-            icon: 'success',
-            title: 'Marcado como pendiente',
-            text: 'El estado se marcó correctamente.',
+            icon: "success",
+            title: "Marcado como pendiente",
+            text: "El estado se marcó correctamente.",
             timer: 1800,
-            showConfirmButton: false
+            showConfirmButton: false,
           });
         } catch (error) {
           await sweetalert2.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Se ha producido un error.',
+            icon: "error",
+            title: "Error",
+            text: "Se ha producido un error.",
             timer: 1800,
-            showConfirmButton: false
+            showConfirmButton: false,
           });
           console.error(error);
         } finally {
           refetchListaEspera();
         }
-      } else if (tipo === 'confirmado') {
+      } else if (tipo === "confirmado") {
         const persona = waitingList.find((p) => p.id === id);
         if (persona) {
           setPersonToConfirm(persona); // Guarda los datos de la persona a confirmar.
@@ -492,42 +503,42 @@ const PilatesGestionLogica = () => {
           setIsConfirmModalOpen(true); // Abre el modal de inscripción.
         } else {
           await sweetalert2.fire(
-            'Error',
-            'No se pudo encontrar a la persona seleccionada.',
-            'error'
+            "Error",
+            "No se pudo encontrar a la persona seleccionada.",
+            "error"
           );
         }
-      } else if (tipo === 'rechazado') {
+      } else if (tipo === "rechazado") {
         const confirm = await sweetalert2.fire({
-          title: '¿Está seguro que quiere marcar como rechazado/sin respuesta?',
-          icon: 'question',
+          title: "¿Está seguro que quiere marcar como rechazado/sin respuesta?",
+          icon: "question",
           showCancelButton: true,
-          confirmButtonText: 'Sí, marcar como rechazado/sin respuesta',
-          cancelButtonText: 'Cancelar',
-          reverseButtons: true
+          confirmButtonText: "Sí, marcar como rechazado/sin respuesta",
+          cancelButtonText: "Cancelar",
+          reverseButtons: true,
         });
         if (!confirm.isConfirmed) return;
         try {
           const datosParaEnviar = {
-            estado_contacto: 'Rechazado/Sin Respuesta',
+            estado_contacto: "Rechazado/Sin Respuesta",
             id_usuario_contacto: userId,
-            notas: 'Contacto rechazado o sin respuesta'
+            notas: "Contacto rechazado o sin respuesta",
           };
           await modificarContactoListaEspera(id, datosParaEnviar);
           await sweetalert2.fire({
-            icon: 'success',
-            title: 'Marcado como rechazado/sin respuesta',
-            text: 'El estado se marcó correctamente.',
+            icon: "success",
+            title: "Marcado como rechazado/sin respuesta",
+            text: "El estado se marcó correctamente.",
             timer: 1800,
-            showConfirmButton: false
+            showConfirmButton: false,
           });
         } catch (error) {
           await sweetalert2.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Se ha producido un error.',
+            icon: "error",
+            title: "Error",
+            text: "Se ha producido un error.",
             timer: 1800,
-            showConfirmButton: false
+            showConfirmButton: false,
           });
           console.error(error);
         } finally {
@@ -536,11 +547,11 @@ const PilatesGestionLogica = () => {
       }
     } catch (error) {
       await sweetalert2.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Se ha producido un error.',
+        icon: "error",
+        title: "Error",
+        text: "Se ha producido un error.",
         timer: 1800,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
       console.error(error);
     }
@@ -563,7 +574,7 @@ const PilatesGestionLogica = () => {
   const handlePanelToggle = (panelName) => {
     setVisiblePanels((prevPanels) => ({
       ...prevPanels,
-      [panelName]: !prevPanels[panelName]
+      [panelName]: !prevPanels[panelName],
     }));
   };
 
@@ -576,8 +587,8 @@ const PilatesGestionLogica = () => {
    * @returns {number} Cantidad de clases de prueba en otros días del grupo
    */
   const countTrialsInOtherDaysOfGroup = (day, hour) => {
-    const lmv = ['LUNES', 'MIÉRCOLES', 'VIERNES'];
-    const mj = ['MARTES', 'JUEVES'];
+    const lmv = ["LUNES", "MIÉRCOLES", "VIERNES"];
+    const mj = ["MARTES", "JUEVES"];
     let group = [];
     if (lmv.includes(day)) group = lmv;
     if (mj.includes(day)) group = mj;
@@ -590,7 +601,7 @@ const PilatesGestionLogica = () => {
         // Solo contar otros días, no el día actual
         const students = schedule[`${d}-${hour}`]?.alumnos || [];
         const trialsInDay = students.filter(
-          (s) => s.status === 'prueba'
+          (s) => s.status === "prueba"
         ).length;
         totalTrials += trialsInDay;
       }
@@ -613,15 +624,15 @@ const PilatesGestionLogica = () => {
     }
     const key = `${day}-${hour}`;
     const cellData = schedule[key] || {};
-    const coachName = cellData.coach || '';
+    const coachName = cellData.coach || "";
     const instructorObj = instructoresData?.find(
       (i) => i.nombre_completo === coachName
     );
     setHorarioSeleccionado({
       day,
       hour,
-      instructorId: instructorObj ? instructorObj.id : '',
-      instructorName: coachName
+      instructorId: instructorObj ? instructorObj.id : "",
+      instructorName: coachName,
     });
     setIsModalProfesorOpen(true);
   };
@@ -649,22 +660,22 @@ const PilatesGestionLogica = () => {
       dia_semana: nuevoHorario.day,
       hora_inicio: nuevoHorario.hour,
       id_instructor: nuevoHorario.instructorId,
-      id_sede: Number(sedeActualFiltro)
+      id_sede: Number(sedeActualFiltro),
     };
 
     try {
       await insertarHorario(datosParaGuardar);
       await sweetalert2.fire({
-        icon: 'success',
-        title: 'Instructor asignado',
+        icon: "success",
+        title: "Instructor asignado",
         text: `El instructor fue asignado correctamente al horario ${nuevoHorario.day} ${nuevoHorario.hour}.`,
         timer: 1800,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
       setIsModalProfesorOpen(false);
       refetch();
     } catch (error) {
-      console.error('Error al guardar el instructor:', error);
+      console.error("Error al guardar el instructor:", error);
     }
   };
 
@@ -678,11 +689,24 @@ const PilatesGestionLogica = () => {
    */
   const generarTodosLosHorariosConCupos = (scheduleData, maxCapacity) => {
     const resultado = {};
-    const DAYS = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'];
+    const DAYS = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES"];
     const HORAS = [
-      '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
-      '13:00', '14:00', '15:00', '16:00', '17:00', '18:00',
-      '19:00', '20:00', '21:00', '22:00'
+      "07:00",
+      "08:00",
+      "09:00",
+      "10:00",
+      "11:00",
+      "12:00",
+      "13:00",
+      "14:00",
+      "15:00",
+      "16:00",
+      "17:00",
+      "18:00",
+      "19:00",
+      "20:00",
+      "21:00",
+      "22:00",
     ];
 
     // Inicializar
@@ -696,12 +720,12 @@ const PilatesGestionLogica = () => {
         const key = `${day}-${hour}`;
         const cellData = scheduleData[key];
         const alumnosCount = cellData?.alumnos ? cellData.alumnos.length : 0;
-        
+
         resultado[day].push({
           hour,
           count: alumnosCount,
           maxCapacity,
-          isFull: alumnosCount >= maxCapacity
+          isFull: alumnosCount >= maxCapacity,
         });
       });
     });
@@ -738,16 +762,19 @@ const PilatesGestionLogica = () => {
     }
 
     try {
-
       // ✅ USAR LA FUNCIÓN encontrarAlumnoYHorario QUE YA EXISTE
       // Esta función busca al alumno en TODOS los horarios, sin importar el día
       // y devuelve todos los IDs que necesitamos
-      const alumnoYHorarios = encontrarAlumnoYHorario(studentData.name, studentData.id, key);
-      
+      const alumnoYHorarios = encontrarAlumnoYHorario(
+        studentData.name,
+        studentData.id,
+        key
+      );
+
       if (!alumnoYHorarios) {
         throw new Error(
           `No se encontró al alumno "${studentData.name}" en la base de datos. ` +
-          `Verifica que el nombre sea correcto.`
+            `Verifica que el nombre sea correcto.`
         );
       }
 
@@ -765,29 +792,31 @@ const PilatesGestionLogica = () => {
       console.log("✅ Cambio de turno ejecutado exitosamente");
 
       await sweetalert2.fire({
-        icon: 'success',
-        title: 'Cambio de turno realizado',
+        icon: "success",
+        title: "Cambio de turno realizado",
         text: `${studentData.name} ha sido trasladado exitosamente al nuevo horario.`,
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
 
       setIsModalCambioTurno(false);
       refetch(); // Recargar la grilla para reflejar el cambio
     } catch (error) {
-      console.error('❌ Error al cambiar turno:', {
+      console.error("❌ Error al cambiar turno:", {
         mensaje: error.message,
         stack: error.stack,
         studentData,
         extras,
-        errorCompleto: error
+        errorCompleto: error,
       });
       await sweetalert2.fire({
-        icon: 'error',
-        title: 'Error al cambiar turno',
-        text: error.message || 'No se pudo realizar el cambio de turno. Intenta nuevamente.',
+        icon: "error",
+        title: "Error al cambiar turno",
+        text:
+          error.message ||
+          "No se pudo realizar el cambio de turno. Intenta nuevamente.",
         timer: 3000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
     }
   };
@@ -798,54 +827,54 @@ const PilatesGestionLogica = () => {
    * Agrega automáticamente al alumno a la lista de espera en situación de "cambio"
    * @param {object} personData - Datos de la persona para lista de espera
    */
- const handleSaveWaitingListCambio = async (personData) => {
-   if (!puedeEditarSede) {
-     await mostrarErrorPermisos();
-     return;
-   }
+  const handleSaveWaitingListCambio = async (personData) => {
+    if (!puedeEditarSede) {
+      await mostrarErrorPermisos();
+      return;
+    }
 
-   try {
-     const objetoParaBackend = {
-       nombre: personData.name,
-       contacto: personData.contact,
-       tipo: "Cambio de turno",
-       plan_interes: personData.plan,
-       horarios_preferidos: personData.hours.join(","),
-       observaciones: personData.obs ?? "", // enviar vacío si corresponde
-       id_sede: sedeActualFiltro,
-       id_usuario_cargado: userId,
-     };
+    try {
+      const objetoParaBackend = {
+        nombre: personData.name,
+        contacto: personData.contact,
+        tipo: "Cambio de turno",
+        plan_interes: personData.plan,
+        horarios_preferidos: personData.hours.join(","),
+        observaciones: personData.obs ?? "", // enviar vacío si corresponde
+        id_sede: sedeActualFiltro,
+        id_usuario_cargado: userId,
+      };
 
-     // Inserta en la lista de espera (solo eso - sin crear contacto inicial)
-     const resultadoInsert = await insertarListaEspera(objetoParaBackend);
+      // Inserta en la lista de espera (solo eso - sin crear contacto inicial)
+      const resultadoInsert = await insertarListaEspera(objetoParaBackend);
 
-     // Normalizar id retornado (puede venir como { id }, { insertId } o número)
-     const nuevaListaId =
-       (resultadoInsert && (resultadoInsert.id || resultadoInsert.insertId)) ||
-       (typeof resultadoInsert === "number" ? resultadoInsert : null);
+      // Normalizar id retornado (puede venir como { id }, { insertId } o número)
+      const nuevaListaId =
+        (resultadoInsert && (resultadoInsert.id || resultadoInsert.insertId)) ||
+        (typeof resultadoInsert === "number" ? resultadoInsert : null);
 
-     await sweetalert2.fire({
-       icon: "success",
-       title: "Agregado a lista de espera",
-       text: `${personData.name} ha sido agregado a la lista de espera para cambio de turno.`,
-       timer: 1800,
-       showConfirmButton: false,
-     });
+      await sweetalert2.fire({
+        icon: "success",
+        title: "Agregado a lista de espera",
+        text: `${personData.name} ha sido agregado a la lista de espera para cambio de turno.`,
+        timer: 1800,
+        showConfirmButton: false,
+      });
 
-     setIsModalCambioTurno(false);
-   } catch (error) {
-     console.error("Error al agregar a lista de espera:", error);
-     await sweetalert2.fire({
-       icon: "error",
-       title: "Error",
-       text: "No se pudo agregar a la lista de espera. Intenta nuevamente.",
-       timer: 2000,
-       showConfirmButton: false,
-     });
-   } finally {
-     refetchListaEspera();
-   }
- };
+      setIsModalCambioTurno(false);
+    } catch (error) {
+      console.error("Error al agregar a lista de espera:", error);
+      await sweetalert2.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo agregar a la lista de espera. Intenta nuevamente.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } finally {
+      refetchListaEspera();
+    }
+  };
   /**
    * FUNCTION: Agregar, modificar o eliminar una persona en la lista de espera
    * Maneja las tres operaciones CRUD (Create, Read, Update, Delete) para la lista de espera.
@@ -861,159 +890,165 @@ const PilatesGestionLogica = () => {
     try {
       if (personData === null) {
         const confirm = await sweetalert2.fire({
-          title: '¿Seguro que deseas eliminar a esta persona?',
-          text: 'Se eliminará toda la información asociada a esta persona de la lista de espera.',
-          icon: 'warning',
+          title: "¿Seguro que deseas eliminar a esta persona?",
+          text: "Se eliminará toda la información asociada a esta persona de la lista de espera.",
+          icon: "warning",
           showCancelButton: true,
-          confirmButtonText: 'Sí, eliminar',
-          cancelButtonText: 'Cancelar',
-          reverseButtons: true
+          confirmButtonText: "Sí, eliminar",
+          cancelButtonText: "Cancelar",
+          reverseButtons: true,
         });
         if (!confirm.isConfirmed) return;
 
         await remove(id);
         await sweetalert2.fire({
-          icon: 'success',
-          title: 'Eliminado',
-          text: 'La persona fue eliminada correctamente de la lista de espera.',
+          icon: "success",
+          title: "Eliminado",
+          text: "La persona fue eliminada correctamente de la lista de espera.",
           timer: 1800,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
       } else {
         const objetoParaBackend = {
           nombre: personData.name,
           contacto: personData.contact,
-          tipo: personData.type === 'cambio' ? 'Cambio de turno' : 'Espera',
+          tipo: personData.type === "cambio" ? "Cambio de turno" : "Espera",
           plan_interes: personData.plan,
-          horarios_preferidos: personData.hours.join(','),
+          horarios_preferidos: personData.hours.join(","),
           observaciones: personData.obs,
           id_sede: sedeActualFiltro,
-          id_usuario_cargado: userId
+          id_usuario_cargado: userId,
         };
 
         if (id) {
           const confirm = await sweetalert2.fire({
             title: `¿Modificar datos de ${personData.name}?`,
-            icon: 'question',
+            icon: "question",
             showCancelButton: true,
-            confirmButtonText: 'Sí, modificar',
-            cancelButtonText: 'Cancelar',
-            reverseButtons: true
+            confirmButtonText: "Sí, modificar",
+            cancelButtonText: "Cancelar",
+            reverseButtons: true,
           });
           if (!confirm.isConfirmed) return;
           await update(id, objetoParaBackend);
           await sweetalert2.fire({
-            icon: 'success',
-            title: 'Modificado',
-            text: 'La persona fue modificada correctamente en la lista de espera.',
+            icon: "success",
+            title: "Modificado",
+            text: "La persona fue modificada correctamente en la lista de espera.",
             timer: 1800,
-            showConfirmButton: false
+            showConfirmButton: false,
           });
         } else {
           await insertarListaEspera(objetoParaBackend);
           await sweetalert2.fire({
-            icon: 'success',
-            title: 'Agregado',
-            text: 'La persona fue agregada correctamente a la lista de espera.',
+            icon: "success",
+            title: "Agregado",
+            text: "La persona fue agregada correctamente a la lista de espera.",
             timer: 1800,
-            showConfirmButton: false
+            showConfirmButton: false,
           });
         }
       }
     } catch (error) {
       await sweetalert2.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Ocurrió un error al actualizar la lista de espera.'
+        icon: "error",
+        title: "Error",
+        text: "Ocurrió un error al actualizar la lista de espera.",
       });
-      console.error('Error en handleUpdateWaitingList:', error);
+      console.error("Error en handleUpdateWaitingList:", error);
     } finally {
       refetchListaEspera();
     }
   };
 
-/**
- * Calcula la distancia de Levenshtein entre dos strings.
- * No necesitas entender cómo funciona por dentro, solo saber que
- * devuelve un número que representa qué tan diferentes son.
- */
-function levenshteinDistance(a, b) {
+  /**
+   * Calcula la distancia de Levenshtein entre dos strings.
+   * No necesitas entender cómo funciona por dentro, solo saber que
+   * devuelve un número que representa qué tan diferentes son.
+   */
+  function levenshteinDistance(a, b) {
     if (a.length === 0) return b.length;
     if (b.length === 0) return a.length;
 
-    const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+    const matrix = Array(b.length + 1)
+      .fill(null)
+      .map(() => Array(a.length + 1).fill(null));
 
     for (let i = 0; i <= a.length; i++) {
-        matrix[0][i] = i;
+      matrix[0][i] = i;
     }
     for (let j = 0; j <= b.length; j++) {
-        matrix[j][0] = j;
+      matrix[j][0] = j;
     }
 
     for (let j = 1; j <= b.length; j++) {
-        for (let i = 1; i <= a.length; i++) {
-            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-            matrix[j][i] = Math.min(
-                matrix[j][i - 1] + 1,      // Deletion
-                matrix[j - 1][i] + 1,      // Insertion
-                matrix[j - 1][i - 1] + cost // Substitution
-            );
-        }
+      for (let i = 1; i <= a.length; i++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        matrix[j][i] = Math.min(
+          matrix[j][i - 1] + 1, // Deletion
+          matrix[j - 1][i] + 1, // Insertion
+          matrix[j - 1][i - 1] + cost // Substitution
+        );
+      }
     }
 
     return matrix[b.length][a.length];
-}
+  }
 
-// FUNCTION: Encuentra un alumno y sus horarios viejo y nuevo por ID (prioridad) o nombre
-const encontrarAlumnoYHorario = useCallback(
-  (nombreBuscado, idBuscado, keyHorarioNuevo) => {
-    if (!keyHorarioNuevo) return null;
+  // FUNCTION: Encuentra un alumno y sus horarios viejo y nuevo por ID (prioridad) o nombre
+  const encontrarAlumnoYHorario = useCallback(
+    (nombreBuscado, idBuscado, keyHorarioNuevo) => {
+      if (!keyHorarioNuevo) return null;
 
-    const puedeBuscarPorId =
-      idBuscado !== undefined && idBuscado !== null && idBuscado !== "";
-    const puedeBuscarPorNombre =
-      typeof nombreBuscado === "string" && nombreBuscado.trim() !== "";
+      const puedeBuscarPorId =
+        idBuscado !== undefined && idBuscado !== null && idBuscado !== "";
+      const puedeBuscarPorNombre =
+        typeof nombreBuscado === "string" && nombreBuscado.trim() !== "";
 
-    if (!puedeBuscarPorId && !puedeBuscarPorNombre) return null;
+      if (!puedeBuscarPorId && !puedeBuscarPorNombre) return null;
 
-    const horarioNuevoInfo = schedule[keyHorarioNuevo];
-    const horarioIdNuevo = horarioNuevoInfo ? horarioNuevoInfo.horarioId : null;
+      const horarioNuevoInfo = schedule[keyHorarioNuevo];
+      const horarioIdNuevo = horarioNuevoInfo
+        ? horarioNuevoInfo.horarioId
+        : null;
 
-    if (horarioIdNuevo === null) {
-      console.error(
-        `No se encontró el ID del nuevo horario para la clave'`
-      );
-      return null;
-    }
-
-    const normalizarNombre = (valor) =>
-      typeof valor === "string" ? valor.trim().toLowerCase() : "";
-    const nombreNormalizado = normalizarNombre(nombreBuscado);
-
-    const listaDeHorarios = Object.values(schedule);
-    for (const horario of listaDeHorarios) {
-      const alumnoEncontrado = horario.alumnos.find((alumno) => {
-        if (puedeBuscarPorId && alumno.id !== undefined && alumno.id !== null) {
-          if (String(alumno.id) === String(idBuscado)) return true;
-        }
-        if (puedeBuscarPorNombre && alumno.name) {
-          return normalizarNombre(alumno.name) === nombreNormalizado;
-        }
-        return false;
-      });
-
-      if (alumnoEncontrado) {
-        return {
-          idEstudiante: alumnoEncontrado.id,
-          idHorarioAnterior: horario.horarioId,
-          idHorarioNuevo: horarioIdNuevo,
-        };
+      if (horarioIdNuevo === null) {
+        console.error(`No se encontró el ID del nuevo horario para la clave'`);
+        return null;
       }
-    }
-    return null;
-  },
-  [schedule]
-);
+
+      const normalizarNombre = (valor) =>
+        typeof valor === "string" ? valor.trim().toLowerCase() : "";
+      const nombreNormalizado = normalizarNombre(nombreBuscado);
+
+      const listaDeHorarios = Object.values(schedule);
+      for (const horario of listaDeHorarios) {
+        const alumnoEncontrado = horario.alumnos.find((alumno) => {
+          if (
+            puedeBuscarPorId &&
+            alumno.id !== undefined &&
+            alumno.id !== null
+          ) {
+            if (String(alumno.id) === String(idBuscado)) return true;
+          }
+          if (puedeBuscarPorNombre && alumno.name) {
+            return normalizarNombre(alumno.name) === nombreNormalizado;
+          }
+          return false;
+        });
+
+        if (alumnoEncontrado) {
+          return {
+            idEstudiante: alumnoEncontrado.id,
+            idHorarioAnterior: horario.horarioId,
+            idHorarioNuevo: horarioIdNuevo,
+          };
+        }
+      }
+      return null;
+    },
+    [schedule]
+  );
 
   /**
    * FUNCTION: Abre el modal para agregar o editar un alumno en un horario específico
@@ -1049,9 +1084,9 @@ const encontrarAlumnoYHorario = useCallback(
    */
   const validateNameDuplicates = async (studentData, accion) => {
     const removeAccents = (str) =>
-      (str || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+      (str || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .trim()
         .toUpperCase();
 
@@ -1062,19 +1097,19 @@ const encontrarAlumnoYHorario = useCallback(
     const yaExiste = allStudents.some(
       (s) =>
         removeAccents(s.name) === nombreIngresado &&
-        (accion === 'agregar' ||
-          (accion === 'modificar' && s.id !== studentData.id))
+        (accion === "agregar" ||
+          (accion === "modificar" && s.id !== studentData.id))
     );
 
     if (yaExiste) {
       await sweetalert2.fire({
-        icon: 'warning',
-        title: 'Nombre duplicado',
+        icon: "warning",
+        title: "Nombre duplicado",
         text:
-          accion === 'agregar'
+          accion === "agregar"
             ? `¡Alerta! El alumno ${studentData.name} ya existe en otro horario. No se puede crear un duplicado.`
             : `¡Alerta! Ya existe otro alumno con el nombre ${studentData.name}. No se puede modificar a un nombre duplicado.`,
-        confirmButtonText: 'Aceptar'
+        confirmButtonText: "Aceptar",
       });
       return true;
     }
@@ -1102,20 +1137,20 @@ const encontrarAlumnoYHorario = useCallback(
     }
 
     // Validar duplicados solo si no es un cambio desde lista de espera
-    if (tipoInscripcionListaEspera != 'cambio') {
+    if (tipoInscripcionListaEspera != "cambio") {
       const tieneDuplicado = await validateNameDuplicates(studentData, accion);
-      if (tieneDuplicado) throw new Error('Nombre duplicado detectado.');
+      if (tieneDuplicado) throw new Error("Nombre duplicado detectado.");
     }
     try {
-      if (accion === 'eliminar') {
+      if (accion === "eliminar") {
         const confirm = await sweetalert2.fire({
           title: `¿Seguro que deseas eliminar a ${studentData.student.name}?`,
-          text: 'Se eliminará toda la información asociada a este cliente.',
-          icon: 'warning',
+          text: "Se eliminará toda la información asociada a este cliente.",
+          icon: "warning",
           showCancelButton: true,
-          confirmButtonText: 'Sí, eliminar',
-          cancelButtonText: 'Cancelar',
-          reverseButtons: true
+          confirmButtonText: "Sí, eliminar",
+          cancelButtonText: "Cancelar",
+          reverseButtons: true,
         });
 
         if (!confirm.isConfirmed) return;
@@ -1123,11 +1158,11 @@ const encontrarAlumnoYHorario = useCallback(
         await deleteCliente(studentData.student.id);
 
         await sweetalert2.fire({
-          icon: 'success',
-          title: 'Eliminado',
-          text: 'El alumno fue eliminado correctamente.',
+          icon: "success",
+          title: "Eliminado",
+          text: "El alumno fue eliminado correctamente.",
           timer: 1800,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
         refetch();
         return;
@@ -1137,42 +1172,42 @@ const encontrarAlumnoYHorario = useCallback(
         buttonsStyling: false, // 👈 clave
         customClass: {
           confirmButton:
-            'swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium ' +
-            'bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400',
+            "swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium " +
+            "bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400",
           cancelButton:
-            'swal2-cancel inline-flex items-center px-4 py-2 rounded-md font-medium ml-3 ' +
-            'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400',
-          popup: 'rounded-xl'
-        }
+            "swal2-cancel inline-flex items-center px-4 py-2 rounded-md font-medium ml-3 " +
+            "bg-gray-200 text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400",
+          popup: "rounded-xl",
+        },
       });
-      if (accion === 'modificar') {
+      if (accion === "modificar") {
         const confirm = await swal.fire({
           title: `¿Modificar datos de ${studentData.name}?`,
-          icon: 'question',
+          icon: "question",
           showCancelButton: true,
-          confirmButtonText: 'Sí, modificar',
-          cancelButtonText: 'Cancelar',
-          reverseButtons: true
+          confirmButtonText: "Sí, modificar",
+          cancelButtonText: "Cancelar",
+          reverseButtons: true,
         });
         if (!confirm.isConfirmed) return;
       }
       if (
         studentData.auditDetails &&
-        studentData.auditDetails.trim() !== '' &&
+        studentData.auditDetails.trim() !== "" &&
         studentData.id
       ) {
         try {
           const auditoriaPayload = {
             motivo: studentData.auditDetails,
-            usuario_id: userId
+            usuario_id: userId,
           };
 
           await guardarAuditoria(studentData.id, auditoriaPayload);
         } catch (auditError) {
           await sweetalert2.fire({
-            icon: 'error',
-            title: 'Error de Auditoría',
-            text: 'No se pudo guardar el motivo del cambio. La operación ha sido cancelada.'
+            icon: "error",
+            title: "Error de Auditoría",
+            text: "No se pudo guardar el motivo del cambio. La operación ha sido cancelada.",
           });
 
           return;
@@ -1183,14 +1218,14 @@ const encontrarAlumnoYHorario = useCallback(
         studentData.planDetails?.startDate ||
         studentData.trialDetails?.date ||
         studentData.scheduledDetails?.date ||
-        '';
+        "";
 
-      let fechaFinStr = '';
+      let fechaFinStr = "";
       let planStartDateAux = studentData.scheduledDetails?.startDateAux || null;
       let planEndDateAux = studentData.scheduledDetails?.endDateAux || null;
 
       if (fechaInicioStr) {
-        const [año, mes, dia] = fechaInicioStr.split('-').map(Number);
+        const [año, mes, dia] = fechaInicioStr.split("-").map(Number);
 
         const fechaInicio = new Date(año, mes - 1, dia);
 
@@ -1203,18 +1238,18 @@ const encontrarAlumnoYHorario = useCallback(
             const fechaFin = new Date(fechaInicio);
             fechaFin.setDate(fechaFin.getDate() + 1);
             const añoFin = fechaFin.getFullYear();
-            const mesFin = String(fechaFin.getMonth() + 1).padStart(2, '0');
-            const diaFin = String(fechaFin.getDate()).padStart(2, '0');
+            const mesFin = String(fechaFin.getMonth() + 1).padStart(2, "0");
+            const diaFin = String(fechaFin.getDate()).padStart(2, "0");
             fechaFinStr = `${añoFin}-${mesFin}-${diaFin}`;
           }
         }
       }
 
       const inscripcionData = {
-        dia: key.split('-')[0],
-        horario: key.split('-')[1],
-        fecha_inscripcion: new Date().toISOString().split('T')[0],
-        id_sede: sedeActualFiltro
+        dia: key.split("-")[0],
+        horario: key.split("-")[1],
+        fecha_inscripcion: new Date().toISOString().split("T")[0],
+        id_sede: sedeActualFiltro,
       };
 
       const formDataForDB = {
@@ -1244,7 +1279,7 @@ const encontrarAlumnoYHorario = useCallback(
       };
       // Lógica específica para cambios desde la lista de espera
       if (accion === "agregar" && tipoInscripcionListaEspera === "cambio") {
-        const alumno = encontrarAlumnoYHorario(studentData.name,null, key);
+        const alumno = encontrarAlumnoYHorario(studentData.name, null, key);
         if (alumno === null) {
           throw new Error("Alumno no encontrado para cambio de turno.");
         }
@@ -1264,10 +1299,10 @@ const encontrarAlumnoYHorario = useCallback(
           timer: 1800,
           showConfirmButton: false,
         });
-        
-      } 
+      }
       // Logica para agregar un nuevo alumno
       else if (accion === "agregar") {
+        await sincronizarConVentas(studentData, inscripcionData);
         await insertCliente(formDataForDB, inscripcionData);
         await sweetalert2.fire({
           icon: "success",
@@ -1324,7 +1359,7 @@ const encontrarAlumnoYHorario = useCallback(
           timer: 1800,
           showConfirmButton: false,
         });
-      } 
+      }
       // Modificaciones generales sin cambio de plan
       else if (accion === "modificar") {
         await insertCliente(formDataForDB, inscripcionData, true);
@@ -1337,18 +1372,82 @@ const encontrarAlumnoYHorario = useCallback(
         });
       }
     } catch (error) {
-      console.error('Error al guardar el alumno:', error);
-      
+      console.error("Error al guardar el alumno:", error);
+
       await sweetalert2.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Ocurrió un error al guardar el cliente en la base de datos.'
+        icon: "error",
+        title: "Error",
+        text: "Ocurrió un error al guardar el cliente en la base de datos.",
       });
       throw error; // Re-lanza el error para que el modal lo capture
-    }finally{
+    } finally {
       refetch();
       refetchReporteAsistencia();
       setTipoInscripcionListaEspera(null);
+    }
+  };
+
+  //Esta función sincroniza los datos del alumno con "Ventas" siempre y cuando el alumno esté en estado "prueba" o "programado".
+  const sincronizarConVentas = async (datosAlumno, datosInscripcion) => {
+    // 1. Sincronizar solo si el alumno está en prueba o programado
+    if (datosAlumno.status !== "prueba" && datosAlumno.status !== "programado")
+      return;
+
+    // 2. Obtener tipo de grupo y normalizar
+    let grp =
+      datosAlumno.trialDetails?.type || datosAlumno.scheduledDetails?.type;
+    let grpNormalizado = grp ? grp.replace(/-/g, "") : "";
+
+    // A. Buscamos el objeto de la sede actual usando el ID del filtro
+    const sedeSeleccionadaObj = sedesData?.find(
+      (s) => String(s.id) === String(sedeActualFiltro)
+    );
+
+    // B. Obtenemos el nombre (asegurando que no sea null)
+    let nombreSedeRaw = sedeSeleccionadaObj
+      ? sedeSeleccionadaObj.nombre || sedeSeleccionadaObj.ciudad || ""
+      : "";
+
+    // C. Normalizamos a minúsculas y sin espacios extras
+    let sedeParaVentas = String(nombreSedeRaw).trim().toLowerCase();
+
+    if (sedeParaVentas === "concepción" || sedeParaVentas === "concepcion") {
+      sedeParaVentas = "concepcion";
+    }
+
+    try {
+      // Definir la fecha según el estado del alumno
+      const fechaClase =
+        datosAlumno.status === "prueba"
+          ? datosAlumno.trialDetails?.date
+          : datosAlumno.scheduledDetails?.date;
+
+      // Armar payload para enviar a Ventas
+      const datos = {
+        nombre: datosAlumno.name,
+        dni: "Sin DNI",
+        tipo_prospecto: "Nuevo",
+        contacto: datosAlumno.contact,
+        canal_contacto: "Desde pilates",
+        actividad: "Pilates",
+        observacion: datosAlumno.observation,
+        sede: sedeParaVentas,
+        usuario_id: userId,
+        clase_prueba_1_fecha: fechaClase,
+        clase_prueba_1_tipo:
+          datosAlumno.status === "prueba"
+            ? "Clase de prueba"
+            : "Visita programada",
+        asesor_nombre: nombreAsesor,
+        grp: grpNormalizado,
+        hhmm: datosInscripcion.horario,
+        clase_num: 1,
+      };
+
+      console.log("Enviando datos a ventas:", datos);
+      await insertarVentasProspectosCompleto(datos);
+    } catch (e) {
+      console.error("Error no bloqueante sync ventas:", e);
     }
   };
 
@@ -1362,25 +1461,25 @@ const encontrarAlumnoYHorario = useCallback(
   const getCellContentAndStyle = useCallback(
     (student) => {
       if (!student)
-        return { content: null, style: 'bg-white hover:bg-gray-100' };
+        return { content: null, style: "bg-white hover:bg-gray-100" };
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       let content = <span className="font-semibold">{student.name}</span>;
-      let style = 'bg-gray-100';
+      let style = "bg-gray-100";
       let isExpired = false;
 
       switch (student.status) {
-        case 'plan':
-          const endDate = new Date(student.planDetails.endDate + 'T00:00:00');
+        case "plan":
+          const endDate = new Date(student.planDetails.endDate + "T00:00:00");
 
           isExpired = endDate <= today;
 
           style =
-            student.planDetails?.type === 'L-M-V'
-              ? 'bg-gray-300'
-              : 'bg-gray-200';
+            student.planDetails?.type === "L-M-V"
+              ? "bg-gray-300"
+              : "bg-gray-200";
 
           const duracion = Number(
             calcularDiasEntreFechas(
@@ -1395,8 +1494,8 @@ const encontrarAlumnoYHorario = useCallback(
               {/* Contenedor para la segunda línea con Flexbox */}
               <div className="flex items-center justify-between mt-1 text-xs italic">
                 <span>
-                  {isExpired ? 'Venció' : 'Vence'} el{' '}
-                  {endDate.toLocaleDateString('es-ES')}
+                  {isExpired ? "Venció" : "Vence"} el{" "}
+                  {endDate.toLocaleDateString("es-ES")}
                 </span>
 
                 {/* Badge "Modificado" (solo si la duración no es estándar) */}
@@ -1410,10 +1509,10 @@ const encontrarAlumnoYHorario = useCallback(
           );
           break;
 
-        case 'prueba':
-          const trialDate = new Date(student.trialDetails.date + 'T00:00:00');
+        case "prueba":
+          const trialDate = new Date(student.trialDetails.date + "T00:00:00");
           isExpired = trialDate < today;
-          style = 'bg-cyan-200';
+          style = "bg-cyan-200";
 
           const asistio = asistenciaPruebasMap[student.id];
 
@@ -1422,10 +1521,10 @@ const encontrarAlumnoYHorario = useCallback(
               {student.name}
               <br />
               <span className="text-xs italic">
-                Clase de prueba{' '}
+                Clase de prueba{" "}
                 {new Date(
-                  student.trialDetails.date + 'T00:00:00'
-                ).toLocaleDateString('es-ES')}
+                  student.trialDetails.date + "T00:00:00"
+                ).toLocaleDateString("es-ES")}
               </span>
 
               {isExpired && asistio !== undefined && (
@@ -1445,21 +1544,21 @@ const encontrarAlumnoYHorario = useCallback(
           );
           break;
 
-        case 'programado':
+        case "programado":
           const fechaRelevante =
             student.scheduledDetails?.promisedDate ||
             student.scheduledDetails.date;
-          const scheduledDate = new Date(fechaRelevante + 'T00:00:00');
+          const scheduledDate = new Date(fechaRelevante + "T00:00:00");
           isExpired = scheduledDate <= today;
-          style = 'bg-yellow-200';
+          style = "bg-yellow-200";
           content = (
             <span>
               {student.name}
               <br />
               <span className="text-xs italic">
-                Renueva el{' '}
-                {new Date(fechaRelevante + 'T00:00:00').toLocaleDateString(
-                  'es-ES'
+                Renueva el{" "}
+                {new Date(fechaRelevante + "T00:00:00").toLocaleDateString(
+                  "es-ES"
                 )}
               </span>
             </span>
@@ -1471,7 +1570,7 @@ const encontrarAlumnoYHorario = useCallback(
       }
 
       if (isExpired) {
-        style = 'bg-red-500 text-white';
+        style = "bg-red-500 text-white";
       }
 
       return { content, style };
@@ -1496,43 +1595,43 @@ const encontrarAlumnoYHorario = useCallback(
     const lmvSlots = [];
     const mjSlots = [];
     for (const hour of [
-      '07:00',
-      '08:00',
-      '09:00',
-      '10:00',
-      '11:00',
-      '12:00',
-      '13:00',
-      '14:00',
-      '15:00',
-      '16:00',
-      '17:00',
-      '18:00',
-      '19:00',
-      '20:00',
-      '21:00',
-      '22:00'
+      "07:00",
+      "08:00",
+      "09:00",
+      "10:00",
+      "11:00",
+      "12:00",
+      "13:00",
+      "14:00",
+      "15:00",
+      "16:00",
+      "17:00",
+      "18:00",
+      "19:00",
+      "20:00",
+      "21:00",
+      "22:00",
     ]) {
       const lunesLibres =
         cupoMaximoPilates -
         (schedule[`LUNES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup('LUNES', hour);
+        countTrialsInOtherDaysOfGroup("LUNES", hour);
       const miercolesLibres =
         cupoMaximoPilates -
         (schedule[`MIÉRCOLES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup('MIÉRCOLES', hour);
+        countTrialsInOtherDaysOfGroup("MIÉRCOLES", hour);
       const viernesLibres =
         cupoMaximoPilates -
         (schedule[`VIERNES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup('VIERNES', hour);
+        countTrialsInOtherDaysOfGroup("VIERNES", hour);
       const martesLibres =
         cupoMaximoPilates -
         (schedule[`MARTES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup('MARTES', hour);
+        countTrialsInOtherDaysOfGroup("MARTES", hour);
       const juevesLibres =
         cupoMaximoPilates -
         (schedule[`JUEVES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup('JUEVES', hour);
+        countTrialsInOtherDaysOfGroup("JUEVES", hour);
 
       const lmvCount = Math.max(
         0,
@@ -1559,19 +1658,19 @@ const encontrarAlumnoYHorario = useCallback(
     allStudents.forEach((student) => {
       if (!student || processedIds.has(student.id)) return;
       let expiryDate;
-      let type = '';
+      let type = "";
       switch (student.status) {
-        case 'plan':
-          expiryDate = new Date(student.planDetails.endDate + 'T00:00:00');
-          type = 'Plan vencido';
+        case "plan":
+          expiryDate = new Date(student.planDetails.endDate + "T00:00:00");
+          type = "Plan vencido";
           break;
-        case 'prueba':
-          expiryDate = new Date(student.trialDetails.date + 'T00:00:00');
-          type = 'Clase de prueba caducada';
+        case "prueba":
+          expiryDate = new Date(student.trialDetails.date + "T00:00:00");
+          type = "Clase de prueba caducada";
           break;
-        case 'programado':
-          expiryDate = new Date(student.scheduledDetails.date + 'T00:00:00');
-          type = 'Renovación pendiente';
+        case "programado":
+          expiryDate = new Date(student.scheduledDetails.date + "T00:00:00");
+          type = "Renovación pendiente";
           break;
         default:
           return;
@@ -1580,7 +1679,7 @@ const encontrarAlumnoYHorario = useCallback(
         calculatedExpiredStudents.push({
           name: student.name,
           type: type,
-          date: expiryDate.toLocaleDateString('es-ES')
+          date: expiryDate.toLocaleDateString("es-ES"),
         });
         processedIds.add(student.id);
       }
@@ -1592,13 +1691,13 @@ const encontrarAlumnoYHorario = useCallback(
       .filter(
         (person) =>
           person.contacto_cliente?.estado_contacto !==
-            'Rechazado/Sin Respuesta' &&
-          person.contacto_cliente?.estado_contacto !== 'Confirmado'
+            "Rechazado/Sin Respuesta" &&
+          person.contacto_cliente?.estado_contacto !== "Confirmado"
       )
       // Ordena para dar prioridad a los que buscan "cambio" sobre los que están en "espera".
       .sort((a, b) => {
-        if (a.type === 'cambio' && b.type !== 'cambio') return -1;
-        if (a.type !== 'cambio' && b.type === 'cambio') return 1;
+        if (a.type === "cambio" && b.type !== "cambio") return -1;
+        if (a.type !== "cambio" && b.type === "cambio") return 1;
         return 0;
       });
 
@@ -1608,15 +1707,15 @@ const encontrarAlumnoYHorario = useCallback(
     actionableWaitingList.forEach((person) => {
       if (processedMatches.has(person.id)) return;
       let hasMatch = false;
-      if (person.plan === 'L-M-V')
+      if (person.plan === "L-M-V")
         hasMatch = person.hours.some((hour) =>
           calculatedFreeSlots.lmv.some((slot) => slot.hour === hour)
         );
-      else if (person.plan === 'M-J')
+      else if (person.plan === "M-J")
         hasMatch = person.hours.some((hour) =>
           calculatedFreeSlots.mj.some((slot) => slot.hour === hour)
         );
-      else if (person.plan === 'Cualquier día')
+      else if (person.plan === "Cualquier día")
         hasMatch = person.hours.some(
           (hour) =>
             calculatedFreeSlots.lmv.some((slot) => slot.hour === hour) ||
@@ -1633,7 +1732,7 @@ const encontrarAlumnoYHorario = useCallback(
     return {
       freeSlots: calculatedFreeSlots,
       expiredStudents: calculatedExpiredStudents,
-      waitingListMatches: calculatedMatches
+      waitingListMatches: calculatedMatches,
     };
   }, [schedule, waitingList, cupoMaximoPilates, countTrialsInOtherDaysOfGroup]);
 
@@ -1661,35 +1760,35 @@ const encontrarAlumnoYHorario = useCallback(
     }
     const now = new Date();
     now.setHours(now.getHours() - 3); // Restar 3 horas a la hora actual porque sino hay desfase
-    const fecha_contacto = now.toISOString().slice(0, 19).replace('T', ' ');
+    const fecha_contacto = now.toISOString().slice(0, 19).replace("T", " ");
 
     const datosParaEnviar = {
       id: id,
       nombre: name,
       contacto: contacto,
       fecha_contacto: fecha_contacto,
-      id_usuario_contacto: userId
+      id_usuario_contacto: userId,
     };
     try {
       const res = await modificarAlumnoContactado(id, datosParaEnviar);
       if (res) {
         await sweetalert2.fire({
-          icon: 'success',
-          title: 'Alumno contactado',
+          icon: "success",
+          title: "Alumno contactado",
           text: `Se registró el contacto con ${name} exitosamente.`,
           timer: 1800,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
         refetchAusentes();
         setcontactarAlumno(false);
       } else {
-        throw new Error('No se pudo modificar el alumno');
+        throw new Error("No se pudo modificar el alumno");
       }
     } catch (error) {
       await sweetalert2.fire({
-        icon: 'error',
-        title: 'Error',
-        text: `Ocurrió un error al registrar el contacto con ${name}.`
+        icon: "error",
+        title: "Error",
+        text: `Ocurrió un error al registrar el contacto con ${name}.`,
       });
     }
   };
@@ -1705,7 +1804,7 @@ const encontrarAlumnoYHorario = useCallback(
   const calcularDiasEntreFechas = (fechaInicioStr, fechaFinStr) => {
     // Función interna para convertir "YYYY-MM-DD" a un objeto Date en UTC
     const parsearFechaYMD = (str) => {
-      const [anio, mes, dia] = str.split('-');
+      const [anio, mes, dia] = str.split("-");
       // Usamos Date.UTC para ignorar la zona horaria local y evitar errores
       return new Date(Date.UTC(anio, mes - 1, dia));
     };
@@ -1725,12 +1824,13 @@ const encontrarAlumnoYHorario = useCallback(
     return diferenciaEnDias;
   };
 
-
   const handleAbrirCambioTurno = (alumno) => {
-  setAlumnoCambioTurno(alumno);
-  setHorariosCambioTurno(generarHorariosConCupos(schedule, cupoMaximoPilates));
-  setIsModalCambioTurno(true);
-};
+    setAlumnoCambioTurno(alumno);
+    setHorariosCambioTurno(
+      generarHorariosConCupos(schedule, cupoMaximoPilates)
+    );
+    setIsModalCambioTurno(true);
+  };
 
   return {
     states: {
@@ -1762,7 +1862,6 @@ const encontrarAlumnoYHorario = useCallback(
       freeSlots,
       alumnoCambioTurno,
       horariosCambioTurno,
-      
     },
     setters: {
       setSection,
@@ -1774,7 +1873,7 @@ const encontrarAlumnoYHorario = useCallback(
       setIsModalDetalleAusentes,
       setcontactarAlumno,
       setIsModalAyuda,
-      setIsConfirmModalOpen
+      setIsConfirmModalOpen,
     },
     functions: {
       handleSectionChange,
@@ -1794,11 +1893,9 @@ const encontrarAlumnoYHorario = useCallback(
       handleAbrirCambioTurno,
       generarHorariosConCupos,
       handleSaveCambioTurno,
-      handleSaveWaitingListCambio
-    }
+      handleSaveWaitingListCambio,
+    },
   };
 };
 
 export default PilatesGestionLogica;
-
-

@@ -11,25 +11,28 @@
  * Contacto: emirvalles90f@gmail.com || 3865761910
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   // Definir estados locales para el token de autenticación y el nombre de usuario
   const [authToken, setAuthToken] = useState(null);
-  const [userName, setUserName] = useState('');
-  const [userLevel, setUserLevel] = useState('');
+  const [userName, setUserName] = useState("");
+  const [userLevel, setUserLevel] = useState("");
   const [userId, setUserId] = useState(null);
-  const [sedeName, setSedeName] = useState('');
+  const [sedeName, setSedeName] = useState("");
+  const [name, setName] = useState("");
 
   useEffect(() => {
     // Obtener el token y el nombre de usuario desde el localStorage
-    const token = localStorage.getItem('authToken');
-    const username = localStorage.getItem('userName');
-    const level = localStorage.getItem('userLevel');
-    const id = localStorage.getItem('userId');
-    const sede = localStorage.getItem('sedeName');
+    const token = localStorage.getItem("authToken");
+    const username = localStorage.getItem("userName");
+    const level = localStorage.getItem("userLevel");
+    const id = localStorage.getItem("userId");
+    const sede = localStorage.getItem("sedeName");
+    const storedName = localStorage.getItem("name");
+
     // Si hay un token en el localStorage, establecerlo en el estado local
     if (token) {
       setAuthToken(token);
@@ -43,48 +46,61 @@ export const AuthProvider = ({ children }) => {
     }
     if (id) {
       setUserId(id);
-    }    
-    if(sede){
+    }
+    if (sede) {
       setSedeName(sede);
     }
+    if (storedName) setName(storedName);
   }, []); // El array vacío asegura que este efecto se ejecute solo una vez al montar el componente
 
-  const login = (token, username, level, id, sede) => {
+  const login = (token, username, level, id, sede, name) => {
     // Establecer el token y el nombre de usuario en el estado local
     setAuthToken(token);
     setUserName(username);
+    setName(name);
     setUserLevel(level);
     setUserId(id);
     setSedeName(sede);
 
     // Guardar el token y el nombre de usuario en el localStorage
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('userName', username);
-    localStorage.setItem('userLevel', level);
-    localStorage.setItem('userId', id);
-    localStorage.setItem('sedeName', sede);
+    localStorage.setItem("authToken", token);
+    localStorage.setItem("userName", username);
+    localStorage.setItem("userLevel", level);
+    localStorage.setItem("userId", id);
+    localStorage.setItem("sedeName", sede);
+    localStorage.setItem("name", name);
   };
 
   const logout = () => {
     // Limpiar el token y el nombre de usuario del estado local
     setAuthToken(null);
-    setUserName('');
-    setUserLevel('');
+    setUserName("");
+    setName("");
+    setUserLevel("");
     setUserId(null);
-    setSedeName('');
+    setSedeName("");
 
     // Remover el token y el nombre de usuario del localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userLevel');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('sedeName');
-
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userLevel");
+    localStorage.removeItem("name");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("sedeName");
   };
 
   return (
     <AuthContext.Provider
-      value={{ authToken, userName, userLevel, userId, sedeName, login, logout }}
+      value={{
+        authToken,
+        userName,
+        userLevel,
+        userId,
+        sedeName,
+        name,
+        login,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -439,6 +439,7 @@ export default function FilterToolbar({
               <option value="Pagina web">Página web</option>
               <option value="Campaña">Campaña</option>
               <option value="Comentarios/Stickers">Comentarios/Stickers</option>
+              <option value="Desde pilates">Desde pilates</option>
             </select>
           </div>
 

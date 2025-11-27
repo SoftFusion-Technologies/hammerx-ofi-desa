@@ -399,12 +399,14 @@ const { data: auditoriaData } = useConsultaDB(
     // Validar auditoría: si está habilitada la edición de fecha personalizada, es OBLIGATORIO el motivo
     if (habilitarFechaFinPersonalizada) {
       if (!detailsAuditoria || detailsAuditoria.trim().length === 0) {
-        alert("El motivo de la auditoría es obligatorio cuando se edita la fecha de vencimiento.");
+        alert(
+          "El motivo de la auditoría es obligatorio cuando se edita la fecha de vencimiento."
+        );
         return;
       }
       if (
-        detailsAuditoria.trim().length < 20 || 
-        detailsAuditoria.trim().length > 250 
+        detailsAuditoria.trim().length < 20 ||
+        detailsAuditoria.trim().length > 250
       ) {
         alert(
           "El motivo de la auditoría debe tener entre 20 y 250 caracteres."
@@ -412,6 +414,10 @@ const { data: auditoriaData } = useConsultaDB(
         return;
       }
     }
+    const [day] = cellData.key.split("-");
+    const planType = ["LUNES", "MIÉRCOLES", "VIERNES"].includes(day)
+      ? "L-M-V"
+      : "M-J";
 
     let studentData = {
       id: cellData.student?.id || null,
@@ -423,12 +429,9 @@ const { data: auditoriaData } = useConsultaDB(
     };
     const isModification = !!studentData.id;
     let accion = isModification ? "modificar" : "agregar";
-    const [day] = cellData.key.split("-");
+
     switch (status) {
       case "plan":
-        const planType = ["LUNES", "MIÉRCOLES", "VIERNES"].includes(day)
-          ? "L-M-V"
-          : "M-J";
         studentData.planDetails = {
           type: planType,
           startDate: planStartDate,
@@ -442,10 +445,11 @@ const { data: auditoriaData } = useConsultaDB(
         }
         break;
       case "prueba":
-        studentData.trialDetails = { date: trialDate };
+        studentData.trialDetails = { date: trialDate, type: planType };
         break;
       case "programado":
         studentData.scheduledDetails = {
+          type: planType,
           date: scheduledDate,
           startDateAux: planStartDateAux,
           endDateAux: planEndDateAux,

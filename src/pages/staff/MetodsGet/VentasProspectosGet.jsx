@@ -43,7 +43,7 @@ const SEDES = [
   { value: 'monteros', label: 'Monteros' },
   { value: 'concepcion', label: 'Concepción' },
   { value: 'barrio sur', label: 'Barrio Sur' },
-  { value: 'barrio norte', label: 'Tucumán Barrio Norte' }
+  { value: 'barrio norte', label: 'Barrio Norte' }
 ];
 
 const normalizeSede = (sede) => {
@@ -459,9 +459,14 @@ const VentasProspectosGet = ({ currentUser }) => {
   };
 
   const normalizeSede2 = (sede) => {
-    if (!sede) return '';
-    const normalized = sede.toLowerCase().replace(/\s/g, '');
-    return normalized === 'smt' ? 'barrio sur' : normalized;
+    if (!sede) return "";
+    let normalized = sede.toLowerCase().replace(/\s/g, "");
+    if (normalized === "smt") {
+      normalized = "barrio sur";
+    } else if (normalized === "barrionorte") {
+      normalized = "barrio norte";
+    }
+    return normalized;
   };
 
   const sedes = [

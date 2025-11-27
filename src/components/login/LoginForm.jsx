@@ -79,7 +79,8 @@ const LoginForm = () => {
               values.email,
               res.data.level,
               res.data.id,
-              res.data.sede
+              res.data.sede,
+              res.data.name
             );
 
             // Ruta posterior (podés customizar si querés según level)

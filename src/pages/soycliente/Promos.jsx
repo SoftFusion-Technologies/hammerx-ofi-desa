@@ -123,11 +123,11 @@ const Promos = forwardRef((props, ref) => {
         },
         {
           text: 'SEMESTRE',
-          description: '1 MES GRATIS'
+          description: '20% OFF'
         },
         {
           text: 'ANUAL',
-          description: '3 MESES GRATIS'
+          description: '30% OFF'
         }
       ]
     },
