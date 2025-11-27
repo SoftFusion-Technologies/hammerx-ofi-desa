@@ -43,7 +43,7 @@ const SEDES = [
   { value: 'monteros', label: 'Monteros' },
   { value: 'concepcion', label: 'Concepción' },
   { value: 'barrio sur', label: 'Barrio Sur' },
-  { key: 'barrio norte', label: 'Tucumán Barrio Norte' }
+  { value: 'barrio norte', label: 'Tucumán Barrio Norte' }
 ];
 
 const normalizeSede = (sede) => {
@@ -304,9 +304,7 @@ const VentasProspectosGet = ({ currentUser }) => {
 
       try {
         // 2) Fallback: /users y filtramos por id
-        const { data: list } = await axios.get(
-          `http://localhost:8080/users`
-        );
+        const { data: list } = await axios.get(`http://localhost:8080/users`);
         const found = Array.isArray(list)
           ? list.find((u) => Number(u.id) === Number(userId))
           : null;
@@ -350,9 +348,7 @@ const VentasProspectosGet = ({ currentUser }) => {
   // Traer prospectos con clase de prueba hoy
   useEffect(() => {
     axios
-      .get(
-        `http://localhost:8080/notifications/clases-prueba/${userId}`
-      )
+      .get(`http://localhost:8080/notifications/clases-prueba/${userId}`)
       .then((res) =>
         setProspectosConAgendaHoy(res.data.map((p) => p.prospecto_id))
       )
@@ -380,8 +376,16 @@ const VentasProspectosGet = ({ currentUser }) => {
           .toLowerCase()
           .trim();
 
-      const sedeEncontrada = sedesEsCiudad.find((s) =>
-        normalize(s.nombre).includes(normalize(selectedSede))
+      // Normalizamos la sede seleccionada
+      let sedeABuscar = normalize(selectedSede);
+
+      // Mapeo rápido: UI → nombre en BD
+      if (sedeABuscar === 'barrionorte' || sedeABuscar === 'sanmiguelbn')
+        sedeABuscar = 'barrio norte';
+      if (sedeABuscar === 'smt') sedeABuscar = 'barrio sur';
+
+      const sedeEncontrada = sedesEsCiudad.find(
+        (s) => normalize(s.nombre) === sedeABuscar
       );
 
       if (sedeEncontrada) {
@@ -479,9 +483,7 @@ const VentasProspectosGet = ({ currentUser }) => {
 
     const fetchUserSede = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:8080/users/${userId}`
-        );
+        const response = await fetch(`http://localhost:8080/users/${userId}`);
         if (!response.ok)
           throw new Error('No se pudo obtener la info del usuario');
         const data = await response.json();
@@ -584,14 +586,11 @@ const VentasProspectosGet = ({ currentUser }) => {
     const prospecto = prospectos.find((p) => p.id === id);
 
     try {
-      await axios.put(
-        `http://localhost:8080/ventas_prospectos/${id}`,
-        {
-          canal_contacto: nuevoCanal,
-          campania_origen:
-            nuevoCanal === 'Campaña' ? prospecto?.campania_origen || '' : ''
-        }
-      );
+      await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
+        canal_contacto: nuevoCanal,
+        campania_origen:
+          nuevoCanal === 'Campaña' ? prospecto?.campania_origen || '' : ''
+      });
     } catch (error) {
       console.error('Error al actualizar canal:', error);
     }
@@ -897,13 +896,10 @@ const VentasProspectosGet = ({ currentUser }) => {
     );
 
     try {
-      await axios.put(
-        `http://localhost:8080/ventas_prospectos/${id}`,
-        {
-          canal_contacto: 'Campaña', // siempre es campaña acá
-          campania_origen: value
-        }
-      );
+      await axios.put(`http://localhost:8080/ventas_prospectos/${id}`, {
+        canal_contacto: 'Campaña', // siempre es campaña acá
+        campania_origen: value
+      });
     } catch (error) {
       console.error('Error al actualizar origen de campaña:', error);
     }
@@ -2148,15 +2144,15 @@ const VentasProspectosGet = ({ currentUser }) => {
                           handleCanalChange(p.id, e.target.value)
                         }
                         className="
-      w-full
-      rounded
-      border border-gray-300
-      text-sm px-3 py-2 font-sans text-gray-700 bg-white
-      transition-colors duration-200 ease-in-out
-      hover:bg-orange-50 hover:text-orange-900
-      focus:outline-none focus:ring-2 focus:ring-orange-400
-      focus:border-orange-600 cursor-pointer
-    "
+                        w-full
+                        rounded
+                        border border-gray-300
+                        text-sm px-3 py-2 font-sans text-gray-700 bg-white
+                        transition-colors duration-200 ease-in-out
+                        hover:bg-orange-50 hover:text-orange-900
+                        focus:outline-none focus:ring-2 focus:ring-orange-400
+                        focus:border-orange-600 cursor-pointer
+                      "
                       >
                         <option value="Mostrador">Mostrador</option>
                         <option value="Whatsapp">Whatsapp</option>
@@ -2167,6 +2163,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                         <option value="Comentarios/Stickers">
                           Comentarios/Stickers
                         </option>
+                        <option value="Desde pilates">Desde pilates</option>
                       </select>
 
                       {/* Select para origen de campaña (solo si el canal es "Campaña") */}
