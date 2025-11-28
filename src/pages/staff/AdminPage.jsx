@@ -420,6 +420,25 @@ const AdminPage = () => {
                   delay={0.3}
                 />
               )}
+
+              {userLevel === 'instructor' ||
+              (userLevel !== 'imagenes' && (
+                <DashboardTile
+                  title="Remarketing"
+                  description="Accedé al módulo de remarketing para gestionar campañas y seguimientos."
+                  to="/dashboard/ventas-remarketing"
+                  icon={ShoppingBag}
+                  delay={0.26}
+                  badgeSlot={
+                    <BadgeAgendaVentas
+                      userId={userId}
+                      userLevel={userLevel}
+                      size="sm"
+                    />
+                  }
+                >
+                </DashboardTile>
+              ))}
             </div>
 
             {/* {(isAdmin || isVendedor) && !isImagenes && (

@@ -211,6 +211,9 @@ import VentasProspectosGet from './pages/staff/MetodsGet/VentasProspectosGet.jsx
 import PilatesInstructores from './pages/Pilates/PilatesInstructores.jsx';
 import PilatesGestion from './pages/Pilates/PilatesGestion.jsx';
 
+//Remarketing
+import VentasRemarketingGet from './pages/staff/MetodsGet/VentasRemarketingGet.jsx';
+
 import NotFound from './pages/NotFound.jsx';
 import LogsAuditoria from './pages/LogsAuditoria.jsx';
 import PromosDashboard from './pages/staff/MetodsGet/PromosDashboard.jsx';
@@ -829,6 +832,15 @@ const App = memo(() => {
                       <ProtectedRoute>
                         {' '}
                         <VentasProspectosGet />
+                      </ProtectedRoute>
+                    }
+                  />{' '}
+                  <Ruta
+                    path="/dashboard/ventas-remarketing"
+                    element={
+                      <ProtectedRoute>
+                        {' '}
+                        <VentasRemarketingGet />
                       </ProtectedRoute>
                     }
                   />{' '}

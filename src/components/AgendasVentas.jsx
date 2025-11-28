@@ -1,75 +1,115 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
-import { Calendar, Bell, X } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from "react";
+import axios from "axios";
+import { Calendar, Bell, X } from "lucide-react";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
-const URL = 'http://localhos:8080/';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const URL = "http://localhost:8080/";
 
 export default function AgendasVentas({
   userId,
-  level = 'vendedor',
+  level = "vendedor", // o 'admin'
   open,
   onClose,
-  onVentasCountChange
+  onVentasCountChange,
 }) {
   const [notis, setNotis] = useState(null); // clases de prueba
   const [ventas, setVentas] = useState(null); // seguimientos ventas
-  const [errorClases, setErrorClases] = useState('');
-  const [errorVentas, setErrorVentas] = useState('');
+  const [errorClases, setErrorClases] = useState("");
+  const [errorVentas, setErrorVentas] = useState("");
 
   // --- helpers ---
-  const onlyDigits = (s = '') => s.replace(/\D/g, '');
+  const onlyDigits = (s = "") => s.replace(/\D/g, "");
   const waURL = (telefono, nombre) => {
-    const msg = `Hola ${nombre || ''} ¿Cómo te fue ayer en la clase de prueba?`;
+    const msg = `Hola ${nombre || ""} ¿Cómo te fue ayer en la clase de prueba?`;
     return `https://wa.me/${onlyDigits(telefono)}?text=${encodeURIComponent(
       msg
     )}`;
   };
+  
   function formatearFecha(fechaISO) {
-    if (!fechaISO) return '';
-    const fecha = new Date(fechaISO);
-    const dia = String(fecha.getDate()).padStart(2, '0');
-    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-    const anio = fecha.getFullYear();
-    return `${dia}-${mes}-${anio}`;
+    if (!fechaISO) return "";
+
+    try {
+      // Intentar con dayjs
+      const fechaFormateada = dayjs.tz(fechaISO, 'America/Argentina/Buenos_Aires').format('DD-MM-YYYY');
+
+      // Si dayjs devuelve "Invalid Date" o null, usamos el método nativo
+      if (!fechaFormateada || fechaFormateada === "Invalid Date") {
+        throw new Error("dayjs falló");
+      }
+
+      return fechaFormateada;
+    } catch (error) {
+      // Respaldo nativo en caso de fallo
+      const fecha = new Date(fechaISO);
+      if (isNaN(fecha.getTime())) return ""; // si la fecha es inválida también en JS
+
+      const dia = String(fecha.getDate()).padStart(2, "0");
+      const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+      const anio = fecha.getFullYear();
+
+      return `${dia}-${mes}-${anio}`;
+    }
   }
 
   // --- loaders ---
   const loadClases = useCallback(async () => {
-    setErrorClases('');
+    setErrorClases("");
     setNotis(null);
     try {
+      const hoy = dayjs().tz('America/Argentina/Buenos_Aires').format('YYYY-MM-DD');
+
+
       const res = await axios.get(
-        `${URL}notifications/clases-prueba/${userId}`
+        `${URL}ventas-remarketing/clases-hoy?fecha=${hoy}${
+          level !== "admin" ? `&usuario_id=${userId}` : ""
+        }`
       );
+
+      const clasesConFechaCorregida = (Array.isArray(res.data) ? res.data : []).map(clase => ({
+        ...clase,
+        fecha: clase.fecha ? dayjs.tz(clase.fecha, 'America/Argentina/Buenos_Aires').format('YYYY-MM-DD') : null,
+        clase_prueba_1_fecha: clase.clase_prueba_1_fecha ? dayjs.tz(clase.clase_prueba_1_fecha, 'America/Argentina/Buenos_Aires').format('YYYY-MM-DD') : null,
+        clase_prueba_2_fecha: clase.clase_prueba_2_fecha ? dayjs.tz(clase.clase_prueba_2_fecha, 'America/Argentina/Buenos_Aires').format('YYYY-MM-DD') : null,
+        clase_prueba_3_fecha: clase.clase_prueba_3_fecha ? dayjs.tz(clase.clase_prueba_3_fecha, 'America/Argentina/Buenos_Aires').format('YYYY-MM-DD') : null,
+      }));
+
+
       setNotis(Array.isArray(res.data) ? res.data : []);
-    } catch {
-      setErrorClases('No se pudo cargar clases de prueba.');
+    } catch (error) {
+      console.error("❌ Error cargando clases:", error); // DEBUG
+      setErrorClases("No se pudo cargar clases de remarketing.");
       setNotis([]);
     }
-  }, [userId]);
+  }, [userId, level]);
 
   const loadVentas = useCallback(async () => {
-    setErrorVentas('');
+    setErrorVentas("");
     setVentas(null);
     try {
       const qs = new URLSearchParams({
-        level: level === 'admin' ? 'admin' : 'vendedor',
-        ...(level !== 'admin' ? { usuario_id: String(userId) } : {}),
-        with_prospect: '1'
+        level: level === "admin" ? "admin" : "vendedor",
+        ...(level !== "admin" ? { usuario_id: String(userId) } : {}),
+        with_prospect: "1",
       });
+      
+      
       const r = await fetch(`${URL}ventas/agenda/hoy?${qs.toString()}`);
       const d = await r.json();
+      
+      
       const arr = Array.isArray(d) ? d : [];
       setVentas(arr);
 
-      // Si tu badge del pill muestra solo PENDIENTES, descomentá estas líneas:
-      // const pend = arr.filter(x => !x.done).length;
-      // onVentasCountChange?.(pend);
-
-      // Si preferís TOTAL (pend+realizados), dejalo así:
       onVentasCountChange?.(arr.length);
-    } catch {
-      setErrorVentas('No se pudo cargar la agenda de ventas.');
+    } catch (error) {
+      console.error('❌ Error cargando ventas:', error);
+      setErrorVentas("No se pudo cargar la agenda de ventas.");
       setVentas([]);
       onVentasCountChange?.(0);
     }
@@ -86,9 +126,9 @@ export default function AgendasVentas({
   // cerrar con ESC
   useEffect(() => {
     if (!open) return;
-    const onKey = (e) => e.key === 'Escape' && onClose?.();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    const onKey = (e) => e.key === "Escape" && onClose?.();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   // acciones ventas (no quita el item; lo marca done y reordena pendientes primero)
@@ -113,12 +153,12 @@ export default function AgendasVentas({
 
     try {
       const r = await fetch(`${URL}ventas/agenda/${id}/done`, {
-        method: 'PATCH'
+        method: "PATCH",
       });
       if (!r.ok) throw new Error();
     } catch {
       setVentas(prev); // rollback
-      alert('No se pudo marcar como realizado');
+      alert("No se pudo marcar como realizado");
     }
   };
 
@@ -129,34 +169,37 @@ export default function AgendasVentas({
   const total = totalClases + totalVentas;
 
   const marcarEnviado = async (prospectoId) => {
-    // snapshot para rollback
-    const prev = notis;
 
-    // Optimista: setear enviado y reordenar (pendientes arriba)
+    const prev = notis;
     setNotis((arr) =>
       Array.isArray(arr)
         ? arr
             .map((n) =>
-              n.prospecto_id === prospectoId ? { ...n, n_contacto_2: 1 } : n
+              n.prospecto_id === prospectoId ? { ...n, enviado: 1 } : n
             )
-            .sort(
-              (a, b) =>
-                (a.n_contacto_2 || 0) - (b.n_contacto_2 || 0) ||
-                a.nombre.localeCompare(b.nombre)
-            )
+            .sort((a, b) => (a.enviado || 0) - (b.enviado || 0))
         : arr
     );
 
     try {
-      const r = await fetch(
-        `${URL}notifications/clases-prueba/${prospectoId}/enviado`,
-        { method: 'PATCH' }
-      );
-      if (!r.ok) throw new Error('patch-failed');
+      const url = `${URL}ventas-remarketing/${prospectoId}/marcar-enviado`;
+
+      const r = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enviado_by_user_id: userId }),
+      });
+
+      const data = await r.json();
+
+      if (!r.ok) {
+        throw new Error(data.mensajeError || "Error al marcar como enviado");
+      }
+
     } catch (e) {
-      // rollback
+      console.error("❌ Error completo:", e); // DEBUG
       setNotis(prev);
-      alert('No se pudo marcar como realizado');
+      alert(`No se pudo marcar como enviado: ${e.message}`);
     }
   };
 
@@ -263,130 +306,186 @@ export default function AgendasVentas({
 
           {Array.isArray(notis) && notis.length > 0 && (
             <div className="space-y-3">
+              <h3 className="uppercase font-bignoodle text-[clamp(18px,3.5vw,24px)] font-bold text-gray-900 dark:text-white">
+                Clases de Remarketing
+              </h3>
               {notis.map((n) => {
-                const enviado = Number(n.n_contacto_2) === 1;
+                const enviado = Number(n.enviado) === 1;
                 const tipo = n.tipo ?? n.tipo_for_today;
                 const fechaMostrar =
+                  n.fecha ??
                   n.fecha_for_today ??
                   n.clase_prueba_1_fecha ??
                   n.clase_prueba_2_fecha ??
                   n.clase_prueba_3_fecha;
-                // prioriza la observación del turno de hoy
-                const observacion = n?.obs_for_today ?? n?.observacion ?? '';
+                const observacion = n?.observacion ?? n?.obs_for_today ?? "";
 
                 return (
-                  <div
-                    key={n.prospecto_id}
-                    className={[
-                      'grid grid-cols-1 md:grid-cols-[auto,1fr,auto] items-start gap-3 sm:gap-4 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow border-l-8',
-                      enviado
-                        ? 'bg-green-50/90 border-green-400'
-                        : 'bg-yellow-50/90 border-yellow-400'
-                    ].join(' ')}
-                    style={{ backdropFilter: 'blur(2px)' }}
-                  >
-                    {/* Fecha */}
-                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                      <Calendar className="text-yellow-500 h-6 w-6 sm:h-7 sm:w-7" />
-                      <span className="font-extrabold text-[15px] sm:text-lg tracking-wide text-gray-900 dark:text-white">
-                        {formatearFecha(fechaMostrar)}
-                      </span>
-                    </div>
+                    <div
+                      key={n.prospecto_id}
+                      className={[
+                        "grid grid-cols-1 md:grid-cols-[auto,1fr,auto] items-start gap-3 sm:gap-4 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow border-l-8",
+                        enviado
+                          ? "bg-green-50/90 border-green-400"
+                          : "bg-yellow-50/90 border-yellow-400",
+                      ].join(" ")}
+                      style={{ backdropFilter: "blur(2px)" }}
+                    >
+                      {/* Fecha */}
+                      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                        <Calendar className="text-yellow-500 h-6 w-6 sm:h-7 sm:w-7" />
+                        <span className="font-extrabold text-[15px] sm:text-lg tracking-wide text-gray-900 dark:text-white">
+                          {formatearFecha(fechaMostrar)}
+                        </span>
+                      </div>
 
-                    {/* Info prospecto */}
-                    <div className="min-w-0">
-                      <div className="uppercase font-semibold text-[15px] sm:text-lg text-yellow-900 dark:text-yellow-100 truncate">
-                        {n.nombre}
-                      </div>
-                      <div className="uppercase font-messina font-semibold text-[15px] sm:text-lg text-yellow-900 dark:text-yellow-100 truncate">
-                        {n.sede}
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">
-                        <span>
-                          Colaborador:{' '}
-                          <span className="text-orange-700 dark:text-orange-400 font-bold">
-                            {n.asesor_nombre}
+                      {/* Info prospecto */}
+                      <div className="min-w-0">
+                        <div className="uppercase font-semibold text-[15px] sm:text-lg text-yellow-900 dark:text-yellow-100 truncate">
+                          {n.nombre || n.nombre_socio}
+                        </div>
+                        <div className="uppercase font-messina font-semibold text-[15px] sm:text-lg text-yellow-900 dark:text-yellow-100 truncate">
+                          {n.sede}
+                        </div>
+                        <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">
+                          <span>
+                            Colaborador:{" "}
+                            <span className="text-orange-700 dark:text-orange-400 font-bold">
+                              {n.asesor_nombre}
+                            </span>
                           </span>
-                        </span>
-                        <span className="block mt-0.5">
-                          Tipo:{' '}
-                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-100 text-orange-800 font-semibold">
-                            {tipo || '—'}
+                          {n.numero_clase && (
+                            <span className="block mt-0.5">
+                              Clase:{" "}
+                              <span className="inline-flex items-center px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold">
+                                #{n.numero_clase}
+                              </span>
+                            </span>
+                          )}
+                          {tipo && (
+                            <span className="block mt-0.5">
+                              Tipo:{" "}
+                              <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-100 text-orange-800 font-semibold">
+                                {tipo}
+                              </span>
+                            </span>
+                          )}
+                          {observacion && (
+                            <span className="block mt-0.5">
+                              Observación:{" "}
+                              <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-100 text-orange-800 font-semibold">
+                                {observacion}
+                              </span>
+                            </span>
+                          )}
+                          <span className="block mt-0.5">
+                            Contacto:{" "}
+                            <span className="font-bold break-words">
+                              {n.contacto}
+                            </span>
                           </span>
-                        </span>
-                        <span className="block mt-0.5">
-                          Observación:{' '}
-                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-100 text-orange-800 font-semibold">
-                            {observacion || '—'}
-                          </span>
-                        </span>
-                        <span className="block mt-0.5">
-                          Contacto:{' '}
-                          <span className="font-bold break-words">
-                            {n.contacto}
-                          </span>
-                        </span>
-                      </div>
-                    </div>
+                            <div className="mt-1.5 flex items-center gap-2 text-sm">
+                              <span className="text-gray-600 dark:text-gray-400">Origen:</span>
+                              
+                              {(() => {
+                                // Lógica para determinar el texto y el color
+                                // 1. Si el backend ya manda el nombre del origen (ej: 'Recaptacion'), úsalo.
+                                // 2. Si tiene 'ventas_prospecto_id', asumimos que es de VENTAS.
+                                // 3. Si la actividad dice 'Pilates', lo destacamos.
+                                let textoOrigen = n.origen || (n.ventas_prospecto_id ? "VENTAS" : "GENERAL");
+                                
+                                // Detectar Pilates especificamente si viene en la actividad
+                                if (n.actividad && n.actividad.toLowerCase().includes("pilates")) {
+                                    textoOrigen = "PILATES";
+                                }
 
-                    {/* Acciones */}
-                    <div className="flex md:justify-end w-full md:w-auto gap-2">
-                      <a
-                        href={`https://wa.me/${(n.contacto || '').replace(
-                          /\D/g,
-                          ''
-                        )}?text=${encodeURIComponent(
-                          `Hola, soy ${n.asesor_nombre} de HammerX y te quería recordar tu clase/visita de hoy.`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={[
-                          'inline-flex w-full md:w-auto items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold shadow',
-                          enviado
-                            ? 'bg-green-400 text-white cursor-not-allowed opacity-70'
-                            : 'bg-green-500 hover:bg-green-600 text-white'
-                        ].join(' ')}
-                        onClick={(e) => enviado && e.preventDefault()}
-                        title={
-                          enviado
-                            ? 'Ya marcado como realizado'
-                            : 'Abrir WhatsApp'
-                        }
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
+                                // Asignar colores según el origen
+                                let clasesColor = "bg-gray-100 text-gray-600 border-gray-200"; // Default
+
+                                const origenUpper = String(textoOrigen).toUpperCase();
+
+                                if (origenUpper.includes("VENTAS")) {
+                                  clasesColor = "bg-blue-100 text-blue-700 border-blue-200";
+                                } else if (origenUpper.includes("RECAPTACION") || origenUpper.includes("RECAPTACIÓN")) {
+                                  clasesColor = "bg-purple-100 text-purple-700 border-purple-200";
+                                } else if (origenUpper.includes("PILATES")) {
+                                  clasesColor = "bg-pink-100 text-pink-700 border-pink-200";
+                                } else if (origenUpper.includes("WEB") || origenUpper.includes("PÁGINA")) {
+                                  clasesColor = "bg-indigo-100 text-indigo-700 border-indigo-200";
+                                }
+
+                                return (
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide shadow-sm border ${clasesColor}`}>
+                                    {textoOrigen}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                        </div>
+                      </div>
+
+                      {/* Acciones */}
+                      <div className="flex md:justify-end w-full md:w-auto gap-2">
+                        <a
+                          href={`https://wa.me/${(n.contacto || "").replace(
+                            /\D/g,
+                            ""
+                          )}?text=${encodeURIComponent(
+                            `Hola ${n.nombre || n.nombre_socio}, soy ${
+                              n.asesor_nombre
+                            } de HammerX y te quería recordar tu clase de prueba ${
+                              n.numero_clase ? `#${n.numero_clase}` : ""
+                            } de hoy.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={[
+                            "inline-flex w-full md:w-auto items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold shadow",
+                            enviado
+                              ? "bg-green-400 text-white cursor-not-allowed opacity-70"
+                              : "bg-green-500 hover:bg-green-600 text-white",
+                          ].join(" ")}
+                          onClick={(e) => enviado && e.preventDefault()}
+                          title={
+                            enviado
+                              ? "Ya marcado como realizado"
+                              : "Abrir WhatsApp"
+                          }
                         >
-                          <path d="M20.52 3.48a12.1 12.1 0 0 0-17.09 0c-4.01 4-4.17 10.44-.36 14.62l-1.06 3.84a1.003 1.003 0 0 0 1.27 1.27l3.84-1.06c4.18 3.81 10.62 3.65 14.62-.36 4.01-4.01 4.01-10.52 0-14.55zm-1.41 13.13c-3.34 3.33-8.77 3.48-12.28.35l-.2-.18-2.34.65.65-2.34-.18-.2c-3.13-3.5-2.98-8.94.35-12.28a9.09 9.09 0 0 1 12.82 12z" />
-                        </svg>
-                        Contactar
-                      </a>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M20.52 3.48a12.1 12.1 0 0 0-17.09 0c-4.01 4-4.17 10.44-.36 14.62l-1.06 3.84a1.003 1.003 0 0 0 1.27 1.27l3.84-1.06c4.18 3.81 10.62 3.65 14.62-.36 4.01-4.01 4.01-10.52 0-14.55zm-1.41 13.13c-3.34 3.33-8.77 3.48-12.28.35l-.2-.18-2.34.65.65-2.34-.18-.2c-3.13-3.5-2.98-8.94.35-12.28a9.09 9.09 0 0 1 12.82 12z" />
+                          </svg>
+                          Contactar
+                        </a>
 
-                      {/* Marcar realizado */}
-                      <button
-                        onClick={() =>
-                          !enviado && marcarEnviado(n.prospecto_id)
-                        }
-                        className={[
-                          'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-sm font-bold shadow',
-                          enviado
-                            ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
-                            : 'bg-[#fc4b08] text-white hover:bg-[#e0480b]'
-                        ].join(' ')}
-                        disabled={enviado}
-                        title={
-                          enviado
-                            ? 'Ya marcado como realizado'
-                            : 'Marcar realizado'
-                        }
-                      >
-                        {enviado ? 'Realizado' : 'Marcar realizado'}
-                      </button>
+                        {/* Marcar realizado */}
+                        <button
+                          onClick={() =>
+                            !enviado && marcarEnviado(n.prospecto_id || n.id)
+                          }
+                          className={[
+                            "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-sm font-bold shadow",
+                            enviado
+                              ? "bg-gray-200 text-gray-600 cursor-not-allowed"
+                              : "bg-[#fc4b08] text-white hover:bg-[#e0480b]",
+                          ].join(" ")}
+                          disabled={enviado}
+                          title={
+                            enviado
+                              ? "Ya marcado como realizado"
+                              : "Marcar realizado"
+                          }
+                        >
+                          {enviado ? "Realizado" : "Marcar realizado"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
                 );
               })}
             </div>
@@ -447,21 +546,21 @@ export default function AgendasVentas({
                       key={it.id}
                       className={[
                         // contenedor con fondo y borde lateral según estado
-                        'group rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition border border-transparent',
-                        'grid grid-cols-1 md:grid-cols-[1fr,auto] items-start gap-3 sm:gap-4',
+                        "group rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition border border-transparent",
+                        "grid grid-cols-1 md:grid-cols-[1fr,auto] items-start gap-3 sm:gap-4",
                         isDone
-                          ? 'bg-green-50/90 border-l-8 border-l-green-400'
-                          : 'bg-orange-50/70 border-l-8 border-l-orange-300'
-                      ].join(' ')}
+                          ? "bg-green-50/90 border-l-8 border-l-green-400"
+                          : "bg-orange-50/70 border-l-8 border-l-orange-300",
+                      ].join(" ")}
                     >
                       {/* Columna izquierda */}
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span
                             className={[
-                              'h-2 w-2 rounded-full mt-1',
-                              isDone ? 'bg-green-500' : 'bg-orange-500'
-                            ].join(' ')}
+                              "h-2 w-2 rounded-full mt-1",
+                              isDone ? "bg-green-500" : "bg-orange-500",
+                            ].join(" ")}
                           />
                           <div className="text-sm sm:text-base font-semibold text-gray-800 truncate">
                             {it.prospecto?.nombre ??
@@ -471,8 +570,8 @@ export default function AgendasVentas({
 
                         <div className="mt-1 text-[11px] sm:text-xs text-gray-600 flex flex-wrap gap-x-2">
                           <span>Clase #{it.clase_num}</span>
-                          <span>• {it.prospecto?.actividad || '—'}</span>
-                          <span>• {it.prospecto?.sede || '—'}</span>
+                          <span>• {it.prospecto?.actividad || "—"}</span>
+                          <span>• {it.prospecto?.sede || "—"}</span>
                         </div>
 
                         <div className="mt-2 text-sm text-gray-800 break-words">
@@ -483,13 +582,13 @@ export default function AgendasVentas({
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                           <span
                             className={[
-                              'inline-block rounded-full px-3 py-1 text-[11px] sm:text-xs font-bold',
+                              "inline-block rounded-full px-3 py-1 text-[11px] sm:text-xs font-bold",
                               isDone
-                                ? 'bg-green-200 text-green-800'
-                                : 'bg-yellow-200 text-yellow-900'
-                            ].join(' ')}
+                                ? "bg-green-200 text-green-800"
+                                : "bg-yellow-200 text-yellow-900",
+                            ].join(" ")}
                           >
-                            {isDone ? 'Realizado' : 'Pendiente'}
+                            {isDone ? "Realizado" : "Pendiente"}
                           </span>
 
                           {it.prospecto?.contacto && (
@@ -502,13 +601,13 @@ export default function AgendasVentas({
                                 target="_blank"
                                 rel="noreferrer"
                                 className={[
-                                  'inline-flex items-center justify-center gap-2 rounded-lg text-white text-[11px] sm:text-xs font-bold px-3 py-1.5 transition w-full sm:w-auto',
+                                  "inline-flex items-center justify-center gap-2 rounded-lg text-white text-[11px] sm:text-xs font-bold px-3 py-1.5 transition w-full sm:w-auto",
                                   isDone
-                                    ? 'bg-green-400 cursor-not-allowed opacity-70'
-                                    : 'bg-green-500/90 hover:bg-green-600'
-                                ].join(' ')}
+                                    ? "bg-green-400 cursor-not-allowed opacity-70"
+                                    : "bg-green-500/90 hover:bg-green-600",
+                                ].join(" ")}
                                 title={
-                                  isDone ? 'Ya realizado' : 'Abrir WhatsApp'
+                                  isDone ? "Ya realizado" : "Abrir WhatsApp"
                                 }
                                 onClick={(e) => isDone && e.preventDefault()}
                               >
@@ -522,13 +621,13 @@ export default function AgendasVentas({
                                   )
                                 }
                                 className={[
-                                  'inline-flex items-center justify-center gap-2 rounded-lg text-[11px] sm:text-xs font-semibold px-3 py-1.5 transition w-full sm:w-auto',
+                                  "inline-flex items-center justify-center gap-2 rounded-lg text-[11px] sm:text-xs font-semibold px-3 py-1.5 transition w-full sm:w-auto",
                                   isDone
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
-                                ].join(' ')}
+                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    : "bg-gray-100 hover:bg-gray-200 text-gray-800",
+                                ].join(" ")}
                                 title={
-                                  isDone ? 'Ya realizado' : 'Copiar teléfono'
+                                  isDone ? "Ya realizado" : "Copiar teléfono"
                                 }
                                 disabled={isDone}
                               >
@@ -544,19 +643,19 @@ export default function AgendasVentas({
                         <button
                           onClick={() => !isDone && marcarDone(it.id)}
                           className={[
-                            'w-full md:w-auto rounded-xl px-4 py-2 text-sm md:text-[15px] font-bold text-white shadow transition',
+                            "w-full md:w-auto rounded-xl px-4 py-2 text-sm md:text-[15px] font-bold text-white shadow transition",
                             isDone
-                              ? 'bg-gray-300 cursor-not-allowed'
-                              : 'bg-[#fc4b08] hover:shadow-md hover:bg-[#e0480b] active:scale-95'
-                          ].join(' ')}
+                              ? "bg-gray-300 cursor-not-allowed"
+                              : "bg-[#fc4b08] hover:shadow-md hover:bg-[#e0480b] active:scale-95",
+                          ].join(" ")}
                           disabled={isDone}
                           title={
                             isDone
-                              ? 'Ya marcado como realizado'
-                              : 'Marcar realizado'
+                              ? "Ya marcado como realizado"
+                              : "Marcar realizado"
                           }
                         >
-                          {isDone ? 'Realizado' : 'Marcar realizado'}
+                          {isDone ? "Realizado" : "Marcar realizado"}
                         </button>
                       </div>
                     </div>

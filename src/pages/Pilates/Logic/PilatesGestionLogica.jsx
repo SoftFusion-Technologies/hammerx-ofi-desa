@@ -1155,6 +1155,7 @@ const PilatesGestionLogica = () => {
 
         if (!confirm.isConfirmed) return;
 
+        // Pasamos el nombre de la sede como segundo parámetro
         await deleteCliente(studentData.student.id);
 
         await sweetalert2.fire({

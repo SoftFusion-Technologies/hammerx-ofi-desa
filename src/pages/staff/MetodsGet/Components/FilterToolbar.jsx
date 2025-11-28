@@ -28,6 +28,14 @@ export default function FilterToolbar({
   onExportClick,
   comisionEstadoFiltro, // NUEVO
   setComisionEstadoFiltro, // NUEVO
+  enviadoFiltro,
+  setEnviadoFiltro,
+  respondidoFiltro,
+  setRespondidoFiltro,
+  agendadoFiltro,
+  setAgendadoFiltro,
+  contactadoFiltro, // NUEVO
+  setContactadoFiltro, // NUEVO
   counts // { all, convertidos, comision, alerta, comiEnRev?, comiAprob?, comiRecha? }
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -397,11 +405,10 @@ export default function FilterToolbar({
               className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
             >
               <option value="">Todas</option>
-              <option value="Multisede">MULTI SEDE</option>
-              <option value="Monteros">MONTEROS</option>
-              <option value="Concepción">CONCEPCIÓN</option>
-              <option value="SMT">TUCUMÁN - BARRIO SUR</option>
-              <option value="SanMiguelBN">TUCUMÁN - BARRIO NORTE</option>
+              <option value="monteros">Monteros</option>
+              <option value="concepcion">Concepción</option>
+              <option value="barrio sur">Barrio Sur</option>
+              <option value="barrio norte">Barrio Norte</option>
             </select>
           </div>
 
@@ -439,7 +446,6 @@ export default function FilterToolbar({
               <option value="Pagina web">Página web</option>
               <option value="Campaña">Campaña</option>
               <option value="Comentarios/Stickers">Comentarios/Stickers</option>
-              <option value="Desde pilates">Desde pilates</option>
             </select>
           </div>
 
@@ -523,6 +529,70 @@ export default function FilterToolbar({
             >
               <option value="">Todas</option>
               <option value="con-alerta">Con alerta</option>
+            </select>
+          </div>
+
+          {/* NUEVO: Filtro Estado de contacto -- REMARKETING */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Contactado
+            </label>
+            <select
+              value={contactadoFiltro}
+              onChange={(e) => setContactadoFiltro(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            >
+              <option value="">Todos</option>
+              <option value="si">Contactados</option>
+              <option value="no">Sin contactar</option>
+            </select>
+          </div>
+
+          {/* Enviado */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Enviado
+            </label>
+            <select
+              value={enviadoFiltro}
+              onChange={(e) => setEnviadoFiltro(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            >
+              <option value="">Todos</option>
+              <option value="si">Enviados</option>
+              <option value="no">No enviados</option>
+            </select>
+          </div>
+
+          {/* Respondido */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Respondido
+            </label>
+            <select
+              value={respondidoFiltro}
+              onChange={(e) => setRespondidoFiltro(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            >
+              <option value="">Todos</option>
+              <option value="si">Respondidos</option>
+              <option value="no">Sin responder</option>
+            </select>
+          </div>
+
+          {/* Agendado */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Agendado
+            </label>
+            <select
+              value={agendadoFiltro}
+              onChange={(e) => setAgendadoFiltro(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            >
+              <option value="">Todos</option>
+              <option value="si">Agendados</option>
+              <option value="no">Sin agendar</option>
             </select>
           </div>
         </div>
