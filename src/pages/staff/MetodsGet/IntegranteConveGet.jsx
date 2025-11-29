@@ -32,6 +32,7 @@ import InvoicesUpload from './InvoicesUpload.jsx';
 import FileUpload from './FileUpload.jsx';
 import FechasConvenios from './Novedad/FechasConvenios.jsx';
 import CongelarIntegrantes from './Integrantes/CongelarIntegrantes';
+
 const IntegranteConveGet = ({ integrantes }) => {
   // Estado para almacenar la lista de personas
   const { id_conv, id_adm } = useParams();
@@ -134,7 +135,6 @@ const IntegranteConveGet = ({ integrantes }) => {
         setDescuento(data.descuento);
         setPrecioFinal(data.preciofinal);
 
-        // concepcion en multisede nuevos precios
         setPrecio_concep(data.precio_concep);
         setDescuento_concep(data.descuento_concep);
         setPrecioFinal_concep(data.preciofinal_concep);
@@ -313,7 +313,7 @@ const IntegranteConveGet = ({ integrantes }) => {
   };
 
   const handleCopyClick = () => {
-    const cbu = '0110372230037217312133';
+    const cbu = '2850156330094245972241';
     navigator.clipboard
       .writeText(cbu)
       .then(() => {
@@ -384,7 +384,6 @@ const IntegranteConveGet = ({ integrantes }) => {
       alert('Ocurrió un error al autorizar los integrantes');
     }
   };
-
   return (
     <>
       <NavbarStaff />
@@ -444,7 +443,7 @@ const IntegranteConveGet = ({ integrantes }) => {
               className="border rounded-sm"
             />
           </form>
-          {/* formulario de busqueda fin */}
+          {/* formulario de busqueda */}
           {(userLevel === 'gerente' ||
             userLevel === 'admin' ||
             userLevel === 'vendedor' ||
@@ -470,7 +469,6 @@ const IntegranteConveGet = ({ integrantes }) => {
               </Link>
             </div>
           )}
-
           {/* Importar Clientes Excel - INICIO */}
           {(userLevel === 'admin' ||
             userLevel === '' ||
@@ -524,7 +522,6 @@ const IntegranteConveGet = ({ integrantes }) => {
               />
             </div>
           )}
-
           {/* Nuevo requerimiento para congelar listados R9 - INICIO  */}
 
           {/* R8 - SE AGREGAN FECHAS PARA TRABAJAR EN CONVENIOS INICIO - BENJAMIN ORELLANA */}
@@ -762,7 +759,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                     <span className="cbutext text-gray-600">
                       {' '}
                       REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU:
-                      0110372230037217312133
+                      2850156330094245972241
                     </span>
                     <img
                       className="copy-icon"
@@ -772,11 +769,11 @@ const IntegranteConveGet = ({ integrantes }) => {
                     />
                   </div>
                   <p className="font-bignoodle text-gray-600 text-2xl">
-                    Titular: Marcelo Javier Garcia
+                    Titular: HAMMERX SAS
                   </p>
-                  <p className="font-bignoodle text-gray-600 text-2xl">
+                  {/* <p className="font-bignoodle text-gray-600 text-2xl">
                     CUIT: 20- 34.764.843 -5
-                  </p>
+                  </p> */}
                   <div
                     colSpan="7"
                     className="font-bold text-[#fc4b08] text-2xl"

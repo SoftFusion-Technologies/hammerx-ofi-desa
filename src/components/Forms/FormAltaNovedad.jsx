@@ -1,7 +1,7 @@
 /*
  * Programadores: Benjamin Orellana (back) y Lucas Albornoz (front)
  * Fecha Cración: 06 / 04 / 2024
- * Versión: 1.1 (UI modernizada 24 / 11 / 2025)
+ * Versión: 1.2 (UI modernizada + Multisede 29 / 11 / 2025)
  *
  * Descripción:
  *  Este archivo (FormAltaNovedad.jsx) es el componente donde realizamos un formulario para
@@ -24,7 +24,8 @@ import ModalError from './ModalError';
 import Alerta from '../Error';
 import { useAuth } from '../../AuthContext';
 
-const ALL_SEDES = ['monteros', 'concepcion', 'SMT', 'SanMiguelBN'];
+// AHORA incluye Multisede
+const ALL_SEDES = ['monteros', 'concepcion', 'SMT', 'SanMiguelBN', 'Multisede'];
 
 const FormAltaNovedad = ({
   isOpen,
@@ -37,7 +38,7 @@ const FormAltaNovedad = ({
   const [selectedSede, setSelectedSede] = useState(['monteros']);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectAllUsers, setSelectAllUsers] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(''); // NUEVO: búsqueda de usuarios
+  const [searchTerm, setSearchTerm] = useState(''); // búsqueda de usuarios
 
   const { userName } = useAuth();
 
@@ -95,7 +96,7 @@ const FormAltaNovedad = ({
     }
   };
 
-  // Filtrado por búsqueda
+  // Filtrado por búsqueda (sobre lo que devolvió el backend)
   const filteredUsers = Array.isArray(users)
     ? users.filter((u) =>
         (u.name || '').toLowerCase().includes((searchTerm || '').toLowerCase())
@@ -111,7 +112,6 @@ const FormAltaNovedad = ({
   };
 
   const handleSelectAllUsers = () => {
-    // ahora toma los usuarios filtrados (los que se ven en la lista)
     const next = !selectAllUsers;
     setSelectAllUsers(next);
 
@@ -136,20 +136,22 @@ const FormAltaNovedad = ({
             return 'T.Barrio Sur';
           case 'SanMiguelBN':
             return 'T.Barrio Norte';
+          case 'Multisede':
+            return 'Multisede';
           default:
             return sede;
         }
       })
       .join(', ');
 
-    if (selectedSedeLocal.length === 4) {
+    if (selectedSedeLocal.length === ALL_SEDES.length) {
       return 'todas';
     }
     return valorFormateado;
   };
 
   const mapSedesToApiValue = (selectedSedeLocal) => {
-    return selectedSedeLocal.length === 4
+    return selectedSedeLocal.length === ALL_SEDES.length
       ? 'todas'
       : selectedSedeLocal.join(', ');
   };
@@ -221,7 +223,7 @@ const FormAltaNovedad = ({
     );
   };
 
-  // NUEVO: botón para marcar todas las sedes
+  // botón para marcar todas las sedes
   const allSedesSelected =
     selectedSede.length === ALL_SEDES.length &&
     ALL_SEDES.every((s) => selectedSede.includes(s));
@@ -305,7 +307,7 @@ const FormAltaNovedad = ({
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {/* Monteros */}
                     <button
                       type="button"
@@ -364,6 +366,21 @@ const FormAltaNovedad = ({
                       {selectedSede.includes('SanMiguelBN')
                         ? 'T.Barrio Norte ✅'
                         : 'T.Barrio Norte'}
+                    </button>
+
+                    {/* Multisede */}
+                    <button
+                      type="button"
+                      onClick={() => handleSedeSelection('Multisede')}
+                      className={`w-full py-2 px-2 rounded-xl text-xs font-semibold transition flex items-center justify-center text-center shadow-sm ${
+                        selectedSede.includes('Multisede')
+                          ? 'bg-[#fc4b08] text-white shadow-md shadow-orange-300'
+                          : 'bg-white text-[#fc4b08] border border-orange-300 hover:bg-orange-50'
+                      }`}
+                    >
+                      {selectedSede.includes('Multisede')
+                        ? 'Multisede ✅'
+                        : 'Multisede'}
                     </button>
                   </div>
                 </section>
