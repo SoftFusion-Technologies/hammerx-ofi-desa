@@ -464,7 +464,7 @@ const ModalListaEspera = ({
               >
                 <option value="L-M-V">Lunes-Miércoles-Viernes</option>
                 <option value="M-J">Martes-Jueves</option>
-                <option value="Cualquier día">Cualquier día</option>
+                <option value="Cualquier dia">Cualquier día</option>
               </select>
             </div>
           </div>
