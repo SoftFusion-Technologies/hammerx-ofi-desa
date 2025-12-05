@@ -5,7 +5,11 @@
 */
 
 import NavbarStaff from "../staff/NavbarStaff";
-import { FaSearch } from "react-icons/fa";
+import {
+  FaSearch,
+  FaCompressAlt,
+  FaExpandAlt,
+} from "react-icons/fa";
 import { VscDebugRestart } from "react-icons/vsc";
 import GrillaHorarios from "./Components/GrillaHorarios";
 import Footer from "../../components/footer/Footer";
@@ -20,7 +24,10 @@ import ModalDetalleAusentes from "./Modal/ModalDetalleAusentes";
 import ModalAyudaGrillaGestion from "./Modal/ModalAyudaGrillaGestion";
 import ModalConfirmarListaEspera from "./Modal/ModalConfirmarListaEspera";
 import ModalCambioTurno from "./Modal/ModalCambioTurno";
+import HorariosDeshabilitados from "./Components/HorariosDeshabilitados";
 import { FaQuestionCircle } from "react-icons/fa";
+import SelectorSedes from "./Components/SelectorSedes";
+import { useAuth } from "../../AuthContext";
 
 const EyeIcon = ({ className }) => (
   <svg
@@ -40,53 +47,14 @@ const EyeIcon = ({ className }) => (
 
 const PilatesGestion = () => {
   const { states, setters, functions } = PilatesGestionLogica();
-
+  const { sedeName: sedeActual, userLevel: rolUsuario } = useAuth(); // Obtener la sede actual del contexto de autenticación
   return (
     <>
       <NavbarStaff />
       {states.sedesData && states.sedesData.length > 0 ? (
         <>
-          <div className="my-2 w-full max-w-md mx-auto">
-            <label
-              htmlFor="select-options"
-              className="block text-gray-700 text-sm font-bold mb-2"
-            >
-              Seleccioná la sede
-            </label>
-            <div className="relative">
-              <select
-                id="select-options"
-                value={states.sedeActualFiltro}
-                onChange={(e) => {
-                  functions.cambiarSede(e.target.value);
-                }}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="" disabled>
-                  -- Elige una opción --
-                </option>
-                {states.sedesData.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.nombre.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div>
+          <div className="w-full shadow-sm my-2 z-40 relative">
+            <SelectorSedes states={states} functions={functions} />
           </div>
 
           {!states.puedeEditarSede && states.sedeActualFiltro && (
@@ -98,15 +66,16 @@ const PilatesGestion = () => {
           <div className="dashboardbg min-h-screen pt-10 pb-10 p-1 sm:p-6 lg:p-8">
             <div className="mx-auto px-2 sm:px-10 bg-gray-500/50 p-2 rounded-xl ">
               {states.rol === "GESTION" && (
-                <div className="flex flex-col sm:flex-row sm:justify-start sm:space-x-5 space-y-3 sm:space-y-0 my-5 w-full">
-                  <div className="mb-0 sm:mb-4 w-full sm:w-auto">
-                    <Link to="/dashboard" className="w-full">
-                      <button className="w-full sm:w-auto font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white h-12 text-base sm:text-sm">
+                <div className="flex flex-col xl:flex-row items-center justify-between gap-4 my-6 w-full">
+                  {/* --- BOTÓN VOLVER --- */}
+                  <div className="w-full xl:w-auto">
+                    <Link to="/dashboard" className="block w-full sm:w-auto">
+                      <button className="group w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white border-2 border-slate-100 text-slate-500 font-bold hover:border-orange-400 hover:text-orange-500 transition-all duration-200">
                         <svg
-                          className="w-4 h-4 mr-2"
+                          className="w-5 h-5 transition-transform duration-200 group-hover:-translate-x-1"
                           fill="none"
                           stroke="currentColor"
-                          strokeWidth="2"
+                          strokeWidth="2.5"
                           viewBox="0 0 24 24"
                         >
                           <path
@@ -115,40 +84,71 @@ const PilatesGestion = () => {
                             d="M15 19l-7-7 7-7"
                           />
                         </svg>
-                        Volver
+                        <span>Volver al inicio</span>
                       </button>
                     </Link>
                   </div>
-                  <button
-                    onClick={() => functions.handleSectionChange("GESTION")}
-                    className={`w-full sm:w-auto font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors inline-flex items-center justify-center ${
-                      states.section === "GESTION"
-                        ? "bg-blue-800 hover:bg-blue-900 text-white"
-                        : "bg-blue-500 hover:bg-blue-700 text-white"
-                    } text-base sm:text-sm`}
-                    aria-pressed={states.section === "GESTION"}
-                  >
-                    {states.section === "GESTION" && (
-                      <EyeIcon className="h-5 w-5 mr-2" />
-                    )}{" "}
-                    Gestión
-                  </button>
-                  <button
-                    onClick={() =>
-                      functions.handleSectionChange("LISTA_ESPERA")
-                    }
-                    className={`w-full sm:w-auto font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors inline-flex items-center justify-center ${
-                      states.section === "LISTA_ESPERA"
-                        ? "bg-blue-800 hover:bg-blue-900 text-white"
-                        : "bg-blue-500 hover:bg-blue-700 text-white"
-                    } text-base sm:text-sm`}
-                    aria-pressed={states.section === "LISTA_ESPERA"}
-                  >
-                    {states.section === "LISTA_ESPERA" && (
-                      <EyeIcon className="h-5 w-5 mr-2" />
-                    )}{" "}
-                    Lista de espera
-                  </button>
+
+                  {/* --- SELECTOR DE VISTAS --- */}
+                  <div className="flex flex-col sm:flex-row w-full xl:w-auto bg-slate-100 p-1.5 rounded-xl gap-1">
+                    {/* Opción: GESTIÓN */}
+                    <button
+                      onClick={() => functions.handleSectionChange("GESTION")}
+                      className={`
+                      flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200
+                      ${
+                        states.section === "GESTION"
+                          ? "bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]" // Activo
+                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50" // Inactivo
+                      }
+                    `}
+                    >
+                      {states.section === "GESTION" && (
+                        <EyeIcon className="h-4 w-4" />
+                      )}
+                      Gestión
+                    </button>
+
+                    {/* Opción: LISTA DE ESPERA */}
+                    <button
+                      onClick={() =>
+                        functions.handleSectionChange("LISTA_ESPERA")
+                      }
+                      className={`
+                      flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200
+                      ${
+                        states.section === "LISTA_ESPERA"
+                          ? "bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]"
+                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                      }
+                    `}
+                    >
+                      {states.section === "LISTA_ESPERA" && (
+                        <EyeIcon className="h-4 w-4" />
+                      )}
+                      Lista de Espera
+                    </button>
+
+                    {/* Opción: HORARIOS DESHABILITADOS */}
+                    <button
+                      onClick={() =>
+                        functions.handleSectionChange("HORARIOS_DESHABILITADOS")
+                      }
+                      className={`
+                      flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200
+                      ${
+                        states.section === "HORARIOS_DESHABILITADOS"
+                          ? "bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]"
+                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                      }
+                    `}
+                    >
+                      {states.section === "HORARIOS_DESHABILITADOS" && (
+                        <EyeIcon className="h-4 w-4" />
+                      )}
+                      Horarios Deshabilitados
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -169,7 +169,7 @@ const PilatesGestion = () => {
                     <ModalConfirmarListaEspera
                       isOpen={states.isConfirmModalOpen}
                       onClose={() => setters.setIsConfirmModalOpen(false)}
-                      onSave={functions.handleSaveStudent} 
+                      onSave={functions.handleSaveStudent}
                       personData={states.personToConfirm}
                       freeSlots={states.freeSlots}
                       onConfirmationComplete={
@@ -178,6 +178,9 @@ const PilatesGestion = () => {
                     />
                   )}
                 </>
+              ) : states.rol === "GESTION" &&
+                states.section === "HORARIOS_DESHABILITADOS" ? (
+                <HorariosDeshabilitados states={states} functions={functions} />
               ) : (
                 <>
                   {states.rol === "GESTION" && (
@@ -188,6 +191,7 @@ const PilatesGestion = () => {
                       visiblePanels={states.visiblePanels}
                       onToggle={functions.handlePanelToggle}
                       alumnosAusentes={states.ausentesAlumnos}
+                      horariosDeshabilitados={states.horariosDeshabilitados}
                       onOpenModalDetalleAusentes={
                         functions.handleOpenModalDetalleAusentes
                       }
@@ -200,8 +204,9 @@ const PilatesGestion = () => {
                         ? "Gestión de Clases de Pilates"
                         : "Lista de Espera - Pilates"}
                     </h1>
-                    {/* --- CONTENEDOR PRINCIPAL MEJORADO --- */}
+
                     <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {/* BARRA DE BÚSQUEDA */}
                       <div className="relative w-full max-w-lg">
                         <input
                           type="text"
@@ -223,13 +228,39 @@ const PilatesGestion = () => {
                         </button>
                       </div>
 
-                      {/* --- Botón de Ayuda Mejorado --- */}
-                      <div className="w-full sm:w-auto">
+                      {/* --- AQUÍ AGREGAMOS EL BOTÓN COMPACTAR/EXPANDIR --- */}
+                      <div className="w-full sm:w-auto flex gap-2">
+                        {/* Lógica: Si están todos minimizados, mostramos Expandir. Si no, Compactar. */}
+                        {states.horariosMinimizados.length === HOURS.length ? (
+                          <button
+                            onClick={() =>
+                              functions.manejarMinimizacionGlobal(HOURS, false)
+                            } // false = no minimizar (expandir)
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-blue-600 font-semibold text-white shadow-md hover:bg-blue-700 transition-colors duration-200"
+                            title="Ver todos los alumnos"
+                          >
+                            <FaExpandAlt />
+                            <span>Expandir</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              functions.manejarMinimizacionGlobal(HOURS, true)
+                            } // true = minimizar todo
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-white text-gray-700 border border-gray-300 font-semibold shadow-sm hover:bg-gray-50 transition-colors duration-200"
+                            title="Ocultar alumnos para ver solo instructores"
+                          >
+                            <FaCompressAlt />
+                            <span>Compactar</span>
+                          </button>
+                        )}
+
+                        {/* BOTÓN AYUDA (Ya existente) */}
                         <button
-                          className="w-full sm:w-auto flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
                           onClick={() => setters.setIsModalAyuda(true)}
                         >
-                          <FaQuestionCircle /> 
+                          <FaQuestionCircle />
                           Ayuda
                         </button>
                       </div>
@@ -249,6 +280,15 @@ const PilatesGestion = () => {
                     }
                     onInstructorClick={functions.handleOpenModalProfesor}
                     puedeEditarSede={states.puedeEditarSede}
+                    horariosDeshabilitados={states.horariosDeshabilitados}
+                    alDeshabilitarHorario={functions.manejarDeshabilitarHorario}
+                    puedeDeshabilitarHorario={
+                      functions.puedeDeshabilitarHorario
+                    }
+                    horariosMinimizados={states.horariosMinimizados}
+                    alternarMinimizacionHorario={
+                      functions.alternarMinimizacionHorario
+                    }
                   />
 
                   {states.isModalOpen && states.currentCell && (

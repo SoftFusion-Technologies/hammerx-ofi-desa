@@ -487,41 +487,43 @@ const { data: auditoriaData } = useConsultaDB(
   * Toma la fecha de fin del plan actual, le suma 1 día y prepara
   * el formulario para una renovación en estado "plan".
   */
-  const handleRenovacionDirecta = () => {
-    // Toggle: si ya está activo, deshacer la renovación directa
-    if (renovacionDirectaActiva) {
-      // Restaurar fecha de inicio original si existe
-      const originalStart = planStartDateAux || today;
-      setPlanStartDate(originalStart);
-      // Restaurar estado previo
-      setStatus(statusAux || 'plan');
-      // Resetear flags
-      setEsClienteProgramadoAContratado(false);
-      setEsClientePlanParaProgramado(false);
-      setEsClienteParaRenovar(false);
-      setRenovacionDirectaActiva(false);
-      return;
-    }
+  const handleStatusChange = (e) => {
+    const selectedValue = e.target.value;
 
-    // Aplicar renovación directa
-    const ultimoVencimiento = cellData?.student?.planDetails?.endDate;
-    if (ultimoVencimiento) {
-      const [y, m, d] = ultimoVencimiento.split("-").map(Number);
-      const fecha = new Date(y, m - 1, d);
-      fecha.setDate(fecha.getDate() + 1); // sumar 1 día
-      const año = fecha.getFullYear();
-      const mes = String(fecha.getMonth() + 1).padStart(2, "0");
-      const dia = String(fecha.getDate()).padStart(2, "0");
-      const newStartDate = `${año}-${mes}-${dia}`;
+    if (selectedValue === "renovacion_directa") {
+      // Lógica para ACTIVAR renovación directa
+      const ultimoVencimiento = cellData?.student?.planDetails?.endDate;
+      if (ultimoVencimiento) {
+        const [y, m, d] = ultimoVencimiento.split("-").map(Number);
+        const fecha = new Date(y, m - 1, d);
+        fecha.setDate(fecha.getDate() + 1); // sumar 1 día
+        const año = fecha.getFullYear();
+        const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+        const dia = String(fecha.getDate()).padStart(2, "0");
+        const newStartDate = `${año}-${mes}-${dia}`;
 
-      setPlanStartDate(newStartDate);
-      setStatus("plan");
-      setEsClienteProgramadoAContratado(true);
-      setEsClientePlanParaProgramado(false);
-      setEsClienteParaRenovar(true);
-      setRenovacionDirectaActiva(true);
+        setPlanStartDate(newStartDate);
+        setStatus("plan"); // Internamente sigue siendo estado "plan"
+        setEsClienteProgramadoAContratado(true);
+        setEsClientePlanParaProgramado(false);
+        setEsClienteParaRenovar(true);
+        setRenovacionDirectaActiva(true);
+      } else {
+        alert(
+          "Error: No se encontró un plan anterior para renovar directamente."
+        );
+      }
     } else {
-      alert("Error: No se encontró un plan anterior para renovar directamente.");
+      // Si el usuario cambia a otra opción, y estaba activa la renovación directa, reseteamos
+      if (renovacionDirectaActiva) {
+        const originalStart = planStartDateAux || today;
+        setPlanStartDate(originalStart);
+        setEsClienteProgramadoAContratado(false);
+        setEsClientePlanParaProgramado(false);
+        setEsClienteParaRenovar(false);
+        setRenovacionDirectaActiva(false);
+      }
+      setStatus(selectedValue);
     }
   };
 
@@ -638,31 +640,24 @@ const { data: auditoriaData } = useConsultaDB(
             </label>
             <select
               id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              value={renovacionDirectaActiva ? "renovacion_directa" : status}
+              onChange={handleStatusChange}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
+              {cellData?.student && (
+                <option value="renovacion_directa">Renovación Directa</option>
+              )}
               <option value="plan">Plan Contratado</option>
+
               {habilitarRenovacionProgramanda && (
-                <option value="programado">Visita o Renovación programada</option>
+                <option value="programado">
+                  Visita o Renovación programada
+                </option>
               )}
               {habilitarClasePrueba && (
                 <option value="prueba">Clase de Prueba</option>
               )}
             </select>
-            {cellData?.student && status === "plan" && (
-              <button
-                type="button" // Importante para que no envíe el formulario
-                onClick={handleRenovacionDirecta}
-                className={`w-full mt-3 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors ${
-                  renovacionDirectaActiva
-                    ? 'bg-gray-300 text-gray-800 hover:bg-gray-400'
-                    : 'bg-orange-500 text-white hover:bg-orange-700'
-                }`}
-              >
-                {renovacionDirectaActiva ? 'Anular Renovación Directa' : 'Renovación Directa'}
-              </button>
-            )}
           </div>
 
           {/* SECCIÓN: Formulario de PLAN CONTRATADO */}
@@ -813,14 +808,11 @@ const { data: auditoriaData } = useConsultaDB(
               {esClienteParaRenovar && (
                 <div className="mt-2 p-3 bg-green-100 border-l-4 border-green-500 text-green-800 rounded-r-lg">
                   <p className="text-sm">
-                    Este cliente tiene una renovación pendiente. Su plan
-                    anterior finalizó el{" "}
-                    <strong>
-                      {formatearFechaSimple(
-                        cellData.student.planDetails.endDate
-                      )}
-                    </strong>
-                    .
+                    <strong>Renovación consecutiva:</strong> El nuevo plan
+                    inicia automáticamente el día siguiente al último
+                    vencimiento (
+                    {formatearFechaSimple(cellData.student.planDetails.endDate)}
+                    ), para mantener la continuidad.
                   </p>
                 </div>
               )}
@@ -903,9 +895,10 @@ const { data: auditoriaData } = useConsultaDB(
                         cellData.student.planDetails.endDate
                       )}
                     </strong>
-                    . Al colocarlo en <strong>“Visita o renovación programada”</strong>,
-                    se respetará su última fecha de vencimiento y se conservará
-                    su lugar en la clase hasta que confirme el pago.
+                    . Al colocarlo en{" "}
+                    <strong>“Visita o renovación programada”</strong>, se
+                    respetará su última fecha de vencimiento y se conservará su
+                    lugar en la clase hasta que confirme el pago.
                   </p>
                 </div>
               )}

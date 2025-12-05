@@ -1,5 +1,24 @@
-import { FaExpandAlt, FaCompressAlt } from "react-icons/fa";
-import { useState } from "react";
+/*
+Autor: Sergio Manrique
+Descripción: 
+Este componente renderiza los 4 paneles informativos superiores del dashboard:
+1. Turnos Libres (filtrando horarios deshabilitados).
+2. Planes Vencidos.
+3. Alumnos Ausentes.
+4. Coincidencias de Lista de Espera (filtrando si los horarios buscados están deshabilitados).
+Permite expandir/contraer la vista y activar/desactivar paneles individualmente.
+*/
+
+import {
+  FaExpandAlt,
+  FaCompressAlt,
+  FaClock,
+  FaUserTimes,
+  FaUserClock,
+  FaCheckCircle,
+  FaExclamationTriangle,
+} from "react-icons/fa";
+import { useEffect, useMemo, useState } from "react";
 
 const PanelesSuperiores = ({
   freeSlots,
@@ -9,253 +28,439 @@ const PanelesSuperiores = ({
   onToggle,
   alumnosAusentes = [],
   onOpenModalDetalleAusentes,
+  horariosDeshabilitados = [],
 }) => {
-  // Estado para controlar la expansión de todos los paneles
+  // Estado para controlar si los paneles se muestran con altura completa o reducida
   const [allExpanded, setAllExpanded] = useState(false);
 
+  // Función simple para alternar el estado de expansión visual
   const handleExpandAllToggle = () => {
     setAllExpanded(!allExpanded);
   };
 
-  const mesActual = new Date().toLocaleString("es-AR", {
-    month: "long",
-    year: "numeric",
-  });
+  // 1. Filtra los TURNOS LIBRES
+  // Objetivo: Eliminar de la visualización los cupos libres que corresponden a horarios que el admin ocultó.
+  const freeSlotsFiltrados = useMemo(() => {
+    // Sub-función para filtrar un array de slots
+    const filtrarHorarios = (slots) => {
+      // Si no hay horarios ocultos, devolvemos la lista original intacta
+      if (!horariosDeshabilitados || horariosDeshabilitados.length === 0) {
+        return slots;
+      }
+      // Retornamos solo los slots cuya hora NO esté en la lista de deshabilitados
+      return slots.filter(
+        (slot) => !horariosDeshabilitados.includes(slot.hour)
+      );
+    };
 
+    // Aplicamos el filtro a ambos grupos (Lunes-Miércoles-Viernes y Martes-Jueves)
+    return {
+      lmv: filtrarHorarios(freeSlots.lmv || []),
+      mj: filtrarHorarios(freeSlots.mj || []),
+    };
+  }, [freeSlots, horariosDeshabilitados]);
+
+  // 2. Filtra las COINCIDENCIAS de Lista de Espera
+  // MODIFICADO: Ahora devolvemos la lista completa. 
+  // La validación visual de "habilitado/deshabilitado" se hace directamente en el renderizado (JSX).
+  const waitingListMatchesFiltrados = useMemo(() => {
+    if (!waitingListMatches) return [];
+    return waitingListMatches;
+  }, [waitingListMatches]);
+
+
+  // Cuenta cuántos paneles están activos (true) para calcular el ancho de las columnas
   const activePanelsCount = Object.values(visiblePanels).filter(Boolean).length;
-  const gridClasses = ` grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-${
-    activePanelsCount > 0 ? activePanelsCount : "1"
+
+  // Mapa para asignar clases de grid de Tailwind según la cantidad de paneles activos
+  const gridColsClass = {
+    1: "xl:grid-cols-1",
+    2: "xl:grid-cols-2",
+    3: "xl:grid-cols-3",
+    4: "xl:grid-cols-4",
+  };
+
+  // String final de clases para el contenedor grid
+  const gridClasses = `grid grid-cols-1 md:grid-cols-2 ${
+    gridColsClass[activePanelsCount] || "xl:grid-cols-4"
   } gap-6 mb-8`;
 
-  return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        {/* Botón de expandir/contraer todo */}
-        <button
-          onClick={handleExpandAllToggle}
-          className="w-full sm:w-auto font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center"
-          aria-label={
-            allExpanded
-              ? "Contraer todos los paneles"
-              : "Expandir todos los paneles"
-          }
-        >
-          {allExpanded ? (
-            <>
-              <FaCompressAlt className="mr-2" />
-              Contraer Todo
-            </>
-          ) : (
-            <>
-              <FaExpandAlt className="mr-2" />
-              Expandir Todo
-            </>
-          )}
-        </button>
+  // Objeto de configuración estática para colores, iconos y títulos (evita repetir código en el JSX)
+  const panelStyles = {
+    freeSlots: { color: "blue", icon: <FaClock />, title: "Turnos Libres" },
+    expiredStudents: {
+      color: "rose",
+      icon: <FaUserTimes />,
+      title: "Planes Vencidos",
+    },
+    absentStudents: {
+      color: "amber",
+      icon: <FaUserClock />,
+      title: "Ausentes",
+    },
+    waitingListMatches: {
+      color: "emerald",
+      icon: <FaCheckCircle />,
+      title: "Coincidencias",
+    },
+  };
 
-        {/* Botones de visibilidad de paneles */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+  return (
+    <div className="w-full">
+      
+      {/* --- SECCIÓN: BARRA DE CONTROL Y FILTROS --- */}
+      <div className="flex flex-col xl:flex-row items-center justify-between gap-4 mb-6 w-full bg-zinc-900 bg-opacity-40 p-4 rounded-2xl shadow-sm border border-gray-400">
+        
+        {/* GRUPO DE BOTONES FILTROS */}
+        <div className="flex flex-wrap items-center justify-center sm:justify-start p-1.5 rounded-xl gap-2 w-full xl:w-auto">
           {[
-            { name: "Libres", key: "freeSlots" },
-            { name: "Vencidos", key: "expiredStudents" },
-            { name: "Ausentes", key: "absentStudents" },
-            { name: "Coincidencias", key: "waitingListMatches" },
-          ].map((button) => {
+            { name: "Libres", key: "freeSlots", textClass: "text-blue-600" },
+            {
+              name: "Vencidos",
+              key: "expiredStudents",
+              textClass: "text-rose-600",
+            },
+            {
+              name: "Ausentes",
+              key: "absentStudents",
+              textClass: "text-amber-600",
+            },
+            {
+              name: "Coincidencias",
+              key: "waitingListMatches",
+              textClass: "text-emerald-600",
+            },
+          ].map((btn) => {
             const visibleCount =
               Object.values(visiblePanels).filter(Boolean).length;
-            const isActive = visiblePanels[button.key];
+            const isActive = visiblePanels[btn.key];
             const isDisabled = isActive && visibleCount <= 1;
 
             return (
               <button
-                key={button.key}
-                onClick={() => {
-                  if (!isDisabled) {
-                    onToggle(button.key);
-                  }
-                }}
+                key={btn.key}
+                onClick={() => !isDisabled && onToggle(btn.key)}
                 disabled={isDisabled}
-                className={`w-full sm:w-auto font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors
-            ${
-              isActive
-                ? isDisabled
-                  ? "bg-orange-400 text-white cursor-not-allowed"
-                  : "bg-orange-600 hover:bg-orange-800 text-white"
-                : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-            }`}
-                title={
-                  isDisabled ? "Debe mantener al menos un panel visible" : ""
-                }
+                className={`
+                  flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
+                  ${
+                    isActive
+                      ? `bg-white shadow-sm ring-1 ring-black/5 ${btn.textClass} scale-[1.02]`
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                  }
+                  ${
+                    isDisabled
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
+                  }
+                `}
               >
-                {button.name}
+                {btn.name}
               </button>
             );
           })}
         </div>
+
+        {/* BOTÓN PARA EXPANDIR/CONTRAER PANELES */}
+        <button
+          onClick={handleExpandAllToggle}
+          className="
+            group w-full xl:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+            bg-white border-2 border-slate-100 text-slate-500 font-bold
+            hover:border-slate-300 hover:text-slate-700 hover:shadow-sm
+            transition-all duration-200
+          "
+        >
+          {allExpanded ? (
+            <FaCompressAlt className="text-slate-400 group-hover:text-slate-600 transition-colors" />
+          ) : (
+            <FaExpandAlt className="text-slate-400 group-hover:text-slate-600 transition-colors" />
+          )}
+          <span>{allExpanded ? "Contraer vista" : "Expandir vista"}</span>
+        </button>
       </div>
 
+      {/* --- SECCIÓN: GRILLA CONTENEDORA DE PANELES --- */}
       <div className={gridClasses}>
+        
+        {/* --- PANEL 1: TURNOS LIBRES --- */}
         {visiblePanels.freeSlots && (
-          <div className="bg-white p-4 rounded-lg shadow-md transition-all duration-300">
-            <h3 className="font-bold text-lg text-gray-700 mb-2 border-b pb-2">
-              Turnos Libres ({freeSlots.lmv.length + freeSlots.mj.length})
-            </h3>
+          <div className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-blue-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl">
+            {/* Header Turnos Libres */}
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-blue-700">
+                {panelStyles.freeSlots.icon}
+                <h3 className="font-bold">{panelStyles.freeSlots.title}</h3>
+              </div>
+              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                {freeSlotsFiltrados.lmv.length + freeSlotsFiltrados.mj.length}
+              </span>
+            </div>
+
+            {/* Content Turnos Libres */}
             <div
-              className={`${
-                allExpanded ? "h-96" : "h-64"
-              } overflow-y-auto transition-all duration-300 text-sm`}
+              className={`${allExpanded ? "h-96" : "h-64"} overflow-y-auto p-4`}
             >
-              {freeSlots.lmv.length > 0 || freeSlots.mj.length > 0 ? (
-                <div>
-                  {freeSlots.lmv.length > 0 && (
-                    <div className="mb-2">
-                      <p className="font-semibold text-gray-600 text-lg">
-                        Lunes-Miércoles-Viernes:
-                      </p>
-                      <ul>
-                        {freeSlots.lmv.map((slot) => (
-                          <li
-                            key={`lmv-${slot.hour}`}
-                            className="text-gray-600 py-1 pl-2 flex justify-between items-center hover:bg-gray-50 rounded transition-colors"
-                          >
-                            <span className="text-lg">{slot.hour}</span>
-                            <span className="font-bold text-gray-800 bg-gray-200 rounded-full px-2 text-lg mr-2">
-                              {slot.count}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {freeSlots.mj.length > 0 && (
-                    <div>
-                      <p className="font-semibold text-gray-600 text-lg">
-                        Martes-Jueves:
-                      </p>
-                      <ul>
-                        {freeSlots.mj.map((slot) => (
-                          <li
-                            key={`mj-${slot.hour}`}
-                            className="text-gray-600 py-1 pl-2 flex justify-between items-center hover:bg-gray-50 rounded transition-colors"
-                          >
-                            <span className="text-lg">{slot.hour}</span>
-                            <span className="font-bold text-gray-800 bg-gray-200 rounded-full px-2 text-lg mr-2">
-                              {slot.count}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+              {freeSlotsFiltrados.lmv.length > 0 ||
+              freeSlotsFiltrados.mj.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Columna Lunes-Miércoles-Viernes */}
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Lun - Mié - Vie
+                    </p>
+                    <ul className="space-y-1">
+                      {freeSlotsFiltrados.lmv.map((slot) => (
+                        <li
+                          key={`lmv-${slot.hour}`}
+                          className="flex justify-between items-center p-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors group"
+                        >
+                          <span className="text-gray-700 font-mono font-medium">
+                            {slot.hour}
+                          </span>
+                          <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-md group-hover:bg-blue-200 transition-colors">
+                            {slot.count} cupos
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    {freeSlotsFiltrados.lmv.length === 0 && (
+                      <div className="text-gray-400 text-sm italic p-2">
+                        Sin turnos disponibles
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Columna Martes-Jueves */}
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Mar - Jue
+                    </p>
+                    <ul className="space-y-1">
+                      {freeSlotsFiltrados.mj.map((slot) => (
+                        <li
+                          key={`mj-${slot.hour}`}
+                          className="flex justify-between items-center p-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors group"
+                        >
+                          <span className="text-gray-700 font-mono font-medium">
+                            {slot.hour}
+                          </span>
+                          <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-md group-hover:bg-blue-200 transition-colors">
+                            {slot.count} cupos
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    {freeSlotsFiltrados.mj.length === 0 && (
+                      <div className="text-gray-400 text-sm italic p-2">
+                        Sin turnos disponibles
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
-                <p className="text-gray-500 italic">
-                  No hay grupos de turnos libres.
-                </p>
+                <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
+                  <FaClock size={24} className="mb-2" />
+                  <p className="text-sm italic">Sin turnos libres</p>
+                </div>
               )}
             </div>
           </div>
         )}
+
+        {/* --- PANEL 2: ALUMNOS VENCIDOS --- */}
         {visiblePanels.expiredStudents && (
-          <div className="bg-white p-4 rounded-lg shadow-md transition-all duration-300">
-            <h3 className="font-bold text-lg text-red-600 mb-2 border-b pb-2">
-              Planes Vencidos ({expiredStudents.length})
-            </h3>
+          <div className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-rose-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl">
+            <div className="bg-rose-50/50 p-4 border-b border-rose-100 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-rose-700">
+                {panelStyles.expiredStudents.icon}
+                <h3 className="font-bold">
+                  {panelStyles.expiredStudents.title}
+                </h3>
+              </div>
+              <span className="bg-rose-100 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                {expiredStudents.length}
+              </span>
+            </div>
+
             <div
-              className={`${
-                allExpanded ? "h-96" : "h-64"
-              } overflow-y-auto transition-all duration-300 text-sm`}
+              className={`${allExpanded ? "h-96" : "h-64"} overflow-y-auto p-4`}
             >
               {expiredStudents.length > 0 ? (
-                <ul>
-                  {expiredStudents.map((student) => (
+                <ul className="space-y-2">
+                  {expiredStudents.map((student, idx) => (
                     <li
-                      key={student.name}
-                      className="text-gray-800 py-1 hover:bg-red-50 rounded transition-colors px-2"
+                      key={`${student.name}-${idx}`}
+                      className="p-3 rounded-xl border border-rose-100 bg-rose-50/30 hover:bg-rose-50 transition-colors"
                     >
-                      <span className="font-semibold">{student.name}</span> -{" "}
-                      {student.type} - {student.date}
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold text-gray-800 text-sm truncate">
+                          {student.name}
+                        </span>
+                        <span className="text-[10px] font-bold text-rose-600 border border-rose-200 px-1.5 py-0.5 rounded bg-white">
+                          Vencido
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>{student.type}</span>
+                        <span className="font-mono">{student.date}</span>
+                      </div>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-500 italic">
-                  No hay alumnos con planes vencidos.
-                </p>
+                <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
+                  <FaCheckCircle size={24} className="mb-2 text-green-400" />
+                  <p className="text-sm italic">Todos al día</p>
+                </div>
               )}
             </div>
           </div>
         )}
+
+        {/* --- PANEL 3: ALUMNOS AUSENTES --- */}
         {visiblePanels.absentStudents && (
-          <div className="bg-white p-4 rounded-lg shadow-md transition-all duration-300 sm:p-3">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-bold text-sm sm:text-lg text-gray-700 mb-2 pb-2">
-                Alumnos Ausentes ({alumnosAusentes.length})
-              </h3>
+          <div className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-amber-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl">
+            <div className="bg-amber-50/50 p-4 border-b border-amber-100 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-amber-700">
+                {panelStyles.absentStudents.icon}
+                <h3 className="font-bold">
+                  {panelStyles.absentStudents.title}
+                </h3>
+              </div>
               <button
                 onClick={onOpenModalDetalleAusentes}
-                className="w-full sm:w-auto font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center"
+                className="text-xs font-bold text-amber-700 hover:text-amber-900 underline decoration-amber-300 underline-offset-2 transition-colors"
               >
-                Detalle
+                Ver detalle
               </button>
             </div>
+
             <div
-              className={`overflow-y-auto transition-all duration-300 text-sm ${
-                allExpanded ? "h-96" : "h-64"
-              }`}
+              className={`${allExpanded ? "h-96" : "h-64"} overflow-y-auto p-4`}
             >
               {alumnosAusentes.length > 0 ? (
-                <ul>
+                <ul className="space-y-2">
                   {alumnosAusentes.map((alumno) => (
                     <li
                       key={alumno.id}
-                      className="text-gray-800 py-1 px-2 hover:bg-yellow-50 rounded transition-colors flex justify-between items-center sm:py-0.5 sm:px-1"
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 hover:bg-amber-50 transition-colors border border-transparent hover:border-amber-100"
                     >
-                      <span className="font-semibold sm:text-sm truncate">
+                      <span className="text-sm font-medium text-gray-700 truncate pr-2">
                         {alumno.name}
                       </span>
-                      <span className="bg-yellow-200 text-yellow-900 font-bold rounded-full px-3 py-1 text-sm sm:px-2 sm:py-0.5">
+                      <span className="flex-shrink-0 bg-amber-100 text-amber-800 text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
                         {alumno.cantidad}
                       </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-500 italic sm:text-sm">
-                  No hay alumnos ausentes este mes.
-                </p>
+                <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
+                  <FaExclamationTriangle size={24} className="mb-2" />
+                  <p className="text-sm italic">Sin ausencias registradas</p>
+                </div>
               )}
             </div>
           </div>
         )}
+
+        {/* --- PANEL 4: COINCIDENCIAS LISTA ESPERA --- */}
         {visiblePanels.waitingListMatches && (
-          <div className="bg-white p-4 rounded-lg shadow-md transition-all duration-300">
-            <h3 className="font-bold text-lg text-green-600 mb-2 border-b pb-2">
-              ¡Tenés Turnos Para...! ({waitingListMatches.length})
-            </h3>
+          <div className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-emerald-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl">
+            <div className="bg-emerald-50/50 p-4 border-b border-emerald-100 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-emerald-700">
+                {panelStyles.waitingListMatches.icon}
+                <h3 className="font-bold">
+                  {panelStyles.waitingListMatches.title}
+                </h3>
+              </div>
+              {/* Usa la longitud filtrada por horarios deshabilitados */}
+              <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                {waitingListMatchesFiltrados.length}
+              </span>
+            </div>
+
             <div
-              className={`${
-                allExpanded ? "h-96" : "h-64"
-              } overflow-y-auto transition-all duration-300 text-sm`}
+              className={`${allExpanded ? "h-96" : "h-64"} overflow-y-auto p-4`}
             >
-              {waitingListMatches.length > 0 ? (
-                <ul>
-                  {waitingListMatches.map((person) => (
-                    <li
-                      key={person.id}
-                      className="text-gray-800 py-1 hover:bg-green-50 rounded transition-colors px-2"
-                    >
-                      <span className="font-semibold text-lg">
-                        {person.name}
-                      </span>
-                      <span className="text-lg block text-gray-500 ">
-                        Busca: {person.plan} en {person.hours.join(", ")}
-                      </span>
-                    </li>
-                  ))}
+              {/* Usa el array filtrado para no mostrar coincidencias en horarios ocultos */}
+{waitingListMatchesFiltrados.length > 0 ? (
+                <ul className="space-y-3">
+                  {waitingListMatchesFiltrados.map((person) => {
+                    // Lógica para detectar si TODOS los horarios que quiere el alumno están deshabilitados
+                    const todosDeshabilitados =
+                      horariosDeshabilitados &&
+                      horariosDeshabilitados.length > 0 &&
+                      person.hours.every((hour) =>
+                        horariosDeshabilitados.includes(hour)
+                      );
+
+                    return (
+                      <li
+                        key={person.id}
+                        // Si todos están deshabilitados, fondo rojo y borde rojo. Si no, color esmeralda original.
+                        className={`p-3 rounded-xl border transition-all hover:shadow-sm ${
+                          todosDeshabilitados
+                            ? "bg-red-50 border-red-200"
+                            : "bg-emerald-50 border-emerald-100"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-bold text-gray-800 text-sm">
+                            {person.name}
+                          </span>
+                          {/* Cambiamos el punto de pulso a rojo si es error, o esmeralda si está bien */}
+                          <div
+                            className={`h-2 w-2 rounded-full animate-pulse ${
+                              todosDeshabilitados
+                                ? "bg-red-500"
+                                : "bg-emerald-500"
+                            }`}
+                          ></div>
+                        </div>
+
+                        <div className="text-xs text-gray-600 bg-white/60 p-2 rounded-lg">
+                          {/* Mensaje de alerta solo si todo está deshabilitado */}
+                          {todosDeshabilitados && (
+                            <p className="text-red-600 font-bold mb-2 border-b border-red-100 pb-1">
+                              Su turno está deshabilitado
+                            </p>
+                          )}
+
+                          <p className="mb-1">
+                            <span
+                              className={`font-semibold ${
+                                todosDeshabilitados
+                                  ? "text-red-700"
+                                  : "text-emerald-700"
+                              }`}
+                            >
+                              Plan:
+                            </span>{" "}
+                            {person.plan}
+                          </p>
+                          <p>
+                            <span
+                              className={`font-semibold ${
+                                todosDeshabilitados
+                                  ? "text-red-700"
+                                  : "text-emerald-700"
+                              }`}
+                            >
+                              Horario:
+                            </span>{" "}
+                            {person.hours.join(", ")}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
-                <p className="text-gray-500 italic">No hay coincidencias.</p>
+                <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
+                  <p className="text-sm italic">No hay coincidencias</p>
+                </div>
               )}
             </div>
           </div>

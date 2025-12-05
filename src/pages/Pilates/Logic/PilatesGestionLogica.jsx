@@ -12,6 +12,8 @@ import ObtenerFechaInternet from "../utils/ObtenerFechaInternet";
 import { useAuth } from "../../../AuthContext";
 import { format, set } from "date-fns";
 import { FaPencilAlt } from "react-icons/fa";
+import useHorariosDeshabilitados from "./PilatesGestion/HorariosDeshabilitados";
+import useGrillaMinimizada from "./PilatesGestion/HorariosOcultos";
 
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
@@ -64,7 +66,6 @@ const PilatesGestionLogica = () => {
   // --- Constantes y Variables Derivadas ---
   const rol = "GESTION"; // Define el rol del usuario para lógicas condicionales en la vista.
   const fechaParaConsulta = fechaHoy || format(new Date(), "yyyy-MM-dd"); // Determina la fecha a usar en las consultas, priorizando la de la API externa.
-
   // ----------------------------------------------------------------
   // --- HOOKS DE PETICIONES A LA API ---
   // ----------------------------------------------------------------
@@ -1833,6 +1834,27 @@ const PilatesGestionLogica = () => {
     setIsModalCambioTurno(true);
   };
 
+  const {
+    horariosDeshabilitados, // Almacena los horarios que han sido ocultados
+    detalleHorariosDeshabilitados, // Detalles adicionales sobre los horarios ocultos
+    manejarDeshabilitarHorario, // Función para ocultar un horario específico
+    manejarHabilitarHorario, // Función para mostrar un horario previamente ocultado
+    puedeDeshabilitarHorario, // Función que verifica si el usuario tiene permisos para ocultar horarios
+  } = useHorariosDeshabilitados({
+    sedeActualFiltro,
+    schedule, // Necesario para validar si hay alumnos
+    rol, // Necesario para permisos
+    userId, // Necesario para saber quién oculta
+    puedeEditarSede, // Necesario para validación de permisos
+    userLevel, // Necesario para validación de permisos
+  });
+
+  const {
+    horariosMinimizados, // Almacena los horarios que han sido minimizados
+    alternarMinimizacionHorario, // Función para minimizar o maximizar un horario específico
+    manejarMinimizacionGlobal, // Función para minimizar o maximizar todos los horarios
+  } = useGrillaMinimizada(); // Lógica para manejar la minimización de la grilla de horarios
+
   return {
     states: {
       puedeEditarSede,
@@ -1863,6 +1885,9 @@ const PilatesGestionLogica = () => {
       freeSlots,
       alumnoCambioTurno,
       horariosCambioTurno,
+      horariosDeshabilitados,
+      detalleHorariosDeshabilitados,
+      horariosMinimizados,
     },
     setters: {
       setSection,
@@ -1895,6 +1920,11 @@ const PilatesGestionLogica = () => {
       generarHorariosConCupos,
       handleSaveCambioTurno,
       handleSaveWaitingListCambio,
+      manejarDeshabilitarHorario,
+      manejarHabilitarHorario,
+      puedeDeshabilitarHorario,
+      alternarMinimizacionHorario,
+      manejarMinimizacionGlobal,
     },
   };
 };
