@@ -362,13 +362,9 @@ const GrillaHorarios = ({
                         )}
 
                         {/* RESUMEN CUANDO ESTÁ MINIMIZADO */}
-                        {estaMinimizado && students.length > 0 ? (
+                        {estaMinimizado && students.length > 0 && (
                           <div className="mt-1 text-xs font-bold text-gray-500 text-center bg-gray-50 rounded py-1">
                             {students.length} Alumnos ocultos
-                          </div>
-                        ) : (
-                          <div className="mt-1 text-xs font-bold text-red-500 text-center bg-gray-50 rounded py-1">
-                            Sin alumnos
                           </div>
                         )}
                       </div>

@@ -548,6 +548,31 @@ const { data: auditoriaData } = useConsultaDB(
    * ================================================================
    */
 
+  // Función simple para determinar qué dice el botón según la selección
+  const getTextoBoton = () => {
+    // Si no hay alumno (modo agregar nuevo), siempre es Guardar
+    if (!cellData?.student) return "Guardar";
+
+    // Obtenemos el estado original del alumno
+    const estadoOriginal = cellData.student.status;
+
+    // Caso especial: Renovación Directa (tiene prioridad)
+    if (renovacionDirectaActiva) return "Renovar";
+
+    // Si el estado es el MISMO que traía, es solo una actualización de datos
+    if (status === estadoOriginal) {
+      return "Actualizar";
+    }
+
+    // Si el estado CAMBIÓ, mostramos el texto acorde a la nueva selección
+    if (status === "plan") return "Contratar";
+    if (status === "programado") return "Programar";
+    if (status === "prueba") return "Agendar Prueba";
+    
+    // Default fallback
+    return "Actualizar";
+  };
+
   // Ocultar modal si no está abierto
   if (!isOpen) return null;
 
@@ -644,7 +669,7 @@ const { data: auditoriaData } = useConsultaDB(
               onChange={handleStatusChange}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {cellData?.student && (
+              {cellData?.student && status === "plan" && (
                 <option value="renovacion_directa">Renovación Directa</option>
               )}
               <option value="plan">Plan Contratado</option>
@@ -927,7 +952,7 @@ const { data: auditoriaData } = useConsultaDB(
               onClick={handleSave}
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             >
-              {cellData?.student ? "Actualizar" : "Guardar"}
+              {getTextoBoton()}
             </button>
             {cellData?.student && (
               <button
