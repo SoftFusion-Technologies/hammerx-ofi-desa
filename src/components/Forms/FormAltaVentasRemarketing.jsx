@@ -20,7 +20,7 @@ import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
 import Alerta from '../Error';
 
-const FormAltaVentasRemarketing = ({ isOpen, onClose, onSuccess, prospecto, setSelectedProspecto, userId, currentUser }) => {
+const FormAltaVentasRemarketing = ({ isOpen, onClose, onSuccess, prospecto, setSelectedProspecto, userId, currentUser, Sede }) => {
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
   const [textoModal, setTextoModal] = useState('');
@@ -48,8 +48,6 @@ const FormAltaVentasRemarketing = ({ isOpen, onClose, onSuccess, prospecto, setS
       .required('El Contacto es obligatorio'),
     actividad: Yup.string()
       .required('La Actividad es obligatoria'),
-    sede: Yup.string()
-      .required('La Sede es obligatoria'),
     observacion: Yup.string()
       .max(500, 'La observación es muy larga')
       .nullable(),
@@ -78,7 +76,7 @@ const FormAltaVentasRemarketing = ({ isOpen, onClose, onSuccess, prospecto, setS
         campania_origen: valores.campania_origen || '',
         contacto: valores.contacto,
         actividad: valores.actividad,
-        sede: valores.sede,
+        sede: Sede,
         observacion: valores.observacion || '',
         
         // 👇 Campos del sistema
@@ -114,9 +112,6 @@ const FormAltaVentasRemarketing = ({ isOpen, onClose, onSuccess, prospecto, setS
 
       };
 
-      console.log('📤 Enviando prospecto:', payload);
-      // console.log(' nombre_socio:', payload.nombre_socio);
-
       // 🔍 VALIDAR que userId existe
       if (!userId) {
         throw new Error('userId no está definido. Verifica que currentUser.id esté llegando al componente.');
@@ -146,7 +141,6 @@ const FormAltaVentasRemarketing = ({ isOpen, onClose, onSuccess, prospecto, setS
         onClose(); // fallback
       }
 
-      // console.log('✅ Respuesta del servidor:', response.data);
       setShowModal(true);
 
       setTimeout(() => {
@@ -217,7 +211,7 @@ const FormAltaVentasRemarketing = ({ isOpen, onClose, onSuccess, prospecto, setS
             campania_origen: prospecto ? prospecto.campania_origen : '',
             contacto: prospecto ? prospecto.contacto : '',
             actividad: prospecto ? prospecto.actividad : '',
-            sede: prospecto ? prospecto.sede : 'monteros',
+            sede: Sede,
             observacion: prospecto ? prospecto.observacion : '',
           }}
           enableReinitialize
@@ -274,7 +268,7 @@ const FormAltaVentasRemarketing = ({ isOpen, onClose, onSuccess, prospecto, setS
                       className="mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
                       placeholder="DNI"
                       name="dni"
-                      maxLength="30"
+                      maxLength={30}
                     />
                     {errors.dni && touched.dni ? (
                       <Alerta>{errors.dni}</Alerta>
@@ -368,24 +362,6 @@ const FormAltaVentasRemarketing = ({ isOpen, onClose, onSuccess, prospecto, setS
                     </Field>
                     {errors.actividad && touched.actividad ? (
                       <Alerta>{errors.actividad}</Alerta>
-                    ) : null}
-                  </div>
-
-                  {/* Sede */}
-                  <div className="mb-3 px-4">
-                    <Field
-                      as="select"
-                      id="sede"
-                      name="sede"
-                      className="form-select mt-2 block w-full p-3 text-black formulario__input bg-slate-100 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                    >
-                      <option value="Monteros">Monteros</option>
-                      <option value="Concepción">Concepción</option>
-                      <option value="Barrio Sur">Barrio Sur</option>
-                      <option value="Barrio Norte">Barrio Norte</option>
-                    </Field>
-                    {errors.sede && touched.sede ? (
-                      <Alerta>{errors.sede}</Alerta>
                     ) : null}
                   </div>
 

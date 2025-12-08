@@ -206,6 +206,7 @@ export default function ComisionesModal({
         const params = {
           page: p,
           pageSize,
+          _t: Date.now(), // evita cache
           ...(estado ? { estado } : {}),
           ...(q ? { q } : {}),
           ...(sede ? { sede } : {}),
@@ -426,6 +427,10 @@ export default function ComisionesModal({
           data: { actor_id: userId } // <<<<<< clave para que el back identifique al actor
         }
       );
+
+      setItems((prev) => prev.filter((item) => item.id !== row.id));
+      setTotal((prev) => Math.max(0, prev - 1));
+
       await Swal.fire({
         background: '#0f172a',
         color: '#e5e7eb',
@@ -433,7 +438,11 @@ export default function ComisionesModal({
         title: 'Eliminada',
         text: 'Comisión eliminada.'
       });
-      fetchComisiones(1);
+
+      setTimeout(() => {
+        fetchComisiones(page, { silent: true });
+      }, 500);
+
     } catch (e) {
       await Swal.fire({
         background: '#0f172a',
@@ -601,7 +610,6 @@ export default function ComisionesModal({
                 </ToolbarButton>
               </div>
             </div>
-            <AnimatePresence>
               {showFilters && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
@@ -647,7 +655,6 @@ export default function ComisionesModal({
                   </div>
                 </motion.div>
               )}
-            </AnimatePresence>
           </div>
 
           {/* Tabla de Comisiones */}
@@ -722,6 +729,7 @@ export default function ComisionesModal({
         </motion.div>
       </motion.div>
       <ComisionEditModal
+        key="edit-modal"
         open={editOpen}
         row={editRow}
         onClose={() => {

@@ -50,7 +50,8 @@ export default function StatsVentasModal({
   sede,
   normalizeSede2,
   mes,
-  anio
+  anio,
+  tipo = 'ventas' // o remarketing
 }) {
   const [stats, setStats] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -65,7 +66,16 @@ export default function StatsVentasModal({
 
   console.log(sede);
 
-  // Ejemplo de uso correcto:
+  // Determinar el endpoint según el tipo
+  const endpoint = tipo === 'remarketing' 
+    ? 'http://localhost:8080/stats-remarketing'
+    : 'http://localhost:8080/stats-ventas';
+
+  // Determinar el título según el tipo
+  const titulo = tipo === 'remarketing' 
+    ? 'Estadísticas de Remarketing'
+    : 'Estadísticas de Ventas';
+
   useEffect(() => {
     if (open) {
       setStats(null); // Spinner de carga mientras llega la data
@@ -74,12 +84,12 @@ export default function StatsVentasModal({
 
       const params = {};
 
-      if (sedeParam) params.sede = normalizeSede2(sedeParam);
+      if (sedeParam && normalizeSede2) params.sede = normalizeSede2(sedeParam);
       if (mes) params.mes = mes;
       if (anio) params.anio = anio;
 
       axios
-        .get('http://localhost:8080/stats-ventas', { params })
+        .get(endpoint, { params })
         .then((res) => {
           setStats(res.data);
         })
@@ -87,7 +97,7 @@ export default function StatsVentasModal({
           console.error('Error al obtener estadísticas:', err);
         });
     }
-  }, [open, sede, mes, anio, normalizeSede2]);
+  }, [open, sede, mes, anio, normalizeSede2, endpoint]);
 
   if (!open) return null;
 
@@ -121,8 +131,8 @@ export default function StatsVentasModal({
           {/* Título */}
           <div className="flex items-center justify-between mb-2 pr-7 font-bignoodle text-4xl text-center">
             <h2 className="text-xl font-bold text-[#fc4b08]">
-              Estadísticas de Ventas{' '}
-              <span className="text-green-500 uppercase">({sede})</span>
+              {titulo}{' '}
+              {sede && <span className="text-green-500 uppercase">({sede})</span>}
               <span className="text-gray-500 normal-case font-semibold text-base ml-2">
                 •{' '}
                 {new Date(anio, mes - 1)

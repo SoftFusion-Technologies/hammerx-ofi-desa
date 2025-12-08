@@ -371,7 +371,7 @@ const FormAltaVentas = ({
                         <option value="Comentarios/Stickers">
                           Comentarios/Stickers
                         </option>
-                        <option value="Desde pilates">
+                        <option value="Baja pilates">
                           Desde pilates
                         </option>
                       </Field>

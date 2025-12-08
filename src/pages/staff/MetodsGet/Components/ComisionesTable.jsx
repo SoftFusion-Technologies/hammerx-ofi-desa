@@ -171,6 +171,7 @@ export function ComisionesTable({ rows, editar, eliminar, PrimaryAction }) {
             <th className="px-4 py-3 text-left">Fecha</th>
             <th className="px-4 py-3 text-left">Vendedor</th>
             <th className="px-4 py-3 text-left">Prospecto</th>
+            <th className="px-4 py-3 text-left">Origen</th>
             <th className="px-4 py-3 text-left">Sede</th>
             <th className="px-4 py-3 text-left">Plan</th>
             <th className="px-4 py-3 text-left">Estado</th>
@@ -201,6 +202,18 @@ export function ComisionesTable({ rows, editar, eliminar, PrimaryAction }) {
                     DNI {row.prospecto.dni}
                   </div>
                 )}
+              </td>
+              <td className="px-4 py-3">
+                <span
+                  className={cx(
+                    'inline-flex items-center rounded-full px-2 py-1 text-[11px] ring-1 capitalize',
+                    row.origen === 'remarketing'
+                      ? 'bg-purple-500/15 text-purple-200 ring-purple-400/30'
+                      : 'bg-emerald-500/45 text-emerald-300 ring-emerald-400/60'
+                  )}
+                >
+                  {row.origen || 'ventas'}
+                </span>
               </td>
               <td className="px-4 py-3 capitalize text-slate-100">
                 {row.sede || '-'}
