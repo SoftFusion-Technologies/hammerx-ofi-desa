@@ -366,6 +366,10 @@ const App = memo(() => {
                     element={<QuejasVist />}
                   />{' '}
                   <Ruta
+                    path="/comentarios-barrionorte"
+                    element={<QuejasVist />}
+                  />{' '}
+                  <Ruta
                     path="/dashboard"
                     element={
                       <ProtectedRoute>

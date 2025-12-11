@@ -89,18 +89,21 @@ const QuejasForms = () => {
       let sede = '';
       let cargado_por = '';
 
-      if (path.includes('monteros')) {
-        sede = 'MONTEROS';
-        cargado_por = 'QR-MONTEROS';
-      } else if (path.includes('concepcion')) {
-        sede = 'CONCEPCION';
-        cargado_por = 'QR-CONCEPCION';
-      } else if (path.includes('barriosur')) {
-        sede = 'BARRIOSUR';
-        cargado_por = 'QR-BARRIOSUR';
-      } else if (path.includes('')) {
-        sede = 'PÁGINA';
-        cargado_por = 'QR-PÁGINA';
+      if (path.includes("monteros")) {
+        sede = "MONTEROS";
+        cargado_por = "QR-MONTEROS";
+      } else if (path.includes("concepcion")) {
+        sede = "CONCEPCIÓN";
+        cargado_por = "QR-CONCEPCION";
+      } else if (path.includes("barriosur")) {
+        sede = "TUCUMÁN - BARRIO SUR";
+        cargado_por = "QR-BARRIOSUR";
+      } else if (path.includes("barrionorte")) {
+        sede = "TUCUMÁN - BARRIO NORTE";
+        cargado_por = "QR-BARRIONORTE";
+      } else if (path.includes("")) {
+        sede = "PÁGINA";
+        cargado_por = "QR-PÁGINA";
       }
 
       const payload = {
