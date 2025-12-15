@@ -13,6 +13,7 @@ import { useAuth } from "../../../AuthContext";
 import { format, set } from "date-fns";
 import { FaPencilAlt } from "react-icons/fa";
 import useHorariosDeshabilitados from "./PilatesGestion/HorariosDeshabilitados";
+import useHistorialAlumnos from "./PilatesGestion/HistorialAlumnos";
 import useGrillaMinimizada from "./PilatesGestion/HorariosOcultos";
 
 import Swal from "sweetalert2";
@@ -55,9 +56,6 @@ const PilatesGestionLogica = () => {
     useState(null); // Guarda el tipo de inscripción (cambio o espera).
   const [alumnoCambioTurno, setAlumnoCambioTurno] = useState(null); // Guarda los datos del alumno para cambiar turno.
   const [horariosCambioTurno, setHorariosCambioTurno] = useState({}); // Almacena todos los horarios con información de cupos para el modal de cambio de turno.
-
-  // --- Refs ---
-  const refSedeUsuario = useRef(null); // Referencia para un elemento del DOM, probablemente un input.
 
   // --- Hooks Externos y de Contexto ---
   const { fecha } = ObtenerFechaInternet(); // Hook que trae la fecha actual desde una API para evitar desajustes de hora locales.
@@ -790,8 +788,6 @@ const PilatesGestionLogica = () => {
       // Con reintentos en caso de problemas intermitentes
       const resultadoCambio = await guardarCambioDeTurno(null, alumnoCambio, 2); // 2 reintentos = 3 intentos totales
 
-      console.log("✅ Cambio de turno ejecutado exitosamente");
-
       await sweetalert2.fire({
         icon: "success",
         title: "Cambio de turno realizado",
@@ -961,40 +957,6 @@ const PilatesGestionLogica = () => {
       refetchListaEspera();
     }
   };
-
-  /**
-   * Calcula la distancia de Levenshtein entre dos strings.
-   * No necesitas entender cómo funciona por dentro, solo saber que
-   * devuelve un número que representa qué tan diferentes son.
-   */
-  function levenshteinDistance(a, b) {
-    if (a.length === 0) return b.length;
-    if (b.length === 0) return a.length;
-
-    const matrix = Array(b.length + 1)
-      .fill(null)
-      .map(() => Array(a.length + 1).fill(null));
-
-    for (let i = 0; i <= a.length; i++) {
-      matrix[0][i] = i;
-    }
-    for (let j = 0; j <= b.length; j++) {
-      matrix[j][0] = j;
-    }
-
-    for (let j = 1; j <= b.length; j++) {
-      for (let i = 1; i <= a.length; i++) {
-        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-        matrix[j][i] = Math.min(
-          matrix[j][i - 1] + 1, // Deletion
-          matrix[j - 1][i] + 1, // Insertion
-          matrix[j - 1][i - 1] + cost // Substitution
-        );
-      }
-    }
-
-    return matrix[b.length][a.length];
-  }
 
   // FUNCTION: Encuentra un alumno y sus horarios viejo y nuevo por ID (prioridad) o nombre
   const encontrarAlumnoYHorario = useCallback(
@@ -1304,8 +1266,10 @@ const PilatesGestionLogica = () => {
       }
       // Logica para agregar un nuevo alumno
       else if (accion === "agregar") {
-        await sincronizarConVentas(studentData, inscripcionData);
-        await insertCliente(formDataForDB, inscripcionData);
+        await sincronizarConVentas(studentData, inscripcionData); // Sincronizar con Ventas si aplica
+        const datosHistorialAlumno = altaHistorialAlumno(studentData) // Crear historial del alumno
+        const altaAlumno = {...formDataForDB, ...datosHistorialAlumno} // Combinar datos del alumno con historial
+        await insertCliente(altaAlumno, inscripcionData); // Insertar nuevo cliente
         await sweetalert2.fire({
           icon: "success",
           title: "Agregado",
@@ -1336,7 +1300,8 @@ const PilatesGestionLogica = () => {
               : "Plan",
         };
 
-        await planAContratadoPeticion(studentData.id, datosParaEnviar);
+        await planAContratadoPeticion(studentData.id, datosParaEnviar); // Actualizar plan del alumno
+        await crearHistorialAlumno(horariosData, studentData, "CAMBIO_PLAN") // Crear historial del alumno
         await sweetalert2.fire({
           icon: "success",
           title: "Modificado",
@@ -1352,8 +1317,12 @@ const PilatesGestionLogica = () => {
         const datosParaEnviar = {
           fecha_prometido_pago: fechaInicioStr,
           estado: "Reprogramado",
+          nombre: studentData.name,
+          observaciones: studentData.observation || "SIN OBSERVACIONES",
+          telefono: studentData.contact || "",
         };
         await planAContratadoPeticion(studentData.id, datosParaEnviar);
+        await crearHistorialAlumno(horariosData, studentData)
         await sweetalert2.fire({
           icon: "success",
           title: "Modificado",
@@ -1365,6 +1334,7 @@ const PilatesGestionLogica = () => {
       // Modificaciones generales sin cambio de plan
       else if (accion === "modificar") {
         await insertCliente(formDataForDB, inscripcionData, true);
+        await crearHistorialAlumno(horariosData, studentData, "MODIFICACION")
         await sweetalert2.fire({
           icon: "success",
           title: "Modificado",
@@ -1445,8 +1415,6 @@ const PilatesGestionLogica = () => {
         hhmm: datosInscripcion.horario,
         clase_num: 1,
       };
-
-      console.log("Enviando datos a ventas:", datos);
       await insertarVentasProspectosCompleto(datos);
     } catch (e) {
       console.error("Error no bloqueante sync ventas:", e);
@@ -1848,6 +1816,12 @@ const PilatesGestionLogica = () => {
     puedeEditarSede, // Necesario para validación de permisos
     userLevel, // Necesario para validación de permisos
   });
+
+    const {
+    altaHistorialAlumno, // Función para crear el historial de un alumno (Se usa solo cuando se da de alta un alumno por primera vez)
+    crearHistorialAlumno // Función para registrar cambios en el historial de un alumno cuando se hacen modificaciones
+  } = useHistorialAlumnos()
+  
 
   const {
     horariosMinimizados, // Almacena los horarios que han sido minimizados

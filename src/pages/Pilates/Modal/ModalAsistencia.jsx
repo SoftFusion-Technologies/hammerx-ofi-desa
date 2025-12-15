@@ -100,7 +100,7 @@ const ModalAsistencia = ({ isOpen, onClose, cellData, cambiarAsistencia, cambiar
                             />
                             <div className="mt-6 flex justify-end">
                                 <button
-                                    onClick={() => cambiarObservaciones(cellData.student.id, observationTextAux)}
+                                    onClick={() => cambiarObservaciones(cellData.student.id, observationTextAux, observationText)}
                                     className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2"
                                 >
                                     <FaEdit /> Guardar Cambios

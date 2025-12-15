@@ -6,6 +6,7 @@ import ObtenerFechaInternet from "../utils/ObtenerFechaInternet";
 import { format, set } from "date-fns";
 import Swal from "sweetalert2";
 import useInsertar from "../ConsultaDb/Insertar";
+import useHistorialAlumnos from "./PilatesGestion/HistorialAlumnos";
 
 const PilatesInstructorLogica = () => {
   const [isModalAsistencia, setIsModalAsistencia] = useState(false); // Estado que abre el modal que marca la asistencia
@@ -16,7 +17,7 @@ const PilatesInstructorLogica = () => {
   const [hoy, setHoy] = useState(""); // Día actual en formato de texto (LUNES, MARTES, etc.)
   const [fechaHoy, setFechaHoy] = useState(null); // Fecha actual obtenida de la API de internet
   const [asistenciasHoy, setAsistenciasHoy] = useState({}); // Asistencias registradas para la fecha actual
-  const { sedeId, instructorName} = useInstructorAuth(); // Obtener el ID de la sede del contexto de autenticación del instructor
+  const { sedeId, instructorName } = useInstructorAuth(); // Obtener el ID de la sede del contexto de autenticación del instructor
   const { fecha } = ObtenerFechaInternet(); // Obtener la fecha actual de una API de internet
 
   // Consulta para obtener los horarios y alumnos asignados a la sede
@@ -24,13 +25,16 @@ const PilatesInstructorLogica = () => {
     sedeId ? `/clientes-pilates/horarios?sedeId=${sedeId}` : null
   );
 
-  const {insert} = useInsertar("/quejas-pilates", true);
+  const { insert } = useInsertar("/quejas-pilates", true);
 
   // Función para modificar la asistencia de un alumno
   const { update } = useModify("/asistencias-pilates/marcar");
 
   // Función para modificar la observacion de un alumno
-  const { update: updateObservacion, error: errorObs} = useModify("/clientesPilates", true);
+  const { update: updateObservacion, error: errorObs } = useModify(
+    "/clientesPilates",
+    true
+  );
 
   // Consulta para obtener el cupo máximo de la sede
   const { data: sedesData } = useConsultaDB(`/sedes/ciudad`);
@@ -47,12 +51,15 @@ const PilatesInstructorLogica = () => {
 
   // Usar fechaHoy (obtenida por la API de internet) o la fecha local del equipo
   const fechaParaConsulta = fechaHoy || format(new Date(), "yyyy-MM-dd");
-  const { data: asistenciasData, refetch: refetchAsistencias,  loading: loadingAsistencias} = useConsultaDB(
+  const {
+    data: asistenciasData,
+    refetch: refetchAsistencias,
+    loading: loadingAsistencias,
+  } = useConsultaDB(
     sedeId && fechaParaConsulta
       ? `/asistencias-pilates/formato?fecha=${fechaParaConsulta}`
       : null
   );
-
 
   // Función para obtener el día actual en formato de texto y asi determinar que dia es que se muestra en la tabla habilitado (sábado y domingo no funcionan)
   const obtenerDiaActual = () => {
@@ -70,7 +77,7 @@ const PilatesInstructorLogica = () => {
   };
 
   useEffect(() => {
-    setHoy(obtenerDiaActual());
+    setHoy(obtenerDiaActual);
   }, []);
 
   useEffect(() => {
@@ -105,7 +112,6 @@ const PilatesInstructorLogica = () => {
     setIsModalAsistencia(true);
   };
 
-
   // Normalizar los datos de horarios
   useEffect(() => {
     if (horariosData && Object.keys(horariosData).length > 0) {
@@ -125,7 +131,6 @@ const PilatesInstructorLogica = () => {
       setSchedule({});
     }
   }, [horariosData]);
-
 
   // Función para obtener el contenido y estilo de una celda según el estado del alumno
   const getCellContentAndStyle = useCallback((student) => {
@@ -198,7 +203,6 @@ const PilatesInstructorLogica = () => {
     return { content, style };
   }, []);
 
-
   // Función para cambiar la asistencia de un alumno
   const cambiarAsistencia = async (studentId, newEstado) => {
     const datos = {
@@ -211,39 +215,43 @@ const PilatesInstructorLogica = () => {
     setIsModalAsistencia(false);
   };
 
-
-const cambiarObservaciones = async (studentId, newObservaciones) => {
-  if (!studentId) {
-    Swal.fire("Error", "ID de estudiante no proporcionado.", "error");
-    return;
-  }
-  const datos = {
-    observaciones: newObservaciones.toUpperCase().trim(),
+  const cambiarObservaciones = async (
+    studentId,
+    newObservaciones,
+    observacionAnterior
+  ) => {
+    if (!studentId) {
+      Swal.fire("Error", "ID de estudiante no proporcionado.", "error");
+      return;
+    }
+    const datos = {
+      observaciones: newObservaciones.toUpperCase().trim(),
+    };
+    const subRoute = `${studentId}/observaciones`;
+    const success = await updateObservacion(subRoute, datos); // Actualizar observaciones del alumno
+    await crearHistorialDesdeInstructor(observacionAnterior, newObservaciones, studentId, instructorName) // Crear historial de cambios en las observaciones
+    if (success) {
+      await refetchHorarios();
+      setIsModalAsistencia(false);
+      Swal.fire({
+        icon: "success",
+        title: "¡Guardado!",
+        text: "Observaciones actualizadas correctamente.",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } else {
+      const errorMessage = errorObs
+        ? errorObs
+        : "Ocurrió un error al intentar guardar.";
+      Swal.fire({
+        icon: "error",
+        title: "Error al Guardar",
+        text: errorMessage,
+        confirmButtonText: "Aceptar",
+      });
+    }
   };
-  const subRoute = `${studentId}/observaciones`;
-  const success = await updateObservacion(subRoute, datos);
-  if (success) {
-    await refetchHorarios();
-    setIsModalAsistencia(false);
-    Swal.fire({
-      icon: "success",
-      title: "¡Guardado!",
-      text: "Observaciones actualizadas correctamente.",
-      showConfirmButton: false,
-      timer: 1500,
-    });
-  } else {
-    const errorMessage = errorObs
-      ? errorObs
-      : "Ocurrió un error al intentar guardar.";
-    Swal.fire({
-      icon: "error",
-      title: "Error al Guardar",
-      text: errorMessage,
-      confirmButtonText: "Aceptar",
-    });
-  }
-};
 
   const agregarQuejas = async (student, newQuejas) => {
     if (newQuejas === "" || newQuejas === null) {
@@ -267,7 +275,6 @@ const cambiarObservaciones = async (studentId, newObservaciones) => {
       tipo_usuario: "cliente",
       resuelto: 0,
     };
-    console.log(datos);
     const respuesta = await insert(datos);
     if (respuesta) {
       await refetchHorarios();
@@ -291,6 +298,11 @@ const cambiarObservaciones = async (studentId, newObservaciones) => {
       });
     }
   };
+
+  const {
+    crearHistorialDesdeInstructor, // función para crear historial de alumnos desde el instructor
+  } = useHistorialAlumnos();
+
 
   return {
     states: {

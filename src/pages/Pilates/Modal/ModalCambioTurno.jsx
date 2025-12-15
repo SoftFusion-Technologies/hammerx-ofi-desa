@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { es } from "date-fns/locale";
+import useHistorialAlumnos from "../Logic/PilatesGestion/HistorialAlumnos"
 
 const ModalCambioTurno = ({
   isOpen,
@@ -21,7 +21,8 @@ const ModalCambioTurno = ({
   allSchedules, // Todos los horarios disponibles con info de cupos
   onSaveDirect, // Callback para agendar cambio directo: (key, studentData, action, extras)
   onSaveWaitingList, // Callback para agendar en lista de espera: (personData, observation)
-  maxCapacity, // Cupo máximo por clase
+  maxCapacity, // Cupo máximo por clase´
+  horariosDeshabilitados, // Horarios deshabilitados (no seleccionables)
 }) => {
   // --- Estados del formulario ---
   const [name, setName] = useState("");
@@ -32,7 +33,7 @@ const ModalCambioTurno = ({
   const [selectedSlotStatus, setSelectedSlotStatus] = useState("available"); // 'available' o 'full'
   const [allHoursForPlan, setAllHoursForPlan] = useState([]); // Todos los horarios del plan (con y sin cupo)
   const [isProcessing, setIsProcessing] = useState(false);
-
+  const { crearHistorialAlumno } = useHistorialAlumnos({idAlumno: studentData?.id});
   // --- Efecto para cargar datos del alumno ---
   useEffect(() => {
     if (studentData) {
@@ -98,7 +99,10 @@ const ModalCambioTurno = ({
         parseInt(a.hour.split(":")[0]) - parseInt(b.hour.split(":")[0])
     );
 
-    setAllHoursForPlan(hoursForPlan);
+    // Filtrar horarios deshabilitados
+    const horariosDisponibles = hoursForPlan.filter(h => !horariosDeshabilitados.includes(h.hour));
+
+    setAllHoursForPlan(horariosDisponibles);
     setSelectedHour("");
     setSelectedSlotStatus("available");
   }, [selectedPlan, allSchedules]);
@@ -209,13 +213,14 @@ const ModalCambioTurno = ({
           endDate: studentData.planDetails?.endDate || null,
         },
       };
-
       await onSaveDirect(key, studentDataToSave, "cambiar_turno", {
         oldDay: studentData.currentDay,
         oldHour: studentData.currentHour,
         newDay: day,
         newHour: selectedHour,
       });
+      crearHistorialAlumno({day: studentData.currentDay, hour: studentData.currentHour}, {day: selectedPlan, hour: selectedHour, id: studentData.id}, "CAMBIO_TURNO")
+      
       onClose();
     } catch (error) {
       console.error("Error al cambiar turno:", error);

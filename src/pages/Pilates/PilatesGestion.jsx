@@ -29,6 +29,7 @@ import { FaQuestionCircle } from "react-icons/fa";
 import SelectorSedes from "./Components/SelectorSedes";
 import { useAuth } from "../../AuthContext";
 
+
 const EyeIcon = ({ className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -269,6 +270,7 @@ const PilatesGestion = () => {
                   <GrillaHorarios
                     schedule={states.schedule}
                     searchTerm={states.searchTerm}
+                    setSearchTerm={setters.setSearchTerm}
                     handleCellClick={functions.handleCellClick}
                     DAYS={DAYS}
                     HOURS={HOURS}
@@ -339,6 +341,7 @@ const PilatesGestion = () => {
                       onSaveDirect={functions.handleSaveCambioTurno}
                       onSaveWaitingList={functions.handleSaveWaitingListCambio}
                       maxCapacity={states.cupoMaximoPilates}
+                      horariosDeshabilitados={states.horariosDeshabilitados}
                     />
                   )}
                 </>

@@ -101,7 +101,7 @@ const PanelesSuperiores = ({
     waitingListMatches: {
       color: "emerald",
       icon: <FaCheckCircle />,
-      title: "Coincidencias",
+      title: "¡Turnos libres! para:",
     },
   };
 

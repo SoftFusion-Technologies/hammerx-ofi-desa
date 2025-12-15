@@ -1,10 +1,12 @@
-import { use, useEffect } from "react";
 import { useAuth } from "../../../AuthContext";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
+import { MdOutlineSearchOff } from "react-icons/md";
+import { logo } from "../../../images/svg/index";
 
 const GrillaHorarios = ({
   schedule,
-  searchTerm,
+  searchTerm, // Estado que contiene el término de búsqueda actual
+  setSearchTerm, // Setter para actualizar el término de búsqueda
   handleCellClick,
   guardarAsistencia, // Función para guardar asistencia de alumnos para el instructor
   DAYS,
@@ -35,6 +37,37 @@ const GrillaHorarios = ({
   const horasVisibles = HOURS.filter(
     (hora) => !horariosDeshabilitados.includes(hora)
   );
+
+  // Función simple para limpiar acentos y mayúsculas
+  const normalizarTexto = (texto) => {
+    return (texto || "")
+      .toString()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+
+  // Filtramos las horas: Si hay búsqueda, solo dejamos las horas que tengan al alumno
+  const horasParaMostrar = horasVisibles.filter((hora) => {
+    // Si no escribieron nada en el buscador, devolvemos la hora tal cual
+    if (!searchTerm) return true;
+
+    const terminoBusqueda = normalizarTexto(searchTerm);
+
+    // Revisamos si en algún día visible de esta hora, existe el alumno buscado
+    const hayCoincidencia = visibleDays.some((day) => {
+      const key = `${day}-${hora}`;
+      const celda = schedule[key];
+      const listaAlumnos = celda ? celda.alumnos : [];
+
+      // Buscamos dentro de los alumnos de esa celda
+      return listaAlumnos.some((alumno) =>
+        normalizarTexto(alumno.name).includes(terminoBusqueda)
+      );
+    });
+
+    return hayCoincidencia;
+  });
 
   return (
     <div className="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-200">
@@ -74,7 +107,8 @@ const GrillaHorarios = ({
 
         {/* CUERPO DE LA TABLA */}
         <tbody>
-          {horasVisibles.map((hour) => {
+          {/* Se filtran los horarios para mostrarse */}
+          {horasParaMostrar.map((hour) => {
             const estaMinimizado = horariosMinimizados.includes(hour);
             const alturaCelda = estaMinimizado ? "auto" : "240px";
 
@@ -362,11 +396,15 @@ const GrillaHorarios = ({
                         )}
 
                         {/* RESUMEN CUANDO ESTÁ MINIMIZADO */}
-                        {estaMinimizado && students.length > 0 && (
+                        {estaMinimizado && students.length > 0 ? (
                           <div className="mt-1 text-xs font-bold text-gray-500 text-center bg-gray-50 rounded py-1">
                             {students.length} Alumnos ocultos
                           </div>
-                        )}
+                        ) : estaMinimizado && students.length === 0 ? (
+                          <div className="mt-1 text-xs font-bold text-red-500 text-center bg-gray-50 rounded py-1">
+                            Sin alumnos asignados
+                          </div>
+                        ) : null}
                       </div>
                     </td>
                   );
@@ -374,6 +412,44 @@ const GrillaHorarios = ({
               </tr>
             );
           })}
+
+          {horasParaMostrar.length === 0 && (
+            <tr>
+              <td
+                colSpan={visibleDays.length + 1}
+                className="p-10 text-center bg-gray-50 border border-gray-200 rounded-xl shadow-lg h-[50vh] align-middle"
+              >
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="flex items-center space-x-4">
+                    {/* LOGO */}
+                    <img
+                      src={logo}
+                      alt="logo"
+                      className="h-14 w-auto ml-12"
+                    />
+
+                    <MdOutlineSearchOff className="text-6xl text-orange-600" />
+                  </div>
+
+                  {/* El resto del contenido se mantiene igual */}
+                  <h3 className="text-2xl font-semibold text-gray-700 mb-2">
+                    No se encontraron coincidencias
+                  </h3>
+                  <p className="text-gray-500 text-lg max-w-5xl mx-auto leading-relaxed">
+                    No hay alumnos que coincidan con la búsqueda.
+                  </p>
+                  <div className="mt-8">
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-500 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 font-medium"
+                    >
+                      Limpiar búsqueda
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

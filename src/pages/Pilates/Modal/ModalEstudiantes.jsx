@@ -5,6 +5,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import { es } from "date-fns/locale";
 import { FaEye } from "react-icons/fa";
 import useConsultaDB from "../ConsultaDb/Consulta";
+import HistorialAlumno from "../Components/HistorialAlumno";
+import {MdHistory} from "react-icons/md";
 
 const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambioTurno }) => {
   /**
@@ -106,7 +108,8 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
 
   // ============ UI MODAL ============
   const [mostrarDetallesAuditoria, setMostrarDetallesAuditoria] = useState(false); // Alterna entre vista principal y vista de auditoría
-
+  // ============ COMPONENTS ============
+  const [mostrarHistorialAlumno, setMostrarHistorialAlumno] = useState(false); // Muestra el componente de Historial de Alumno
   /**
    * ================================================================
    * SECCIÓN 2: EFFECTS - SINCRONIZACIÓN DE FECHAS CON REACT-DATEPICKER
@@ -578,13 +581,15 @@ const { data: auditoriaData } = useConsultaDB(
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start z-50 overflow-y-auto p-4">
-      {!mostrarDetallesAuditoria ? (
+      {!mostrarHistorialAlumno ? (
+        <>
+              {!mostrarDetallesAuditoria ? (
         <div className="bg-white rounded-lg p-8 w-full max-w-4xl shadow-2xl">
           {/* VISTA PRINCIPAL: Formulario para agregar/editar alumno */}
 
           {/* Encabezado del modal */}
-          <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-            {cellData?.student ? "Cambiar Alumno" : "Agregar Alumno"}
+          <h2 className="text-4xl font-bold mb-6 text-orange-600 font-bignoodle text-center">
+            {cellData?.student ? "Modificar Alumno" : "Agregar Alumno"}
           </h2>
           {cellData?.student ? (
             <div className="flex justify-center items-center gap-5 ">
@@ -608,9 +613,16 @@ const { data: auditoriaData } = useConsultaDB(
                     onClose();
                   }
                 }}
-                className="bg-orange-500 text-white rounded-md p-2 font-semibold hover:bg-orange-600 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
               >
                 Cambiar turno
+              </button>
+              <button
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
+                onClick={() => setMostrarHistorialAlumno(true)}
+              >
+                <MdHistory className="text-lg" />
+                <span>Historial</span>
               </button>
             </div>
           ) : (
@@ -622,7 +634,7 @@ const { data: auditoriaData } = useConsultaDB(
           {/* SECCIÓN: Datos básicos del alumno (nombre y contacto) */}
           <div className="mb-4">
             <label
-              className="block text-gray-700 text-sm font-bold mb-2"
+              className="block text-orange-600 font-messina text-sm font-bold mb-2"
               htmlFor="name"
             >
               Apellido y Nombre
@@ -639,7 +651,7 @@ const { data: auditoriaData } = useConsultaDB(
           </div>
           <div className="mb-4">
             <label
-              className="block text-gray-700 text-sm font-bold mb-2"
+              className="block text-orange-600 font-messina text-sm font-bold mb-2"
               htmlFor="name"
             >
               Contacto
@@ -658,7 +670,7 @@ const { data: auditoriaData } = useConsultaDB(
           {/* SECCIÓN: Selector de estado/tipo de plan */}
           <div className="mb-6">
             <label
-              className="block text-gray-700 text-sm font-bold mb-2"
+              className="block text-orange-600 font-messina text-sm font-bold mb-2"
               htmlFor="status"
             >
               Estado / Plan
@@ -689,7 +701,7 @@ const { data: auditoriaData } = useConsultaDB(
           {status === "plan" && (
             <>
               <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2">
+                <label className="block text-orange-600 font-messina text-sm font-bold mb-2">
                   Fecha de Contratación
                 </label>
                 <DatePicker
@@ -714,7 +726,7 @@ const { data: auditoriaData } = useConsultaDB(
               <div className="mt-4">
                 <div className="flex items-center gap-2 mb-2">
                   <label
-                    className="block text-gray-700 text-sm font-bold"
+                    className="block text-orange-600 font-messina text-sm font-bold"
                     htmlFor="planDuration"
                   >
                     Duración del Plan
@@ -798,7 +810,7 @@ const { data: auditoriaData } = useConsultaDB(
                         </p>
                       )}
                       <button
-                        className="bg-orange-500 text-white rounded-md p-2 font-semibold"
+                        className="flex items-center space-x-2 px-2 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
                         onClick={() =>
                           setHabilitarFechaFinPersonalizada(
                             !habilitarFechaFinPersonalizada
@@ -932,7 +944,7 @@ const { data: auditoriaData } = useConsultaDB(
 
           {/* SECCIÓN: Campo de observaciones generales */}
           <div className="mt-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
+            <label className="block text-orange-600 font-messina text-sm font-bold mb-2">
               Observación (Opcional)
             </label>
             <textarea
@@ -1032,6 +1044,11 @@ const { data: auditoriaData } = useConsultaDB(
           </div>
         </div>
       )}
+        </>
+      ) : (
+        <HistorialAlumno volver={setMostrarHistorialAlumno} cerrar={onClose} idCliente={cellData.student.id} nombreCliente={cellData.student.name}></HistorialAlumno>
+      )}
+
     </div>
   );
 };
