@@ -27,7 +27,12 @@ import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
 import Alerta from '../Error';
 import { useAuth } from '../../AuthContext';
-
+import {
+  FaFacebookF,
+  FaWhatsapp,
+  FaInstagram,
+  FaLinkedinIn
+} from 'react-icons/fa';
 const nuevoIntegranteSchema = Yup.object().shape({
   nombre: Yup.string().required('El Nombre es obligatorio'),
   telefono: Yup.string().required('El Teléfono es obligatorio'),
@@ -135,19 +140,48 @@ const FormAltaIntegranteConve = ({
     }
   };
 
+  const ARS = new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    maximumFractionDigits: 0
+  });
+
+  const toNumberAR = (v) => {
+    if (v === null || v === undefined) return 0;
+    const s = String(v).trim();
+
+    // Soporta: "25.000", "$25.000", "25000", "25,000" (lo normalizamos)
+    const normalized = s
+      .replace(/\$/g, '')
+      .replace(/\s/g, '')
+      .replace(/\./g, '')
+      .replace(/,/g, '.')
+      .replace(/[^\d.-]/g, '');
+
+    const n = Number(normalized);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const formatARS = (v) => ARS.format(toNumberAR(v));
+
+  const formatPct = (v) => {
+    const n = toNumberAR(v);
+    return `${n}%`;
+  };
+
   return (
     <div
       className={`${
         isOpen ? 'fixed' : 'hidden'
       } inset-0 z-50 flex items-center justify-center px-4 sm:px-6`}
     >
-      {/* Backdrop claro con leve blur */}
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-[2px] transition-opacity"
         onClick={handleClose}
       />
 
-      {/* Wrapper por si tenés estilos previos en .container-inputs */}
+      {/* Modal */}
       <div className="container-inputs relative w-full max-w-xl">
         <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
           {/* Header */}
@@ -159,16 +193,18 @@ const FormAltaIntegranteConve = ({
               </span>
 
               <div>
-                <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+                <h2 className="text-base sm:text-lg font-semibold text-orange-600 font-bignoodle">
                   {integrante?.nombre
                     ? integrante.nombre
                     : 'Integrante de convenio'}
                 </h2>
+
                 <p className="mt-1 text-xs text-slate-500">
                   Completá los datos del integrante. Los campos marcados con{' '}
                   <span className="font-semibold text-orange-600">*</span> son
                   obligatorios.
                 </p>
+
                 {id_conv && (
                   <p className="mt-1 text-[11px] text-slate-500">
                     Convenio asociado:{' '}
@@ -190,7 +226,7 @@ const FormAltaIntegranteConve = ({
             </button>
           </div>
 
-          {/* Contenido + Formik */}
+          {/* Formik */}
           <Formik
             innerRef={formikRef}
             initialValues={{
@@ -214,221 +250,343 @@ const FormAltaIntegranteConve = ({
               resetForm();
             }}
           >
-            {({ isSubmitting, setFieldValue, errors, touched, values }) => (
-              <Form className="flex flex-col max-h-[80vh]">
-                <div className="flex-1 space-y-6 overflow-y-auto px-5 py-4">
-                  {/* Sección: Datos personales */}
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 mb-2">
-                      Datos personales
-                    </p>
-                    <div className="space-y-4">
-                      {/* Nombre */}
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <label
-                            htmlFor="nombre"
-                            className="text-xs font-medium text-slate-800"
-                          >
-                            Nombre y apellido{' '}
-                            <span className="text-orange-600">*</span>
-                          </label>
-                          <span className="text-[11px] text-slate-400">
-                            Máx. 70 caracteres
-                          </span>
-                        </div>
-                        <Field
-                          id="nombre"
-                          name="nombre"
-                          type="text"
-                          maxLength="70"
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
-                          placeholder="Ej: María Fernanda López"
-                        />
-                        {errors.nombre && touched.nombre && (
-                          <Alerta>{errors.nombre}</Alerta>
-                        )}
-                      </div>
+            {({ isSubmitting, setFieldValue, errors, touched, values }) => {
+              // Helpers AR (inline para que este snippet sea plug&play)
+              const ARS = new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+                maximumFractionDigits: 0
+              });
 
-                      {/* DNI + Teléfono */}
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              const toNumberAR = (v) => {
+                if (v === null || v === undefined) return 0;
+                const s = String(v).trim();
+                const normalized = s
+                  .replace(/\$/g, '')
+                  .replace(/\s/g, '')
+                  .replace(/\./g, '')
+                  .replace(/,/g, '.')
+                  .replace(/[^\d.-]/g, '');
+
+                const n = Number(normalized);
+                return Number.isFinite(n) ? n : 0;
+              };
+
+              const formatARS = (v) => ARS.format(toNumberAR(v));
+              const formatPct = (v) => `${toNumberAR(v)}%`;
+
+              const precioBase = toNumberAR(values.precio);
+              const totalFinal = toNumberAR(values.preciofinal);
+              const descuentoPct = toNumberAR(values.descuento);
+              const ahorro = Math.max(0, precioBase - totalFinal);
+
+              return (
+                <Form className="flex flex-col max-h-[80vh]">
+                  <div className="flex-1 space-y-6 overflow-y-auto px-5 py-4">
+                    {/* Sección: Datos personales */}
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 mb-2">
+                        Datos personales
+                      </p>
+
+                      <div className="space-y-4">
+                        {/* Nombre */}
                         <div className="space-y-1">
-                          <label
-                            htmlFor="dni"
-                            className="text-xs font-medium text-slate-800"
-                          >
-                            DNI
-                          </label>
-                          <Field
-                            id="dni"
-                            name="dni"
-                            type="tel"
-                            maxLength="20"
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
-                            placeholder="Ej: 38.123.456"
-                          />
-                          {errors.dni && touched.dni && (
-                            <Alerta>{errors.dni}</Alerta>
-                          )}
-                        </div>
-
-                        <div className="space-y-1 mt-2">
                           <div className="flex items-center justify-between">
                             <label
-                              htmlFor="telefono"
+                              htmlFor="nombre"
                               className="text-xs font-medium text-slate-800"
                             >
-                              Teléfono{' '}
+                              Nombre y apellido{' '}
                               <span className="text-orange-600">*</span>
                             </label>
                             <span className="text-[11px] text-slate-400">
-                              Solo números
+                              Máx. 70 caracteres
                             </span>
                           </div>
+
                           <Field
-                            id="telefono"
-                            name="telefono"
-                            type="tel"
-                            maxLength="20"
+                            id="nombre"
+                            name="nombre"
+                            type="text"
+                            maxLength="70"
                             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
-                            placeholder="Ej: 3816123456"
+                            placeholder="Ej: María Fernanda López"
                           />
-                          {errors.telefono && touched.telefono && (
-                            <Alerta>{errors.telefono}</Alerta>
+                          {errors.nombre && touched.nombre && (
+                            <Alerta>{errors.nombre}</Alerta>
+                          )}
+                        </div>
+
+                        {/* DNI + Teléfono */}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div className="space-y-1">
+                            <label
+                              htmlFor="dni"
+                              className="text-xs font-medium text-slate-800"
+                            >
+                              DNI
+                            </label>
+                            <Field
+                              id="dni"
+                              name="dni"
+                              type="tel"
+                              maxLength="20"
+                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
+                              placeholder="Ej: 38.123.456"
+                            />
+                            {errors.dni && touched.dni && (
+                              <Alerta>{errors.dni}</Alerta>
+                            )}
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <label
+                                htmlFor="telefono"
+                                className="text-xs font-medium text-slate-800"
+                              >
+                                Teléfono{' '}
+                                <span className="text-orange-600">*</span>
+                              </label>
+                              <span className="text-[11px] text-slate-400">
+                                Solo números
+                              </span>
+                            </div>
+
+                            <Field
+                              id="telefono"
+                              name="telefono"
+                              type="tel"
+                              maxLength="20"
+                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
+                              placeholder="Ej: 3816123456"
+                            />
+                            {errors.telefono && touched.telefono && (
+                              <Alerta>{errors.telefono}</Alerta>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Email */}
+                        <div className="space-y-1">
+                          <label
+                            htmlFor="email"
+                            className="text-xs font-medium text-slate-800"
+                          >
+                            Email
+                          </label>
+                          <Field
+                            id="email"
+                            name="email"
+                            type="email"
+                            maxLength="100"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
+                            placeholder="Ej: nombre@correo.com"
+                          />
+                          {errors.email && touched.email && (
+                            <Alerta>{errors.email}</Alerta>
                           )}
                         </div>
                       </div>
+                    </div>
 
-                      {/* Email */}
-                      <div className="space-y-1">
-                        <label
-                          htmlFor="email"
-                          className="text-xs font-medium text-slate-800"
-                        >
-                          Email
-                        </label>
-                        <Field
-                          id="email"
-                          name="email"
-                          type="email"
-                          maxLength="100"
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
-                          placeholder="Ej: nombre@correo.com"
-                        />
-                        {errors.email && touched.email && (
-                          <Alerta>{errors.email}</Alerta>
+                    {/* Sección: Configuración de convenio */}
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 mb-2">
+                        Configuración de convenio
+                      </p>
+
+                      <div className="space-y-3">
+                        {/* Sede */}
+                        <div className="space-y-1">
+                          <label
+                            htmlFor="sede"
+                            className="text-xs font-medium text-slate-800"
+                          >
+                            Sede <span className="text-orange-600">*</span>
+                          </label>
+
+                          <Field
+                            as="select"
+                            id="sede"
+                            name="sede"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
+                            onChange={(e) => {
+                              const selectedSede = e.target.value;
+                              setFieldValue('sede', selectedSede);
+
+                              // Normalizamos a número para evitar arrastrar formatos raros
+                              if (selectedSede === 'Monteros') {
+                                setFieldValue('precio', toNumberAR(precio));
+                                setFieldValue(
+                                  'descuento',
+                                  toNumberAR(descuento)
+                                );
+                                setFieldValue(
+                                  'preciofinal',
+                                  toNumberAR(preciofinal)
+                                );
+                              } else if (selectedSede === 'Concepción') {
+                                setFieldValue(
+                                  'precio',
+                                  toNumberAR(precio_concep)
+                                );
+                                setFieldValue(
+                                  'descuento',
+                                  toNumberAR(descuento_concep)
+                                );
+                                setFieldValue(
+                                  'preciofinal',
+                                  toNumberAR(preciofinal_concep)
+                                );
+                              }
+                            }}
+                          >
+                            <option value="" disabled>
+                              Seleccionar sede…
+                            </option>
+                            <option value="Multisede">MULTI SEDE</option>
+                            <option value="Monteros">MONTEROS</option>
+                            <option value="Concepción">CONCEPCIÓN</option>
+                            <option value="SMT">TUCUMÁN - BARRIO SUR</option>
+                            <option value="SanMiguelBN">
+                              TUCUMÁN - BARRIO NORTE
+                            </option>
+                          </Field>
+
+                          {errors.sede && touched.sede && (
+                            <Alerta>{errors.sede}</Alerta>
+                          )}
+                        </div>
+
+                        {/* Resumen pro (ARS + ahorro) */}
+                        {(values.precio || values.preciofinal) && (
+                          <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                            {!!precioBase && (
+                              <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-1 border border-slate-200 text-slate-700">
+                                Precio base:
+                                <span className="ml-1 font-semibold text-slate-900">
+                                  {formatARS(precioBase)}
+                                </span>
+                              </span>
+                            )}
+
+                            {!!descuentoPct && (
+                              <span className="inline-flex items-center rounded-full bg-orange-50 px-2.5 py-1 border border-orange-100 text-orange-700">
+                                Descuento:
+                                <span className="ml-1 font-semibold">
+                                  {formatPct(descuentoPct)}
+                                </span>
+                              </span>
+                            )}
+
+                            {!!totalFinal && (
+                              <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 border border-emerald-100 text-emerald-700">
+                                Total final:
+                                <span className="ml-1 font-semibold">
+                                  {formatARS(totalFinal)}
+                                </span>
+                              </span>
+                            )}
+
+                            {!!ahorro && (
+                              <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 border border-indigo-100 text-indigo-700">
+                                Ahorro:
+                                <span className="ml-1 font-semibold">
+                                  {formatARS(ahorro)}
+                                </span>
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Sección: Configuración de convenio */}
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 mb-2">
-                      Configuración de convenio
-                    </p>
-                    <div className="space-y-3">
-                      {/* Sede */}
-                      <div className="space-y-1">
-                        <label
-                          htmlFor="sede"
-                          className="text-xs font-medium text-slate-800"
-                        >
-                          Sede <span className="text-orange-600">*</span>
-                        </label>
-                        <Field
-                          as="select"
-                          id="sede"
-                          name="sede"
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
-                          onChange={(e) => {
-                            const selectedSede = e.target.value;
-                            setFieldValue('sede', selectedSede);
+                  {/* Footer: acciones + redes */}
+                  <div className="border-t border-slate-200 bg-slate-50 px-5 py-3.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={handleClose}
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50"
+                      >
+                        Cancelar
+                      </button>
 
-                            if (selectedSede === 'Monteros') {
-                              setFieldValue('precio', precio);
-                              setFieldValue('descuento', descuento);
-                              setFieldValue('preciofinal', preciofinal);
-                            } else if (selectedSede === 'Concepción') {
-                              setFieldValue('precio', precio_concep);
-                              setFieldValue('descuento', descuento_concep);
-                              setFieldValue('preciofinal', preciofinal_concep);
-                            }
-                          }}
-                        >
-                          <option value="" disabled>
-                            Seleccionar sede…
-                          </option>
-                          <option value="Multisede">MULTI SEDE</option>
-                          <option value="Monteros">MONTEROS</option>
-                          <option value="Concepción">CONCEPCIÓN</option>
-                          <option value="SMT">TUCUMÁN - BARRIO SUR</option>
-                          <option value="SanMiguelBN">
-                            TUCUMÁN - BARRIO NORTE
-                          </option>
-                        </Field>
-                        {errors.sede && touched.sede && (
-                          <Alerta>{errors.sede}</Alerta>
-                        )}
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 via-orange-500 to-orange-400 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-[0_8px_18px_rgba(249,115,22,0.35)] hover:shadow-[0_10px_22px_rgba(249,115,22,0.45)] hover:-translate-y-[1px] transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50"
+                      >
+                        {isSubmitting
+                          ? 'Guardando...'
+                          : integrante
+                          ? 'Actualizar integrante'
+                          : 'Crear integrante'}
+                      </button>
+                    </div>
+
+                    {/* Redes SoftFusion (light coherente) */}
+                    <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="text-[11px] text-slate-500">
+                        Desarrollado por{' '}
+                        <span className="font-semibold text-pink-600">
+                          SoftFusion
+                        </span>
                       </div>
 
-                      {/* Resumen de valores */}
-                      {(values.precio || values.preciofinal) && (
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-                          {values.precio && (
-                            <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-1 border border-slate-200 text-slate-700">
-                              Precio base:{' '}
-                              <span className="ml-1 font-semibold text-slate-900">
-                                ${values.precio}
-                              </span>
-                            </span>
-                          )}
-                          {values.descuento && (
-                            <span className="inline-flex items-center rounded-full bg-orange-50 px-2.5 py-1 border border-orange-100 text-orange-700">
-                              Descuento:{' '}
-                              <span className="ml-1 font-semibold">
-                                {values.descuento}%
-                              </span>
-                            </span>
-                          )}
-                          {values.preciofinal && (
-                            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 border border-emerald-100 text-emerald-700">
-                              Total final:{' '}
-                              <span className="ml-1 font-semibold">
-                                ${values.preciofinal}
-                              </span>
-                            </span>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-slate-500 mr-1 hidden sm:inline">
+                          Seguinos:
+                        </span>
+
+                        <a
+                          href="https://www.facebook.com/profile.php?id=61551009572957&mibextid=wwXIfr&rdid=i9TyFp5jNmBtdYT8&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1JAMUqUEaQ%2F%3Fmibextid%3DwwXIfr#"
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="SoftFusion en Facebook"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+                        >
+                          <FaFacebookF className="text-[13px]" />
+                        </a>
+
+                        <a
+                          href="https://api.whatsapp.com/send/?phone=5493815430503&text&type=phone_number&app_absent=0"
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="SoftFusion en WhatsApp"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                        >
+                          <FaWhatsapp className="text-[14px]" />
+                        </a>
+
+                        <a
+                          href="https://www.instagram.com/softfusiontechnologies/"
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="SoftFusion en Instagram"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-fuchsia-300 hover:bg-fuchsia-50 hover:text-fuchsia-700"
+                        >
+                          <FaInstagram className="text-[14px]" />
+                        </a>
+
+                        <a
+                          href="https://www.linkedin.com"
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="SoftFusion en LinkedIn"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+                        >
+                          <FaLinkedinIn className="text-[13px]" />
+                        </a>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Footer: acciones */}
-                <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-3.5">
-                  <button
-                    type="button"
-                    onClick={handleClose}
-                    className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50"
-                  >
-                    Cancelar
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 via-orange-500 to-orange-400 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-[0_8px_18px_rgba(249,115,22,0.35)] hover:shadow-[0_10px_22px_rgba(249,115,22,0.45)] hover:-translate-y-[1px] transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50"
-                  >
-                    {isSubmitting
-                      ? 'Guardando...'
-                      : integrante
-                      ? 'Actualizar integrante'
-                      : 'Crear integrante'}
-                  </button>
-                </div>
-              </Form>
-            )}
+                </Form>
+              );
+            }}
           </Formik>
         </div>
       </div>

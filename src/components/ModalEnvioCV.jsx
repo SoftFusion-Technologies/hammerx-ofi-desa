@@ -28,7 +28,12 @@ const CARGOS = [
   'Otro'
 ];
 
-const SEDES = ['SMT - BARRIO SUR', 'Monteros', 'Concepción'];
+const SEDES = [
+  'SMT - BARRIO SUR',
+  'SMT - BARRIO NORTE',
+  'Monteros',
+  'Concepción'
+];
 
 // Activá/desactivá el “wizard flow”
 const AUTO_ADVANCE = true;
@@ -369,7 +374,7 @@ export default function ModalEnvioCV({ isOpen, onClose }) {
                 </div>
 
                 {/* CTA guiados (opcional, súper mobile-friendly) */}
-                <div className="mt-4 flex flex-wrap gap-2">
+                {/* <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={goToCargos}
@@ -397,14 +402,14 @@ export default function ModalEnvioCV({ isOpen, onClose }) {
                     <Mail className="w-4 h-4 text-orange-600" />
                     Ver preview
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
 
           {/* Scrollable content */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto">
-            <div className="p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="p-6 sm:p-8 grid grid-cols-1  gap-6">
               {/* Left: Form */}
               <div className="space-y-4">
                 <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm p-4">
@@ -434,11 +439,8 @@ export default function ModalEnvioCV({ isOpen, onClose }) {
                   </div>
 
                   <div className="mt-3 text-[12px] text-zinc-500 font-messina">
-                    El asunto se arma automáticamente como:{' '}
-                    <span className="text-orange-700 font-semibold">
-                      SEDE / PUESTO
-                    </span>
-                    .
+                    Si tenes problema para generar el correo, envianos
+                    directamente a mi-cv@hammer.ar
                   </div>
                 </div>
 
@@ -595,8 +597,7 @@ export default function ModalEnvioCV({ isOpen, onClose }) {
               </div>
 
               {/* Right: Preview */}
-              <div className="space-y-4">
-                {/* Anchor Preview */}
+              {/* <div className="space-y-4">
                 <div ref={previewAnchorRef} />
 
                 <motion.div
@@ -670,7 +671,7 @@ export default function ModalEnvioCV({ isOpen, onClose }) {
                     .
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
