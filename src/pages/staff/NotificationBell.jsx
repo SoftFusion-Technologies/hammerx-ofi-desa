@@ -189,15 +189,15 @@ const NotificationBell = () => {
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         whileTap={{ scale: 0.92 }}
-        className="relative flex items-center justify-center w-14 h-14 rounded-full bg-zinc-900/80 border border-white/10 shadow-lg shadow-black/40 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all"
+        className="relative flex items-center justify-center w-9 h-9 rounded-full bg-zinc-900/80 border border-white/10 shadow-lg shadow-black/40 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all"
       >
-        <Bell className="w-7 h-7 text-zinc-100" />
+        <Bell className="w-4 h-4 text-zinc-100" />
         {hasBadge && (
           <>
             {/* Glow */}
-            <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-red-500/60 blur-[3px] animate-pulse" />
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500/60 blur-[3px] animate-pulse" />
             {/* Contador */}
-            <span className="absolute -top-0.5 -right-0.5 min-w-[28px] px-2 h-7 flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 text-[10px] font-semibold text-white shadow-md">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] px-1.5 h-4 flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 text-[10px] font-semibold text-white shadow-md">
               {badgeValue}
             </span>
           </>
