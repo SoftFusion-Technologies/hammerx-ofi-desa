@@ -1444,7 +1444,7 @@ const PilatesGestionLogica = () => {
         case "plan":
           const endDate = new Date(student.planDetails.endDate + "T00:00:00");
 
-          isExpired = endDate <= today;
+          isExpired = endDate < today;
 
           style =
             student.planDetails?.type === "L-M-V"
@@ -1519,7 +1519,7 @@ const PilatesGestionLogica = () => {
             student.scheduledDetails?.promisedDate ||
             student.scheduledDetails.date;
           const scheduledDate = new Date(fechaRelevante + "T00:00:00");
-          isExpired = scheduledDate <= today;
+          isExpired = scheduledDate < today;
           style = "bg-yellow-200";
           content = (
             <span>
