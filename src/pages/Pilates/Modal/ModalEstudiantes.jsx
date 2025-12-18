@@ -592,7 +592,7 @@ const { data: auditoriaData } = useConsultaDB(
             {cellData?.student ? "Modificar Alumno" : "Agregar Alumno"}
           </h2>
           {cellData?.student ? (
-            <div className="flex justify-center items-center gap-5 ">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 ">
               <p className="text-gray-600 text-center">
                 {cellData?.day} a las {cellData?.time}
               </p>
@@ -743,7 +743,7 @@ const { data: auditoriaData } = useConsultaDB(
                       </button>
                     )}
                 </div>
-                <div className="mb-6 grid grid-cols-3 items-center gap-10">
+                <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 items-center gap-6">
                   <div className="col-span-1">
                     <select
                       id="planDuration"
@@ -776,7 +776,7 @@ const { data: auditoriaData } = useConsultaDB(
                         )}
                     </p>
                   ) : (
-                    <div className="flex gap-1">
+                    <div className="flex flex-col sm:flex-row gap-1 items-start">
                       {habilitarFechaFinPersonalizada ? (
                         <>
                           <p className="text-sm text-gray-500 font-bold mt-2">
@@ -796,7 +796,7 @@ const { data: auditoriaData } = useConsultaDB(
                             }}
                             dateFormat="dd/MM/yyyy"
                             placeholderText="Seleccioná una fecha"
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 max-w-28"
+                            className="shadow appearance-none border rounded w-full sm:max-w-[140px] py-2 px-3 text-gray-700"
                             locale={es}
                           />
                         </>
@@ -959,27 +959,33 @@ const { data: auditoriaData } = useConsultaDB(
           </div>
 
           {/* SECCIÓN: Botones de acción (Guardar, Dar de baja, Cancelar) */}
-          <div className="flex items-center justify-between mt-8">
-            <button
-              onClick={handleSave}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-            >
-              {getTextoBoton()}
-            </button>
-            {cellData?.student && (
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between mt-8 gap-3">
+            <div className="w-full sm:w-auto">
               <button
-                onClick={handleDelete}
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                onClick={handleSave}
+                className="w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               >
-                Dar de baja
+                {getTextoBoton()}
               </button>
+            </div>
+            {cellData?.student && (
+              <div className="w-full sm:w-auto">
+                <button
+                  onClick={handleDelete}
+                  className="w-full sm:w-auto bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Dar de baja
+                </button>
+              </div>
             )}
-            <button
-              onClick={onClose}
-              className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
-            >
-              Cancelar
-            </button>
+            <div className="w-full sm:w-auto">
+              <button
+                onClick={onClose}
+                className="w-full sm:w-auto inline-block text-center font-bold text-sm text-blue-500 hover:text-blue-800"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       ) : (

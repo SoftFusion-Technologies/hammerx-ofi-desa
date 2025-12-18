@@ -47,12 +47,12 @@ const DashboardTile = ({
       initial={{ opacity: 0, y: 20, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.45, delay }}
-      className="relative"
+      className="relative w-full"
     >
       <Wrapper
         to={to}
         onClick={onClick}
-        className="group block h-full text-left focus:outline-none"
+        className="group block h-full w-full text-left focus:outline-none"
         type={to ? undefined : 'button'}
       >
         <div className="relative h-full overflow-hidden rounded-2xl border border-slate-100 bg-white/95 shadow-[0_18px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_24px_60px_rgba(15,23,42,0.2)]">
@@ -245,9 +245,10 @@ const AdminPage = () => {
       {/* CONTENEDOR PRINCIPAL */}
       <section className="relative w-full min-h-[calc(100vh-80px)]">
         <div className="dashboardbg min-h-[calc(100vh-80px)]">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-14">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-14">
+            
             {/* ENCABEZADO */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
               <div>
                 <motion.h1
                   initial={{ opacity: 0, y: 10 }}
@@ -293,175 +294,193 @@ const AdminPage = () => {
               </motion.div>
             </div>
 
-            {/* GRID DE TARJETAS */}
-            <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {/* Pregúntale a la IA - todos */}
-              <DashboardTile
-                title="Preguntale a la IA"
-                description="Consultá dudas frecuentes del staff, procedimientos y sugerencias inteligentes."
-                to="/dashboard/preguntas-ia"
-                icon={MessageCircle}
-                delay={0.1}
-              />
-
-              {/* Foro de Novedades */}
-              {(isAdmin || isVendedor) && (
-                <DashboardTile
-                  title="Foro de Novedades"
-                  description="Publicá y revisá novedades internas para todo el equipo."
-                  to="/dashboard/novedades"
-                  icon={Megaphone}
-                  delay={0.12}
-                />
-              )}
-
-              {/* Leads y Prospectos */}
-              {(isAdmin || isVendedor) && (
-                <DashboardTile
-                  title="Leads y Prospectos"
-                  description="Gestioná leads, prospectos y oportunidades comerciales."
-                  to="/dashboard/testclass"
-                  icon={ClipboardList}
-                  delay={0.14}
-                />
-              )}
-
-              {/* Convenios */}
-              {(isAdmin || isVendedor) && (
-                <DashboardTile
-                  title="Convenios"
-                  description="Seguimiento de convenios activos y beneficios asociados."
-                  to="/dashboard/admconvenios"
-                  icon={FileText}
-                  delay={0.16}
-                />
-              )}
-
-              {/* Instructores */}
-              {(isAdmin || isInstructor) && (
-                <DashboardTile
-                  title="Instructores"
-                  description="Gestión de instructores, alumnos y coordinación de asistencias."
-                  onClick={handleButtonClickInstructores}
-                  icon={Users}
-                  delay={0.18}
-                />
-              )}
-
-              {/* Estadísticas */}
-              {(isAdmin || isInstructor) && (
-                <DashboardTile
-                  title="Estadísticas"
-                  description="Visualizá estadísticas de los instructores de HammerX."
-                  to="/dashboard/estadisticas"
-                  icon={BarChart2}
-                  delay={0.2}
-                />
-              )}
-
-              {/* Quejas */}
-              {!isImagenes && (
-                <DashboardTile
-                  title="Quejas"
-                  description="Registrá y gestioná quejas internas para mejorar la experiencia de los socios."
-                  to="/dashboard/quejas"
-                  icon={HelpCircle}
-                  delay={0.22}
-                />
-              )}
-
-              {/* Ventas */}
-              {(isAdmin || isVendedor) && !isImagenes && (
-                <DashboardTile
-                  title="Ventas"
-                  description="Accedé al módulo de ventas, agenda y seguimiento de clientes."
-                  to="/dashboard/ventas"
-                  icon={ShoppingBag}
-                  delay={0.24}
-                  badgeSlot={
-                    <BadgeAgendaVentas
-                      userId={userId}
-                      userLevel={userLevel}
-                      size="sm"
-                    />
-                  }
-                />
-              )}
-
-              {/* Pilates */}
-              {(isAdmin || isVendedor) && !isImagenes && (
-                <DashboardTile
-                  title="Pilates"
-                  description="Gestión de alumnos, clases y administración del módulo Pilates."
-                  to="/dashboard/pilates/gestion"
-                  icon={Dumbbell}
-                  delay={0.26}
-                />
-              )}
-
-              {/* Imágenes */}
-              {isImagenes && (
-                <DashboardTile
-                  title="Imágenes"
-                  description="Subí y gestioná las imágenes oficiales del gimnasio."
-                  to="/dashboard/imagenes"
-                  icon={ImageIcon}
-                  delay={0.28}
-                />
-              )}
-
-              {/* Recaptación como tile normal */}
-              {(isAdmin || isVendedor) && !isImagenes && (
-                <DashboardTile
-                  title="Recaptación de clientes"
-                  description="Seguimiento de contactos leads y reactivación de socios."
-                  to="/dashboard/recaptacion"
-                  icon={Target}
-                  delay={0.3}
-                />
-              )}
-
-              {userLevel === 'instructor' ||
-              (userLevel !== 'imagenes' && (
-                <DashboardTile
-                  title="Remarketing"
-                  description="Accedé al módulo de remarketing para gestionar campañas y seguimientos."
-                  to="/dashboard/ventas-remarketing"
-                  icon={ShoppingBag}
-                  delay={0.26}
-                  badgeSlot={
-                    <BadgeAgendaVentas
-                      userId={userId}
-                      userLevel={userLevel}
-                      size="sm"
-                    />
-                  }
-                >
-                </DashboardTile>
-              ))}
-            </div>
-
-            {/* {(isAdmin || isVendedor) && !isImagenes && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.35 }}
-                className="mt-8"
-              >
-                <div className="rounded-2xl border border-slate-100 bg-white/95 shadow-[0_18px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl p-5">
-                  <CardRecaptacion
-                    userLevel={userLevel}
-                    userId={userId}
-                    mes={mesActual}
-                    anio={anioActual}
-                  />
+            {/* --- GRID PRINCIPAL DE 3 COLUMNAS --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+              
+              {/* === COLUMNA 1: GESTIÓN === */}
+              <div className="flex flex-col gap-5 w-full">
+                {/* Título de Sección */}
+                <div className="pb-2 border-b border-orange-500/30 mb-2">
+                   <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">
+                     GESTIÓN
+                   </h2>
+                   <p className="text-xs text-slate-300  font-semibold">Administración y novedades</p>
                 </div>
-              </motion.div>
-            )} */}
+
+                {/* Foro de Novedades */}
+                {(isAdmin || isVendedor) && (
+                  <DashboardTile
+                    title="Foro de Novedades"
+                    description="Publicá y revisá novedades internas para todo el equipo."
+                    to="/dashboard/novedades"
+                    icon={Megaphone}
+                    delay={0.1}
+                  />
+                )}
+
+                {/* Convenios */}
+                {(isAdmin || isVendedor) && (
+                  <DashboardTile
+                    title="Convenios"
+                    description="Seguimiento de convenios activos y beneficios asociados."
+                    to="/dashboard/admconvenios"
+                    icon={FileText}
+                    delay={0.12}
+                  />
+                )}
+
+                {/* Quejas */}
+                {!isImagenes && (
+                  <DashboardTile
+                    title="Quejas"
+                    description="Registrá y gestioná quejas internas."
+                    to="/dashboard/quejas"
+                    icon={HelpCircle}
+                    delay={0.14}
+                  />
+                )}
+
+                {/* Pilates */}
+                {(isAdmin || isVendedor) && !isImagenes && (
+                  <DashboardTile
+                    title="Pilates"
+                    description="Gestión de alumnos y clases de Pilates."
+                    to="/dashboard/pilates/gestion"
+                    icon={Dumbbell}
+                    delay={0.16}
+                  />
+                )}
+              </div>
+
+              {/* === COLUMNA 2: CONTACTOS === */}
+              <div className="flex flex-col gap-5 w-full">
+                {/* Título de Sección */}
+                <div className="pb-2 border-b border-orange-500/30 mb-2">
+                   <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">
+                     CONTACTOS
+                   </h2>
+                   <p className="text-xs text-slate-300 font-semibold">Ventas y seguimiento</p>
+                </div>
+
+                {/* Ventas */}
+                {(isAdmin || isVendedor) && !isImagenes && (
+                  <DashboardTile
+                    title="Ventas"
+                    description="Accedé al módulo de ventas y agenda."
+                    to="/dashboard/ventas"
+                    icon={ShoppingBag}
+                    delay={0.18}
+                    badgeSlot={
+                      <BadgeAgendaVentas
+                        userId={userId}
+                        userLevel={userLevel}
+                        size="sm"
+                      />
+                    }
+                  />
+                )}
+
+                {/* Leads y Prospectos */}
+                {(isAdmin || isVendedor) && (
+                  <DashboardTile
+                    title="Leads y Prospectos"
+                    description="Gestioná leads y oportunidades comerciales."
+                    to="/dashboard/testclass"
+                    icon={ClipboardList}
+                    delay={0.20}
+                  />
+                )}
+
+                {/* Recaptación de clientes */}
+                {(isAdmin || isVendedor) && !isImagenes && (
+                  <DashboardTile
+                    title="Recaptación"
+                    description="Reactivación de socios y seguimiento."
+                    to="/dashboard/recaptacion"
+                    icon={Target}
+                    delay={0.22}
+                  />
+                )}
+
+                {/* Remarketing */}
+                {userLevel === 'instructor' ||
+                (userLevel !== 'imagenes' && (
+                  <DashboardTile
+                    title="Remarketing"
+                    description="Gestión de campañas y seguimientos."
+                    to="/dashboard/ventas-remarketing"
+                    icon={ShoppingBag}
+                    delay={0.24}
+                    badgeSlot={
+                      <BadgeAgendaVentas
+                        userId={userId}
+                        userLevel={userLevel}
+                        size="sm"
+                      />
+                    }
+                  />
+                ))}
+              </div>
+
+              {/* === COLUMNA 3: OTROS === */}
+              <div className="flex flex-col gap-5 w-full">
+                {/* Título de Sección */}
+                <div className="pb-2 border-b border-orange-500/30 mb-2">
+                   <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">
+                     OTROS
+                   </h2>
+                   <p className="text-xs text-slate-300 font-semibold">Herramientas y soporte</p>
+                </div>
+
+                {/* Pregúntale a la IA */}
+                <DashboardTile
+                  title="Preguntale a la IA"
+                  description="Consultá dudas frecuentes y procedimientos."
+                  to="/dashboard/preguntas-ia"
+                  icon={MessageCircle}
+                  delay={0.26}
+                />
+
+                {/* Instructores */}
+                {(isAdmin || isInstructor) && (
+                  <DashboardTile
+                    title="Instructores"
+                    description="Gestión de instructores y asistencias."
+                    onClick={handleButtonClickInstructores}
+                    icon={Users}
+                    delay={0.28}
+                  />
+                )}
+
+                {/* Estadísticas */}
+                {(isAdmin || isInstructor) && (
+                  <DashboardTile
+                    title="Estadísticas"
+                    description="Visualizá estadísticas generales."
+                    to="/dashboard/estadisticas"
+                    icon={BarChart2}
+                    delay={0.30}
+                  />
+                )}
+
+                {/* Imágenes */}
+                {isImagenes && (
+                  <DashboardTile
+                    title="Imágenes"
+                    description="Gestión de imágenes oficiales."
+                    to="/dashboard/imagenes"
+                    icon={ImageIcon}
+                    delay={0.32}
+                  />
+                )}
+              </div>
+
+            </div>
+            {/* --- FIN GRID --- */}
 
             {/* CTA FAQs */}
             {(isAdmin || isVendedor) && (
-              <div className="mt-10 flex justify-end">
+              <div className="mt-12 flex justify-end border-t border-white/5 pt-6">
                 <button
                   onClick={abrirModalPreguntas}
                   className="relative inline-flex items-center gap-2 rounded-2xl border border-white/30 bg-white/90 px-4 py-2 text-sm font-semibold text-[#fc4b08] shadow-md backdrop-blur hover:bg-[#fc4b08] hover:text-white hover:shadow-lg transition-all"

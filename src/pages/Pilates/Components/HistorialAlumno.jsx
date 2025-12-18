@@ -158,15 +158,15 @@ const HistorialAlumno = ({ volver, cerrar, idCliente, nombreCliente }) => {
     return valor;
   };
   return (
-    <div className="bg-white rounded-xl p-6 w-full max-w-[80%] shadow-xl border border-gray-100">
+    <div className="bg-white rounded-xl p-6 w-full max-w-[100%]  sm:max-w-[80%] shadow-xl border border-gray-100">
       {/* Encabezado */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-        <div className="flex items-center space-x-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b border-gray-200 gap-4">
+        <div className="flex items-center space-x-3 w-full sm:w-auto">
           <div className="p-2 bg-gradient-to-r from-orange-500 to-orange-500 rounded-lg">
             <MdHistory className="text-white text-2xl" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-orange-600 font-bignoodle">
+            <h2 className="text-xl sm:text-2xl font-bold text-orange-600 font-bignoodle">
               Historial del Alumno
             </h2>
             <p className="text-gray-600 text-sm">
@@ -176,16 +176,16 @@ const HistorialAlumno = ({ volver, cerrar, idCliente, nombreCliente }) => {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-2">
           <button
-            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
             onClick={() => volver(false)}
           >
             <MdArrowBack className="text-lg" />
             <span>Volver</span>
           </button>
           <button
-            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
             onClick={cerrar}
           >
             <IoClose className="text-lg" />

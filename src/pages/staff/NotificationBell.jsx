@@ -189,15 +189,15 @@ const NotificationBell = () => {
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         whileTap={{ scale: 0.92 }}
-        className="relative flex items-center justify-center w-9 h-9 rounded-full bg-zinc-900/80 border border-white/10 shadow-lg shadow-black/40 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all"
+        className="relative flex items-center justify-center w-14 h-14 rounded-full bg-zinc-900/80 border border-white/10 shadow-lg shadow-black/40 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all"
       >
-        <Bell className="w-4 h-4 text-zinc-100" />
+        <Bell className="w-7 h-7 text-zinc-100" />
         {hasBadge && (
           <>
             {/* Glow */}
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500/60 blur-[3px] animate-pulse" />
+            <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-red-500/60 blur-[3px] animate-pulse" />
             {/* Contador */}
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] px-1.5 h-4 flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 text-[10px] font-semibold text-white shadow-md">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[28px] px-2 h-7 flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 text-[10px] font-semibold text-white shadow-md">
               {badgeValue}
             </span>
           </>
@@ -213,11 +213,11 @@ const NotificationBell = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.16, ease: 'easeOut' }}
-            className="absolute right-0 mt-3 w-80 max-w-xs sm:max-w-sm z-50"
+            className="absolute right-0 mt-3 w-[20rem] sm:w-[36rem] z-50"
           >
             <div className="rounded-2xl border border-white/10 bg-zinc-950/95 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.65)] overflow-hidden">
               {/* Header */}
-              <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+              <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-[11px] uppercase tracking-[0.16em] text-zinc-500">
                     Notificaciones
@@ -238,12 +238,12 @@ const NotificationBell = () => {
               </div>
 
               {/* Contenido */}
-              <div className="max-h-64 overflow-y-auto">
+              <div className="max-h-[34rem] overflow-y-auto">
                 {loading && (
-                  <div className="px-4 py-4 space-y-3">
-                    <div className="h-3 w-32 bg-zinc-800 rounded-full animate-pulse" />
-                    <div className="h-3 w-48 bg-zinc-800 rounded-full animate-pulse" />
-                    <div className="h-3 w-40 bg-zinc-800 rounded-full animate-pulse" />
+                  <div className="px-6 py-6 space-y-4">
+                    <div className="h-4 w-40 bg-zinc-800 rounded-full animate-pulse" />
+                    <div className="h-4 w-56 bg-zinc-800 rounded-full animate-pulse" />
+                    <div className="h-4 w-48 bg-zinc-800 rounded-full animate-pulse" />
                   </div>
                 )}
 
@@ -273,7 +273,7 @@ const NotificationBell = () => {
                           handleRedirect(n);
                           handleNotificationClick(n);
                         }}
-                        className={`w-full text-left p-3 sm:p-4 border-b border-white/5 last:border-0 group transition-colors ${
+                        className={`w-full text-left p-6 sm:p-7 border-b border-white/5 last:border-0 group transition-colors ${
                           isUnread
                             ? 'bg-gradient-to-r from-orange-500/14 via-red-500/10 to-amber-400/8 hover:from-orange-500/20 hover:via-red-500/16 hover:to-amber-400/12'
                             : 'bg-zinc-950/80 hover:bg-zinc-900/90'
@@ -284,8 +284,8 @@ const NotificationBell = () => {
                           <div
                             className={`mt-1 w-1 rounded-full ${
                               isUnread
-                                ? 'h-7 bg-gradient-to-b from-orange-400 via-red-400 to-amber-300 shadow-[0_0_10px_rgba(249,115,22,0.8)]'
-                                : 'h-5 bg-zinc-600'
+                                ? 'h-12 bg-gradient-to-b from-orange-400 via-red-400 to-amber-300 shadow-[0_0_14px_rgba(249,115,22,0.85)]'
+                                : 'h-8 bg-zinc-600'
                             }`}
                           />
                           <div className="flex-1">

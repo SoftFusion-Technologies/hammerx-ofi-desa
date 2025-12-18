@@ -385,7 +385,7 @@ const PanelesSuperiores = ({
               className={`${allExpanded ? "h-96" : "h-64"} overflow-y-auto p-4`}
             >
               {/* Usa el array filtrado para no mostrar coincidencias en horarios ocultos */}
-{waitingListMatchesFiltrados.length > 0 ? (
+              {waitingListMatchesFiltrados.length > 0 ? (
                 <ul className="space-y-3">
                   {waitingListMatchesFiltrados.map((person) => {
                     // Lógica para detectar si TODOS los horarios que quiere el alumno están deshabilitados
@@ -395,26 +395,29 @@ const PanelesSuperiores = ({
                       person.hours.every((hour) =>
                         horariosDeshabilitados.includes(hour)
                       );
-
+                    // Lógica para contacto pendiente
+                    const contactoPendiente =
+                      person.contacto_cliente &&
+                      person.contacto_cliente.estado_contacto === "Pendiente";
                     return (
                       <li
                         key={person.id}
-                        // Si todos están deshabilitados, fondo rojo y borde rojo. Si no, color esmeralda original.
-                        className={`p-3 rounded-xl border transition-all hover:shadow-sm ${
-                          todosDeshabilitados
-                            ? "bg-red-50 border-red-200"
-                            : "bg-emerald-50 border-emerald-100"
-                        }`}
+                        className={`p-3 rounded-xl border transition-all hover:shadow-sm
+                          ${contactoPendiente
+                            ? "bg-yellow-100 border-yellow-300"
+                            : todosDeshabilitados
+                              ? "bg-emerald-50 border-emerald-200"
+                              : "bg-emerald-50 border-emerald-100"}
+                        `}
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-bold text-gray-800 text-sm">
                             {person.name}
                           </span>
-                          {/* Cambiamos el punto de pulso a rojo si es error, o esmeralda si está bien */}
                           <div
                             className={`h-2 w-2 rounded-full animate-pulse ${
-                              todosDeshabilitados
-                                ? "bg-red-500"
+                              contactoPendiente
+                                ? "bg-yellow-400"
                                 : "bg-emerald-500"
                             }`}
                           ></div>
@@ -423,31 +426,25 @@ const PanelesSuperiores = ({
                         <div className="text-xs text-gray-600 bg-white/60 p-2 rounded-lg">
                           {/* Mensaje de alerta solo si todo está deshabilitado */}
                           {todosDeshabilitados && (
-                            <p className="text-red-600 font-bold mb-2 border-b border-red-100 pb-1">
-                              Su turno está deshabilitado
+                            <p className="flex items-center gap-2 text-emerald-600 font-bold mb-2 border-b border-emerald-100 pb-1">
+                              <FaExclamationTriangle className="text-amber-600" /> Su turno está deshabilitado
+                            </p>
+                          )}
+                          {/* Mensaje de alerta si contacto pendiente */}
+                          {contactoPendiente && (
+                            <p className="flex items-center gap-2 text-yellow-700 font-bold mb-2 border-b border-yellow-200 pb-1">
+                              <FaExclamationTriangle className="text-yellow-500" /> Contacto pendiente
                             </p>
                           )}
 
                           <p className="mb-1">
-                            <span
-                              className={`font-semibold ${
-                                todosDeshabilitados
-                                  ? "text-red-700"
-                                  : "text-emerald-700"
-                              }`}
-                            >
+                            <span className={`font-semibold text-emerald-700`}>
                               Plan:
                             </span>{" "}
                             {person.plan}
                           </p>
                           <p>
-                            <span
-                              className={`font-semibold ${
-                                todosDeshabilitados
-                                  ? "text-red-700"
-                                  : "text-emerald-700"
-                              }`}
-                            >
+                            <span className={`font-semibold text-emerald-700`}>
                               Horario:
                             </span>{" "}
                             {person.hours.join(", ")}
