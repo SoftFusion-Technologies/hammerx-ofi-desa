@@ -1645,7 +1645,7 @@ const PilatesGestionLogica = () => {
         default:
           return;
       }
-      if (expiryDate <= today) {
+      if (expiryDate < today) {
         calculatedExpiredStudents.push({
           name: student.name,
           type: type,
