@@ -2,8 +2,6 @@ import React from 'react';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-
-// Importá el array automático
 import comercios from './marcas_v2';
 
 const Marcas_v2 = () => {
@@ -26,20 +24,30 @@ const Marcas_v2 = () => {
   return (
     <div className="bg-transparent py-16 font-lora" data-aos="fade-down">
       <div className="container mx-auto">
-        <h2 className="font-bignoodle text-4xl font-lora text-center text-black mb-12">
-          COMERCIOS AMIGOS
-        </h2>
-        <Slider {...sliderSettings} className="slick-slider">
+        <div className="text-center mb-14">
+          <h2 className="font-bignoodle text-3xl sm:text-4xl xl:text-5xl text-black tracking-wide">
+            COMERCIOS AMIGOS
+          </h2>
+          <div className="w-16 h-1 bg-orange-600 mx-auto mt-3 rounded-full"></div>
+        </div>
+        <Slider {...sliderSettings} className="slick-slider px-4">
           {comercios.map((src, index) => (
-            <div key={index} className="p-4">
-              <div className="bg-white rounded-lg shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300 transform hover:scale-105 ease-in-out">
-                <img
-                  src={src}
-                  alt={`Comercio ${index + 1}`}
-                  className="w-full h-32 sm:h-40 md:h-48 lg:h-56 object-contain rounded-md"
-                  loading="lazy"
-                  decoding="async"
-                />
+            <div key={index} className="p-4 h-full">
+              <div className="group relative bg-white rounded-xl border border-gray-200 shadow-md transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 overflow-hidden h-full">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-orange-600 transform scale-x-0 transition-transform duration-300 ease-out origin-left group-hover:scale-x-100 z-10"></div>
+
+                <div className="p-6 flex items-center justify-center relative">
+                  <div className="absolute inset-0 bg-orange-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <img
+                    src={src}
+                    alt={`Comercio ${index + 1}`}
+                    className="z-10 w-full h-32 sm:h-40 md:h-48 lg:h-56 object-contain transition-transform duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) group-hover:scale-110 rounded-md"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+
+                <div className="absolute bottom-0 w-full h-[2px] bg-gray-100 group-hover:bg-orange-600 transition-colors duration-300"></div>
               </div>
             </div>
           ))}
