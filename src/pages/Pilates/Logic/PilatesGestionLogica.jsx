@@ -1685,7 +1685,7 @@ const PilatesGestionLogica = () => {
         hasMatch = person.hours.some((hour) =>
           calculatedFreeSlots.mj.some((slot) => slot.hour === hour)
         );
-      else if (person.plan === "Cualquier día")
+      else if (person.plan === "Cualquier dia")
         hasMatch = person.hours.some(
           (hour) =>
             calculatedFreeSlots.lmv.some((slot) => slot.hour === hour) ||
