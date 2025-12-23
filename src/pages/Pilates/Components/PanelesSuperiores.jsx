@@ -213,7 +213,7 @@ const PanelesSuperiores = ({
                       {freeSlotsFiltrados.lmv.map((slot) => (
                         <li
                           key={`lmv-${slot.hour}`}
-                          className="flex justify-between items-center p-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors group"
+                          className="flex flex-wrap gap-1 justify-between items-center p-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors group"
                         >
                           <span className="text-gray-700 font-mono font-medium">
                             {slot.hour}
@@ -240,7 +240,7 @@ const PanelesSuperiores = ({
                       {freeSlotsFiltrados.mj.map((slot) => (
                         <li
                           key={`mj-${slot.hour}`}
-                          className="flex justify-between items-center p-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors group"
+                          className="flex flex-wrap gap-1 justify-between items-center p-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors group"
                         >
                           <span className="text-gray-700 font-mono font-medium">
                             {slot.hour}

@@ -5,11 +5,7 @@
 */
 
 import NavbarStaff from "../staff/NavbarStaff";
-import {
-  FaSearch,
-  FaCompressAlt,
-  FaExpandAlt,
-} from "react-icons/fa";
+import { FaSearch, FaCompressAlt, FaExpandAlt } from "react-icons/fa";
 import { VscDebugRestart } from "react-icons/vsc";
 import GrillaHorarios from "./Components/GrillaHorarios";
 import Footer from "../../components/footer/Footer";
@@ -20,7 +16,6 @@ import PanelesSuperiores from "./Components/PanelesSuperiores";
 import { Link } from "react-router-dom";
 import { DAYS, HOURS, MAX_STUDENTS_PER_SLOT } from "./Constants/constanst";
 import PilatesGestionLogica from "./Logic/PilatesGestionLogica";
-import ModalDetalleAusentes from "./Modal/ModalDetalleAusentes";
 import ModalAyudaGrillaGestion from "./Modal/ModalAyudaGrillaGestion";
 import ModalConfirmarListaEspera from "./Modal/ModalConfirmarListaEspera";
 import ModalCambioTurno from "./Modal/ModalCambioTurno";
@@ -28,7 +23,7 @@ import HorariosDeshabilitados from "./Components/HorariosDeshabilitados";
 import { FaQuestionCircle } from "react-icons/fa";
 import SelectorSedes from "./Components/SelectorSedes";
 import { useAuth } from "../../AuthContext";
-
+import ModalDetalleAusentes from "./Modal/ModalDetalleAusentes";
 
 const EyeIcon = ({ className }) => (
   <svg
@@ -318,11 +313,11 @@ const PilatesGestion = () => {
                     <ModalDetalleAusentes
                       isOpen={states.isModalDetalleAusentes}
                       onClose={() => setters.setIsModalDetalleAusentes(false)}
-                      alumnos={states.ausentesAlumnos}
-                      onContact={functions.handleContactAlumno}
-                      contactarAlumno={states.contactarAlumno}
-                      setcontactarAlumno={setters.setcontactarAlumno}
-                    />
+                      ausentesData={states.ausentesData}
+                      refetchAusentesData={functions.refetchAusentes}
+                      isLoadingAusentesData={states.isLoadingAusentesData}
+                      errorAusentesData={states.errorAusentesData}
+                    ></ModalDetalleAusentes>
                   )}
 
                   {states.isModalAyuda && (

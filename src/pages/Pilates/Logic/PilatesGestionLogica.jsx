@@ -39,7 +39,6 @@ const PilatesGestionLogica = () => {
   const [isModalDetalleAusentes, setIsModalDetalleAusentes] = useState(false); // Controla la visibilidad del modal que muestra los alumnos ausentes.
   const [isModalAyuda, setIsModalAyuda] = useState(false); // Controla la visibilidad del modal de ayuda.
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // Controla la visibilidad del modal para confirmar e inscribir desde la lista de espera.
-  const [contactarAlumno, setcontactarAlumno] = useState(false); // Estado interno del modal de ausentes para mostrar opciones de contacto.
   const [visiblePanels, setVisiblePanels] = useState({
     // Controla qué paneles de resumen rápido son visibles.
     freeSlots: true,
@@ -79,10 +78,10 @@ const PilatesGestionLogica = () => {
     // Trae los datos de la lista de espera para la sede seleccionada.
     sedeActualFiltro ? `/lista-espera-pilates?sedeId=${sedeActualFiltro}` : null
   );
-  const { data: ausentesData, refetch: refetchAusentes } = useConsultaDB(
+  const { data: ausentesData, refetch: refetchAusentes, error: errorAusentesData, isLoading: isLoadingAusentesData } = useConsultaDB(
     // Trae el reporte de alumnos con inasistencias en el mes actual.
-    sedeActualFiltro && fechaParaConsulta
-      ? `/asistencias-pilates/ausencias-mensuales?id_sede=${sedeActualFiltro}&fecha=${fechaParaConsulta}`
+    sedeActualFiltro
+      ? `/pilates/ausentes-dashboard?id_sede=${sedeActualFiltro}`
       : null
   );
   const { data: reporteAsistenciaData, refetch: refetchReporteAsistencia } =
@@ -121,10 +120,6 @@ const PilatesGestionLogica = () => {
   const { update: planAContratadoPeticion } = useModify(
     // Hook para manejar las transiciones de estado de un plan (ej: de programado a contratado).
     "/clientes-pilates/plan-renovacion"
-  );
-  const { update: modificarAlumnoContactado } = useModify(
-    // Hook para marcar a un alumno como contactado por inasistencias.
-    "/clientes-pilates/contactar"
   );
   const { update: modificarContactoListaEspera } = useModify(
     // Hook para actualizar el estado de un contacto en la lista de espera (pendiente, confirmado, etc.).
@@ -269,30 +264,16 @@ const PilatesGestionLogica = () => {
     if (ausentesData && ausentesData.length > 0) {
       // Formatear los datos para el estado ausentesAlumnos
       const formatear = ausentesData
-        .filter((alumno) => alumno.cantidad_ausentes >= 7)
+        .filter((alumno) => alumno.estado_visual === "ROJO")
         .map((alumno) => ({
           id: alumno.id,
           name: alumno.nombre,
-          cantidad: alumno.cantidad_ausentes,
+          cantidad: alumno.racha_actual,
           contacto: alumno.telefono,
-          contactado: alumno.contactado ? "SI" : "NO",
-          fecha_ultimo_contacto: alumno.fecha_contacto || "N/A",
-          contacto_nombre: alumno.contacto_usuario_nombre || "N/A",
         }));
       setAusentesAlumnos(formatear);
     }
   }, [ausentesData]);
-
-  /**
-   * EFFECT: Sincroniza el estado del modal de contacto con el modal de ausentes
-   * Cuando se cierra el modal de detalle de ausentes, también cierra el formulario de contacto.
-   * Evita que el modal de contacto quede abierto con datos null/undefined.
-   */
-  useEffect(() => {
-    if (!isModalDetalleAusentes) {
-      setcontactarAlumno(false);
-    }
-  }, [isModalDetalleAusentes]);
 
   /**
    * EFFECT: Sincroniza la fecha obtenida de la API externa con el estado local
@@ -1716,54 +1697,6 @@ const PilatesGestionLogica = () => {
   };
 
   /**
-   * FUNCTION: Registra el contacto realizado con un alumno ausente
-   * Actualiza en la base de datos que se realizó un contacto con ese alumno.
-   * Incluye fecha, hora y usuario que realizó el contacto.
-   * @param {number} id - ID del cliente
-   * @param {string} name - Nombre del alumno
-   * @param {string} contacto - Número de contacto (teléfono)
-   */
-  const handleContactAlumno = async (id, name, contacto) => {
-    if (!puedeEditarSede) {
-      await mostrarErrorPermisos();
-      return;
-    }
-    const now = new Date();
-    now.setHours(now.getHours() - 3); // Restar 3 horas a la hora actual porque sino hay desfase
-    const fecha_contacto = now.toISOString().slice(0, 19).replace("T", " ");
-
-    const datosParaEnviar = {
-      id: id,
-      nombre: name,
-      contacto: contacto,
-      fecha_contacto: fecha_contacto,
-      id_usuario_contacto: userId,
-    };
-    try {
-      const res = await modificarAlumnoContactado(id, datosParaEnviar);
-      if (res) {
-        await sweetalert2.fire({
-          icon: "success",
-          title: "Alumno contactado",
-          text: `Se registró el contacto con ${name} exitosamente.`,
-          timer: 1800,
-          showConfirmButton: false,
-        });
-        refetchAusentes();
-        setcontactarAlumno(false);
-      } else {
-        throw new Error("No se pudo modificar el alumno");
-      }
-    } catch (error) {
-      await sweetalert2.fire({
-        icon: "error",
-        title: "Error",
-        text: `Ocurrió un error al registrar el contacto con ${name}.`,
-      });
-    }
-  };
-
-  /**
    * UTILITY FUNCTION: Calcula la diferencia en días entre dos fechas
    * Convierte fechas en formato "YYYY-MM-DD" a objetos Date en UTC.
    * Calcula la diferencia en milisegundos y la convierte a días enteros.
@@ -1851,7 +1784,6 @@ const PilatesGestionLogica = () => {
       fechaHoy,
       ausentesAlumnos,
       isModalDetalleAusentes,
-      contactarAlumno,
       isModalAyuda,
       isModalCambioTurno,
       isConfirmModalOpen,
@@ -1862,6 +1794,9 @@ const PilatesGestionLogica = () => {
       horariosDeshabilitados,
       detalleHorariosDeshabilitados,
       horariosMinimizados,
+      ausentesData,
+      errorAusentesData,
+      isLoadingAusentesData,
     },
     setters: {
       setSection,
@@ -1871,7 +1806,6 @@ const PilatesGestionLogica = () => {
       setIsModalOpen,
       setIsModalCambioTurno,
       setIsModalDetalleAusentes,
-      setcontactarAlumno,
       setIsModalAyuda,
       setIsConfirmModalOpen,
     },
@@ -1887,7 +1821,6 @@ const PilatesGestionLogica = () => {
       getCellContentAndStyle,
       cambiarSede,
       handleOpenModalDetalleAusentes,
-      handleContactAlumno,
       marcarEstadosAlumnoListaEspera,
       handleConfirmationComplete,
       handleAbrirCambioTurno,
@@ -1899,6 +1832,7 @@ const PilatesGestionLogica = () => {
       puedeDeshabilitarHorario,
       alternarMinimizacionHorario,
       manejarMinimizacionGlobal,
+      refetchAusentes,
     },
   };
 };
