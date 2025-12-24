@@ -631,6 +631,19 @@ const { data: auditoriaData } = useConsultaDB(
             </p>
           )}
 
+          {cellData?.tipoInscripcion === "cupo_adicional" && (
+          <div className={`bg-orange-100 border-l-4 border-orange-500 rounded-md p-4 mb-2 ${cellData.student && "mt-1"}`}>
+            <h2 className={`text-2xl font-bold text-orange-600 font-bignoodle text-start uppercase tracking-wide`}>
+              Cupo Adicional
+            </h2>
+            <p className="text-orange-700 text-sm font-sans">
+              {cellData.student 
+                ? "Se está modificando un alumno fuera del límite estándar." 
+                : "Se está inscribiendo un alumno fuera del límite estándar."}
+            </p>
+          </div>
+          )}
+
           {/* SECCIÓN: Datos básicos del alumno (nombre y contacto) */}
           <div className="mb-4">
             <label
@@ -643,7 +656,14 @@ const { data: auditoriaData } = useConsultaDB(
               id="name"
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value.toUpperCase())}
+              onChange={(e) => {
+                      const cleanValue = e.target.value
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .replace(/[^a-zA-Z0-9 ]/g, "");
+
+                      setName(cleanValue.toUpperCase());
+                    }}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Ej: PÉREZ, JUAN"
               maxLength={100}
@@ -859,7 +879,7 @@ const { data: auditoriaData } = useConsultaDB(
           {/* SECCIÓN: Formulario de CLASE DE PRUEBA */}
           {status === "prueba" && (
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
+              <label className="block text-orange-600 font-messina text-sm font-bold mb-2">
                 Fecha de la Clase
               </label>
               <DatePicker
@@ -886,7 +906,7 @@ const { data: auditoriaData } = useConsultaDB(
           {status === "programado" && (
             <>
               <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2">
+                <label className="block text-orange-600 font-messina text-sm font-bold mb-2">
                   Fecha de Pago/Inicio
                 </label>
                 <DatePicker

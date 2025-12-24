@@ -15,6 +15,7 @@ import { FaPencilAlt } from "react-icons/fa";
 import useHorariosDeshabilitados from "./PilatesGestion/HorariosDeshabilitados";
 import useHistorialAlumnos from "./PilatesGestion/HistorialAlumnos";
 import useGrillaMinimizada from "./PilatesGestion/HorariosOcultos";
+import { IoAlertCircle } from "react-icons/io5";
 
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
@@ -1001,22 +1002,56 @@ const PilatesGestionLogica = () => {
    * @param {string} day - Día de la semana
    * @param {string} time - Hora del horario
    * @param {object} studentToEdit - Alumno a editar (null si es agregar nuevo)
+   * @param {string} tipo - Tipo de inscripción (normal o cupo_adicional)
    */
-  const handleCellClick = (day, time, studentToEdit = null) => {
-    if (!puedeEditarSede) {
-      mostrarErrorPermisos();
-      return;
-    }
-    const key = `${day}-${time}`;
-    const studentsInSlot = schedule[key]?.alumnos || [];
-    if (!studentToEdit && studentsInSlot.length >= 10) {
-      alert(`Este turno ya está completo (10/10).`);
-      return;
-    }
+    const handleCellClick = (
+      day,
+      time,
+      studentToEdit = null,
+      tipo = "normal"
+    ) => {
+      if (!puedeEditarSede) {
+        mostrarErrorPermisos();
+        return;
+      }
+      const key = `${day}-${time}`;
+      const abrirModal = (tipoFinal) => {
+        setCurrentCell({
+          key,
+          day,
+          time,
+          student: studentToEdit,
+          tipoInscripcion: tipoFinal,
+        });
+        setIsModalOpen(true);
+      };
 
-    setCurrentCell({ key, day, time, student: studentToEdit });
-    setIsModalOpen(true);
-  };
+      if (tipo === "cupo_adicional" && studentToEdit === null) { // Si es sobrecupo y nuevo alumno, mostramos alerta
+        Swal.fire({
+          title: "<strong>Inscripción de Sobrecupo</strong>",
+          icon: "warning",
+          html: `
+            <div class="text-left">
+              <p class="mb-2">El límite de alumnos para este horario ha sido alcanzado o no hay cupos habilitados.</p>
+              <p class="font-semibold text-orange-600">¿Desea autorizar una inscripción excepcional de sobrecupo para este estudiante?</p>
+            </div>
+          `,
+          showCancelButton: true,
+          confirmButtonColor: "#ea580c", 
+          cancelButtonColor: "#6b7280", 
+          confirmButtonText: "Sí, autorizar sobrecupo",
+          cancelButtonText: "Cancelar", 
+        }).then((result) => {
+          if (result.isConfirmed) {
+            abrirModal("cupo_adicional");
+          }
+        });
+      } else if (tipo === "cupo_adicional") { // Si es sobrecupo y ya hay un alumno (edición), abrimos directo
+        abrirModal("cupo_adicional");
+      } else { // Si es normal, abrimos directo
+        abrirModal("normal");
+      }
+    };
 
   /**
    * FUNCTION: Valida si el nombre de un alumno ya existe en otro horario
@@ -1417,7 +1452,7 @@ const PilatesGestionLogica = () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      let content = <span className="font-semibold">{student.name}</span>;
+      let content = <span className="font-semibold">{student.es_cupo_extra && <IoAlertCircle />}{student.name}</span>;
       let style = "bg-gray-100";
       let isExpired = false;
 
@@ -1440,8 +1475,13 @@ const PilatesGestionLogica = () => {
           );
           content = (
             <span>
-              {student.name}
-              <br />
+              <div className="flex">
+                {student.es_cupo_extra && (
+                  <span className="text-yellow-600 text-xl">
+                    <IoAlertCircle />
+                  </span>
+                )} {student.name}
+              </div>
               {/* Contenedor para la segunda línea con Flexbox */}
               <div className="flex items-center justify-between mt-1 text-xs italic">
                 <span>
@@ -1469,8 +1509,14 @@ const PilatesGestionLogica = () => {
 
           content = (
             <span>
-              {student.name}
-              <br />
+              <div className="flex items-center">
+                {student.es_cupo_extra && (
+                  <span className="text-yellow-600 text-xl">
+                    <IoAlertCircle />
+                  </span>
+                )}
+                {student.name}
+              </div>
               <span className="text-xs italic">
                 Clase de prueba{" "}
                 {new Date(
@@ -1504,8 +1550,14 @@ const PilatesGestionLogica = () => {
           style = "bg-yellow-200";
           content = (
             <span>
-              {student.name}
-              <br />
+              <div className="flex items-center">
+                {student.es_cupo_extra && (
+                  <span className="text-yellow-600 text-xl">
+                    <IoAlertCircle />
+                  </span>
+                )}
+                {student.name}
+              </div>
               <span className="text-xs italic">
                 Renueva el{" "}
                 {new Date(fechaRelevante + "T00:00:00").toLocaleDateString(
@@ -1750,7 +1802,7 @@ const PilatesGestionLogica = () => {
     userLevel, // Necesario para validación de permisos
   });
 
-    const {
+  const {
     altaHistorialAlumno, // Función para crear el historial de un alumno (Se usa solo cuando se da de alta un alumno por primera vez)
     crearHistorialAlumno // Función para registrar cambios en el historial de un alumno cuando se hacen modificaciones
   } = useHistorialAlumnos()

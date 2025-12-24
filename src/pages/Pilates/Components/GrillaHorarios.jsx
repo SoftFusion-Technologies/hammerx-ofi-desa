@@ -1,10 +1,17 @@
+/*
+  Componente: GrillaHorarios
+  Autor: Sergio Manrique
+  Propósito: Mostrar y gestionar la grilla de horarios, instructores y alumnos para clases de Pilates.
+  Fecha modificación: 24/12/2025
+*/
+
 import { useAuth } from "../../../AuthContext";
-import { FaEyeSlash, FaEye } from "react-icons/fa";
+import { FaEyeSlash, FaEye, FaPlus } from "react-icons/fa";
 import { MdOutlineSearchOff } from "react-icons/md";
 import { logo } from "../../../images/svg/index";
 
 const GrillaHorarios = ({
-  schedule,
+  schedule, // Objeto que contiene la información de horarios, instructores y alumnos
   searchTerm, // Estado que contiene el término de búsqueda actual
   setSearchTerm, // Setter para actualizar el término de búsqueda
   handleCellClick,
@@ -308,14 +315,13 @@ const GrillaHorarios = ({
                                     isDayEnabled
                                       ? rol === "GESTION"
                                         ? () =>
-                                            handleCellClick(day, hour, student)
+                                            handleCellClick(day, hour, student, student.es_cupo_extra ? "cupo_adicional" : "normal")
                                         : () =>
                                             guardarAsistencia(
                                               day,
                                               hour,
                                               student,
                                               estadoAsistencia
-                                              // Podrías pasar tieneAsistencia aquí si tu función lo soporta
                                             )
                                       : null
                                   }
@@ -354,29 +360,38 @@ const GrillaHorarios = ({
                               );
                             })}
 
-                            {/* BOTÓN AGREGAR ALUMNO (Solo Gestión y Editable) */}
+                            {/* Botón para agregar alumno o cupo adicional (solo Gestión y editable) */}
                             {rol === "GESTION" && esGestionEditable && (
                               <>
-                                {Array.from({
-                                  length: Math.max(
-                                    0,
-                                    MAX_STUDENTS_PER_SLOT -
-                                      students.length -
-                                      countTrialsInOtherDaysOfGroup(day, hour)
-                                  ),
-                                }).map((_, index) => (
-                                  <div
-                                    key={`empty-${index}`}
-                                    className="flex-grow p-1 text-blue-600 text-xs flex items-center justify-center rounded-lg cursor-pointer transition-all duration-200 border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 hover:shadow-sm"
-                                    onClick={() =>
-                                      handleCellClick(day, hour, null)
-                                    }
-                                  >
-                                    <span className="text-xs md:text-sm font-medium text-blue-600 hover:text-blue-800">
-                                      + Agregar alumno
-                                    </span>
-                                  </div>
-                                ))}
+                                {(() => {
+                                  const ocupacionTotal = students.length + countTrialsInOtherDaysOfGroup(day, hour);
+                                  const espaciosLibres = Math.max(0, MAX_STUDENTS_PER_SLOT - ocupacionTotal);
+                                  if (espaciosLibres > 0) {
+                                    return Array.from({ length: espaciosLibres }).map((_, index) => (
+                                      <div
+                                        key={`empty-${index}`}
+                                        className="flex-grow p-1 text-blue-600 text-xs flex items-center justify-center rounded-lg cursor-pointer transition-all duration-200 border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 hover:shadow-sm"
+                                        onClick={() => handleCellClick(day, hour, null, "normal")}
+                                      >
+                                        <span className="text-xs md:text-sm font-medium text-blue-600 hover:text-blue-800">
+                                          + Agregar alumno
+                                        </span>
+                                      </div>
+                                    ));
+                                  }
+                                  // Si no hay lugar, mostrar botón de cupo adicional
+                                  return (
+                                    <div
+                                      className="flex-grow p-1 text-red-600 text-xs flex items-center justify-center rounded-lg cursor-pointer transition-all duration-200 border-2 border-dashed border-red-300 bg-red-50 hover:bg-red-100 hover:border-red-400 hover:shadow-sm mt-1"
+                                      onClick={() => handleCellClick(day, hour, null, "cupo_adicional")}
+                                      title="El cupo está lleno. Haz clic para agregar un sobrecupo."
+                                    >
+                                      <span className="text-xs md:text-sm font-medium text-red-600 hover:text-red-800 tracking-tight flex items-center gap-1">
+                                        + Cupo emergencia
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
                               </>
                             )}
 

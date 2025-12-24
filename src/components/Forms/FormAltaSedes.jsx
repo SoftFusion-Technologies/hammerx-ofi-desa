@@ -56,16 +56,9 @@ const FormAltaSede = ({
     updated_at: Yup.date().nullable(true),
   });
 
-  useEffect(() => {
-    if (SedesMaxInscriptoCiudad) {
-
-      console.log("SedesMaxInscriptoCiudad en FormAltaSede:", SedesMaxInscriptoCiudad);
-    }
-  },[SedesMaxInscriptoCiudad])
-
   const handleSubmitUser = async (valores) => {
     try {
-      console.log("Valores del formulario:", valores.nombre);
+      /* console.log("Valores del formulario:", valores.nombre); */
 
       // Verificamos si los campos obligatorios están vacíos
       if (valores.nombre === "") {
@@ -147,7 +140,7 @@ const FormAltaSede = ({
           );
         }
         const data = await respuesta.json();
-        console.log("Registro insertado correctamente:", data);
+        /* console.log("Registro insertado correctamente:", data); */
         setShowModal(true);
         setTimeout(() => {
           setShowModal(false);

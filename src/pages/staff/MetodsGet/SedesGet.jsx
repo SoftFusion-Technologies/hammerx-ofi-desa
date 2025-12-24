@@ -12,6 +12,7 @@
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
 import axios from 'axios';
+import { format, parseISO } from 'date-fns';
 import React, { useEffect, useState } from 'react';
 import NavbarStaff from '../NavbarStaff';
 import { Link } from 'react-router-dom';
@@ -383,7 +384,9 @@ const SedesGet = () => {
                           {Sedes.cupo_maximo_pilates ? Sedes.cupo_maximo_pilates : 'N/A'}
                         </td>
                         <td onClick={() => obtenerSedes(Sedes.id)}>
-                          {Sedes.created_at}
+                          {Sedes.created_at
+                            ? format(parseISO(Sedes.created_at), 'dd/MM/yyyy HH:mm:ss')
+                            : ''}
                         </td>
                         {/* ACCIONES */}
                         {(userLevel === 'admin' ||
