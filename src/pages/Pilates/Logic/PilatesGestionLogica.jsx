@@ -1,24 +1,25 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import useConsultaDB from "../ConsultaDb/Consulta";
-import useInsertClientePilates from "../ConsultaDb/Insertar_ModificarCliente";
-import useDeleteClientePilates from "../ConsultaDb/Eliminar";
-import useInsertDataListaEspera from "../ConsultaDb/InsertarListaEspera";
-import useUpdateDataListaEspera from "../ConsultaDb/ModificarListaEspera";
-import useDeleteListaEspera from "../ConsultaDb/EliminarListaEspera";
-import useInsertar from "../ConsultaDb/Insertar";
-import sweetalert2 from "sweetalert2";
-import useModify from "../ConsultaDb/Modificar";
-import ObtenerFechaInternet from "../utils/ObtenerFechaInternet";
-import { useAuth } from "../../../AuthContext";
-import { format, set } from "date-fns";
-import { FaPencilAlt } from "react-icons/fa";
-import useHorariosDeshabilitados from "./PilatesGestion/HorariosDeshabilitados";
-import useHistorialAlumnos from "./PilatesGestion/HistorialAlumnos";
-import useGrillaMinimizada from "./PilatesGestion/HorariosOcultos";
-import { IoAlertCircle } from "react-icons/io5";
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import useConsultaDB from '../ConsultaDb/Consulta';
+import useInsertClientePilates from '../ConsultaDb/Insertar_ModificarCliente';
+import useDeleteClientePilates from '../ConsultaDb/Eliminar';
+import useInsertDataListaEspera from '../ConsultaDb/InsertarListaEspera';
+import useUpdateDataListaEspera from '../ConsultaDb/ModificarListaEspera';
+import useDeleteListaEspera from '../ConsultaDb/EliminarListaEspera';
+import useInsertar from '../ConsultaDb/Insertar';
+import sweetalert2 from 'sweetalert2';
+import useModify from '../ConsultaDb/Modificar';
+import ObtenerFechaInternet from '../utils/ObtenerFechaInternet';
+import { useAuth } from '../../../AuthContext';
+import { format, set } from 'date-fns';
+import { FaPencilAlt } from 'react-icons/fa';
+import useHorariosDeshabilitados from './PilatesGestion/HorariosDeshabilitados';
+import useHistorialAlumnos from './PilatesGestion/HistorialAlumnos';
+import useGrillaMinimizada from './PilatesGestion/HorariosOcultos';
+import { IoAlertCircle } from 'react-icons/io5';
+import { differenceInDays, parseISO } from 'date-fns';
 
-import Swal from "sweetalert2";
-import "sweetalert2/dist/sweetalert2.min.css";
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 const PilatesGestionLogica = () => {
   // --- Estados de Datos Principales ---
   const [schedule, setSchedule] = useState([]); // Almacena el horario completo de la grilla con sus alumnos.
@@ -27,10 +28,10 @@ const PilatesGestionLogica = () => {
   const [asistenciaPruebasMap, setAsistenciaPruebasMap] = useState({}); // Objeto para consulta rápida (`{ id: true/false }`) del estado de asistencia de las clases de prueba.
 
   // --- Estados de Configuración y Filtros ---
-  const [section, setSection] = useState("GESTION"); // Controla la vista actual ('GESTION' o 'LISTA_ESPERA').
+  const [section, setSection] = useState('GESTION'); // Controla la vista actual ('GESTION' o 'LISTA_ESPERA').
   const [sedeActualFiltro, setSedeActualFiltro] = useState(); // Guarda el ID de la sede seleccionada para filtrar los datos.
   const [cupoMaximoPilates, setCupoMaximoPilates] = useState(0); // Almacena el cupo máximo de la sede actual.
-  const [searchTerm, setSearchTerm] = useState(""); // Guarda el texto del campo de búsqueda para filtrar alumnos en la grilla.
+  const [searchTerm, setSearchTerm] = useState(''); // Guarda el texto del campo de búsqueda para filtrar alumnos en la grilla.
   const [fechaHoy, setFechaHoy] = useState(null); // Almacena la fecha actual obtenida de una API externa.
 
   // --- Estados para Controlar la Interfaz (Modales, Paneles) ---
@@ -45,7 +46,7 @@ const PilatesGestionLogica = () => {
     freeSlots: true,
     expiredStudents: true,
     absentStudents: true,
-    waitingListMatches: true,
+    waitingListMatches: true
   });
 
   // --- Estados para Datos Temporales de Interacción ---
@@ -62,8 +63,8 @@ const PilatesGestionLogica = () => {
   const { userId, sedeName, userLevel, name: nombreAsesor } = useAuth(); // Hook que obtiene el ID y nombre de la sede del usuario logueado.
 
   // --- Constantes y Variables Derivadas ---
-  const rol = "GESTION"; // Define el rol del usuario para lógicas condicionales en la vista.
-  const fechaParaConsulta = fechaHoy || format(new Date(), "yyyy-MM-dd"); // Determina la fecha a usar en las consultas, priorizando la de la API externa.
+  const rol = 'GESTION'; // Define el rol del usuario para lógicas condicionales en la vista.
+  const fechaParaConsulta = fechaHoy || format(new Date(), 'yyyy-MM-dd'); // Determina la fecha a usar en las consultas, priorizando la de la API externa.
   // ----------------------------------------------------------------
   // --- HOOKS DE PETICIONES A LA API ---
   // ----------------------------------------------------------------
@@ -79,7 +80,12 @@ const PilatesGestionLogica = () => {
     // Trae los datos de la lista de espera para la sede seleccionada.
     sedeActualFiltro ? `/lista-espera-pilates?sedeId=${sedeActualFiltro}` : null
   );
-  const { data: ausentesData, refetch: refetchAusentes, error: errorAusentesData, isLoading: isLoadingAusentesData } = useConsultaDB(
+  const {
+    data: ausentesData,
+    refetch: refetchAusentes,
+    error: errorAusentesData,
+    isLoading: isLoadingAusentesData
+  } = useConsultaDB(
     // Trae el reporte de alumnos con inasistencias en el mes actual.
     sedeActualFiltro
       ? `/pilates/ausentes-dashboard?id_sede=${sedeActualFiltro}`
@@ -88,7 +94,7 @@ const PilatesGestionLogica = () => {
   const { data: reporteAsistenciaData, refetch: refetchReporteAsistencia } =
     useConsultaDB(
       // Trae el reporte de asistencia de las clases de prueba.
-      "/asistencias-pilates/reportes/asistencia-clases-prueba"
+      '/asistencias-pilates/reportes/asistencia-clases-prueba'
     );
   const { data: instructoresData } = useConsultaDB(`/usuarios-pilates/nombres`); // Trae la lista de todos los instructores disponibles.
   const { data: sedesData } = useConsultaDB(`/sedes/ciudad`); // Trae la lista de todas las sedes que tienen Pilates.
@@ -97,49 +103,49 @@ const PilatesGestionLogica = () => {
   const { insertCliente } = useInsertClientePilates(); // Hook para crear un nuevo cliente y su inscripción asociada.
   const { insert: insertarContactoListaEspera } = useInsertDataListaEspera(
     // Hook para registrar un nuevo contacto en la lista de espera.
-    "/contactos-lista-espera"
+    '/contactos-lista-espera'
   );
   const { insert: insertarListaEspera } = useInsertDataListaEspera(
     // Hook para agregar una nueva persona a la tabla de lista de espera.
-    "/lista-espera-pilates"
+    '/lista-espera-pilates'
   );
   const { insert: insertarHorario } = useInsertar(
     // Hook para asignar o cambiar el instructor de un horario específico.
-    "/horarios-pilates/cambiar-instructor"
+    '/horarios-pilates/cambiar-instructor'
   );
 
   const {
     insert: insertarVentasProspectosCompleto,
-    error: errorInsertarVentasProspectosCompleto,
+    error: errorInsertarVentasProspectosCompleto
   } = useInsertar(
     // Hook para asignar o cambiar el instructor de un horario específico.
-    "/ventas-prospectos/sincronizar-completo",
+    '/ventas-prospectos/sincronizar-completo',
     true
   );
 
   // --- Hooks de Actualización (PUT / PATCH) ---
   const { update: planAContratadoPeticion } = useModify(
     // Hook para manejar las transiciones de estado de un plan (ej: de programado a contratado).
-    "/clientes-pilates/plan-renovacion"
+    '/clientes-pilates/plan-renovacion'
   );
   const { update: modificarContactoListaEspera } = useModify(
     // Hook para actualizar el estado de un contacto en la lista de espera (pendiente, confirmado, etc.).
-    "/contactos-lista-espera"
+    '/contactos-lista-espera'
   );
-  const { update } = useUpdateDataListaEspera("/lista-espera-pilates"); // Hook para modificar los datos de una persona en la lista de espera.
+  const { update } = useUpdateDataListaEspera('/lista-espera-pilates'); // Hook para modificar los datos de una persona en la lista de espera.
   const { update: guardarAuditoria } = useModify(
     // Hook para crear o actualizar el registro de auditoría cuando se modifica una fecha de fin manualmente.
-    "/auditoria-pilates/cliente"
+    '/auditoria-pilates/cliente'
   );
   const { update: guardarCambioDeTurno } = useModify(
     // Hook para actualizar cuando un alumno cambia de turno desde la lista de espera.
-    "/inscripciones-pilates/cambiar-turno",
+    '/inscripciones-pilates/cambiar-turno',
     true
   );
 
   // --- Hooks de Eliminación (DELETE) ---
   const { deleteCliente } = useDeleteClientePilates(); // Hook para eliminar un cliente y todos sus datos asociados.
-  const { remove } = useDeleteListaEspera("/lista-espera-pilates"); // Hook para eliminar a una persona de la lista de espera.
+  const { remove } = useDeleteListaEspera('/lista-espera-pilates'); // Hook para eliminar a una persona de la lista de espera.
 
   /**
    * EFFECT: Normaliza los datos de horarios de la API
@@ -150,14 +156,14 @@ const PilatesGestionLogica = () => {
     if (horariosData && Object.keys(horariosData).length > 0) {
       const normalizedData = {};
       Object.keys(horariosData).forEach((key) => {
-        const normalizedKey = key.replace("MIERCOLES", "MIÉRCOLES");
+        const normalizedKey = key.replace('MIERCOLES', 'MIÉRCOLES');
         normalizedData[normalizedKey] = {
-          coach: horariosData[key].coach || "",
+          coach: horariosData[key].coach || '',
           horarioId: horariosData[key].horarioId || null,
           coachId: horariosData[key].coachId || null,
           alumnos: Array.isArray(horariosData[key].alumnos)
             ? horariosData[key].alumnos
-            : [],
+            : []
         };
         setSchedule(normalizedData);
       });
@@ -179,18 +185,18 @@ const PilatesGestionLogica = () => {
       const listaEsperaNormalizada = listaEsperaData.map((item) => ({
         id: item.id,
         name: item.nombre,
-        type: item.tipo.toLowerCase().includes("cambio") ? "cambio" : "espera",
+        type: item.tipo.toLowerCase().includes('cambio') ? 'cambio' : 'espera',
         contact: item.contacto,
         nombre_usuario_cargado: item.nombre_usuario_cargado,
         plan: item.plan_interes,
         hours: item.horarios_preferidos
-          ? item.horarios_preferidos.split(",").map((h) => h.trim())
+          ? item.horarios_preferidos.split(',').map((h) => h.trim())
           : [],
         obs: item.observaciones,
-        date: item.fecha_carga ? item.fecha_carga.split("T")[0] : "",
+        date: item.fecha_carga ? item.fecha_carga.split('T')[0] : '',
         hour: item.fecha_carga
-          ? item.fecha_carga.split("T")[1].split(".")[0]
-          : "",
+          ? item.fecha_carga.split('T')[1].split('.')[0]
+          : '',
 
         // CORRECCIÓN: Se añade la comprobación '&& item.contacto_cliente.length > 0'
         contacto_cliente:
@@ -204,9 +210,9 @@ const PilatesGestionLogica = () => {
                 estado_contacto: item.contacto_cliente[0].estado_contacto,
                 notas: item.contacto_cliente[0].notas,
                 usuario_contacto_nombre:
-                  item.contacto_cliente[0].nombre_usuario_contacto,
+                  item.contacto_cliente[0].nombre_usuario_contacto
               }
-            : null, // Si el array está vacío o no existe, asignamos null
+            : null // Si el array está vacío o no existe, asignamos null
       }));
       setWaitingList(listaEsperaNormalizada);
     } else {
@@ -257,22 +263,31 @@ const PilatesGestionLogica = () => {
   }, [reporteAsistenciaData]);
 
   /**
-   * EFFECT: Normaliza los datos de alumnos ausentes del mes actual
-   * Filtra solo a alumnos con 7 o más inasistencias y los formatea para la vista.
-   * Incluye información de contacto y si ya fueron contactados.
+   * EFFECT: Procesa los alumnos ausentes para la vista.
+   * Calcula los días desde el último contacto
    */
   useEffect(() => {
     if (ausentesData && ausentesData.length > 0) {
-      // Formatear los datos para el estado ausentesAlumnos
-      const formatear = ausentesData
-        .filter((alumno) => alumno.estado_visual === "ROJO")
-        .map((alumno) => ({
+      const fecha_actual = new Date();
+      const lista_formateada = ausentesData.map((alumno) => {
+        let dias_pasados = null;
+
+        if (alumno.ultimo_contacto) {
+          const fecha_contacto = parseISO(alumno.ultimo_contacto);
+          dias_pasados = differenceInDays(fecha_actual, fecha_contacto);
+        }
+
+        return {
           id: alumno.id,
           name: alumno.nombre,
           cantidad: alumno.racha_actual,
+          total_contactos: alumno.total_contactos,
           contacto: alumno.telefono,
-        }));
-      setAusentesAlumnos(formatear);
+          dias_desde_ultimo_contacto: dias_pasados
+        };
+      });
+
+      setAusentesAlumnos(lista_formateada);
     }
   }, [ausentesData]);
 
@@ -296,19 +311,19 @@ const PilatesGestionLogica = () => {
       return;
 
     // Normalizamos el nombre de la sede del usuario para comparaciones
-    let sedeUser = String(sedeName || "")
+    let sedeUser = String(sedeName || '')
       .trim()
       .toLowerCase();
 
     // Si el usuario tiene "smt" o "sanmiguelbn", lo forzamos a buscar "barrio sur" o "barrio norte" en la lista de sedes.
-    if (sedeUser === "smt") {
-      sedeUser = "barrio sur";
-    } else if (sedeUser === "sanmiguelbn") {
-      sedeUser = "barrio norte";
+    if (sedeUser === 'smt') {
+      sedeUser = 'barrio sur';
+    } else if (sedeUser === 'sanmiguelbn') {
+      sedeUser = 'barrio norte';
     }
 
     // Si el usuario es 'multisede', seleccionamos por defecto la primera sede disponible
-    if (sedeUser === "multisede") {
+    if (sedeUser === 'multisede') {
       if (sedesData[0] && (sedesData[0].id || sedesData[0].id === 0)) {
         setSedeActualFiltro(String(sedesData[0].id));
       }
@@ -318,7 +333,7 @@ const PilatesGestionLogica = () => {
     if (sedeName) {
       const sedeEncontrada = sedesData.find(
         (sede) =>
-          String(sede.nombre || "")
+          String(sede.nombre || '')
             .trim()
             .toLowerCase() === sedeUser
       );
@@ -343,10 +358,10 @@ const PilatesGestionLogica = () => {
    * Útil para comparaciones case-insensitive y sin acentos (ej: búsquedas).
    */
   const normalizarTexto = (valor) =>
-    (valor ?? "")
+    (valor ?? '')
       .toString()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
       .trim()
       .toLowerCase();
 
@@ -357,17 +372,17 @@ const PilatesGestionLogica = () => {
    */
   const puedeEditarSede = useMemo(() => {
     // Permitir edición global si el usuario es 'admin' o si su sedeName es 'multisede'
-    const nivel = String(userLevel || "").toLowerCase();
-    let sedeLower = String(sedeName || "").toLowerCase();
+    const nivel = String(userLevel || '').toLowerCase();
+    let sedeLower = String(sedeName || '').toLowerCase();
 
     // Si el usuario es 'smt', lo convertimos manualmente a 'barrio sur'
-    if (sedeLower === "smt") {
-      sedeLower = "barrio sur";
-    } else if (sedeLower === "sanmiguelbn") {
-      sedeLower = "barrio norte";
+    if (sedeLower === 'smt') {
+      sedeLower = 'barrio sur';
+    } else if (sedeLower === 'sanmiguelbn') {
+      sedeLower = 'barrio norte';
     }
 
-    if (nivel === "admin" || sedeLower === "multisede") return true;
+    if (nivel === 'admin' || sedeLower === 'multisede') return true;
 
     if (!sedeActualFiltro || !Array.isArray(sedesData) || !sedeName)
       return false;
@@ -379,7 +394,7 @@ const PilatesGestionLogica = () => {
       sedeSeleccionada.nombre ||
       sedeSeleccionada.ciudad ||
       sedeSeleccionada.sede ||
-      "";
+      '';
     return (
       normalizarTexto(nombreSedeSeleccionada) === normalizarTexto(sedeLower)
     );
@@ -391,11 +406,11 @@ const PilatesGestionLogica = () => {
    */
   const mostrarErrorPermisos = () =>
     sweetalert2.fire({
-      icon: "error",
-      title: "Acceso denegado",
-      text: "No tenés permisos para editar esta sede.",
+      icon: 'error',
+      title: 'Acceso denegado',
+      text: 'No tenés permisos para editar esta sede.',
       timer: 2000,
-      showConfirmButton: false,
+      showConfirmButton: false
     });
 
   /**
@@ -407,18 +422,18 @@ const PilatesGestionLogica = () => {
   const handleConfirmationComplete = async (listaEsperaId) => {
     try {
       const datosParaEnviar = {
-        estado_contacto: "Confirmado",
+        estado_contacto: 'Confirmado',
         id_usuario_contacto: userId,
-        notas: "Contacto confirmado",
+        notas: 'Contacto confirmado'
       };
       // Llama al hook que actualiza el estado del contacto
       await modificarContactoListaEspera(listaEsperaId, datosParaEnviar);
     } catch (error) {
       console.error("Error al actualizar el estado a 'Confirmado':", error);
       await sweetalert2.fire({
-        icon: "error",
-        title: "Paso final fallido",
-        text: "El alumno fue inscrito, pero no se pudo actualizar su estado en la lista de espera.",
+        icon: 'error',
+        title: 'Paso final fallido',
+        text: 'El alumno fue inscrito, pero no se pudo actualizar su estado en la lista de espera.'
       });
     } finally {
       // Refresca la lista de espera para que el cambio se vea reflejado.
@@ -439,44 +454,44 @@ const PilatesGestionLogica = () => {
       return;
     }
     try {
-      if (tipo === "pendiente") {
+      if (tipo === 'pendiente') {
         const confirm = await sweetalert2.fire({
-          title: "¿Está seguro que quiere marcar como pendiente?",
-          icon: "question",
+          title: '¿Está seguro que quiere marcar como pendiente?',
+          icon: 'question',
           showCancelButton: true,
-          confirmButtonText: "Sí, marcar como pendiente",
-          cancelButtonText: "Cancelar",
-          reverseButtons: true,
+          confirmButtonText: 'Sí, marcar como pendiente',
+          cancelButtonText: 'Cancelar',
+          reverseButtons: true
         });
         if (!confirm.isConfirmed) return;
         const datosParaEnviar = {
           id_lista_espera: id,
-          estado_contacto: "Pendiente",
-          notas: "Pendiente de contacto",
-          id_usuario_contacto: userId,
+          estado_contacto: 'Pendiente',
+          notas: 'Pendiente de contacto',
+          id_usuario_contacto: userId
         };
         try {
           await insertarContactoListaEspera(datosParaEnviar);
           await sweetalert2.fire({
-            icon: "success",
-            title: "Marcado como pendiente",
-            text: "El estado se marcó correctamente.",
+            icon: 'success',
+            title: 'Marcado como pendiente',
+            text: 'El estado se marcó correctamente.',
             timer: 1800,
-            showConfirmButton: false,
+            showConfirmButton: false
           });
         } catch (error) {
           await sweetalert2.fire({
-            icon: "error",
-            title: "Error",
-            text: "Se ha producido un error.",
+            icon: 'error',
+            title: 'Error',
+            text: 'Se ha producido un error.',
             timer: 1800,
-            showConfirmButton: false,
+            showConfirmButton: false
           });
           console.error(error);
         } finally {
           refetchListaEspera();
         }
-      } else if (tipo === "confirmado") {
+      } else if (tipo === 'confirmado') {
         const persona = waitingList.find((p) => p.id === id);
         if (persona) {
           setPersonToConfirm(persona); // Guarda los datos de la persona a confirmar.
@@ -484,42 +499,42 @@ const PilatesGestionLogica = () => {
           setIsConfirmModalOpen(true); // Abre el modal de inscripción.
         } else {
           await sweetalert2.fire(
-            "Error",
-            "No se pudo encontrar a la persona seleccionada.",
-            "error"
+            'Error',
+            'No se pudo encontrar a la persona seleccionada.',
+            'error'
           );
         }
-      } else if (tipo === "rechazado") {
+      } else if (tipo === 'rechazado') {
         const confirm = await sweetalert2.fire({
-          title: "¿Está seguro que quiere marcar como rechazado/sin respuesta?",
-          icon: "question",
+          title: '¿Está seguro que quiere marcar como rechazado/sin respuesta?',
+          icon: 'question',
           showCancelButton: true,
-          confirmButtonText: "Sí, marcar como rechazado/sin respuesta",
-          cancelButtonText: "Cancelar",
-          reverseButtons: true,
+          confirmButtonText: 'Sí, marcar como rechazado/sin respuesta',
+          cancelButtonText: 'Cancelar',
+          reverseButtons: true
         });
         if (!confirm.isConfirmed) return;
         try {
           const datosParaEnviar = {
-            estado_contacto: "Rechazado/Sin Respuesta",
+            estado_contacto: 'Rechazado/Sin Respuesta',
             id_usuario_contacto: userId,
-            notas: "Contacto rechazado o sin respuesta",
+            notas: 'Contacto rechazado o sin respuesta'
           };
           await modificarContactoListaEspera(id, datosParaEnviar);
           await sweetalert2.fire({
-            icon: "success",
-            title: "Marcado como rechazado/sin respuesta",
-            text: "El estado se marcó correctamente.",
+            icon: 'success',
+            title: 'Marcado como rechazado/sin respuesta',
+            text: 'El estado se marcó correctamente.',
             timer: 1800,
-            showConfirmButton: false,
+            showConfirmButton: false
           });
         } catch (error) {
           await sweetalert2.fire({
-            icon: "error",
-            title: "Error",
-            text: "Se ha producido un error.",
+            icon: 'error',
+            title: 'Error',
+            text: 'Se ha producido un error.',
             timer: 1800,
-            showConfirmButton: false,
+            showConfirmButton: false
           });
           console.error(error);
         } finally {
@@ -528,11 +543,11 @@ const PilatesGestionLogica = () => {
       }
     } catch (error) {
       await sweetalert2.fire({
-        icon: "error",
-        title: "Error",
-        text: "Se ha producido un error.",
+        icon: 'error',
+        title: 'Error',
+        text: 'Se ha producido un error.',
         timer: 1800,
-        showConfirmButton: false,
+        showConfirmButton: false
       });
       console.error(error);
     }
@@ -555,7 +570,7 @@ const PilatesGestionLogica = () => {
   const handlePanelToggle = (panelName) => {
     setVisiblePanels((prevPanels) => ({
       ...prevPanels,
-      [panelName]: !prevPanels[panelName],
+      [panelName]: !prevPanels[panelName]
     }));
   };
 
@@ -568,8 +583,8 @@ const PilatesGestionLogica = () => {
    * @returns {number} Cantidad de clases de prueba en otros días del grupo
    */
   const countTrialsInOtherDaysOfGroup = (day, hour) => {
-    const lmv = ["LUNES", "MIÉRCOLES", "VIERNES"];
-    const mj = ["MARTES", "JUEVES"];
+    const lmv = ['LUNES', 'MIÉRCOLES', 'VIERNES'];
+    const mj = ['MARTES', 'JUEVES'];
     let group = [];
     if (lmv.includes(day)) group = lmv;
     if (mj.includes(day)) group = mj;
@@ -582,7 +597,7 @@ const PilatesGestionLogica = () => {
         // Solo contar otros días, no el día actual
         const students = schedule[`${d}-${hour}`]?.alumnos || [];
         const trialsInDay = students.filter(
-          (s) => s.status === "prueba"
+          (s) => s.status === 'prueba'
         ).length;
         totalTrials += trialsInDay;
       }
@@ -605,15 +620,15 @@ const PilatesGestionLogica = () => {
     }
     const key = `${day}-${hour}`;
     const cellData = schedule[key] || {};
-    const coachName = cellData.coach || "";
+    const coachName = cellData.coach || '';
     const instructorObj = instructoresData?.find(
       (i) => i.nombre_completo === coachName
     );
     setHorarioSeleccionado({
       day,
       hour,
-      instructorId: instructorObj ? instructorObj.id : "",
-      instructorName: coachName,
+      instructorId: instructorObj ? instructorObj.id : '',
+      instructorName: coachName
     });
     setIsModalProfesorOpen(true);
   };
@@ -641,22 +656,22 @@ const PilatesGestionLogica = () => {
       dia_semana: nuevoHorario.day,
       hora_inicio: nuevoHorario.hour,
       id_instructor: nuevoHorario.instructorId,
-      id_sede: Number(sedeActualFiltro),
+      id_sede: Number(sedeActualFiltro)
     };
 
     try {
       await insertarHorario(datosParaGuardar);
       await sweetalert2.fire({
-        icon: "success",
-        title: "Instructor asignado",
+        icon: 'success',
+        title: 'Instructor asignado',
         text: `El instructor fue asignado correctamente al horario ${nuevoHorario.day} ${nuevoHorario.hour}.`,
         timer: 1800,
-        showConfirmButton: false,
+        showConfirmButton: false
       });
       setIsModalProfesorOpen(false);
       refetch();
     } catch (error) {
-      console.error("Error al guardar el instructor:", error);
+      console.error('Error al guardar el instructor:', error);
     }
   };
 
@@ -670,24 +685,24 @@ const PilatesGestionLogica = () => {
    */
   const generarTodosLosHorariosConCupos = (scheduleData, maxCapacity) => {
     const resultado = {};
-    const DAYS = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES"];
+    const DAYS = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'];
     const HORAS = [
-      "07:00",
-      "08:00",
-      "09:00",
-      "10:00",
-      "11:00",
-      "12:00",
-      "13:00",
-      "14:00",
-      "15:00",
-      "16:00",
-      "17:00",
-      "18:00",
-      "19:00",
-      "20:00",
-      "21:00",
-      "22:00",
+      '07:00',
+      '08:00',
+      '09:00',
+      '10:00',
+      '11:00',
+      '12:00',
+      '13:00',
+      '14:00',
+      '15:00',
+      '16:00',
+      '17:00',
+      '18:00',
+      '19:00',
+      '20:00',
+      '21:00',
+      '22:00'
     ];
 
     // Inicializar
@@ -706,7 +721,7 @@ const PilatesGestionLogica = () => {
           hour,
           count: alumnosCount,
           maxCapacity,
-          isFull: alumnosCount >= maxCapacity,
+          isFull: alumnosCount >= maxCapacity
         });
       });
     });
@@ -763,7 +778,7 @@ const PilatesGestionLogica = () => {
       const alumnoCambio = {
         id_estudiante: alumnoYHorarios.idEstudiante,
         id_horario_anterior: alumnoYHorarios.idHorarioAnterior,
-        id_horario_nuevo: alumnoYHorarios.idHorarioNuevo,
+        id_horario_nuevo: alumnoYHorarios.idHorarioNuevo
       };
 
       // Realizar el cambio de turno a través de la API
@@ -771,31 +786,31 @@ const PilatesGestionLogica = () => {
       const resultadoCambio = await guardarCambioDeTurno(null, alumnoCambio, 2); // 2 reintentos = 3 intentos totales
 
       await sweetalert2.fire({
-        icon: "success",
-        title: "Cambio de turno realizado",
+        icon: 'success',
+        title: 'Cambio de turno realizado',
         text: `${studentData.name} ha sido trasladado exitosamente al nuevo horario.`,
         timer: 2000,
-        showConfirmButton: false,
+        showConfirmButton: false
       });
 
       setIsModalCambioTurno(false);
       refetch(); // Recargar la grilla para reflejar el cambio
     } catch (error) {
-      console.error("❌ Error al cambiar turno:", {
+      console.error('❌ Error al cambiar turno:', {
         mensaje: error.message,
         stack: error.stack,
         studentData,
         extras,
-        errorCompleto: error,
+        errorCompleto: error
       });
       await sweetalert2.fire({
-        icon: "error",
-        title: "Error al cambiar turno",
+        icon: 'error',
+        title: 'Error al cambiar turno',
         text:
           error.message ||
-          "No se pudo realizar el cambio de turno. Intenta nuevamente.",
+          'No se pudo realizar el cambio de turno. Intenta nuevamente.',
         timer: 3000,
-        showConfirmButton: false,
+        showConfirmButton: false
       });
     }
   };
@@ -816,12 +831,12 @@ const PilatesGestionLogica = () => {
       const objetoParaBackend = {
         nombre: personData.name,
         contacto: personData.contact,
-        tipo: "Cambio de turno",
+        tipo: 'Cambio de turno',
         plan_interes: personData.plan,
-        horarios_preferidos: personData.hours.join(","),
-        observaciones: personData.obs ?? "", // enviar vacío si corresponde
+        horarios_preferidos: personData.hours.join(','),
+        observaciones: personData.obs ?? '', // enviar vacío si corresponde
         id_sede: sedeActualFiltro,
-        id_usuario_cargado: userId,
+        id_usuario_cargado: userId
       };
 
       // Inserta en la lista de espera (solo eso - sin crear contacto inicial)
@@ -830,25 +845,25 @@ const PilatesGestionLogica = () => {
       // Normalizar id retornado (puede venir como { id }, { insertId } o número)
       const nuevaListaId =
         (resultadoInsert && (resultadoInsert.id || resultadoInsert.insertId)) ||
-        (typeof resultadoInsert === "number" ? resultadoInsert : null);
+        (typeof resultadoInsert === 'number' ? resultadoInsert : null);
 
       await sweetalert2.fire({
-        icon: "success",
-        title: "Agregado a lista de espera",
+        icon: 'success',
+        title: 'Agregado a lista de espera',
         text: `${personData.name} ha sido agregado a la lista de espera para cambio de turno.`,
         timer: 1800,
-        showConfirmButton: false,
+        showConfirmButton: false
       });
 
       setIsModalCambioTurno(false);
     } catch (error) {
-      console.error("Error al agregar a lista de espera:", error);
+      console.error('Error al agregar a lista de espera:', error);
       await sweetalert2.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se pudo agregar a la lista de espera. Intenta nuevamente.",
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo agregar a la lista de espera. Intenta nuevamente.',
         timer: 2000,
-        showConfirmButton: false,
+        showConfirmButton: false
       });
     } finally {
       refetchListaEspera();
@@ -869,72 +884,72 @@ const PilatesGestionLogica = () => {
     try {
       if (personData === null) {
         const confirm = await sweetalert2.fire({
-          title: "¿Seguro que deseas eliminar a esta persona?",
-          text: "Se eliminará toda la información asociada a esta persona de la lista de espera.",
-          icon: "warning",
+          title: '¿Seguro que deseas eliminar a esta persona?',
+          text: 'Se eliminará toda la información asociada a esta persona de la lista de espera.',
+          icon: 'warning',
           showCancelButton: true,
-          confirmButtonText: "Sí, eliminar",
-          cancelButtonText: "Cancelar",
-          reverseButtons: true,
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar',
+          reverseButtons: true
         });
         if (!confirm.isConfirmed) return;
 
         await remove(id);
         await sweetalert2.fire({
-          icon: "success",
-          title: "Eliminado",
-          text: "La persona fue eliminada correctamente de la lista de espera.",
+          icon: 'success',
+          title: 'Eliminado',
+          text: 'La persona fue eliminada correctamente de la lista de espera.',
           timer: 1800,
-          showConfirmButton: false,
+          showConfirmButton: false
         });
       } else {
         const objetoParaBackend = {
           nombre: personData.name,
           contacto: personData.contact,
-          tipo: personData.type === "cambio" ? "Cambio de turno" : "Espera",
+          tipo: personData.type === 'cambio' ? 'Cambio de turno' : 'Espera',
           plan_interes: personData.plan,
-          horarios_preferidos: personData.hours.join(","),
+          horarios_preferidos: personData.hours.join(','),
           observaciones: personData.obs,
           id_sede: sedeActualFiltro,
-          id_usuario_cargado: userId,
+          id_usuario_cargado: userId
         };
 
         if (id) {
           const confirm = await sweetalert2.fire({
             title: `¿Modificar datos de ${personData.name}?`,
-            icon: "question",
+            icon: 'question',
             showCancelButton: true,
-            confirmButtonText: "Sí, modificar",
-            cancelButtonText: "Cancelar",
-            reverseButtons: true,
+            confirmButtonText: 'Sí, modificar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
           });
           if (!confirm.isConfirmed) return;
           await update(id, objetoParaBackend);
           await sweetalert2.fire({
-            icon: "success",
-            title: "Modificado",
-            text: "La persona fue modificada correctamente en la lista de espera.",
+            icon: 'success',
+            title: 'Modificado',
+            text: 'La persona fue modificada correctamente en la lista de espera.',
             timer: 1800,
-            showConfirmButton: false,
+            showConfirmButton: false
           });
         } else {
           await insertarListaEspera(objetoParaBackend);
           await sweetalert2.fire({
-            icon: "success",
-            title: "Agregado",
-            text: "La persona fue agregada correctamente a la lista de espera.",
+            icon: 'success',
+            title: 'Agregado',
+            text: 'La persona fue agregada correctamente a la lista de espera.',
             timer: 1800,
-            showConfirmButton: false,
+            showConfirmButton: false
           });
         }
       }
     } catch (error) {
       await sweetalert2.fire({
-        icon: "error",
-        title: "Error",
-        text: "Ocurrió un error al actualizar la lista de espera.",
+        icon: 'error',
+        title: 'Error',
+        text: 'Ocurrió un error al actualizar la lista de espera.'
       });
-      console.error("Error en handleUpdateWaitingList:", error);
+      console.error('Error en handleUpdateWaitingList:', error);
     } finally {
       refetchListaEspera();
     }
@@ -946,9 +961,9 @@ const PilatesGestionLogica = () => {
       if (!keyHorarioNuevo) return null;
 
       const puedeBuscarPorId =
-        idBuscado !== undefined && idBuscado !== null && idBuscado !== "";
+        idBuscado !== undefined && idBuscado !== null && idBuscado !== '';
       const puedeBuscarPorNombre =
-        typeof nombreBuscado === "string" && nombreBuscado.trim() !== "";
+        typeof nombreBuscado === 'string' && nombreBuscado.trim() !== '';
 
       if (!puedeBuscarPorId && !puedeBuscarPorNombre) return null;
 
@@ -963,7 +978,7 @@ const PilatesGestionLogica = () => {
       }
 
       const normalizarNombre = (valor) =>
-        typeof valor === "string" ? valor.trim().toLowerCase() : "";
+        typeof valor === 'string' ? valor.trim().toLowerCase() : '';
       const nombreNormalizado = normalizarNombre(nombreBuscado);
 
       const listaDeHorarios = Object.values(schedule);
@@ -986,7 +1001,7 @@ const PilatesGestionLogica = () => {
           return {
             idEstudiante: alumnoEncontrado.id,
             idHorarioAnterior: horario.horarioId,
-            idHorarioNuevo: horarioIdNuevo,
+            idHorarioNuevo: horarioIdNuevo
           };
         }
       }
@@ -1004,54 +1019,57 @@ const PilatesGestionLogica = () => {
    * @param {object} studentToEdit - Alumno a editar (null si es agregar nuevo)
    * @param {string} tipo - Tipo de inscripción (normal o cupo_adicional)
    */
-    const handleCellClick = (
-      day,
-      time,
-      studentToEdit = null,
-      tipo = "normal"
-    ) => {
-      if (!puedeEditarSede) {
-        mostrarErrorPermisos();
-        return;
-      }
-      const key = `${day}-${time}`;
-      const abrirModal = (tipoFinal) => {
-        setCurrentCell({
-          key,
-          day,
-          time,
-          student: studentToEdit,
-          tipoInscripcion: tipoFinal,
-        });
-        setIsModalOpen(true);
-      };
+  const handleCellClick = (
+    day,
+    time,
+    studentToEdit = null,
+    tipo = 'normal'
+  ) => {
+    if (!puedeEditarSede) {
+      mostrarErrorPermisos();
+      return;
+    }
+    const key = `${day}-${time}`;
+    const abrirModal = (tipoFinal) => {
+      setCurrentCell({
+        key,
+        day,
+        time,
+        student: studentToEdit,
+        tipoInscripcion: tipoFinal
+      });
+      setIsModalOpen(true);
+    };
 
-      if (tipo === "cupo_adicional" && studentToEdit === null) { // Si es sobrecupo y nuevo alumno, mostramos alerta
-        Swal.fire({
-          title: "<strong>Inscripción de Sobrecupo</strong>",
-          icon: "warning",
-          html: `
+    if (tipo === 'cupo_adicional' && studentToEdit === null) {
+      // Si es sobrecupo y nuevo alumno, mostramos alerta
+      Swal.fire({
+        title: '<strong>Inscripción de Sobrecupo</strong>',
+        icon: 'warning',
+        html: `
             <div class="text-left">
               <p class="mb-2">El límite de alumnos para este horario ha sido alcanzado o no hay cupos habilitados.</p>
               <p class="font-semibold text-orange-600">¿Desea autorizar una inscripción excepcional de sobrecupo para este estudiante?</p>
             </div>
           `,
-          showCancelButton: true,
-          confirmButtonColor: "#ea580c", 
-          cancelButtonColor: "#6b7280", 
-          confirmButtonText: "Sí, autorizar sobrecupo",
-          cancelButtonText: "Cancelar", 
-        }).then((result) => {
-          if (result.isConfirmed) {
-            abrirModal("cupo_adicional");
-          }
-        });
-      } else if (tipo === "cupo_adicional") { // Si es sobrecupo y ya hay un alumno (edición), abrimos directo
-        abrirModal("cupo_adicional");
-      } else { // Si es normal, abrimos directo
-        abrirModal("normal");
-      }
-    };
+        showCancelButton: true,
+        confirmButtonColor: '#ea580c',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sí, autorizar sobrecupo',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          abrirModal('cupo_adicional');
+        }
+      });
+    } else if (tipo === 'cupo_adicional') {
+      // Si es sobrecupo y ya hay un alumno (edición), abrimos directo
+      abrirModal('cupo_adicional');
+    } else {
+      // Si es normal, abrimos directo
+      abrirModal('normal');
+    }
+  };
 
   /**
    * FUNCTION: Valida si el nombre de un alumno ya existe en otro horario
@@ -1063,9 +1081,9 @@ const PilatesGestionLogica = () => {
    */
   const validateNameDuplicates = async (studentData, accion) => {
     const removeAccents = (str) =>
-      (str || "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+      (str || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
         .trim()
         .toUpperCase();
 
@@ -1076,19 +1094,19 @@ const PilatesGestionLogica = () => {
     const yaExiste = allStudents.some(
       (s) =>
         removeAccents(s.name) === nombreIngresado &&
-        (accion === "agregar" ||
-          (accion === "modificar" && s.id !== studentData.id))
+        (accion === 'agregar' ||
+          (accion === 'modificar' && s.id !== studentData.id))
     );
 
     if (yaExiste) {
       await sweetalert2.fire({
-        icon: "warning",
-        title: "Nombre duplicado",
+        icon: 'warning',
+        title: 'Nombre duplicado',
         text:
-          accion === "agregar"
+          accion === 'agregar'
             ? `¡Alerta! El alumno ${studentData.name} ya existe en otro horario. No se puede crear un duplicado.`
             : `¡Alerta! Ya existe otro alumno con el nombre ${studentData.name}. No se puede modificar a un nombre duplicado.`,
-        confirmButtonText: "Aceptar",
+        confirmButtonText: 'Aceptar'
       });
       return true;
     }
@@ -1116,20 +1134,20 @@ const PilatesGestionLogica = () => {
     }
 
     // Validar duplicados solo si no es un cambio desde lista de espera
-    if (tipoInscripcionListaEspera != "cambio") {
+    if (tipoInscripcionListaEspera != 'cambio') {
       const tieneDuplicado = await validateNameDuplicates(studentData, accion);
-      if (tieneDuplicado) throw new Error("Nombre duplicado detectado.");
+      if (tieneDuplicado) throw new Error('Nombre duplicado detectado.');
     }
     try {
-      if (accion === "eliminar") {
+      if (accion === 'eliminar') {
         const confirm = await sweetalert2.fire({
           title: `¿Seguro que deseas eliminar a ${studentData.student.name}?`,
-          text: "Se eliminará toda la información asociada a este cliente.",
-          icon: "warning",
+          text: 'Se eliminará toda la información asociada a este cliente.',
+          icon: 'warning',
           showCancelButton: true,
-          confirmButtonText: "Sí, eliminar",
-          cancelButtonText: "Cancelar",
-          reverseButtons: true,
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar',
+          reverseButtons: true
         });
 
         if (!confirm.isConfirmed) return;
@@ -1138,11 +1156,11 @@ const PilatesGestionLogica = () => {
         await deleteCliente(studentData.student.id);
 
         await sweetalert2.fire({
-          icon: "success",
-          title: "Eliminado",
-          text: "El alumno fue eliminado correctamente.",
+          icon: 'success',
+          title: 'Eliminado',
+          text: 'El alumno fue eliminado correctamente.',
           timer: 1800,
-          showConfirmButton: false,
+          showConfirmButton: false
         });
         refetch();
         return;
@@ -1152,42 +1170,42 @@ const PilatesGestionLogica = () => {
         buttonsStyling: false, // 👈 clave
         customClass: {
           confirmButton:
-            "swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium " +
-            "bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400",
+            'swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium ' +
+            'bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400',
           cancelButton:
-            "swal2-cancel inline-flex items-center px-4 py-2 rounded-md font-medium ml-3 " +
-            "bg-gray-200 text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400",
-          popup: "rounded-xl",
-        },
+            'swal2-cancel inline-flex items-center px-4 py-2 rounded-md font-medium ml-3 ' +
+            'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400',
+          popup: 'rounded-xl'
+        }
       });
-      if (accion === "modificar") {
+      if (accion === 'modificar') {
         const confirm = await swal.fire({
           title: `¿Modificar datos de ${studentData.name}?`,
-          icon: "question",
+          icon: 'question',
           showCancelButton: true,
-          confirmButtonText: "Sí, modificar",
-          cancelButtonText: "Cancelar",
-          reverseButtons: true,
+          confirmButtonText: 'Sí, modificar',
+          cancelButtonText: 'Cancelar',
+          reverseButtons: true
         });
         if (!confirm.isConfirmed) return;
       }
       if (
         studentData.auditDetails &&
-        studentData.auditDetails.trim() !== "" &&
+        studentData.auditDetails.trim() !== '' &&
         studentData.id
       ) {
         try {
           const auditoriaPayload = {
             motivo: studentData.auditDetails,
-            usuario_id: userId,
+            usuario_id: userId
           };
 
           await guardarAuditoria(studentData.id, auditoriaPayload);
         } catch (auditError) {
           await sweetalert2.fire({
-            icon: "error",
-            title: "Error de Auditoría",
-            text: "No se pudo guardar el motivo del cambio. La operación ha sido cancelada.",
+            icon: 'error',
+            title: 'Error de Auditoría',
+            text: 'No se pudo guardar el motivo del cambio. La operación ha sido cancelada.'
           });
 
           return;
@@ -1198,14 +1216,14 @@ const PilatesGestionLogica = () => {
         studentData.planDetails?.startDate ||
         studentData.trialDetails?.date ||
         studentData.scheduledDetails?.date ||
-        "";
+        '';
 
-      let fechaFinStr = "";
+      let fechaFinStr = '';
       let planStartDateAux = studentData.scheduledDetails?.startDateAux || null;
       let planEndDateAux = studentData.scheduledDetails?.endDateAux || null;
 
       if (fechaInicioStr) {
-        const [año, mes, dia] = fechaInicioStr.split("-").map(Number);
+        const [año, mes, dia] = fechaInicioStr.split('-').map(Number);
 
         const fechaInicio = new Date(año, mes - 1, dia);
 
@@ -1218,154 +1236,154 @@ const PilatesGestionLogica = () => {
             const fechaFin = new Date(fechaInicio);
             fechaFin.setDate(fechaFin.getDate() + 1);
             const añoFin = fechaFin.getFullYear();
-            const mesFin = String(fechaFin.getMonth() + 1).padStart(2, "0");
-            const diaFin = String(fechaFin.getDate()).padStart(2, "0");
+            const mesFin = String(fechaFin.getMonth() + 1).padStart(2, '0');
+            const diaFin = String(fechaFin.getDate()).padStart(2, '0');
             fechaFinStr = `${añoFin}-${mesFin}-${diaFin}`;
           }
         }
       }
 
       const inscripcionData = {
-        dia: key.split("-")[0],
-        horario: key.split("-")[1],
-        fecha_inscripcion: new Date().toISOString().split("T")[0],
-        id_sede: sedeActualFiltro,
+        dia: key.split('-')[0],
+        horario: key.split('-')[1],
+        fecha_inscripcion: new Date().toISOString().split('T')[0],
+        id_sede: sedeActualFiltro
       };
 
       const formDataForDB = {
         id: studentData.id || null,
-        nombre: studentData.name || "",
-        telefono: studentData.contact || "",
-        observaciones: studentData.observation || "SIN OBSERVACIONES",
+        nombre: studentData.name || '',
+        telefono: studentData.contact || '',
+        observaciones: studentData.observation || 'SIN OBSERVACIONES',
         estado:
-          studentData.status === "plan"
-            ? "Plan"
-            : studentData.status === "prueba"
-            ? "Clase de prueba"
-            : studentData.status === "programado"
-            ? "Renovacion programada"
-            : "Renovacion reprogramada",
+          studentData.status === 'plan'
+            ? 'Plan'
+            : studentData.status === 'prueba'
+            ? 'Clase de prueba'
+            : studentData.status === 'programado'
+            ? 'Renovacion programada'
+            : 'Renovacion reprogramada',
         fecha_inicio:
-          planAContratado === "De plan a programado"
+          planAContratado === 'De plan a programado'
             ? planStartDateAux
             : fechaInicioStr,
 
         fecha_fin:
-          planAContratado === "De plan a programado"
+          planAContratado === 'De plan a programado'
             ? planEndDateAux
             : fechaFinStr,
         fecha_prometido_pago:
-          planAContratado === "De plan a programado" ? fechaInicioStr : null,
+          planAContratado === 'De plan a programado' ? fechaInicioStr : null
       };
       // Lógica específica para cambios desde la lista de espera
-      if (accion === "agregar" && tipoInscripcionListaEspera === "cambio") {
+      if (accion === 'agregar' && tipoInscripcionListaEspera === 'cambio') {
         const alumno = encontrarAlumnoYHorario(studentData.name, null, key);
         if (alumno === null) {
-          throw new Error("Alumno no encontrado para cambio de turno.");
+          throw new Error('Alumno no encontrado para cambio de turno.');
         }
         const alumnoCambio = {
           id_estudiante: alumno.idEstudiante,
           id_horario_anterior: alumno.idHorarioAnterior,
-          id_horario_nuevo: alumno.idHorarioNuevo,
+          id_horario_nuevo: alumno.idHorarioNuevo
         };
         const resultadoCambio = await guardarCambioDeTurno(null, alumnoCambio);
         if (!resultadoCambio) {
-          throw new Error("No se pudo cambiar el turno del alumno.");
+          throw new Error('No se pudo cambiar el turno del alumno.');
         }
         await sweetalert2.fire({
-          icon: "success",
-          title: "Agregado",
-          text: "El alumno fue cambiado de turno correctamente.",
+          icon: 'success',
+          title: 'Agregado',
+          text: 'El alumno fue cambiado de turno correctamente.',
           timer: 1800,
-          showConfirmButton: false,
+          showConfirmButton: false
         });
       }
       // Logica para agregar un nuevo alumno
-      else if (accion === "agregar") {
+      else if (accion === 'agregar') {
         await sincronizarConVentas(studentData, inscripcionData); // Sincronizar con Ventas si aplica
-        const datosHistorialAlumno = altaHistorialAlumno(studentData) // Crear historial del alumno
-        const altaAlumno = {...formDataForDB, ...datosHistorialAlumno} // Combinar datos del alumno con historial
+        const datosHistorialAlumno = altaHistorialAlumno(studentData); // Crear historial del alumno
+        const altaAlumno = { ...formDataForDB, ...datosHistorialAlumno }; // Combinar datos del alumno con historial
         await insertCliente(altaAlumno, inscripcionData); // Insertar nuevo cliente
         await sweetalert2.fire({
-          icon: "success",
-          title: "Agregado",
-          text: "El alumno fue agregado correctamente.",
+          icon: 'success',
+          title: 'Agregado',
+          text: 'El alumno fue agregado correctamente.',
           timer: 1800,
-          showConfirmButton: false,
+          showConfirmButton: false
         });
       } else if (
         // Modificaciones cuando hay cambio de plan entre programado y contratado
-        accion === "modificar" &&
-        (planAContratado === "De plan a programado" ||
-          planAContratado === "De programado a contratado")
+        accion === 'modificar' &&
+        (planAContratado === 'De plan a programado' ||
+          planAContratado === 'De programado a contratado')
       ) {
         const datosParaEnviar = {
           fecha_prometido_pago:
-            planAContratado === "De plan a programado" ? fechaInicioStr : null,
+            planAContratado === 'De plan a programado' ? fechaInicioStr : null,
           fecha_fin:
-            planAContratado === "De plan a programado"
+            planAContratado === 'De plan a programado'
               ? planEndDateAux
               : fechaFinStr,
           fecha_inicio:
-            planAContratado === "De plan a programado"
+            planAContratado === 'De plan a programado'
               ? planStartDateAux
               : fechaInicioStr,
           estado:
-            planAContratado === "De plan a programado"
-              ? "Renovacion programada"
-              : "Plan",
+            planAContratado === 'De plan a programado'
+              ? 'Renovacion programada'
+              : 'Plan'
         };
 
         await planAContratadoPeticion(studentData.id, datosParaEnviar); // Actualizar plan del alumno
-        await crearHistorialAlumno(horariosData, studentData, "CAMBIO_PLAN") // Crear historial del alumno
+        await crearHistorialAlumno(horariosData, studentData, 'CAMBIO_PLAN'); // Crear historial del alumno
         await sweetalert2.fire({
-          icon: "success",
-          title: "Modificado",
-          text: "El alumno fue modificado correctamente.",
+          icon: 'success',
+          title: 'Modificado',
+          text: 'El alumno fue modificado correctamente.',
           timer: 1800,
-          showConfirmButton: false,
+          showConfirmButton: false
         });
       } else if (
         // Modificaciones cuando solo se actualiza la fecha prometida
-        accion === "modificar" &&
+        accion === 'modificar' &&
         studentData?.scheduledDetails?.promisedDate
       ) {
         const datosParaEnviar = {
           fecha_prometido_pago: fechaInicioStr,
-          estado: "Reprogramado",
+          estado: 'Reprogramado',
           nombre: studentData.name,
-          observaciones: studentData.observation || "SIN OBSERVACIONES",
-          telefono: studentData.contact || "",
+          observaciones: studentData.observation || 'SIN OBSERVACIONES',
+          telefono: studentData.contact || ''
         };
         await planAContratadoPeticion(studentData.id, datosParaEnviar);
-        await crearHistorialAlumno(horariosData, studentData)
+        await crearHistorialAlumno(horariosData, studentData);
         await sweetalert2.fire({
-          icon: "success",
-          title: "Modificado",
-          text: "La fecha prometida fue actualizada correctamente.",
+          icon: 'success',
+          title: 'Modificado',
+          text: 'La fecha prometida fue actualizada correctamente.',
           timer: 1800,
-          showConfirmButton: false,
+          showConfirmButton: false
         });
       }
       // Modificaciones generales sin cambio de plan
-      else if (accion === "modificar") {
+      else if (accion === 'modificar') {
         await insertCliente(formDataForDB, inscripcionData, true);
-        await crearHistorialAlumno(horariosData, studentData, "MODIFICACION")
+        await crearHistorialAlumno(horariosData, studentData, 'MODIFICACION');
         await sweetalert2.fire({
-          icon: "success",
-          title: "Modificado",
-          text: "El alumno fue modificado correctamente.",
+          icon: 'success',
+          title: 'Modificado',
+          text: 'El alumno fue modificado correctamente.',
           timer: 1800,
-          showConfirmButton: false,
+          showConfirmButton: false
         });
       }
     } catch (error) {
-      console.error("Error al guardar el alumno:", error);
+      console.error('Error al guardar el alumno:', error);
 
       await sweetalert2.fire({
-        icon: "error",
-        title: "Error",
-        text: "Ocurrió un error al guardar el cliente en la base de datos.",
+        icon: 'error',
+        title: 'Error',
+        text: 'Ocurrió un error al guardar el cliente en la base de datos.'
       });
       throw error; // Re-lanza el error para que el modal lo capture
     } finally {
@@ -1378,13 +1396,13 @@ const PilatesGestionLogica = () => {
   //Esta función sincroniza los datos del alumno con "Ventas" siempre y cuando el alumno esté en estado "prueba" o "programado".
   const sincronizarConVentas = async (datosAlumno, datosInscripcion) => {
     // 1. Sincronizar solo si el alumno está en prueba o programado
-    if (datosAlumno.status !== "prueba" && datosAlumno.status !== "programado")
+    if (datosAlumno.status !== 'prueba' && datosAlumno.status !== 'programado')
       return;
 
     // 2. Obtener tipo de grupo y normalizar
     let grp =
       datosAlumno.trialDetails?.type || datosAlumno.scheduledDetails?.type;
-    let grpNormalizado = grp ? grp.replace(/-/g, "") : "";
+    let grpNormalizado = grp ? grp.replace(/-/g, '') : '';
 
     // A. Buscamos el objeto de la sede actual usando el ID del filtro
     const sedeSeleccionadaObj = sedesData?.find(
@@ -1393,47 +1411,47 @@ const PilatesGestionLogica = () => {
 
     // B. Obtenemos el nombre (asegurando que no sea null)
     let nombreSedeRaw = sedeSeleccionadaObj
-      ? sedeSeleccionadaObj.nombre || sedeSeleccionadaObj.ciudad || ""
-      : "";
+      ? sedeSeleccionadaObj.nombre || sedeSeleccionadaObj.ciudad || ''
+      : '';
 
     // C. Normalizamos a minúsculas y sin espacios extras
     let sedeParaVentas = String(nombreSedeRaw).trim().toLowerCase();
 
-    if (sedeParaVentas === "concepción" || sedeParaVentas === "concepcion") {
-      sedeParaVentas = "concepcion";
+    if (sedeParaVentas === 'concepción' || sedeParaVentas === 'concepcion') {
+      sedeParaVentas = 'concepcion';
     }
 
     try {
       // Definir la fecha según el estado del alumno
       const fechaClase =
-        datosAlumno.status === "prueba"
+        datosAlumno.status === 'prueba'
           ? datosAlumno.trialDetails?.date
           : datosAlumno.scheduledDetails?.date;
 
       // Armar payload para enviar a Ventas
       const datos = {
         nombre: datosAlumno.name,
-        dni: "Sin DNI",
-        tipo_prospecto: "Nuevo",
+        dni: 'Sin DNI',
+        tipo_prospecto: 'Nuevo',
         contacto: datosAlumno.contact,
-        canal_contacto: "Desde pilates",
-        actividad: "Pilates",
+        canal_contacto: 'Desde pilates',
+        actividad: 'Pilates',
         observacion: datosAlumno.observation,
         sede: sedeParaVentas,
         usuario_id: userId,
         clase_prueba_1_fecha: fechaClase,
         clase_prueba_1_tipo:
-          datosAlumno.status === "prueba"
-            ? "Clase de prueba"
-            : "Visita programada",
+          datosAlumno.status === 'prueba'
+            ? 'Clase de prueba'
+            : 'Visita programada',
         asesor_nombre: nombreAsesor,
         grp: grpNormalizado,
         hhmm: datosInscripcion.horario,
-        clase_num: 1,
+        clase_num: 1
       };
       await insertarVentasProspectosCompleto(datos);
     } catch (e) {
-      console.error("Error no bloqueante sync ventas:", e);
+      console.error('Error no bloqueante sync ventas:', e);
     }
   };
 
@@ -1447,25 +1465,30 @@ const PilatesGestionLogica = () => {
   const getCellContentAndStyle = useCallback(
     (student) => {
       if (!student)
-        return { content: null, style: "bg-white hover:bg-gray-100" };
+        return { content: null, style: 'bg-white hover:bg-gray-100' };
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      let content = <span className="font-semibold">{student.es_cupo_extra && <IoAlertCircle />}{student.name}</span>;
-      let style = "bg-gray-100";
+      let content = (
+        <span className="font-semibold">
+          {student.es_cupo_extra && <IoAlertCircle />}
+          {student.name}
+        </span>
+      );
+      let style = 'bg-gray-100';
       let isExpired = false;
 
       switch (student.status) {
-        case "plan":
-          const endDate = new Date(student.planDetails.endDate + "T00:00:00");
+        case 'plan':
+          const endDate = new Date(student.planDetails.endDate + 'T00:00:00');
 
           isExpired = endDate < today;
 
           style =
-            student.planDetails?.type === "L-M-V"
-              ? "bg-gray-300"
-              : "bg-gray-200";
+            student.planDetails?.type === 'L-M-V'
+              ? 'bg-gray-300'
+              : 'bg-gray-200';
 
           const duracion = Number(
             calcularDiasEntreFechas(
@@ -1480,13 +1503,14 @@ const PilatesGestionLogica = () => {
                   <span className="text-yellow-600 text-xl">
                     <IoAlertCircle />
                   </span>
-                )} {student.name}
+                )}{' '}
+                {student.name}
               </div>
               {/* Contenedor para la segunda línea con Flexbox */}
               <div className="flex items-center justify-between mt-1 text-xs italic">
                 <span>
-                  {isExpired ? "Venció" : "Vence"} el{" "}
-                  {endDate.toLocaleDateString("es-ES")}
+                  {isExpired ? 'Venció' : 'Vence'} el{' '}
+                  {endDate.toLocaleDateString('es-ES')}
                 </span>
 
                 {/* Badge "Modificado" (solo si la duración no es estándar) */}
@@ -1500,10 +1524,10 @@ const PilatesGestionLogica = () => {
           );
           break;
 
-        case "prueba":
-          const trialDate = new Date(student.trialDetails.date + "T00:00:00");
+        case 'prueba':
+          const trialDate = new Date(student.trialDetails.date + 'T00:00:00');
           isExpired = trialDate < today;
-          style = "bg-cyan-200";
+          style = 'bg-cyan-200';
 
           const asistio = asistenciaPruebasMap[student.id];
 
@@ -1518,10 +1542,10 @@ const PilatesGestionLogica = () => {
                 {student.name}
               </div>
               <span className="text-xs italic">
-                Clase de prueba{" "}
+                Clase de prueba{' '}
                 {new Date(
-                  student.trialDetails.date + "T00:00:00"
-                ).toLocaleDateString("es-ES")}
+                  student.trialDetails.date + 'T00:00:00'
+                ).toLocaleDateString('es-ES')}
               </span>
 
               {isExpired && asistio !== undefined && (
@@ -1541,13 +1565,13 @@ const PilatesGestionLogica = () => {
           );
           break;
 
-        case "programado":
+        case 'programado':
           const fechaRelevante =
             student.scheduledDetails?.promisedDate ||
             student.scheduledDetails.date;
-          const scheduledDate = new Date(fechaRelevante + "T00:00:00");
+          const scheduledDate = new Date(fechaRelevante + 'T00:00:00');
           isExpired = scheduledDate < today;
-          style = "bg-yellow-200";
+          style = 'bg-yellow-200';
           content = (
             <span>
               <div className="flex items-center">
@@ -1559,9 +1583,9 @@ const PilatesGestionLogica = () => {
                 {student.name}
               </div>
               <span className="text-xs italic">
-                Renueva el{" "}
-                {new Date(fechaRelevante + "T00:00:00").toLocaleDateString(
-                  "es-ES"
+                Renueva el{' '}
+                {new Date(fechaRelevante + 'T00:00:00').toLocaleDateString(
+                  'es-ES'
                 )}
               </span>
             </span>
@@ -1573,7 +1597,7 @@ const PilatesGestionLogica = () => {
       }
 
       if (isExpired) {
-        style = "bg-red-500 text-white";
+        style = 'bg-red-500 text-white';
       }
 
       return { content, style };
@@ -1598,43 +1622,43 @@ const PilatesGestionLogica = () => {
     const lmvSlots = [];
     const mjSlots = [];
     for (const hour of [
-      "07:00",
-      "08:00",
-      "09:00",
-      "10:00",
-      "11:00",
-      "12:00",
-      "13:00",
-      "14:00",
-      "15:00",
-      "16:00",
-      "17:00",
-      "18:00",
-      "19:00",
-      "20:00",
-      "21:00",
-      "22:00",
+      '07:00',
+      '08:00',
+      '09:00',
+      '10:00',
+      '11:00',
+      '12:00',
+      '13:00',
+      '14:00',
+      '15:00',
+      '16:00',
+      '17:00',
+      '18:00',
+      '19:00',
+      '20:00',
+      '21:00',
+      '22:00'
     ]) {
       const lunesLibres =
         cupoMaximoPilates -
         (schedule[`LUNES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup("LUNES", hour);
+        countTrialsInOtherDaysOfGroup('LUNES', hour);
       const miercolesLibres =
         cupoMaximoPilates -
         (schedule[`MIÉRCOLES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup("MIÉRCOLES", hour);
+        countTrialsInOtherDaysOfGroup('MIÉRCOLES', hour);
       const viernesLibres =
         cupoMaximoPilates -
         (schedule[`VIERNES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup("VIERNES", hour);
+        countTrialsInOtherDaysOfGroup('VIERNES', hour);
       const martesLibres =
         cupoMaximoPilates -
         (schedule[`MARTES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup("MARTES", hour);
+        countTrialsInOtherDaysOfGroup('MARTES', hour);
       const juevesLibres =
         cupoMaximoPilates -
         (schedule[`JUEVES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup("JUEVES", hour);
+        countTrialsInOtherDaysOfGroup('JUEVES', hour);
 
       const lmvCount = Math.max(
         0,
@@ -1661,19 +1685,19 @@ const PilatesGestionLogica = () => {
     allStudents.forEach((student) => {
       if (!student || processedIds.has(student.id)) return;
       let expiryDate;
-      let type = "";
+      let type = '';
       switch (student.status) {
-        case "plan":
-          expiryDate = new Date(student.planDetails.endDate + "T00:00:00");
-          type = "Plan vencido";
+        case 'plan':
+          expiryDate = new Date(student.planDetails.endDate + 'T00:00:00');
+          type = 'Plan vencido';
           break;
-        case "prueba":
-          expiryDate = new Date(student.trialDetails.date + "T00:00:00");
-          type = "Clase de prueba caducada";
+        case 'prueba':
+          expiryDate = new Date(student.trialDetails.date + 'T00:00:00');
+          type = 'Clase de prueba caducada';
           break;
-        case "programado":
-          expiryDate = new Date(student.scheduledDetails.date + "T00:00:00");
-          type = "Renovación pendiente";
+        case 'programado':
+          expiryDate = new Date(student.scheduledDetails.date + 'T00:00:00');
+          type = 'Renovación pendiente';
           break;
         default:
           return;
@@ -1682,7 +1706,7 @@ const PilatesGestionLogica = () => {
         calculatedExpiredStudents.push({
           name: student.name,
           type: type,
-          date: expiryDate.toLocaleDateString("es-ES"),
+          date: expiryDate.toLocaleDateString('es-ES')
         });
         processedIds.add(student.id);
       }
@@ -1694,13 +1718,13 @@ const PilatesGestionLogica = () => {
       .filter(
         (person) =>
           person.contacto_cliente?.estado_contacto !==
-            "Rechazado/Sin Respuesta" &&
-          person.contacto_cliente?.estado_contacto !== "Confirmado"
+            'Rechazado/Sin Respuesta' &&
+          person.contacto_cliente?.estado_contacto !== 'Confirmado'
       )
       // Ordena para dar prioridad a los que buscan "cambio" sobre los que están en "espera".
       .sort((a, b) => {
-        if (a.type === "cambio" && b.type !== "cambio") return -1;
-        if (a.type !== "cambio" && b.type === "cambio") return 1;
+        if (a.type === 'cambio' && b.type !== 'cambio') return -1;
+        if (a.type !== 'cambio' && b.type === 'cambio') return 1;
         return 0;
       });
 
@@ -1710,15 +1734,15 @@ const PilatesGestionLogica = () => {
     actionableWaitingList.forEach((person) => {
       if (processedMatches.has(person.id)) return;
       let hasMatch = false;
-      if (person.plan === "L-M-V")
+      if (person.plan === 'L-M-V')
         hasMatch = person.hours.some((hour) =>
           calculatedFreeSlots.lmv.some((slot) => slot.hour === hour)
         );
-      else if (person.plan === "M-J")
+      else if (person.plan === 'M-J')
         hasMatch = person.hours.some((hour) =>
           calculatedFreeSlots.mj.some((slot) => slot.hour === hour)
         );
-      else if (person.plan === "Cualquier dia")
+      else if (person.plan === 'Cualquier dia')
         hasMatch = person.hours.some(
           (hour) =>
             calculatedFreeSlots.lmv.some((slot) => slot.hour === hour) ||
@@ -1735,7 +1759,7 @@ const PilatesGestionLogica = () => {
     return {
       freeSlots: calculatedFreeSlots,
       expiredStudents: calculatedExpiredStudents,
-      waitingListMatches: calculatedMatches,
+      waitingListMatches: calculatedMatches
     };
   }, [schedule, waitingList, cupoMaximoPilates, countTrialsInOtherDaysOfGroup]);
 
@@ -1759,7 +1783,7 @@ const PilatesGestionLogica = () => {
   const calcularDiasEntreFechas = (fechaInicioStr, fechaFinStr) => {
     // Función interna para convertir "YYYY-MM-DD" a un objeto Date en UTC
     const parsearFechaYMD = (str) => {
-      const [anio, mes, dia] = str.split("-");
+      const [anio, mes, dia] = str.split('-');
       // Usamos Date.UTC para ignorar la zona horaria local y evitar errores
       return new Date(Date.UTC(anio, mes - 1, dia));
     };
@@ -1792,26 +1816,25 @@ const PilatesGestionLogica = () => {
     detalleHorariosDeshabilitados, // Detalles adicionales sobre los horarios ocultos
     manejarDeshabilitarHorario, // Función para ocultar un horario específico
     manejarHabilitarHorario, // Función para mostrar un horario previamente ocultado
-    puedeDeshabilitarHorario, // Función que verifica si el usuario tiene permisos para ocultar horarios
+    puedeDeshabilitarHorario // Función que verifica si el usuario tiene permisos para ocultar horarios
   } = useHorariosDeshabilitados({
     sedeActualFiltro,
     schedule, // Necesario para validar si hay alumnos
     rol, // Necesario para permisos
     userId, // Necesario para saber quién oculta
     puedeEditarSede, // Necesario para validación de permisos
-    userLevel, // Necesario para validación de permisos
+    userLevel // Necesario para validación de permisos
   });
 
   const {
     altaHistorialAlumno, // Función para crear el historial de un alumno (Se usa solo cuando se da de alta un alumno por primera vez)
     crearHistorialAlumno // Función para registrar cambios en el historial de un alumno cuando se hacen modificaciones
-  } = useHistorialAlumnos()
-  
+  } = useHistorialAlumnos();
 
   const {
     horariosMinimizados, // Almacena los horarios que han sido minimizados
     alternarMinimizacionHorario, // Función para minimizar o maximizar un horario específico
-    manejarMinimizacionGlobal, // Función para minimizar o maximizar todos los horarios
+    manejarMinimizacionGlobal // Función para minimizar o maximizar todos los horarios
   } = useGrillaMinimizada(); // Lógica para manejar la minimización de la grilla de horarios
 
   return {
@@ -1848,7 +1871,7 @@ const PilatesGestionLogica = () => {
       horariosMinimizados,
       ausentesData,
       errorAusentesData,
-      isLoadingAusentesData,
+      isLoadingAusentesData
     },
     setters: {
       setSection,
@@ -1859,7 +1882,7 @@ const PilatesGestionLogica = () => {
       setIsModalCambioTurno,
       setIsModalDetalleAusentes,
       setIsModalAyuda,
-      setIsConfirmModalOpen,
+      setIsConfirmModalOpen
     },
     functions: {
       handleSectionChange,
@@ -1884,8 +1907,8 @@ const PilatesGestionLogica = () => {
       puedeDeshabilitarHorario,
       alternarMinimizacionHorario,
       manejarMinimizacionGlobal,
-      refetchAusentes,
-    },
+      refetchAusentes
+    }
   };
 };
 

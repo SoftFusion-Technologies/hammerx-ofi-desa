@@ -4,14 +4,14 @@ Fecha de creación: 23-12-2025
 Descripción: Componente ModalDetalleAusentes para gestionar alumnos ausentes en Pilates.
 */
 
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useAuth } from "../../../AuthContext";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import Swal from "sweetalert2";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuth } from '../../../AuthContext';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import Swal from 'sweetalert2';
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = 'http://localhost:8080';
 
 const ModalDetalleAusentes = ({
   isOpen,
@@ -19,7 +19,7 @@ const ModalDetalleAusentes = ({
   ausentesData,
   refetchAusentesData,
   isLoadingAusentesData,
-  errorAusentesData,
+  errorAusentesData
 }) => {
   const { userId } = useAuth();
   // --- ESTADOS DE DATOS ---
@@ -27,10 +27,10 @@ const ModalDetalleAusentes = ({
 
   // --- ESTADOS DE UI ---
   const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
-  const [busqueda, setBusqueda] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState("TODOS");
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('TODOS');
   const [paginaActual, setPaginaActual] = useState(1);
-  const [nuevaObservacion, setNuevaObservacion] = useState("");
+  const [nuevaObservacion, setNuevaObservacion] = useState('');
 
   // --- ESTADOS DE CARGA Y ERROR ---
   const [loadingHistorial, setLoadingHistorial] = useState(false);
@@ -42,8 +42,8 @@ const ModalDetalleAusentes = ({
     if (!isOpen) {
       // Limpieza al cerrar
       setAlumnoSeleccionado(null);
-      setBusqueda("");
-      setFiltroEstado("TODOS");
+      setBusqueda('');
+      setFiltroEstado('TODOS');
     }
   }, [isOpen]);
 
@@ -51,6 +51,9 @@ const ModalDetalleAusentes = ({
   useEffect(() => {
     if (alumnoSeleccionado) {
       cargarHistorial(alumnoSeleccionado.id);
+    } else {
+      setAlumnoSeleccionado(null);
+      setHistorialSeleccionado([]);
     }
   }, [alumnoSeleccionado]);
 
@@ -64,8 +67,8 @@ const ModalDetalleAusentes = ({
       );
       setHistorialSeleccionado(response.data);
     } catch (err) {
-      console.error("Error cargando historial:", err);
-      alert("Error al cargar el historial del alumno.");
+      console.error('Error cargando historial:', err);
+      alert('Error al cargar el historial del alumno.');
     } finally {
       setLoadingHistorial(false);
     }
@@ -75,57 +78,55 @@ const ModalDetalleAusentes = ({
   const handleGuardarObservacion = async () => {
     if (!nuevaObservacion.trim()) {
       return Swal.fire({
-        icon: "warning",
-        title: "Campo vacío",
-        text: "Por favor, escribe una observación antes de guardar.",
-        confirmButtonColor: "#3085d6",
+        icon: 'warning',
+        title: 'Campo vacío',
+        text: 'Por favor, escribe una observación antes de guardar.',
+        confirmButtonColor: '#3085d6'
       });
     }
 
     // 1. Pregunta de confirmación
     const result = await Swal.fire({
-      title: "¿Estás seguro?",
-      text: "Se agregará esta observación al historial de contacto del alumno.",
-      icon: "question",
+      title: '¿Estás seguro?',
+      text: 'Se agregará esta observación al historial de contacto del alumno.',
+      icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: "#3b82f6", // Azul acorde a tu UI
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, guardar contacto",
-      cancelButtonText: "Cancelar",
+      confirmButtonColor: '#3b82f6', // Azul acorde a tu UI
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, guardar contacto',
+      cancelButtonText: 'Cancelar'
     });
 
     // Si el usuario confirma, procedemos con el POST
     if (result.isConfirmed) {
       try {
-        console.log(alumnoSeleccionado.racha_actual);
-
         await axios.post(`${API_BASE_URL}/pilates/historial-contactos`, {
           id_cliente: Number(alumnoSeleccionado.id),
           id_usuario: Number(userId),
           observacion: nuevaObservacion.trim().toUpperCase(),
-          contacto_realizado: String(alumnoSeleccionado.racha_actual),
+          contacto_realizado: String(alumnoSeleccionado.racha_actual)
         });
 
         // 2. Mensaje de éxito
         await Swal.fire({
-          icon: "success",
-          title: "¡Guardado!",
-          text: "La observación se ha guardado exitosamente.",
+          icon: 'success',
+          title: '¡Guardado!',
+          text: 'La observación se ha guardado exitosamente.',
           timer: 2000,
-          showConfirmButton: false,
+          showConfirmButton: false
         });
 
-        setNuevaObservacion("");
+        setNuevaObservacion('');
         await cargarHistorial(alumnoSeleccionado.id);
         refetchAusentesData();
       } catch (err) {
-        console.error("Error guardando:", err);
+        console.error('Error guardando:', err);
 
         // 3. Mensaje de error
         Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "No se pudo guardar la observación. Inténtalo de nuevo.",
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo guardar la observación. Inténtalo de nuevo.'
         });
       }
     }
@@ -138,7 +139,7 @@ const ModalDetalleAusentes = ({
       alumno.nombre?.toLowerCase().includes(texto) ||
       alumno.telefono?.toLowerCase().includes(texto);
     const coincideEstado =
-      filtroEstado === "TODOS" || alumno.estado_visual === filtroEstado;
+      filtroEstado === 'TODOS' || alumno.estado_visual === filtroEstado;
     return coincideTexto && coincideEstado;
   }); // El backend ya los devuelve ordenados (Rojos primero)
 
@@ -159,19 +160,19 @@ const ModalDetalleAusentes = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4 transition-opacity">
-      <div className="bg-white w-full max-w-[95%] h-[98vh] rounded-xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
+      <div className="bg-white w-full max-w-7xl h-[98vh] rounded-xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
         {/* HEADER */}
         <div className="bg-white px-6 py-4 border-b flex justify-between items-center shrink-0 shadow-sm z-10">
           <div>
             <h2 className="text-2xl font-bold text-gray-800 tracking-tight font-bignoodle">
               {alumnoSeleccionado
-                ? "FICHA DE SEGUIMIENTO"
-                : "AUSENTES POR CLASES"}
+                ? 'FICHA DE SEGUIMIENTO'
+                : 'AUSENTES POR CLASES'}
             </h2>
             <p className="text-sm text-gray-500">
               {alumnoSeleccionado
                 ? `Gestionando a: ${alumnoSeleccionado.nombre}`
-                : "Alumnos con 2 o más inasistencias"}
+                : 'Alumnos con 2 o más inasistencias'}
             </p>
           </div>
           <button
@@ -203,7 +204,7 @@ const ModalDetalleAusentes = ({
             </div>
           ) : errorAusentesData ? (
             <div className="flex items-center justify-center h-full text-red-600 font-medium">
-              {"Se produjo un error al cargar los datos"}
+              {'Se produjo un error al cargar los datos'}
             </div>
           ) : !alumnoSeleccionado ? (
             // =========================
@@ -223,6 +224,18 @@ const ModalDetalleAusentes = ({
                       setPaginaActual(1);
                     }}
                   />
+                  {/* <div className="flex gap-2">
+                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
+                      Todos
+                    </button>
+                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
+                      🔴 No contactados
+                    </button>
+                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
+                      🟢 Contactados
+                    </button>
+                  </div> */}
+
                   <select
                     className="block w-full sm:w-48 pl-3 pr-8 py-2 border-gray-300 rounded-lg border bg-white focus:outline-none"
                     value={filtroEstado}
@@ -232,16 +245,16 @@ const ModalDetalleAusentes = ({
                     }}
                   >
                     <option value="TODOS">Todos los Estados</option>
-                    <option value="ROJO">🔴 Pendientes</option>
-                    <option value="VERDE">🟢 Gestionados</option>
+                    <option value="ROJO">🔴 No contactados</option>
+                    <option value="VERDE">🟢 Contactados</option>
                   </select>
                 </div>
                 <div className="text-sm text-gray-500 font-medium whitespace-nowrap">
-                  Mostrando{" "}
+                  Mostrando{' '}
                   <span className="font-bold text-gray-900">
                     {alumnosPaginados.length}
-                  </span>{" "}
-                  de{" "}
+                  </span>{' '}
+                  de{' '}
                   <span className="font-bold text-gray-900">
                     {alumnosFiltrados.length}
                   </span>
@@ -276,10 +289,11 @@ const ModalDetalleAusentes = ({
                         <tr
                           key={alumno.id}
                           className={`hover:bg-opacity-80 transition duration-150 ${
-                            alumno.estado_visual === "ROJO"
-                              ? "bg-red-50"
-                              : "bg-green-50"
+                            alumno.estado_visual === 'ROJO'
+                              ? 'bg-red-50'
+                              : 'bg-green-50'
                           }`}
+                          onClick={() => setAlumnoSeleccionado(alumno)}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-col">
@@ -297,23 +311,20 @@ const ModalDetalleAusentes = ({
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
-                            {alumno.estado_visual === "ROJO" ? (
+                            {alumno.estado_visual === 'ROJO' ? (
                               <span className="inline-flex px-3 py-1 text-xs font-bold leading-5 text-red-800 bg-red-200 rounded-full border border-red-300 shadow-sm">
-                                Pendiente
+                                No contactados
                               </span>
                             ) : (
                               <span className="inline-flex px-3 py-1 text-xs font-bold leading-5 text-green-800 bg-green-200 rounded-full border border-green-300 shadow-sm">
-                                Gestionado
+                                Contactados
                               </span>
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <div className="flex flex-col items-center gap-2">
-                              {alumno.estado_visual === "ROJO" ? (
-                                <button
-                                  onClick={() => setAlumnoSeleccionado(alumno)}
-                                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide"
-                                >
+                              {alumno.estado_visual === 'ROJO' ? (
+                                <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
                                   Contactar
                                 </button>
                               ) : (
@@ -321,18 +332,13 @@ const ModalDetalleAusentes = ({
                                   <span className="text-green-700 font-bold text-xs flex items-center gap-1 mb-1 bg-white px-2 py-0.5 rounded border border-green-200">
                                     ✔ Contactado
                                   </span>
-                                  <button
-                                    onClick={() =>
-                                      setAlumnoSeleccionado(alumno)
-                                    }
-                                    className="text-[11px] text-blue-600 hover:underline font-medium"
-                                  >
+                                  <button className="text-[11px] text-blue-600 hover:underline font-medium">
                                     Ver Observación
                                   </button>
                                 </div>
                               )}
                               <span className="text-[10px] text-gray-500 mt-1">
-                                Contactos:{" "}
+                                Contactos:{' '}
                                 <strong className="text-gray-800">
                                   {alumno.total_contactos}
                                 </strong>
@@ -366,7 +372,7 @@ const ModalDetalleAusentes = ({
                     Anterior
                   </button>
                   <span className="text-sm text-gray-700">
-                    Página <span className="font-bold">{paginaActual}</span> de{" "}
+                    Página <span className="font-bold">{paginaActual}</span> de{' '}
                     <span className="font-bold">{totalPaginas}</span>
                   </span>
                   <button
@@ -432,7 +438,7 @@ const ModalDetalleAusentes = ({
                     <p className="text-sm text-orange-900 italic">
                       "
                       {alumnoSeleccionado.observaciones_cliente ||
-                        "Sin observaciones."}
+                        'Sin observaciones.'}
                       "
                     </p>
                   </div>
@@ -467,7 +473,7 @@ const ModalDetalleAusentes = ({
                                   {/* Línea modificada con date-fns */}
                                   {format(
                                     new Date(item.fecha_contacto),
-                                    "dd/MM/yyyy HH:mm",
+                                    'dd/MM/yyyy HH:mm',
                                     { locale: es }
                                   )}
                                 </span>
@@ -479,8 +485,8 @@ const ModalDetalleAusentes = ({
                               </div>
 
                               <span className="text-xs text-gray-400">
-                                Contactado por:{" "}
-                                {item.usuario?.name || "Desconocido"}{" "}
+                                Contactado por:{' '}
+                                {item.usuario?.name || 'Desconocido'}{' '}
                                 {item.usuario?.apellido}
                               </span>
                             </div>

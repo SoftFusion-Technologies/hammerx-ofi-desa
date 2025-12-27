@@ -4,26 +4,25 @@
 --Descripción: Componente principal para la gestión de clases de Pilates, incluyendo selección de sede, navegación entre secciones, y modales para detalles y ayuda.
 */
 
-import NavbarStaff from "../staff/NavbarStaff";
-import { FaSearch, FaCompressAlt, FaExpandAlt } from "react-icons/fa";
-import { VscDebugRestart } from "react-icons/vsc";
-import GrillaHorarios from "./Components/GrillaHorarios";
-import Footer from "../../components/footer/Footer";
-import StudentModal from "./Modal/ModalEstudiantes";
-import ModalProfesor from "./Modal/ModalProfesor";
-import ListaEspera from "./Components/ListaEspera";
-import PanelesSuperiores from "./Components/PanelesSuperiores";
-import { Link } from "react-router-dom";
-import { DAYS, HOURS, MAX_STUDENTS_PER_SLOT } from "./Constants/constanst";
-import PilatesGestionLogica from "./Logic/PilatesGestionLogica";
-import ModalAyudaGrillaGestion from "./Modal/ModalAyudaGrillaGestion";
-import ModalConfirmarListaEspera from "./Modal/ModalConfirmarListaEspera";
-import ModalCambioTurno from "./Modal/ModalCambioTurno";
-import HorariosDeshabilitados from "./Components/HorariosDeshabilitados";
-import { FaQuestionCircle } from "react-icons/fa";
-import SelectorSedes from "./Components/SelectorSedes";
-import { useAuth } from "../../AuthContext";
-import ModalDetalleAusentes from "./Modal/ModalDetalleAusentes";
+import NavbarStaff from '../staff/NavbarStaff';
+import { FaSearch, FaCompressAlt, FaExpandAlt } from 'react-icons/fa';
+import { VscDebugRestart } from 'react-icons/vsc';
+import GrillaHorarios from './Components/GrillaHorarios';
+import Footer from '../../components/footer/Footer';
+import StudentModal from './Modal/ModalEstudiantes';
+import ModalProfesor from './Modal/ModalProfesor';
+import ListaEspera from './Components/ListaEspera';
+import PanelesSuperiores from './Components/PanelesSuperiores';
+import { Link } from 'react-router-dom';
+import { DAYS, HOURS } from './Constants/constanst';
+import PilatesGestionLogica from './Logic/PilatesGestionLogica';
+import ModalAyudaGrillaGestion from './Modal/ModalAyudaGrillaGestion';
+import ModalConfirmarListaEspera from './Modal/ModalConfirmarListaEspera';
+import ModalCambioTurno from './Modal/ModalCambioTurno';
+import HorariosDeshabilitados from './Components/HorariosDeshabilitados';
+import { FaQuestionCircle } from 'react-icons/fa';
+import SelectorSedes from './Components/SelectorSedes';
+import ModalDetalleAusentes from './Modal/ModalDetalleAusentes';
 
 const EyeIcon = ({ className }) => (
   <svg
@@ -43,7 +42,6 @@ const EyeIcon = ({ className }) => (
 
 const PilatesGestion = () => {
   const { states, setters, functions } = PilatesGestionLogica();
-  const { sedeName: sedeActual, userLevel: rolUsuario } = useAuth(); // Obtener la sede actual del contexto de autenticación
   return (
     <>
       <NavbarStaff />
@@ -61,7 +59,7 @@ const PilatesGestion = () => {
 
           <div className="dashboardbg min-h-screen pt-10 pb-10 p-1 sm:p-6 lg:p-8">
             <div className="mx-auto px-2 sm:px-10 bg-gray-500/50 p-2 rounded-xl ">
-              {states.rol === "GESTION" && (
+              {states.rol === 'GESTION' && (
                 <div className="flex flex-col xl:flex-row items-center justify-between gap-4 my-6 w-full">
                   {/* --- BOTÓN VOLVER --- */}
                   <div className="w-full xl:w-auto">
@@ -89,17 +87,17 @@ const PilatesGestion = () => {
                   <div className="flex flex-col sm:flex-row w-full xl:w-auto bg-slate-100 p-1.5 rounded-xl gap-1">
                     {/* Opción: GESTIÓN */}
                     <button
-                      onClick={() => functions.handleSectionChange("GESTION")}
+                      onClick={() => functions.handleSectionChange('GESTION')}
                       className={`
                       flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200
                       ${
-                        states.section === "GESTION"
-                          ? "bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]" // Activo
-                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50" // Inactivo
+                        states.section === 'GESTION'
+                          ? 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]' // Activo
+                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50' // Inactivo
                       }
                     `}
                     >
-                      {states.section === "GESTION" && (
+                      {states.section === 'GESTION' && (
                         <EyeIcon className="h-4 w-4" />
                       )}
                       Gestión
@@ -108,18 +106,18 @@ const PilatesGestion = () => {
                     {/* Opción: LISTA DE ESPERA */}
                     <button
                       onClick={() =>
-                        functions.handleSectionChange("LISTA_ESPERA")
+                        functions.handleSectionChange('LISTA_ESPERA')
                       }
                       className={`
                       flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200
                       ${
-                        states.section === "LISTA_ESPERA"
-                          ? "bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]"
-                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                        states.section === 'LISTA_ESPERA'
+                          ? 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]'
+                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                       }
                     `}
                     >
-                      {states.section === "LISTA_ESPERA" && (
+                      {states.section === 'LISTA_ESPERA' && (
                         <EyeIcon className="h-4 w-4" />
                       )}
                       Lista de Espera
@@ -128,18 +126,18 @@ const PilatesGestion = () => {
                     {/* Opción: HORARIOS DESHABILITADOS */}
                     <button
                       onClick={() =>
-                        functions.handleSectionChange("HORARIOS_DESHABILITADOS")
+                        functions.handleSectionChange('HORARIOS_DESHABILITADOS')
                       }
                       className={`
                       flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200
                       ${
-                        states.section === "HORARIOS_DESHABILITADOS"
-                          ? "bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]"
-                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                        states.section === 'HORARIOS_DESHABILITADOS'
+                          ? 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]'
+                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                       }
                     `}
                     >
-                      {states.section === "HORARIOS_DESHABILITADOS" && (
+                      {states.section === 'HORARIOS_DESHABILITADOS' && (
                         <EyeIcon className="h-4 w-4" />
                       )}
                       Horarios Deshabilitados
@@ -148,7 +146,7 @@ const PilatesGestion = () => {
                 </div>
               )}
 
-              {states.rol === "GESTION" && states.section === "LISTA_ESPERA" ? (
+              {states.rol === 'GESTION' && states.section === 'LISTA_ESPERA' ? (
                 <>
                   <ListaEspera
                     waitingList={states.waitingList}
@@ -174,12 +172,12 @@ const PilatesGestion = () => {
                     />
                   )}
                 </>
-              ) : states.rol === "GESTION" &&
-                states.section === "HORARIOS_DESHABILITADOS" ? (
+              ) : states.rol === 'GESTION' &&
+                states.section === 'HORARIOS_DESHABILITADOS' ? (
                 <HorariosDeshabilitados states={states} functions={functions} />
               ) : (
                 <>
-                  {states.rol === "GESTION" && (
+                  {states.rol === 'GESTION' && (
                     <PanelesSuperiores
                       freeSlots={states.freeSlots}
                       expiredStudents={states.expiredStudents}
@@ -196,9 +194,9 @@ const PilatesGestion = () => {
 
                   <header className="mb-6">
                     <h1 className="text-4xl font-bold text-gray-50 mb-2">
-                      {states.section === "GESTION"
-                        ? "Gestión de Clases de Pilates"
-                        : "Lista de Espera - Pilates"}
+                      {states.section === 'GESTION'
+                        ? 'Gestión de Clases de Pilates'
+                        : 'Lista de Espera - Pilates'}
                     </h1>
 
                     <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -216,7 +214,7 @@ const PilatesGestion = () => {
                         />
                         <FaSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400" />
                         <button
-                          onClick={() => setters.setSearchTerm("")}
+                          onClick={() => setters.setSearchTerm('')}
                           className="absolute top-1/2 right-2 transform -translate-y-1/2 flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-md"
                         >
                           <VscDebugRestart />

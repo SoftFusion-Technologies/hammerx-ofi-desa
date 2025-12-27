@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 
 const HorariosDisponiblesModal = ({
   onClose,
   confirmar,
   horariosDisponiblesPilates = [],
-  horarioInicial = null,
+  horarioInicial = null
 }) => {
   const [selected, setSelected] = useState(horarioInicial);
 
@@ -25,10 +25,10 @@ const HorariosDisponiblesModal = ({
       <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl mx-auto flex flex-col"
         style={{
-          maxHeight: "calc(100vh - 32px)",
-          margin: "16px",
-          overflowY: "auto",
-          boxSizing: "border-box",
+          maxHeight: 'calc(100vh - 32px)',
+          margin: '16px',
+          overflowY: 'auto',
+          boxSizing: 'border-box'
         }}
       >
         <div className="p-3 sm:p-6 flex-1 flex flex-col">
@@ -52,24 +52,24 @@ const HorariosDisponiblesModal = ({
                           key={h.hhmm + h.grp}
                           className={`border rounded px-2 py-2 sm:px-3 sm:py-2 text-xs sm:text-sm flex flex-col items-center justify-center transition
                         ${
-                          selected === h.hhmm + " " + h.grp
-                            ? "!bg-orange-600 text-black font-semibold border-orange-600"
-                            : "bg-white text-gray-800 border-gray-300"
+                          selected === h.hhmm + ' ' + h.grp
+                            ? '!bg-orange-600 text-black font-semibold border-orange-600'
+                            : 'bg-white text-gray-800 border-gray-300'
                         }
                         ${
                           disabled
-                            ? "opacity-40 cursor-not-allowed"
-                            : "hover:bg-orange-50 hover:border-orange-400"
+                            ? 'opacity-40 cursor-not-allowed'
+                            : 'hover:bg-orange-50 hover:border-orange-400'
                         }
                       `}
                           disabled={disabled}
-                          onClick={() => setSelected(h.hhmm + " " + h.grp)}
+                          onClick={() => setSelected(h.hhmm + ' ' + h.grp)}
                         >
                           <span className="font-mono text-base sm:text-lg">
                             {h.hhmm}
                           </span>
                           <span className="text-[10px] sm:text-xs mt-1">
-                            Quedan: {cupoDisponible}
+                            Quedan: {cupoDisponible > 0 ? cupoDisponible : 0}
                           </span>
                         </button>
                       );
