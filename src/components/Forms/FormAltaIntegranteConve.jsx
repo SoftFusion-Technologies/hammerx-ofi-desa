@@ -19,7 +19,7 @@
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
@@ -63,6 +63,41 @@ const FormAltaIntegranteConve = ({
 
   const { id_conv } = useParams(); // Obtener el id_conv de la URL
   const { userName } = useAuth();
+  // Benjamin Orellana 26-12-2025 - INICIO
+  const [convenioMeta, setConvenioMeta] = useState(null);
+  const [loadingConve, setLoadingConve] = useState(false);
+  const [planes, setPlanes] = useState([]);
+  const [loadingPlanes, setLoadingPlanes] = useState(false);
+  const [errorPlanes, setErrorPlanes] = useState(null);
+
+  const [sedesCiudad, setSedesCiudad] = useState([]);
+  const [loadingSedesCiudad, setLoadingSedesCiudad] = useState(false);
+  const [errorSedesCiudad, setErrorSedesCiudad] = useState(null);
+
+  useEffect(() => {
+    const fetchSedesCiudad = async () => {
+      if (!isOpen) return;
+
+      try {
+        setLoadingSedesCiudad(true);
+        setErrorSedesCiudad(null);
+
+        const resp = await fetch(`http://localhost:8080/sedes/ciudad`);
+        if (!resp.ok) throw new Error(`Error sedes: ${resp.status}`);
+        const data = await resp.json();
+
+        setSedesCiudad(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error('No se pudieron cargar sedes ciudad:', e?.message);
+        setErrorSedesCiudad(e?.message || 'Error');
+        setSedesCiudad([]);
+      } finally {
+        setLoadingSedesCiudad(false);
+      }
+    };
+
+    fetchSedesCiudad();
+  }, [isOpen]);
 
   const obtenerFechaActual = () => {
     const hoy = new Date();
@@ -76,6 +111,137 @@ const FormAltaIntegranteConve = ({
     return `${año}-${mes}-${dia} ${horas}:${minutos}:${segundos}`;
   };
 
+  useEffect(() => {
+    const fetchConvenio = async () => {
+      if (!isOpen || !id_conv) return;
+
+      try {
+        setLoadingConve(true);
+        const resp = await fetch(
+          `http://localhost:8080/admconvenios/${id_conv}`
+        );
+        if (!resp.ok) throw new Error(`Error convenio: ${resp.status}`);
+        const data = await resp.json();
+        setConvenioMeta(data || null);
+      } catch (e) {
+        console.error('No se pudo cargar el convenio:', e?.message);
+        setConvenioMeta(null);
+      } finally {
+        setLoadingConve(false);
+      }
+    };
+
+    fetchConvenio();
+  }, [isOpen, id_conv]);
+
+  useEffect(() => {
+    const fetchPlanes = async () => {
+      if (!isOpen || !id_conv) return;
+
+      try {
+        setLoadingPlanes(true);
+        setErrorPlanes(null);
+
+        const resp = await fetch(
+          `http://localhost:8080/convenios-planes?convenio_id=${id_conv}`
+        );
+
+        if (!resp.ok) throw new Error(`Error planes: ${resp.status}`);
+        const data = await resp.json();
+
+        // Esperado: array
+        const rows = Array.isArray(data) ? data : data?.registros || [];
+        setPlanes(rows);
+      } catch (e) {
+        console.error('No se pudieron cargar planes:', e?.message);
+        setErrorPlanes(e?.message || 'Error');
+        setPlanes([]);
+      } finally {
+        setLoadingPlanes(false);
+      }
+    };
+
+    fetchPlanes();
+  }, [isOpen, id_conv]);
+  const permiteElegirSedeEmpresa =
+    Number(convenioMeta?.permiteElegirSedeEmpresa) === 1;
+
+  const sedeFijaConvenio = String(convenioMeta?.sede || '').trim();
+
+  // =====================================================
+  // REQ: Restringir planes por sede del convenio (si está fija)
+  // - Si el convenio es Multisede => mostrar todos
+  // - Si el convenio está fijo en Monteros/Concepción => mostrar (General/null) + planes de esa sede
+  // - Si la sede fija no mapea a una sede_id conocida => mostrar solo (General/null)
+  // =====================================================
+  const norm = (v) =>
+    String(v || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+  const isMultiSedeConvenio = useMemo(() => {
+    const s = norm(sedeFijaConvenio);
+    return s.includes('multi');
+  }, [sedeFijaConvenio]);
+
+  const sedeIdFromConvenio = useMemo(() => {
+    if (!sedeFijaConvenio) return null;
+
+    const s = norm(sedeFijaConvenio);
+
+    // Mapeo "semántico" de valores legacy del combo a nombres reales en tabla sedes
+    // Ajustá/extendé si tu convenio guarda otros códigos.
+    const aliasToNombreSede = {
+      monteros: 'monteros',
+      concepcion: 'concepcion',
+      smt: 'barrio sur',
+      sanmiguelbn: 'barrio norte',
+      'barrio sur': 'barrio sur',
+      'barrio norte': 'barrio norte'
+    };
+
+    const targetNombre = aliasToNombreSede[s] || s;
+
+    // Buscar en sedes reales (ids cambian según ambiente)
+    const match = (sedesCiudad || []).find(
+      (x) => norm(x.nombre) === norm(targetNombre)
+    );
+
+    return match ? Number(match.id) : null;
+  }, [sedeFijaConvenio, sedesCiudad]);
+
+  const planesVisibles = useMemo(() => {
+    if (!sedeFijaConvenio) return planes;
+
+    // Multisede => se ven todos
+    if (isMultiSedeConvenio) return planes;
+
+    // Mientras no cargaron sedes, por seguridad no mostramos planes por sede
+    if (!sedesCiudad || sedesCiudad.length === 0) {
+      return (planes || []).filter((p) => p?.sede_id == null);
+    }
+
+    // Sede fija conocida => General/null + sede_id matching
+    if (sedeIdFromConvenio) {
+      return (planes || []).filter(
+        (p) =>
+          p?.sede_id == null || Number(p.sede_id) === Number(sedeIdFromConvenio)
+      );
+    }
+
+    // Sede fija no mapeada => solo General/null
+    return (planes || []).filter((p) => p?.sede_id == null);
+  }, [
+    planes,
+    sedeFijaConvenio,
+    isMultiSedeConvenio,
+    sedeIdFromConvenio,
+    sedesCiudad
+  ]);
+  // Benjamin Orellana 26-12-2025 - FIN
+  
   const handleClose = () => {
     if (formikRef.current) {
       formikRef.current.resetForm();
@@ -139,35 +305,153 @@ const FormAltaIntegranteConve = ({
       }, 2700);
     }
   };
+  const normTxt = (v) =>
+    String(v || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
 
-  const ARS = new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0
-  });
+  const isMultiSedeValue = (v) => normTxt(v).includes('multi');
 
-  const toNumberAR = (v) => {
-    if (v === null || v === undefined) return 0;
-    const s = String(v).trim();
+  // Convierte valores legacy del select a nombres reales de tabla sedes
+  const mapSedeValueToNombre = (raw) => {
+    const s = normTxt(raw);
 
-    // Soporta: "25.000", "$25.000", "25000", "25,000" (lo normalizamos)
-    const normalized = s
-      .replace(/\$/g, '')
-      .replace(/\s/g, '')
-      .replace(/\./g, '')
-      .replace(/,/g, '.')
-      .replace(/[^\d.-]/g, '');
+    const alias = {
+      monteros: 'monteros',
+      concepcion: 'concepcion',
+      // según tu select actual:
+      smt: 'barrio sur',
+      sanmiguelbn: 'barrio norte',
+      'tucuman - barrio sur': 'barrio sur',
+      'tucuman - barrio norte': 'barrio norte'
+    };
 
-    const n = Number(normalized);
-    return Number.isFinite(n) ? n : 0;
+    return alias[s] || s; // si ya viene "Barrio Sur", queda ok
   };
 
-  const formatARS = (v) => ARS.format(toNumberAR(v));
+  const resolveSedeIdFromValue = (rawSede, sedesCiudad = []) => {
+    if (!rawSede) return null;
+    if (isMultiSedeValue(rawSede)) return null;
 
-  const formatPct = (v) => {
-    const n = toNumberAR(v);
-    return `${n}%`;
+    const targetNombre = mapSedeValueToNombre(rawSede);
+
+    const match = (sedesCiudad || []).find(
+      (x) => normTxt(x.nombre) === normTxt(targetNombre)
+    );
+
+    return match ? Number(match.id) : null;
   };
+
+  const getPlanesVisiblesBySede = ({
+    planes = [],
+    sedeValue,
+    sedesCiudad = []
+  }) => {
+    if (!sedeValue) return planes; // si todavía no eligió, no filtramos (o si preferís: solo generales)
+    if (isMultiSedeValue(sedeValue)) return planes;
+
+    // Si todavía no cargaron sedes, por seguridad devolvemos solo generales
+    if (!sedesCiudad || sedesCiudad.length === 0) {
+      return planes.filter((p) => p?.sede_id == null);
+    }
+
+    const sedeId = resolveSedeIdFromValue(sedeValue, sedesCiudad);
+
+    if (!sedeId) return planes.filter((p) => p?.sede_id == null);
+
+    // Recomendado: Generales + Sede elegida
+    return planes.filter(
+      (p) => p?.sede_id == null || Number(p.sede_id) === Number(sedeId)
+    );
+
+    // return planes.filter((p) => Number(p.sede_id) === Number(sedeId));
+  };
+
+  // Se comenta por que no se utiliza Benjamin Orellana 21-12-2025
+  // const formatARS = (v) => ARS.format(toNumberAR(v));
+
+  // const formatPct = (v) => {
+  //   const n = toNumberAR(v);
+  //   return `${n}%`;
+  // };
+
+  function SedeSync({
+    permiteElegirSedeEmpresa,
+    sedeFijaConvenio,
+    values,
+    setFieldValue,
+    precio,
+    descuento,
+    preciofinal,
+    precio_concep,
+    descuento_concep,
+    preciofinal_concep
+  }) {
+    useEffect(() => {
+      if (permiteElegirSedeEmpresa) return;
+      if (!sedeFijaConvenio) return;
+
+      // Setear sede si viene vacía
+      if (!values.sede) {
+        setFieldValue('sede', sedeFijaConvenio);
+      }
+
+      // Aplicar precios según sede fija
+      const s = values.sede || sedeFijaConvenio;
+
+      if (s === 'Monteros') {
+        setFieldValue('precio', precio);
+        setFieldValue('descuento', descuento);
+        setFieldValue('preciofinal', preciofinal);
+      } else if (s === 'Concepción') {
+        setFieldValue('precio', precio_concep);
+        setFieldValue('descuento', descuento_concep);
+        setFieldValue('preciofinal', preciofinal_concep);
+      }
+    }, [permiteElegirSedeEmpresa, sedeFijaConvenio]);
+
+    return null;
+  }
+
+  function PlanSedeRestrictSync({
+    sedeFijaConvenio,
+    isMultiSedeConvenio,
+    sedeIdFromConvenio,
+    planes,
+    values,
+    setFieldValue
+  }) {
+    useEffect(() => {
+      if (!sedeFijaConvenio) return;
+      if (isMultiSedeConvenio) return;
+      if (!values.convenio_plan_id) return;
+
+      const plan = (planes || []).find(
+        (p) => String(p.id) === String(values.convenio_plan_id)
+      );
+      if (!plan) return;
+
+      const ok =
+        plan.sede_id == null ||
+        (sedeIdFromConvenio &&
+          Number(plan.sede_id) === Number(sedeIdFromConvenio));
+
+      if (!ok) {
+        // Limpiamos selección incompatible
+        setFieldValue('convenio_plan_id', '');
+        setFieldValue('fecha_vencimiento', '');
+      }
+    }, [
+      sedeFijaConvenio,
+      isMultiSedeConvenio,
+      sedeIdFromConvenio,
+      values.convenio_plan_id
+    ]);
+
+    return null;
+  }
 
   return (
     <div
@@ -241,7 +525,13 @@ const FormAltaIntegranteConve = ({
               descuento: integrante ? integrante.descuento : descuento,
               preciofinal: integrante ? integrante.preciofinal : preciofinal,
               userName: userName || '',
-              fechaCreacion: obtenerFechaActual()
+              fechaCreacion: obtenerFechaActual(),
+              convenio_plan_id: integrante
+                ? integrante.convenio_plan_id ?? ''
+                : '',
+              fecha_vencimiento: integrante
+                ? integrante.fecha_vencimiento ?? ''
+                : ''
             }}
             enableReinitialize
             validationSchema={nuevoIntegranteSchema}
@@ -275,10 +565,67 @@ const FormAltaIntegranteConve = ({
               const formatARS = (v) => ARS.format(toNumberAR(v));
               const formatPct = (v) => `${toNumberAR(v)}%`;
 
+              // Sede contexto para filtrar planes:
+              // - si el convenio permite elegir => usamos values.sede
+              // - si está bloqueado => usamos sedeFijaConvenio
+              const sedeContextoPlanes = permiteElegirSedeEmpresa
+                ? values.sede
+                : sedeFijaConvenio;
+
+              const sedeIdContextoPlanes = resolveSedeIdFromValue(
+                sedeContextoPlanes,
+                sedesCiudad
+              );
+
+              const multiContextoPlanes = isMultiSedeValue(sedeContextoPlanes);
+
+              const planesVisibles = getPlanesVisiblesBySede({
+                planes,
+                sedeValue: sedeContextoPlanes,
+                sedesCiudad
+              });
+
               const precioBase = toNumberAR(values.precio);
               const totalFinal = toNumberAR(values.preciofinal);
               const descuentoPct = toNumberAR(values.descuento);
               const ahorro = Math.max(0, precioBase - totalFinal);
+
+              const formatDateAR = (value) => {
+                if (!value) return '';
+
+                // Caso 1: viene como ISO (ej: 2026-01-20T03:00:00.000Z)
+                if (String(value).includes('T')) {
+                  const d = new Date(value);
+                  if (Number.isNaN(d.getTime())) return String(value);
+                  return new Intl.DateTimeFormat('es-AR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  }).format(d);
+                }
+
+                // Caso 2: viene como "YYYY-MM-DD HH:mm:ss"
+                const s = String(value).trim();
+                const [datePart, timePart = '00:00:00'] = s.split(' ');
+                const [y, m, d] = datePart.split('-').map((n) => Number(n));
+                const [hh, mm, ss] = timePart.split(':').map((n) => Number(n));
+
+                const dt = new Date(
+                  y,
+                  (m || 1) - 1,
+                  d || 1,
+                  hh || 0,
+                  mm || 0,
+                  ss || 0
+                );
+                if (Number.isNaN(dt.getTime())) return String(value);
+
+                return new Intl.DateTimeFormat('es-AR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric'
+                }).format(dt);
+              };
 
               return (
                 <Form className="flex flex-col max-h-[80vh]">
@@ -340,7 +687,7 @@ const FormAltaIntegranteConve = ({
                             )}
                           </div>
 
-                          <div className="space-y-1">
+                          <div className="space-y-1 mt-2">
                             <div className="flex items-center justify-between">
                               <label
                                 htmlFor="telefono"
@@ -399,6 +746,19 @@ const FormAltaIntegranteConve = ({
 
                       <div className="space-y-3">
                         {/* Sede */}
+                        <SedeSync
+                          permiteElegirSedeEmpresa={permiteElegirSedeEmpresa}
+                          sedeFijaConvenio={sedeFijaConvenio}
+                          values={values}
+                          setFieldValue={setFieldValue}
+                          precio={precio}
+                          descuento={descuento}
+                          preciofinal={preciofinal}
+                          precio_concep={precio_concep}
+                          descuento_concep={descuento_concep}
+                          preciofinal_concep={preciofinal_concep}
+                        />
+
                         <div className="space-y-1">
                           <label
                             htmlFor="sede"
@@ -407,57 +767,236 @@ const FormAltaIntegranteConve = ({
                             Sede <span className="text-orange-600">*</span>
                           </label>
 
+                          {permiteElegirSedeEmpresa ? (
+                            <>
+                              <Field
+                                as="select"
+                                id="sede"
+                                name="sede"
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
+                                onChange={(e) => {
+                                  const selectedSede = e.target.value;
+                                  const prevSede = values.sede;
+
+                                  setFieldValue('sede', selectedSede);
+
+                                  // Si cambió sede, invalidamos plan/vencimiento (para evitar plan de otra sede)
+                                  if (prevSede && prevSede !== selectedSede) {
+                                    setFieldValue('convenio_plan_id', '');
+                                    setFieldValue('fecha_vencimiento', '');
+                                  }
+                                  if (selectedSede === 'Monteros') {
+                                    setFieldValue('precio', toNumberAR(precio));
+                                    setFieldValue(
+                                      'descuento',
+                                      toNumberAR(descuento)
+                                    );
+                                    setFieldValue(
+                                      'preciofinal',
+                                      toNumberAR(preciofinal)
+                                    );
+                                  } else if (selectedSede === 'Concepción') {
+                                    setFieldValue(
+                                      'precio',
+                                      toNumberAR(precio_concep)
+                                    );
+                                    setFieldValue(
+                                      'descuento',
+                                      toNumberAR(descuento_concep)
+                                    );
+                                    setFieldValue(
+                                      'preciofinal',
+                                      toNumberAR(preciofinal_concep)
+                                    );
+                                  }
+                                }}
+                              >
+                                <option value="" disabled>
+                                  Seleccionar sede…
+                                </option>
+                                <option value="Multisede">MULTI SEDE</option>
+                                <option value="Monteros">MONTEROS</option>
+                                <option value="Concepción">CONCEPCIÓN</option>
+                                <option value="SMT">
+                                  TUCUMÁN - BARRIO SUR
+                                </option>
+                                <option value="SanMiguelBN">
+                                  TUCUMÁN - BARRIO NORTE
+                                </option>
+                              </Field>
+
+                              {errors.sede && touched.sede && (
+                                <Alerta>{errors.sede}</Alerta>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {/* Sede bloqueada: no se elige */}
+                              <div className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-900">
+                                {sedeFijaConvenio ||
+                                  'Sede definida por el convenio'}
+                              </div>
+                              {/* Mantener el valor en el payload */}
+                              <Field type="hidden" id="sede" name="sede" />
+                              <p className="text-[11px] text-slate-500">
+                                La sede está bloqueada por configuración del
+                                convenio.
+                              </p>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Plan del convenio */}
+                        <div className="space-y-1">
+                          <label
+                            htmlFor="convenio_plan_id"
+                            className="text-xs font-medium text-slate-800"
+                          >
+                            Plan del convenio
+                          </label>
+
+                          <PlanSedeRestrictSync
+                            sedeFijaConvenio={sedeContextoPlanes}
+                            isMultiSedeConvenio={multiContextoPlanes}
+                            sedeIdFromConvenio={sedeIdContextoPlanes}
+                            planes={planes}
+                            values={values}
+                            setFieldValue={setFieldValue}
+                          />
+
                           <Field
                             as="select"
-                            id="sede"
-                            name="sede"
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40"
+                            id="convenio_plan_id"
+                            name="convenio_plan_id"
+                            disabled={loadingPlanes}
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 shadow-inner shadow-slate-100 outline-none transition-all duration-150 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-400/40 disabled:opacity-70"
                             onChange={(e) => {
-                              const selectedSede = e.target.value;
-                              setFieldValue('sede', selectedSede);
+                              const planId = e.target.value;
+                              setFieldValue('convenio_plan_id', planId);
 
-                              // Normalizamos a número para evitar arrastrar formatos raros
-                              if (selectedSede === 'Monteros') {
-                                setFieldValue('precio', toNumberAR(precio));
-                                setFieldValue(
-                                  'descuento',
-                                  toNumberAR(descuento)
-                                );
-                                setFieldValue(
-                                  'preciofinal',
-                                  toNumberAR(preciofinal)
-                                );
-                              } else if (selectedSede === 'Concepción') {
-                                setFieldValue(
-                                  'precio',
-                                  toNumberAR(precio_concep)
-                                );
-                                setFieldValue(
-                                  'descuento',
-                                  toNumberAR(descuento_concep)
-                                );
-                                setFieldValue(
-                                  'preciofinal',
-                                  toNumberAR(preciofinal_concep)
-                                );
+                              // Si selecciona "sin plan", limpiamos vencimiento (backend también lo hará)
+                              if (!planId) {
+                                setFieldValue('fecha_vencimiento', '');
+                                return;
                               }
+
+                              // Opcional: preview de vencimiento en UI (no persistimos como regla final)
+                              const plan = planes.find(
+                                (p) => String(p.id) === String(planId)
+                              );
+                              const dur = Number(plan?.duracion_dias || 0);
+
+                              if (dur > 0) {
+                                const base = values.fechaCreacion
+                                  ? new Date(values.fechaCreacion)
+                                  : new Date();
+                                const vto = new Date(base.getTime());
+                                vto.setDate(vto.getDate() + dur);
+
+                                // guardamos string ISO-like para mostrar; backend será el source of truth
+                                const yyyy = vto.getFullYear();
+                                const mm = String(vto.getMonth() + 1).padStart(
+                                  2,
+                                  '0'
+                                );
+                                const dd = String(vto.getDate()).padStart(
+                                  2,
+                                  '0'
+                                );
+                                setFieldValue(
+                                  'fecha_vencimiento',
+                                  `${yyyy}-${mm}-${dd} 00:00:00`
+                                );
+                              } else {
+                                setFieldValue('fecha_vencimiento', '');
+                              }
+
+                              // También podemos "sync" precios con el plan si querés (lo hago en el próximo paso)
                             }}
                           >
-                            <option value="" disabled>
-                              Seleccionar sede…
+                            <option value="">
+                              {loadingPlanes
+                                ? 'Cargando planes…'
+                                : 'Sin plan / No asignar'}
                             </option>
-                            <option value="Multisede">MULTI SEDE</option>
-                            <option value="Monteros">MONTEROS</option>
-                            <option value="Concepción">CONCEPCIÓN</option>
-                            <option value="SMT">TUCUMÁN - BARRIO SUR</option>
-                            <option value="SanMiguelBN">
-                              TUCUMÁN - BARRIO NORTE
-                            </option>
+
+                            {planesVisibles.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.nombre_plan}
+                                {p.duracion_dias
+                                  ? ` · ${p.duracion_dias} días`
+                                  : ''}
+                                {p.precio_final
+                                  ? ` · $${Number(
+                                      p.precio_final
+                                    ).toLocaleString('es-AR')}`
+                                  : ''}
+                              </option>
+                            ))}
                           </Field>
 
-                          {errors.sede && touched.sede && (
-                            <Alerta>{errors.sede}</Alerta>
+                          {errorPlanes && (
+                            <p className="text-[11px] text-red-600">
+                              No se pudieron cargar los planes ({errorPlanes})
+                            </p>
                           )}
+
+                          {/* Vista rápida del plan seleccionado */}
+                          {values.convenio_plan_id &&
+                            (() => {
+                              const plan = planes.find(
+                                (p) =>
+                                  String(p.id) ===
+                                  String(values.convenio_plan_id)
+                              );
+                              if (!plan) return null;
+
+                              const precioLista = Number(
+                                plan.precio_lista || 0
+                              );
+                              const desc = Number(plan.descuento_valor || 0);
+                              const final =
+                                plan.precio_final !== null &&
+                                plan.precio_final !== undefined
+                                  ? Number(plan.precio_final)
+                                  : Math.max(
+                                      0,
+                                      precioLista - (precioLista * desc) / 100
+                                    );
+
+                              return (
+                                <div className="mt-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-600">
+                                  <div className="flex flex-wrap gap-2">
+                                    <span className="font-semibold text-slate-900">
+                                      {plan.nombre_plan}
+                                    </span>
+                                    {plan.duracion_dias ? (
+                                      <span className="rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5">
+                                        {plan.duracion_dias} días
+                                      </span>
+                                    ) : null}
+                                    <span className="rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5">
+                                      Lista: {formatARS(precioLista)}
+                                    </span>
+                                    <span className="rounded-full bg-orange-50 border border-orange-100 px-2 py-0.5 text-orange-700">
+                                      Desc: {Number(desc)}%
+                                    </span>
+                                    <span className="rounded-full bg-emerald-50 border border-emerald-100 px-2 py-0.5 text-emerald-700">
+                                      Final: {formatARS(final)}
+                                    </span>
+                                  </div>
+
+                                  {values.fecha_vencimiento ? (
+                                    <div className="mt-1 text-slate-500">
+                                      Vencimiento estimado:{' '}
+                                      <span className="font-medium text-slate-800">
+                                        {formatDateAR(values.fecha_vencimiento)}
+                                      </span>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              );
+                            })()}
                         </div>
 
                         {/* Resumen pro (ARS + ahorro) */}
@@ -517,7 +1056,7 @@ const FormAltaIntegranteConve = ({
 
                       <button
                         type="submit"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || loadingConve}
                         className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 via-orange-500 to-orange-400 px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-[0_8px_18px_rgba(249,115,22,0.35)] hover:shadow-[0_10px_22px_rgba(249,115,22,0.45)] hover:-translate-y-[1px] transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50"
                       >
                         {isSubmitting

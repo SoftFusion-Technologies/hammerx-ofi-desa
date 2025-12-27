@@ -14,6 +14,10 @@ import ModalTareasDiarias from './ModalTareasDiarias';
 import { motion } from 'framer-motion';
 import CardRecaptacion from './Components/CardRecaptacion';
 import BadgeAgendaVentas from './MetodsGet/Details/BadgeAgendaVentas';
+// Benjamin Orellana 22-12-2025 se adiciona badge de agenda convenios
+import BadgeAgendaConvenios from './MetodsGet/Details/BadgeAgendaConvenios';
+import ConveniosAccionesInboxModal from './MetodsGet/Details/ConveniosAccionesInboxModal';
+
 import {
   MessageCircle,
   Megaphone,
@@ -107,6 +111,16 @@ const AdminPage = () => {
 
   const URL = 'http://localhost:8080/ask/';
   const URL_TAREAS = 'http://localhost:8080/tareasdiarias';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+  const [modalConveniosInboxOpen, setModalConveniosInboxOpen] = useState(false);
+  const [conveniosPendientes, setConveniosPendientes] = useState([]);
+  const [conveniosPendientesLoading, setConveniosPendientesLoading] =
+    useState(false);
+
+  const [tareasLoaded, setTareasLoaded] = useState(false);
+  const [autoOpenedConveniosInbox, setAutoOpenedConveniosInbox] =
+    useState(false);
 
   const { userId, userLevel, userName, nomyape } = useAuth();
   const navigate = useNavigate();
@@ -223,6 +237,7 @@ const AdminPage = () => {
       try {
         const response = await axios.get(`${URL_TAREAS}?userId=${userId}`);
         setTareasDiarias(response.data);
+
         if (response.data.length > 0) {
           setTimeout(() => {
             setModalTareasOpen(true);
@@ -230,6 +245,8 @@ const AdminPage = () => {
         }
       } catch (error) {
         console.error('Error al obtener tareas diarias:', error);
+      } finally {
+        setTareasLoaded(true);
       }
     };
 
@@ -237,6 +254,99 @@ const AdminPage = () => {
       fetchTareasDiarias();
     }
   }, [userId]);
+
+  const loadConveniosPendientes = async () => {
+    setConveniosPendientesLoading(true);
+    try {
+      const qs = new URLSearchParams();
+      qs.set('leido', '0');
+      qs.set('limit', '200');
+      qs.set('offset', '0');
+
+      const { data } = await axios.get(
+        `${API_URL}/convenios-mes-acciones?${qs.toString()}`
+      );
+
+      const regs = Array.isArray(data?.registros)
+        ? data.registros
+        : Array.isArray(data)
+        ? data
+        : [];
+      setConveniosPendientes(regs);
+    } catch (e) {
+      console.error('Error loadConveniosPendientes:', e);
+      setConveniosPendientes([]);
+    } finally {
+      setConveniosPendientesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!userId) return;
+    loadConveniosPendientes();
+
+    const onUpdate = () => loadConveniosPendientes();
+    window.addEventListener('convenios-mes-acciones-updated', onUpdate);
+
+    const id = setInterval(loadConveniosPendientes, 60_000);
+
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('convenios-mes-acciones-updated', onUpdate);
+    };
+  }, [userId, userLevel]);
+
+  useEffect(() => {
+    if (autoOpenedConveniosInbox) return;
+    if (!tareasLoaded) return;
+
+    // Si hay tareas abiertas, esperamos a que se cierre.
+    if (modalTareasOpen) return;
+
+    if (conveniosPendientes.length > 0) {
+      setAutoOpenedConveniosInbox(true);
+      setTimeout(() => setModalConveniosInboxOpen(true), 650);
+    }
+  }, [
+    isAdmin,
+    tareasLoaded,
+    modalTareasOpen,
+    conveniosPendientes.length,
+    autoOpenedConveniosInbox
+  ]);
+
+  const marcarAccionLeida = async (item) => {
+    try {
+      await axios.patch(`${API_URL}/convenios-mes-acciones/${item.id}/leido`, {
+        user_id: userId,
+        user_name: nomyape
+      });
+      setConveniosPendientes((prev) => prev.filter((x) => x.id !== item.id));
+      window.dispatchEvent(new Event('convenios-mes-acciones-updated'));
+    } catch (e) {
+      console.error('marcarAccionLeida error:', e);
+    }
+  };
+
+  const marcarTodasLeidas = async () => {
+    if (!conveniosPendientes.length) return;
+
+    try {
+      await Promise.all(
+        conveniosPendientes.map((it) =>
+          axios.patch(`${API_URL}/convenios-mes-acciones/${it.id}/leido`, {
+            user_id: userId,
+            user_name: nomyape
+          })
+        )
+      );
+
+      setConveniosPendientes([]);
+      window.dispatchEvent(new Event('convenios-mes-acciones-updated'));
+    } catch (e) {
+      console.error('marcarTodasLeidas error:', e);
+    }
+  };
 
   return (
     <>
@@ -246,7 +356,6 @@ const AdminPage = () => {
       <section className="relative w-full min-h-[calc(100vh-80px)]">
         <div className="dashboardbg min-h-[calc(100vh-80px)]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-14">
-            
             {/* ENCABEZADO */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
               <div>
@@ -291,6 +400,23 @@ const AdminPage = () => {
                     {nivelLabel}
                   </p>
                 </div>
+                {isAdmin ||
+                  (isVendedor && conveniosPendientes.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setModalConveniosInboxOpen(true)}
+                      className="relative rounded-2xl border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-md
+               hover:bg-white/15 transition text-left"
+                      title="Ver pendientes de convenios"
+                    >
+                      <p className="text-[11px] uppercase tracking-wide text-slate-200/70">
+                        Pendientes Convenios
+                      </p>
+                      <p className="text-sm font-semibold text-white">
+                        {conveniosPendientes.length}
+                      </p>
+                    </button>
+                  ))}
               </motion.div>
             </div>
 
@@ -344,6 +470,13 @@ const AdminPage = () => {
                           to="/dashboard/admconvenios"
                           icon={FileText}
                           delay={0.12}
+                          badgeSlot={
+                            <BadgeAgendaConvenios
+                              userId={userId}
+                              userLevel={userLevel}
+                              size="sm"
+                            />
+                          }
                         />
                       )}
 
@@ -524,6 +657,20 @@ const AdminPage = () => {
         isOpen={modalDetalleOpen}
         onClose={cerrarModalDetalle}
         pregunta={preguntaSeleccionada}
+      />
+      <ConveniosAccionesInboxModal
+        isOpen={modalConveniosInboxOpen}
+        onClose={() => setModalConveniosInboxOpen(false)}
+        items={conveniosPendientes}
+        loading={conveniosPendientesLoading}
+        onMarkRead={marcarAccionLeida}
+        onMarkAllRead={marcarTodasLeidas}
+        onGoConvenios={() => {
+          setModalConveniosInboxOpen(false);
+          navigate('/dashboard/admconvenios');
+        }}
+        userId={userId}
+        nomyape={nomyape}
       />
     </>
   );

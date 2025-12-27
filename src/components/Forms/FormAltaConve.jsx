@@ -26,6 +26,8 @@ import '../../styles/Forms/FormAltaConve.css';
 import SelectSede from '../../components/SelectSede';
 import SelectSedes from '../../pages/staff/Components/SelectSedes';
 import { motion, AnimatePresence } from 'framer-motion'; // necesitas framer-motion
+// Benjamin Orellana - 22-12-2026 - Importar modal de planes a convenios
+import ConvenioPlanesModal from '../../pages/staff/Components/ConvenioPlanesModal';
 
 const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
   // const [conve, setConve] = useState([]);
@@ -41,6 +43,12 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
   // const textoModal = 'Conve creado correctamente.'; se elimina el texto
   // nuevo estado para gestionar dinámicamente según el método (PUT o POST)
   const [textoModal, setTextoModal] = useState('');
+
+  //BENJAMIN ORELLANA - 22-12-2026 - Para gestionar planes a convenios INI */
+  const [planesOpen, setPlanesOpen] = useState(false);
+  const [planesConvenioId, setPlanesConvenioId] = useState(null);
+  const [planesConvenioTitulo, setPlanesConvenioTitulo] = useState('');
+  //BENJAMIN ORELLANA - 22-12-2026 - Para gestionar planes a convenios FIN */
 
   // nueva variable para administrar el contenido de formulario para saber cuando limpiarlo
   const formikRef = useRef(null);
@@ -64,7 +72,9 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
       } else {
         const transformedValues = {
           ...valores,
-          permiteFam: valores.permiteFam ? 1 : 0
+          permiteFam: valores.permiteFam ? 1 : 0,
+          //BENJAMIN ORELLANA - 22-12-2026 - Se adiciona bandera para saber si el convenio puede seleccionar sede */
+          permiteElegirSedeEmpresa: valores.permiteElegirSedeEmpresa ? 1 : 0
         };
 
         //
@@ -98,6 +108,22 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
         // Convertimos la respuesta a JSON
         const data = await respuesta.json();
         console.log('Registro insertado correctamente:', data);
+
+
+        // Intentar obtener el ID del convenio desde la respuesta.Benjamin Orellana 22-12-2025
+        const createdId =
+          data?.id ||
+          data?.registro?.id ||
+          data?.registroActualizado?.id ||
+          data?.convenio?.id ||
+          null;
+
+        if (!conve2 && createdId) {
+          // POST: abrir modal de planes para el nuevo convenio
+          setPlanesConvenioId(createdId);
+          setPlanesConvenioTitulo(transformedValues?.nameConve || '');
+          setPlanesOpen(true);
+        }
 
         // Mostrar la ventana modal de éxito
         setShowModal(true);
@@ -174,9 +200,19 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
               precio: conve2 ? conve2.precio : '',
               descuento: conve2 ? conve2.descuento : '',
               preciofinal: conve2 ? conve2.preciofinal : '',
-              permiteFam: conve2 ? conve2.permiteFam : false,
-              cantFamiliares: conve2 ? conve2.cantFamiliares : 0,
+              permiteFam: conve2 ? Number(conve2.permiteFam) === 1 : false,
+
+              cantFamiliares: conve2
+                ? Number(conve2.permiteFam) === 1
+                  ? Number(conve2.cantFamiliares) > 0
+                    ? Number(conve2.cantFamiliares)
+                    : 1
+                  : 0
+                : 0,
               sede: conve2 ? conve2.sede : '',
+              permiteElegirSedeEmpresa: conve2
+                ? conve2.permiteElegirSedeEmpresa
+                : 0,
               agrupador: conve2 ? conve2.agrupador : '',
               desc_usu: conve2 ? conve2.desc_usu : '',
               permiteFec: conve2 ? conve2.permiteFec : 0,
@@ -376,7 +412,8 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                                   setFieldValue('descConve', content);
                                   setDescConveCount(content.length);
                                 }}
-                                placeholder="Qué incluye el convenio, reglas internas, etc."
+                                // placeholder innecesario - quitado por Benjamin Orellana 21/12/2025
+                                // placeholder="Qué incluye el convenio, reglas internas, etc."
                                 className="custom-quill-editor"
                               />
                             </div>
@@ -402,7 +439,8 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                                   setFieldValue('desc_usu', content);
                                   setDescUsuCount(content.length);
                                 }}
-                                placeholder="Texto que verá el usuario final."
+                                // placeholder innecesario - quitado por Benjamin Orellana 21/12/2025
+                                // placeholder="Texto que verá el usuario final."
                                 className="custom-quill-editor"
                               />
                             </div>
@@ -430,20 +468,77 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                           touched={touched}
                         />
 
+                        <div className="mt-4">
+                          <div className="text-sm font-medium text-slate-700 mb-2">
+                            Permitir que la empresa elija sede
+                          </div>
+
+                          <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFieldValue('permiteElegirSedeEmpresa', 1)
+                              }
+                              className={`px-4 py-2 rounded-lg text-sm font-semibold transition
+        ${
+          Number(values.permiteElegirSedeEmpresa) === 1
+            ? 'bg-white shadow-sm text-slate-900'
+            : 'text-slate-600'
+        }
+      `}
+                            >
+                              Permitir
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFieldValue('permiteElegirSedeEmpresa', 0)
+                              }
+                              className={`px-4 py-2 rounded-lg text-sm font-semibold transition
+        ${
+          Number(values.permiteElegirSedeEmpresa) === 0
+            ? 'bg-white shadow-sm text-slate-900'
+            : 'text-slate-600'
+        }
+      `}
+                            >
+                              Bloquear
+                            </button>
+                          </div>
+
+                          <p className="mt-2 text-xs text-slate-500">
+                            Si está en “Bloquear”, la empresa no podrá
+                            seleccionar sede al cargar integrantes (queda
+                            definida por configuración).
+                          </p>
+                        </div>
+
                         <div className="mt-4 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
                           {/* Switch (si querés mantener checkbox, al menos estilizarlo) */}
                           <button
                             type="button"
-                            onClick={() =>
-                              setFieldValue('permiteFam', !values.permiteFam)
-                            }
+                            onClick={() => {
+                              const next = !values.permiteFam;
+                              setFieldValue('permiteFam', next);
+
+                              // Si se activa y viene 0 / vacío / null, seteamos 1 para que no quede “0”
+                              if (next) {
+                                const cf = Number(values.cantFamiliares);
+                                if (!cf || cf < 1)
+                                  setFieldValue('cantFamiliares', 1);
+                              } else {
+                                // Si se desactiva, lo dejamos en 0 (o '' si preferís)
+                                setFieldValue('cantFamiliares', 0);
+                              }
+                            }}
                             className={`w-full md:w-auto rounded-xl border px-4 py-3 text-sm font-semibold transition
-              ${
-                values.permiteFam
-                  ? 'border-orange-300 bg-orange-50 text-orange-700'
-                  : 'border-slate-200 bg-slate-50 text-slate-700'
-              }
-            `}
+    ${
+      values.permiteFam
+        ? 'border-orange-300 bg-orange-50 text-orange-700'
+        : 'border-slate-200 bg-slate-50 text-slate-700'
+    }
+  `}
                           >
                             {values.permiteFam
                               ? 'Permite familiar: Sí'
@@ -532,6 +627,20 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                         >
                           Limpiar
                         </button>
+                        {conve2?.id && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPlanesConvenioId(conve2.id);
+                              setPlanesConvenioTitulo(conve2.nameConve || '');
+                              setPlanesOpen(true);
+                            }}
+                            className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-700 hover:bg-orange-100 transition"
+                          >
+                            Gestionar planes
+                          </button>
+                        )}
+
                         <button
                           type="submit"
                           disabled={isSubmitting}
@@ -559,6 +668,12 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
         <ModalError
           isVisible={errorModal}
           onClose={() => setErrorModal(false)}
+        />
+        <ConvenioPlanesModal
+          open={planesOpen}
+          onClose={() => setPlanesOpen(false)}
+          convenioId={planesConvenioId}
+          convenioTitulo={planesConvenioTitulo}
         />
       </div>
     </div>

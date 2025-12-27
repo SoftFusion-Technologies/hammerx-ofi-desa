@@ -14,7 +14,7 @@ const ModalSuccess = ({ isVisible, onClose, textoModal }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-100/70 backdrop-blur-[2px] px-4"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-100/40 px-4"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"

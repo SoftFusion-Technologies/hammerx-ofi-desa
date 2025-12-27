@@ -1,223 +1,368 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import axios from 'axios';
-import '../../../styles/imagesUpload.css';
 import { useAuth } from '../../../AuthContext';
-import FechasConvenios from './Novedad/FechasConvenios';
 
-const InvoicesUpload = ({ convenioId, selectedMonth, setSelectedMonth }) => {
-  const [file, setFile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+// Helpers
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const MAX_MB = 30;
 
+const monthLabelAR = (d) =>
+  new Intl.DateTimeFormat('es-AR', { month: 'long', year: 'numeric' }).format(
+    d
+  );
 
-  const [imagess, setImagess] = useState([]); // Estado para almacenar imágenes del convenioId
-  const [imagesFac, setImagesFac] = useState([]); // Todas las imágenes
+const toMonthStartMysql = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}-01 00:00:00`;
+};
 
+const parseMysqlDate = (v) => {
+  if (!v) return null;
+  if (v instanceof Date) return v;
+  const s = String(v);
+  const isoLike = s.includes(' ') ? s.replace(' ', 'T') : s;
+  const d = new Date(isoLike);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+const isSameYearMonth = (a, b) =>
+  a &&
+  b &&
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth();
+
+export default function InvoicesUpload({
+  convenioId,
+  selectedMonth,
+  setSelectedMonth,
+  monthCursor,
+  monthStart
+}) {
   const { userLevel } = useAuth();
 
-  const URL = 'http://localhost:8080/facget/';
+  // Solo admin puede subir facturas
+  const canManage =
+     userLevel === 'admin' || userLevel === 'administrador';
 
-  useEffect(() => {
-    // utilizamos get para obtenerPersonas los datos contenidos en la url
-    axios.get(URL).then((res) => {
-      setImagesFac(res.data);
-      obtenerImages();
-    });
-  }, []);
+  const fileInputRef = useRef(null);
 
-  // Función para obtener todos los personClass desde la API
-  const obtenerImages = async () => {
-    try {
-      const response = await axios.get(URL);
-      setImagesFac(response.data);
-    } catch (error) {
-      console.log('Error al obtener las imagenes :', error);
+  const [items, setItems] = useState([]);
+  const [file, setFile] = useState(null);
+
+  const [loadingList, setLoadingList] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState('');
+
+  const targetDate = useMemo(() => {
+    if (monthCursor instanceof Date && !Number.isNaN(monthCursor.getTime())) {
+      return new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1);
     }
-  };
-  useEffect(() => {
-    // Fetch images for the given convenioId when the component mounts
-    const fetchImages = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:8080/imagesfac/${convenioId}`
-        );
-        setImagess(response.data.images || []);
-      } catch (err) {
-        console.error(err);
-        setError('Error al cargar las imágenes.');
-      }
-    };
+    if (typeof monthStart === 'string' && monthStart.trim()) {
+      const d = parseMysqlDate(monthStart);
+      if (d) return new Date(d.getFullYear(), d.getMonth(), 1);
+    }
+    if (
+      typeof selectedMonth === 'number' &&
+      selectedMonth >= 0 &&
+      selectedMonth <= 11
+    ) {
+      const y = new Date().getFullYear();
+      return new Date(y, selectedMonth, 1);
+    }
+    return new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  }, [monthCursor, monthStart, selectedMonth]);
 
-    fetchImages();
+  const targetMonthStartMysql = useMemo(
+    () => toMonthStartMysql(targetDate),
+    [targetDate]
+  );
+
+  // Sync opcional con selectedMonth (compat)
+  useEffect(() => {
+    if (typeof setSelectedMonth === 'function') {
+      const m = targetDate.getMonth();
+      if (typeof selectedMonth === 'number' && selectedMonth !== m)
+        setSelectedMonth(m);
+    }
+  }, [targetDate]);
+
+  const fetchList = useCallback(async () => {
+    if (!convenioId) return;
+    setErr('');
+    setLoadingList(true);
+    try {
+      const { data } = await axios.get(`${API_BASE}/imagesfac/${convenioId}`);
+      const list = Array.isArray(data?.images) ? data.images : [];
+      setItems(list);
+    } catch (e) {
+      console.error(e);
+      setErr('No se pudieron cargar las facturas.');
+      setItems([]);
+    } finally {
+      setLoadingList(false);
+    }
   }, [convenioId]);
 
-  // Filtrar imágenes basadas en el mes seleccionado
-  const filteredImages = imagesFac.filter((image) => {
-    if (!selectedMonth) return true;
-    const imageMonth = new Date(image.created_at).getMonth();
-    return imageMonth === parseInt(selectedMonth, 10);
-  });
+  useEffect(() => {
+    fetchList();
+  }, [fetchList]);
 
-  // Definir el año y el día:
-  const year = new Date().getFullYear(); // El año actual
-  const day = 1; // Primer día del mes
+  const filtered = useMemo(() => {
+    return (items || []).filter((it) => {
+      const d = parseMysqlDate(it.created_at || it.fecha || it.createdAt);
+      return isSameYearMonth(d, targetDate);
+    });
+  }, [items, targetDate]);
 
-  // Crear una fecha con el formato: YYYY-MM-DD HH:MM:SS
-  const fechaCompleta = new Date(year, selectedMonth, day, 0, 0, 0);
-
-  // Convertir la fecha a una cadena en el formato que MySQL acepta: YYYY-MM-DD HH:MM:SS
-  const fechaFormateada = fechaCompleta
-    .toISOString()
-    .slice(0, 19)
-    .replace('T', ' ');
-
-  console.log(fechaFormateada);
-
-  // Handle file change
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+  const validateFile = (f) => {
+    if (!f) return 'Por favor seleccioná un archivo.';
+    const isImage =
+      f.type === 'image/jpeg' ||
+      f.type === 'image/png' ||
+      f.type === 'image/jpg';
+    if (!isImage) return 'Formato inválido. Solo JPG/PNG.';
+    const mb = f.size / (1024 * 1024);
+    if (mb > MAX_MB) return `El archivo supera ${MAX_MB}MB.`;
+    return '';
   };
 
-  // Handle image upload
+  const onPickFile = (f) => {
+    const msg = validateFile(f);
+    if (msg) {
+      setFile(null);
+      setErr(msg);
+      return;
+    }
+    setErr('');
+    setFile(f);
+  };
+
   const handleUpload = async () => {
-    if (!file) {
-      setError('Por favor selecciona un archivo.');
+    if (!convenioId) return;
+    const msg = validateFile(file);
+    if (msg) {
+      setErr(msg);
       return;
     }
 
-    setLoading(true);
-    setError('');
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const newFec = fechaFormateada;
-    formData.append('fecha', newFec); //
+    setUploading(true);
+    setErr('');
     try {
-      const response = await axios.post(
-        `http://localhost:8080/uploadfac/${convenioId}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('fecha', targetMonthStartMysql);
 
-      if (response.status === 200) {
-        // Add the newly uploaded image to the list
-        setImagess([...imagess, response.data.imageUrl]);
-        alert('Imagen subida con éxito.');
-        obtenerImages();
-      }
-    } catch (err) {
-      console.error(err);
-      setError('Error al subir la imagen.');
+      await axios.post(`${API_BASE}/uploadfac/${convenioId}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+
+      await fetchList();
+    } catch (e) {
+      console.error(e);
+      setErr('Error al subir la factura.');
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
-  // Función para eliminar una imagen
-  const eliminarImagen = async (id) => {
+  const handleDelete = async (id) => {
+    if (!id) return;
+    const ok = window.confirm(
+      '¿Eliminar esta factura? Esta acción no se puede deshacer.'
+    );
+    if (!ok) return;
+
+    setErr('');
     try {
-      await axios.delete(`${URL}${id}`); // Solicitud DELETE al servidor
-      obtenerImages(); // Recarga la lista de imágenes después de la eliminación
-    } catch (error) {
-      console.log('Error al eliminar la imagen:', error);
+      // Compat con tu viejo delete: DELETE /facget/:id
+      await axios.delete(`${API_BASE}/facget/${id}`);
+      await fetchList();
+    } catch (e) {
+      console.error(e);
+      setErr('No se pudo eliminar la factura.');
     }
   };
 
   return (
-    <div className="upload-container bg-gray-100 p-6 rounded-lg shadow-lg max-w-xl mx-auto">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        FACTURA EMITIDA POR COMERCIO <br />
-        <FechasConvenios onMonthChange={setSelectedMonth} />
-        {userLevel === 'admin' && (
-          <span className="text-base font-normal">
-            1. Presionar Seleccionar Archivo,
-            <br />
-            2. Subir Imagen solo(jpg, png, jpeg) hasta 30MB
-          </span>
-        )}
-      </h2>
+    <div className="relative">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold tracking-wide text-white/90">
+            Facturas emitidas (Imágenes)
+          </h3>
+          <p className="mt-1 text-xs text-white/60">
+            Mes:{' '}
+            <span className="text-white/80 font-semibold">
+              {monthLabelAR(targetDate)}
+            </span>
+          </p>
+        </div>
 
-      {userLevel === 'admin' && (
-        <div className="input-group flex flex-col space-y-2 mb-4">
-          <input
-            type="file"
-            id="file-upload"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg cursor-pointer focus:outline-none"
-          />
-          <button
-            className="btnnn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200 disabled:bg-gray-400"
-            onClick={handleUpload}
-            disabled={loading}
-          >
-            {loading ? 'Subiendo...' : 'Subir Imagen'}
-          </button>
+        <button
+          type="button"
+          onClick={fetchList}
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-semibold text-white/80 backdrop-blur-xl shadow-[0_10px_30px_-18px_rgba(0,0,0,0.65)] transition hover:bg-white/[0.08] active:scale-[0.99]"
+        >
+          Actualizar
+        </button>
+      </div>
+
+      {/* Uploader */}
+      {canManage && (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-3 shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
+          <label className="block">
+            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-4 transition hover:bg-white/[0.05]">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold text-white/80">
+                  Subir imagen (JPG/PNG) hasta {MAX_MB}MB
+                </p>
+                <p className="text-[11px] text-white/55">
+                  Se guardará asociada al mes seleccionado.
+                </p>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={(e) => onPickFile(e.target.files?.[0] || null)}
+                  className="mt-2 block w-full text-xs text-white/80 file:mr-3 file:rounded-xl file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white/80 hover:file:bg-white/15"
+                />
+
+                {file && (
+                  <div className="mt-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-xs text-white/80">
+                        {file.name}
+                      </span>
+                      <span className="text-[11px] text-white/50">
+                        {(file.size / (1024 * 1024)).toFixed(2)} MB
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleUpload}
+                    disabled={!file || uploading}
+                    className="inline-flex items-center justify-center rounded-xl bg-[#ff4d00] px-4 py-2 text-xs font-bold text-white shadow-md transition hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+                  >
+                    {uploading ? 'Subiendo...' : 'Subir'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFile(null);
+                      setErr('');
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-white/80 backdrop-blur-xl transition hover:bg-white/[0.06] active:scale-[0.99]"
+                  >
+                    Limpiar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </label>
         </div>
       )}
 
-      {error && (
-        <p className="error-message text-red-500 font-semibold">{error}</p>
+      {err && (
+        <div className="mt-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs text-red-200">
+          {err}
+        </div>
       )}
 
-      <h3 className="text-lg font-medium text-gray-700 mt-6 mb-2">
-        {/* Imágenes Disponibles */}
-      </h3>
-      <ul className="image-list space-y-4">
-        {/* {imagess.map((image, index) => (
-          <li
-            key={index}
-            className="image-item flex items-center justify-between bg-white p-4 rounded shadow-md"
-          >
-            <img
-              src={`http://localhost:8080/public/${image}`}
-              alt={`Imagen ${index + 1}`}
-              className="thumbnail w-24 h-24 object-cover rounded"
-            />
-          </li>
-        ))} */}
+      {/* List (con scroll) */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-white/70">
+            Disponibles:{' '}
+            <span className="text-white/90">{filtered.length}</span>
+          </p>
+          {loadingList && (
+            <p className="text-[11px] text-white/50">Cargando…</p>
+          )}
+        </div>
 
-        {filteredImages.length > 0 ? (
-          filteredImages.map((image, index) => (
-            <div key={image.id}>
-              <h3 className="text-lg font-medium text-gray-700 mt-2 mb-2">
-                Imágenes Disponibles {index + 1}
-              </h3>
-              <li className="image-item flex items-center justify-between bg-white p-4 rounded shadow-md">
-                <div className="flex items-center space-x-4">
-                  <a
-                    href={`http://localhost:8080/downloadfac/${image.id}`}
-                    download={image.image_path}
-                    className="download-link text-blue-500 hover:underline"
-                  >
-                    Ver Imagen
-                  </a>
-                  {userLevel === 'admin' && (
-                    <button
-                      onClick={() => eliminarImagen(image.id)}
-                      className="mt-3 delete-button bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200"
-                    >
-                      Eliminar
-                    </button>
-                  )}
-                </div>
-              </li>
-            </div>
-          ))
+        {filtered.length === 0 ? (
+          <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs text-white/60">
+            No hay facturas cargadas para este mes.
+          </div>
         ) : (
-          <p>No hay imágenes disponibles.</p>
-        )}
-      </ul>
+          <div className="mt-3 max-h-[340px] overflow-y-auto rounded-2xl pr-1 [scrollbar-gutter:stable]">
+            <ul className="space-y-2">
+              {filtered.map((it, idx) => {
+                const d = parseMysqlDate(
+                  it.created_at || it.fecha || it.createdAt
+                );
+                const label =
+                  d?.toLocaleString('es-AR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) || '—';
 
-      <h1 className="mt-5 text-sm font-light text-gray-600">
-        RECUERDE QUE AL (ELIMINAR, CARGAR) IMAGEN, DEBE RECARGAR LA PÁGINA
-      </h1>
+                return (
+                  <li
+                    key={it.id ?? `${idx}`}
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl px-4 py-3 shadow-[0_14px_45px_rgba(0,0,0,0.22)]"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold text-white/85">
+                          Factura #{idx + 1}
+                          <span className="ml-2 text-[11px] font-normal text-white/50">
+                            {label}
+                          </span>
+                        </p>
+                        <p className="mt-1 truncate text-[11px] text-white/55">
+                          {it.image_path || it.path || it.nombre || '—'}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`${API_BASE}/downloadfac/${it.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-white/80 transition hover:bg-white/[0.06]"
+                        >
+                          Ver
+                        </a>
+
+                        {canManage && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(it.id)}
+                            className="inline-flex items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-[11px] font-bold text-red-100 transition hover:bg-red-500/15"
+                          >
+                            Eliminar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-export default InvoicesUpload;
+}

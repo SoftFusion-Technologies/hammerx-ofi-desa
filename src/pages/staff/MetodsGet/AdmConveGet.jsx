@@ -12,112 +12,180 @@
  * Contacto: benjamin.orellanaof@gmail.com || 3863531891
  */
 import axios from 'axios';
-import React, { useEffect, useState, useMemo } from 'react';
-import { formatearFecha } from '../../../Helpers';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import Swal from 'sweetalert2';
+import {
+  FaArrowLeft,
+  FaArchive,
+  FaBoxOpen,
+  FaBuilding,
+  FaChevronLeft,
+  FaChevronRight,
+  FaEdit,
+  FaEye,
+  FaPlus,
+  FaSearch,
+  FaTrash
+} from 'react-icons/fa';
+
 import NavbarStaff from '../NavbarStaff';
 import '../../../styles/MetodsGet/Tabla.css';
 import '../../../styles/staff/background.css';
 import Footer from '../../../components/footer/Footer';
 import FormAltaConve from '../../../components/Forms/FormAltaConve';
-import IntegranteConveGet from './IntegranteConveGet';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../AuthContext';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const URL = `${API_URL}/admconvenios/`;
+
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2200,
+  timerProgressBar: true
+});
+
+// Asegura que SweetAlert2 quede siempre arriba (soluciona el clásico “queda detrás del modal”)
+const swalTop = (opts) =>
+  Swal.fire({
+    heightAuto: false,
+    ...opts,
+    didOpen: () => {
+      const container = document.querySelector('.swal2-container');
+      if (container) container.style.zIndex = '999999';
+      opts?.didOpen?.();
+    }
+  });
+
+const cx = (...classes) => classes.filter(Boolean).join(' ');
+
+const Badge = ({ icon: Icon, children, tone = 'neutral' }) => {
+  const toneCls =
+    tone === 'orange'
+      ? 'bg-orange-500/15 text-orange-200 ring-1 ring-orange-400/20'
+      : tone === 'green'
+      ? 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/20'
+      : tone === 'red'
+      ? 'bg-rose-500/15 text-rose-200 ring-1 ring-rose-400/20'
+      : tone === 'slate'
+      ? 'bg-slate-500/15 text-slate-200 ring-1 ring-slate-400/20'
+      : 'bg-white/10 text-white/80 ring-1 ring-white/10';
+
+  return (
+    <span
+      className={cx(
+        'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium backdrop-blur',
+        toneCls
+      )}
+    >
+      {Icon ? <Icon className="opacity-90" /> : null}
+      <span className="truncate">{children}</span>
+    </span>
+  );
+};
+
+const IconBtn = ({ title, onClick, className, children }) => (
+  <button
+    type="button"
+    title={title}
+    onClick={onClick}
+    className={cx(
+      'inline-flex h-9 w-9 items-center justify-center rounded-xl transition',
+      'bg-white/5 hover:bg-white/10 ring-1 ring-white/10 hover:ring-white/20',
+      'text-white/80 hover:text-white',
+      className
+    )}
+  >
+    {children}
+  </button>
+);
+
+const SkeletonCard = () => (
+  <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4 shadow-[0_18px_55px_rgba(0,0,0,0.35)]">
+    <div className="h-5 w-2/3 rounded bg-white/10" />
+    <div className="mt-3 flex flex-wrap gap-2">
+      <div className="h-7 w-24 rounded-full bg-white/10" />
+      <div className="h-7 w-28 rounded-full bg-white/10" />
+      <div className="h-7 w-20 rounded-full bg-white/10" />
+    </div>
+    <div className="mt-5 h-10 w-full rounded-xl bg-white/10" />
+  </div>
+);
 
 const AdmConveGet = () => {
   // Estado para almacenar la lista de personas
   const [conve, setConve] = useState([]);
   const [modalNewConve, setmodalNewConve] = useState(false);
-  const [integrantes, setIntegrantes] = useState([]);
+  const [conveArchivados, setConveArchivados] = useState([]);
+  const [sedes, setSedes] = useState([]);
 
-  const [selectedConve, setSelectedConve] = useState(null);
   const [selectedConve2, setSelectedConve2] = useState(null);
+
   // estado para obtener el nombre y el email del instructor
   const [nombreInstructor, setNombreInstructor] = useState('');
   const [sede, setSede] = useState('');
 
-  const navigate = useNavigate(); // Hook para navegación
+  // Estado para almacenar el término de búsqueda
+  const [search, setSearch] = useState('');
+  const [filterSede, setFilterSede] = useState('');
 
+  const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate(); // Hook para navegación
   const { userName, userLevel } = useAuth();
 
-  const [conveArchivados, setConveArchivados] = useState([]); // nuevo estado para convenios archivados
+  const isAdmin = userLevel === 'admin' || userLevel === 'administrador';
 
-  const [sedes, setSedes] = useState([]);
+  const norm = (v = '') =>
+    String(v || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
 
-  useEffect(() => {
-    const getUserIdByEmail = async () => {
-      try {
-        const response = await fetch(`http://localhost:8080/users/`);
-
-        if (!response.ok) {
-          throw new Error(
-            `Error al obtener los usuarios: ${response.statusText}`
-          );
-        }
-
-        const users = await response.json();
-
-        // Buscar el usuario por email
-        const user = users.find((u) => u.email === userName);
-        // console.log(user.sede);
-
-        if (user) {
-          // setUserId(user.id);
-          setNombreInstructor(user.name);
-          setSede(user.sede); // Guardar la sede en el estado
-          console.log(`ID del usuario ${userName}:`, user.id);
-          console.log(`Sede del usuario ${userName}:`, user.sede);
-          obtenerConves(user.sede);
-        } else {
-          console.log(`Usuario con email ${userName} no encontrado`);
-        }
-      } catch (err) {
-        console.log(`Error al obtener el usuario: ${err.message}`);
-      }
-    };
-
-    getUserIdByEmail();
-  }, [userName, userLevel]); // Se ejecuta cuando cambian userName o userLevel
-
-  const normalizeSede = (sede) => {
-    if (sede === 'monteros') return 'Monteros';
-    if (sede === 'concepción') return 'Concepción';
-    if (sede === 'smt') return 'SMT';
-    return sede; // Si ya está bien escrito, lo dejamos igual
+  const normalizeSede = (s) => {
+    const x = norm(s);
+    if (x === 'monteros') return 'Monteros';
+    if (x === 'concepcion') return 'Concepción';
+    if (x === 'smt') return 'SMT';
+    if (x === 'multisede') return 'Multisede';
+    // Respeta lo que venga si ya es “presentable”
+    return s;
   };
 
   const abrirModal = () => {
     setmodalNewConve(true);
     setSelectedConve2(null);
   };
+
   const cerarModal = () => {
     setmodalNewConve(false);
-    obtenerConves('');
+    // recargar manteniendo sede del usuario cuando aplique
+    obtenerConves(sede, true);
   };
-  // Estado para almacenar el término de búsqueda
-  const [search, setSearch] = useState('');
-  const [filterSede, setFilterSede] = useState(''); // Estado para el filtro de sede
-
-  //URL estatica, luego cambiar por variable de entorno
-  const URL = 'http://localhost:8080/admconvenios/';
 
   const handleVerIntegrantes = (id) => {
-    setSelectedConve(id);
     navigate(`/dashboard/integrantes?id_conv=${id}`);
   };
 
-  const obtenerConves = async (sede) => {
+  const obtenerConves = async (sedeParam, mantenerFiltro = false) => {
     try {
+      setLoading(true);
       const response = await axios.get(URL);
-      const convenios = response.data;
-      const conveniosActivos = convenios.filter((c) => c.archivado === 1);
+      const convenios = response.data || [];
+      const conveniosActivos = convenios.filter(
+        (c) => Number(c.archivado) === 1
+      );
 
-      if (userLevel === 'admin' || userLevel === 'administrador') {
+      if (isAdmin) {
         setConve(conveniosActivos);
-        setFilterSede(''); // O el valor por defecto que quieras
+        if (!mantenerFiltro) setFilterSede('');
       } else {
         // Solo convenios de la sede del usuario o Multisede
-        const userSedeNormalized = normalizeSede(sede);
+        const userSedeNormalized = normalizeSede(sedeParam);
 
         setConve(
           conveniosActivos.filter(
@@ -127,111 +195,102 @@ const AdmConveGet = () => {
                 normalizeSede(c.sede) === 'Multisede')
           )
         );
-        setFilterSede(`sede:${userSedeNormalized}`);
+
+        // Dejar marcado el filtro del usuario, salvo que quieras explícitamente resetearlo
+        if (!mantenerFiltro) setFilterSede(`sede:${userSedeNormalized}`);
       }
     } catch (error) {
       console.log('Error al obtener los convenios:', error);
+      Toast.fire({ icon: 'error', title: 'Error al cargar convenios' });
+    } finally {
+      setLoading(false);
     }
   };
 
   const obtenerConvesArchivados = async () => {
     try {
+      setLoading(true);
       const response = await axios.get(URL);
-      const convenios = response.data;
+      const convenios = response.data || [];
 
       // Filtrar los convenios archivados (archivado = 0)
       const conveniosArchivados = convenios.filter(
         (c) => Number(c.archivado) === 0
       );
-
-      console.log('Convenios archivados:', conveniosArchivados);
       setConveArchivados(conveniosArchivados);
     } catch (error) {
       console.log('Error al obtener los convenios archivados:', error);
+      Toast.fire({ icon: 'error', title: 'Error al cargar archivados' });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEliminarConve = async (id) => {
-    const confirmacion = window.confirm('¿Seguro que desea eliminar?');
-    if (confirmacion) {
+  const obtenerSedes = async (mantenerFiltro = false) => {
+    try {
+      const response = await axios.get(`${API_URL}/sedes`);
+      const sedesResp = response.data || [];
+
+      // 🔥 Filtrar solo las sedes activas (estado === 'activo')
+      const sedesActivas = sedesResp.filter((s) => s.estado === 'activo');
+
+      if (!mantenerFiltro) setFilterSede('');
+      setSedes(sedesActivas);
+    } catch (error) {
+      console.log('Error al obtener las sedes:', error);
+    }
+  };
+
+  useEffect(() => {
+    obtenerSedes(true);
+  }, []);
+
+  useEffect(() => {
+    const getUserIdByEmail = async () => {
       try {
-        const url = `${URL}${id}`;
-        const respuesta = await fetch(url, {
-          method: 'DELETE'
-        });
-        await respuesta.json();
-        const arrayConve = conve.filter((conve) => conve.id !== id);
+        setLoading(true);
+        const response = await fetch(`${API_URL}/users/`);
+        if (!response.ok) {
+          throw new Error(
+            `Error al obtener los usuarios: ${response.statusText}`
+          );
+        }
+        const users = await response.json();
 
-        setConve(arrayConve);
-      } catch (error) {
-        console.log(error);
+        // Buscar el usuario por email
+        const user = users.find((u) => u.email === userName);
+
+        if (user) {
+          // En tu modelo real es "nombre" (dejamos fallback por compatibilidad)
+          setNombreInstructor(user.nombre || user.name || '');
+          setSede(user.sede || '');
+
+          obtenerConves(user.sede, true);
+        } else {
+          console.log(`Usuario con email ${userName} no encontrado`);
+          // En caso raro: cargar igual sin filtro
+          obtenerConves('', true);
+        }
+      } catch (err) {
+        console.log(`Error al obtener el usuario: ${err.message}`);
+        // Fallback: cargar igual
+        obtenerConves('', true);
+      } finally {
+        setLoading(false);
       }
-    }
-  };
+    };
 
-  const searcher = (e) => {
-    setSearch(e.target.value);
-  };
-
-  let results = [];
-
-  if (!search) {
-    results = conve;
-  } else if (search) {
-    results = conve.filter((dato) => {
-      const nameMatch = dato.nameConve
-        .toLowerCase()
-        .includes(search.toLowerCase());
-
-      return nameMatch;
-    });
-  }
-
-  // Función para ordenar los conve de forma decreciente basado en el id
-  const ordenarConveDecreciente = (conve) => {
-    return [...conve].sort((a, b) => b.id - a.id);
-  };
-
-  // Llamada a la función para obtener los conves ordenados de forma decreciente
-  const sortedConve = ordenarConveDecreciente(results);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
-  const lastIndex = currentPage * itemsPerPage;
-  const firstIndex = lastIndex - itemsPerPage;
-  const records = sortedConve.slice(firstIndex, lastIndex);
-  const nPage = Math.ceil(sortedConve.length / itemsPerPage);
-  const numbers = [...Array(nPage + 1).keys()].slice(1);
-
-  function prevPage() {
-    if (currentPage !== firstIndex) {
-      setCurrentPage(currentPage - 1);
-    }
-  }
-
-  function changeCPage(id) {
-    setCurrentPage(id);
-  }
-
-  function nextPage() {
-    if (currentPage !== firstIndex) {
-      setCurrentPage(currentPage + 1);
-    }
-  }
-
-  const handleEditarConve = (conve) => {
-    // (NUEVO)
-    // setSelectedConve(conve);
-    setSelectedConve2(conve);
-    setmodalNewConve(true);
-  };
+    getUserIdByEmail();
+  }, [userName, userLevel]); // Se ejecuta cuando cambian userName o userLevel
 
   // Función para manejar el cambio en el filtro de sede
   const handleFilterSedeChange = (e) => {
     const newValue = e.target.value;
-    const sedeNormalizada = normalizeSede(newValue); // Aplicamos la normalización
-    setFilterSede(sedeNormalizada);
-    console.log('Filtro cambiado a:', sedeNormalizada); // Debugging
+
+    // Si viene como "sede:XXX" o "agrupador:YYY", lo respetamos.
+    // Si viene plano, lo normalizamos.
+    const value = newValue.includes(':') ? newValue : normalizeSede(newValue);
+    setFilterSede(value);
   };
 
   useEffect(() => {
@@ -240,75 +299,32 @@ const AdmConveGet = () => {
     }
   }, [filterSede]);
 
-  const filteredResults = useMemo(() => {
-    if (!filterSede || filterSede === 'Todas las sedes') {
-      return results;
-    }
+  const searcher = (e) => setSearch(e.target.value);
 
-    // Si el filtro es 'Multisede', filtrar tanto por sede como por agrupador
-    if (filterSede === 'Multisede') {
-      return results.filter(
-        (conve) =>
-          conve.sede?.toLowerCase() === 'multisede' ||
-          conve.agrupador?.toLowerCase() === 'multisede'
-      );
-    }
-
-    // Filtrar convenios por agrupador (si tienen agrupador)
-    const conveniosConAgrupador = results.filter(
-      (conve) => conve.agrupador?.trim() !== ''
-    );
-
-    // Filtrar convenios con agrupador por el filtro seleccionado
-    const conveniosFiltradosPorAgrupador = conveniosConAgrupador.filter(
-      (conve) => {
-        return (
-          conve.agrupador?.trim().toLowerCase() === filterSede.toLowerCase()
-        );
-      }
-    );
-
-    // Filtrar convenios sin agrupador (es decir, que tienen sede) por la sede seleccionada
-    const conveniosSinAgrupador = results.filter((conve) => {
-      return conve.agrupador?.trim() === '' || conve.agrupador === null;
+  let results = [];
+  if (!search) {
+    results = conve;
+  } else {
+    results = conve.filter((dato) => {
+      const nameMatch = String(dato.nameConve || '')
+        .toLowerCase()
+        .includes(search.toLowerCase());
+      return nameMatch;
     });
-
-    const conveniosFiltradosPorSede = conveniosSinAgrupador.filter((conve) => {
-      const sedeNormalizada = normalizeSede(
-        conve.sede?.trim().toLowerCase() || ''
-      );
-      return sedeNormalizada === filterSede.toLowerCase();
-    });
-
-    // Ahora, si el filtro es por una sede específica, incluir convenios con esa sede
-    // incluso si tienen un agrupador diferente
-    const conveniosConSedeSinAgrupador = results.filter((conve) => {
-      return (
-        conve.sede?.toLowerCase() === filterSede.toLowerCase() &&
-        (conve.agrupador?.trim() === '' || conve.agrupador === null)
-      );
-    });
-
-    // Combinar los resultados filtrados por agrupador y sede (incluyendo convenios sin agrupador)
-    return [
-      ...conveniosFiltradosPorAgrupador,
-      ...conveniosFiltradosPorSede,
-      ...conveniosConSedeSinAgrupador
-    ];
-  }, [results, filterSede]); // Se recalcula solo cuando cambian estos valores
+  }
 
   const filteredArchivados = useMemo(() => {
-    return conveArchivados.filter((conve) =>
-      conve.nameConve.toLowerCase().includes(search.toLowerCase())
+    return (conveArchivados || []).filter((c) =>
+      String(c.nameConve || '')
+        .toLowerCase()
+        .includes(search.toLowerCase())
     );
   }, [conveArchivados, search]);
 
   const mostrarResultados = useMemo(() => {
     if (!filterSede || filterSede === '' || filterSede === 'Todas las sedes') {
       // Principal: solo sin agrupador
-      return results.filter(
-        (conve) => !conve.agrupador || conve.agrupador.trim() === ''
-      );
+      return results.filter((c) => !c.agrupador || c.agrupador.trim() === '');
     }
     if (filterSede === 'Archivados') {
       return filteredArchivados;
@@ -320,307 +336,570 @@ const AdmConveGet = () => {
     if (tipo === 'sede') {
       // Convenios sin agrupador y con sede = valor
       return results.filter(
-        (conve) =>
-          (!conve.agrupador || conve.agrupador.trim() === '') &&
-          (conve.sede || '').trim().toLowerCase() === valor.trim().toLowerCase()
+        (c) =>
+          (!c.agrupador || c.agrupador.trim() === '') &&
+          String(c.sede || '')
+            .trim()
+            .toLowerCase() ===
+            String(valor || '')
+              .trim()
+              .toLowerCase()
       );
     }
     if (tipo === 'agrupador') {
       // Convenios con agrupador = valor
       return results.filter(
-        (conve) =>
-          (conve.agrupador || '').trim().toLowerCase() ===
-          valor.trim().toLowerCase()
+        (c) =>
+          String(c.agrupador || '')
+            .trim()
+            .toLowerCase() ===
+          String(valor || '')
+            .trim()
+            .toLowerCase()
       );
     }
     return [];
   }, [results, filterSede, filteredArchivados]);
 
-  const obtenerSedes = async (mantenerFiltro = false) => {
-    try {
-      const response = await axios.get('http://localhost:8080/sedes'); // URL de la API para obtener las sedes
-      const sedes = response.data;
+  // Ordenar decreciente por id (se ve “pro” y consistente)
+  const sortedMostrarResultados = useMemo(() => {
+    return [...(mostrarResultados || [])].sort(
+      (a, b) => Number(b.id) - Number(a.id)
+    );
+  }, [mostrarResultados]);
 
-      // 🔥 Filtrar solo las sedes activas (estado === 'activo')
-      const sedesActivas = sedes.filter((sede) => sede.estado === 'activo');
-
-      // Si no mantener filtro, se restablece el filtro
-      if (!mantenerFiltro) {
-        setFilterSede(''); // Restablecer el filtro de sede
-      }
-
-      setSedes(sedesActivas); // Establecer las sedes activas en el estado
-    } catch (error) {
-      console.log('Error al obtener las sedes:', error);
-    }
-  };
+  // Paginación real (antes estaba pero no se usaba en el render)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
-    obtenerSedes();
-  }, []);
+    setCurrentPage(1);
+  }, [search, filterSede]);
 
-  // Función para obtener las sedes filtradas según el nivel de usuario
-  const getFilteredSedes = () => {
-    const normalizedSede = filterSede?.toLowerCase(); // Normaliza la sede a minúsculas
+  const totalItems = sortedMostrarResultados.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const safePage = Math.min(Math.max(currentPage, 1), totalPages);
 
-    // Si el usuario es admin, mostrar todas las sedes activas (sin agregar "Agrupadores")
-    if (userLevel === 'admin' || userLevel === 'administrador') {
-      return ['Todas las sedes', ...sedes.map((sede) => sede.nombre)];
-    }
+  const pageItems = useMemo(() => {
+    const start = (safePage - 1) * itemsPerPage;
+    return sortedMostrarResultados.slice(start, start + itemsPerPage);
+  }, [sortedMostrarResultados, safePage]);
 
-    // Filtrar las sedes activas según el filtro de sede
-    const filteredSedes = sedes
-      .filter((sede) => {
-        if (normalizedSede === 'monteros') {
-          return (
-            sede.nombre.toLowerCase() === 'monteros' ||
-            sede.nombre.toLowerCase() === 'multisede'
-          );
-        } else if (normalizedSede === 'concepción') {
-          return (
-            sede.nombre.toLowerCase() === 'concepción' ||
-            sede.nombre.toLowerCase() === 'multisede'
-          );
-        } else if (normalizedSede === 'smt') {
-          return (
-            sede.nombre.toLowerCase() === 'smt' ||
-            sede.nombre.toLowerCase() === 'multisede'
-          );
-        }
-        return sede.nombre.toLowerCase() === 'multisede'; // Filtrar por 'Multisede' si no es ninguna de las anteriores
-      })
-      .map((sede) => sede.nombre); // Extraer los nombres de las sedes filtradas
+  const prevPage = () => safePage > 1 && setCurrentPage(safePage - 1);
+  const nextPage = () => safePage < totalPages && setCurrentPage(safePage + 1);
 
-    // Siempre mostrar "Todas las sedes" además de las sedes filtradas
-    return ['Todas las sedes', ...filteredSedes];
+  const handleEditarConve = (c) => {
+    // (NUEVO)
+    setSelectedConve2(c);
+    setmodalNewConve(true);
   };
 
-  // Obtener las sedes filtradas de acuerdo con el nivel de usuario y el filtro
-  const filteredSedes = getFilteredSedes() || []; // Garantiza que siempre sea un array
+  const handleEliminarConve = async (id) => {
+    const r = await swalTop({
+      title: 'Eliminar convenio',
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#e11d48'
+    });
+
+    if (!r.isConfirmed) return;
+
+    try {
+      await fetch(`${URL}${id}`, { method: 'DELETE' });
+      setConve((prev) => prev.filter((x) => x.id !== id));
+      Toast.fire({ icon: 'success', title: 'Convenio eliminado' });
+    } catch (error) {
+      console.log(error);
+      Toast.fire({ icon: 'error', title: 'No se pudo eliminar' });
+    }
+  };
 
   const handleArchivarConve = async (id) => {
     try {
       await axios.put(`${URL}${id}`, { archivado: 0 }); // Cambia a 0 = archivado
-      alert('Convenio archivado correctamente');
-      // recargá los convenios
-      obtenerConves(null, true); // ✅ No resetea el filtro actual
+      Toast.fire({ icon: 'success', title: 'Convenio archivado' });
+      obtenerConves(sede, true); // ✅ No resetea el filtro actual
     } catch (error) {
       console.error('Error al archivar el convenio:', error);
-      alert('Hubo un error al archivar el convenio');
+      Toast.fire({ icon: 'error', title: 'Error al archivar' });
     }
   };
 
   const handleDesarchivarConve = async (id) => {
     try {
       await axios.put(`${URL}${id}`, { archivado: 1 }); // Cambia a 1 = activo
-      alert('Convenio desarchivado correctamente');
-      obtenerConvesArchivados(); // Recarga los archivados
-      obtenerConves(null, true); // ✅ No resetea el filtro actual
+      Toast.fire({ icon: 'success', title: 'Convenio desarchivado' });
+      obtenerConvesArchivados();
+      obtenerConves(sede, true); // ✅ No resetea el filtro actual
     } catch (error) {
       console.error('Error al desarchivar el convenio:', error);
-      alert('Hubo un error al desarchivar el convenio');
+      Toast.fire({ icon: 'error', title: 'Error al desarchivar' });
     }
   };
 
-  // SEDES únicas activas
-  const sedesUnicas = sedes.map((sede) => sede.nombre);
-  const sedesConConveniosSinAgrupador = sedesUnicas.filter((sede) =>
-    results.some(
-      (c) =>
-        (!c.agrupador || c.agrupador.trim() === '') &&
-        (c.sede || '').trim().toLowerCase() === sede.trim().toLowerCase()
-    )
-  );
-  // AGRUPADORES únicos de los convenios
-  const agrupadoresUnicos = Array.from(
-    new Set(
-      results
-        .map((c) => c.agrupador && c.agrupador.trim())
-        .filter((a) => a && a !== '')
-    )
-  );
+  // SEDES únicas activas (desde /sedes)
+  const sedesUnicas = useMemo(() => sedes.map((s) => s.nombre), [sedes]);
+
+  const sedesConConveniosSinAgrupador = useMemo(() => {
+    return sedesUnicas.filter((s) =>
+      results.some(
+        (c) =>
+          (!c.agrupador || c.agrupador.trim() === '') &&
+          norm(c.sede) === norm(s)
+      )
+    );
+  }, [sedesUnicas, results]);
+
+  // AGRUPADORES únicos de los convenios (desde convenios)
+  const agrupadoresUnicos = useMemo(() => {
+    return Array.from(
+      new Set(
+        results
+          .map((c) => (c.agrupador && c.agrupador.trim()) || '')
+          .filter((a) => a && a !== '')
+      )
+    );
+  }, [results]);
+
+  const headerSubtitle = isAdmin
+    ? 'Gestión completa de convenios, filtros avanzados y acciones rápidas.'
+    : 'Visualizá los convenios disponibles para tu sede y Multisede.';
 
   return (
     <>
       <NavbarStaff />
-      <div className="dashboardbg h-contain pt-10 pb-10">
-        <div className=" rounded-lg w-12/12 mx-auto pb-2">
-          <div className="bg-white mb-5">
-            <div className="pl-5 pt-5">
-              <Link to="/dashboard">
-                <button className="py-2 px-5 bg-[#fc4b08] rounded-lg text-sm text-white hover:bg-orange-500">
-                  Volver
-                </button>
-              </Link>
-            </div>
-            <div className="flex justify-center">
-              <h1 className="pb-5">
-                Listado de Convenios: &nbsp;
-                <p className="mb-2">
-                  Cantidad de registros: {mostrarResultados.length}
-                </p>
-              </h1>
-            </div>
 
-            {/* formulario de busqueda */}
-            <form className="flex justify-center pb-5">
-              <input
-                value={search}
-                onChange={searcher}
-                type="text"
-                placeholder="Buscar convenio"
-                className="border rounded-sm"
-              />
-              <select
-                value={filterSede}
-                onChange={handleFilterSedeChange}
-                className="border rounded-sm ml-3"
-              >
-                {userLevel === 'admin' && (
-                  <option value="">Todas las sedes</option>
-                )}
-                <optgroup label="Sedes">
-                  {sedesConConveniosSinAgrupador.map((sede) => (
-                    <option key={sede} value={`sede:${sede}`}>
-                      {sede}
-                    </option>
-                  ))}
-                </optgroup>
+      <div className="dashboardbg min-h-screen">
+        {/* Fondo premium sutil (sin romper tu dashboardbg) */}
+        <div className="pointer-events-none fixed inset-0 opacity-60">
+          <div className="absolute -top-24 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-orange-500/10 blur-[90px]" />
+          <div className="absolute -bottom-28 right-[-120px] h-[520px] w-[520px] rounded-full bg-emerald-500/10 blur-[100px]" />
+          <div className="absolute -bottom-40 left-[-120px] h-[520px] w-[520px] rounded-full bg-sky-500/10 blur-[110px]" />
+        </div>
 
-                <optgroup label="Agrupadores">
-                  {agrupadoresUnicos.map((agrupador) => (
-                    <option key={agrupador} value={`agrupador:${agrupador}`}>
-                      {agrupador}
-                    </option>
-                  ))}
-                </optgroup>
-                <option value="Archivados">Archivados</option>
-              </select>
-            </form>
-            {/* formulario de busqueda */}
+        <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 pb-10">
+          {/* HERO / HEADER */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+            className={cx(
+              'rounded-3xl border border-white/10 bg-white/[0.06] backdrop-blur-xl',
+              'shadow-[0_22px_70px_rgba(0,0,0,0.42)] overflow-hidden'
+            )}
+          >
+            <div className="relative px-5 sm:px-7 py-6 sm:py-7">
+              <div className="absolute inset-0 opacity-70">
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/0 to-white/0" />
+                <div className="absolute -top-24 right-[-120px] h-64 w-64 rounded-full bg-orange-500/10 blur-[70px]" />
+              </div>
 
-            {
-              /* userLevel === 'gerente' || */
-              /* userLevel === 'vendedor' || */
-              /* userLevel === 'convenio' || Se elimina la visualizacion para que  la persona que entre con este rol no pueda crear un convenio*/
-              /* Unicos roles que pueden dar Alta un nuevo convenio */
-              (userLevel === 'admin' || userLevel === 'administrador') && (
-                <div className="flex justify-center pb-10">
-                  <Link to="#">
-                    <button
-                      onClick={abrirModal}
-                      className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
-                    >
-                      Nuevo Convenio
-                    </button>
-                  </Link>
-                </div>
-              )
-            }
-          </div>
-          {Object.keys(results).length === 0 ? (
-            <p className="text-center pb-10">
-              El Convenio NO Existe ||{' '}
-              <span className="text-span"> Convenio: {results.length}</span>
-            </p>
-          ) : (
-            <div>
-              <div className="grid grid-cols-3 gap-8 mx-auto pb-10 lg:grid-cols-5 max-sm:grid-cols-2 md:grid-cols-3">
-                {mostrarResultados.map((conve) => (
-                  <div
-                    key={conve.id}
-                    className="bg-white p-4 rounded-md max-w-xs mx-auto"
-                  >
-                    <h2 className="btnstaff">
-                      {/* CONVENIO:{' '} */}
-                      <span className="bg-white font-bignoodle w-[200px] h-[80px] text-[16px] lg:w-[250px] lg:h-[100px] lg:text-[22px] mx-auto flex justify-center items-center rounded-tr-xl rounded-bl-xl">
-                        {conve.nameConve}
-                      </span>
-                    </h2>
-
-                    {(userLevel === 'admin' ||
-                      userLevel === 'administrador') && (
-                      <>
-                        <p className="btnstaff mt-1 text-sm">
-                          SEDE:{' '}
-                          <span className="font-semibold uppercase">
-                            {conve.sede}
-                          </span>
-                        </p>
-                        <p className="btnstaff mt-1 text-sm">
-                          AGRUPADOR:{' '}
-                          <span className="font-semibold uppercase">
-                            {conve.agrupador?.trim()
-                              ? conve.agrupador
-                              : 'Sin Agrupador'}
-                          </span>
-                        </p>
-                      </>
-                    )}
-
+              <div className="relative flex flex-col gap-5">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                  <div className="flex items-start gap-4">
                     <Link
-                      to={`/dashboard/admconvenios/${conve.id}/integrantes/`}
+                      to="/dashboard"
+                      className={cx(
+                        'inline-flex items-center gap-2 rounded-2xl px-4 py-2',
+                        'bg-white/5 hover:bg-white/10 ring-1 ring-white/10 hover:ring-white/20',
+                        'text-white/85 hover:text-white transition'
+                      )}
                     >
-                      <button
-                        style={{ ...styles.button, backgroundColor: '#fc4b08' }}
-                        className="py-1 px-3 text-sm"
-                      >
-                        Ver Integrantes
-                      </button>
+                      <FaArrowLeft />
+                      <span className="text-sm font-semibold">Volver</span>
                     </Link>
 
-                    {(userLevel === 'admin' ||
-                      userLevel === 'administrador') && (
-                      <div className="mt-2 flex space-x-2">
-                        {/* Mostrar Eliminar y Editar solo si NO está archivado */}
-                        {conve.archivado === 1 && (
-                          <>
-                            <button
-                              onClick={() => handleEliminarConve(conve.id)}
-                              style={{
-                                ...styles.button,
-                                backgroundColor: 'red'
-                              }}
-                              className="py-1 px-3 text-sm"
-                            >
-                              Eliminar
-                            </button>
-
-                            <button
-                              onClick={() => handleEditarConve(conve)}
-                              className="py-1 px-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm"
-                            >
-                              Editar
-                            </button>
-                          </>
-                        )}
-
-                        {/* Mostrar botón de Archivar o Desarchivar según el filtro actual */}
-                        {filterSede === 'Archivados' ? (
-                          <button
-                            onClick={() => handleDesarchivarConve(conve.id)}
-                            className="py-1 px-3 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
-                          >
-                            Desarchivar
-                          </button>
+                    <div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h1 className="font-bignoodle text-xl sm:text-3xl font-extrabold tracking-tight text-orange-600">
+                          Convenios
+                        </h1>
+                        <Badge icon={FaBuilding} tone="orange">
+                          {filterSede === 'Archivados'
+                            ? 'Archivados'
+                            : 'Activos'}
+                        </Badge>
+                        <Badge tone="neutral">
+                          Total:{' '}
+                          <span className="text-white font-semibold">
+                            {totalItems}
+                          </span>
+                        </Badge>
+                        {isAdmin ? (
+                          <Badge tone="slate">Rol: Administrador</Badge>
                         ) : (
-                          <button
-                            onClick={() => handleArchivarConve(conve.id)}
-                            className="py-1 px-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm"
-                          >
-                            Archivar
-                          </button>
+                          <Badge tone="slate">
+                            Sede: {normalizeSede(sede) || '—'}
+                          </Badge>
                         )}
                       </div>
-                    )}
+                      <p className="mt-1 text-sm text-white/60 max-w-2xl">
+                        {headerSubtitle}
+                      </p>
+
+                      {/* mini info contextual */}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Badge tone="neutral">
+                          Mostrando{' '}
+                          <span className="text-white font-semibold">
+                            {pageItems.length}
+                          </span>{' '}
+                          de{' '}
+                          <span className="text-white font-semibold">
+                            {totalItems}
+                          </span>
+                        </Badge>
+                        {!!nombreInstructor && (
+                          <Badge tone="neutral">
+                            Usuario:{' '}
+                            <span className="text-white/90">
+                              {nombreInstructor}
+                            </span>
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                ))}
-                {selectedConve && (
-                  <IntegranteConveGet integrantes={integrantes} />
-                )}
+
+                  {/* Acciones rápidas (solo admin) */}
+                  {
+                    /* userLevel === 'gerente' || */
+                    /* userLevel === 'vendedor' || */
+                    /* userLevel === 'convenio' || Se elimina la visualizacion para que  la persona que entre con este rol no pueda crear un convenio*/
+                    /* Unicos roles que pueden dar Alta un nuevo convenio */
+                    isAdmin && (
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={abrirModal}
+                          className={cx(
+                            'inline-flex items-center gap-2 rounded-2xl px-5 py-3',
+                            'bg-emerald-500/90 hover:bg-emerald-500 text-emerald-950',
+                            'font-extrabold shadow-[0_14px_30px_rgba(16,185,129,0.25)] transition'
+                          )}
+                        >
+                          <FaPlus />
+                          Nuevo Convenio
+                        </button>
+                      </div>
+                    )
+                  }
+                </div>
+
+                {/* CONTROLES: Buscar + Filtro */}
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-3 sm:gap-4">
+                  <div className="relative">
+                    <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                    <input
+                      value={search}
+                      onChange={searcher}
+                      type="text"
+                      placeholder="Buscar convenio por nombre…"
+                      className={cx(
+                        'w-full rounded-2xl pl-11 pr-4 py-3',
+                        'bg-white/5 text-white placeholder:text-white/35',
+                        'ring-1 ring-white/10 focus:ring-2 focus:ring-orange-400/40 outline-none',
+                        'transition'
+                      )}
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <select
+                      value={filterSede}
+                      onChange={handleFilterSedeChange}
+                      className={cx(
+                        'w-full rounded-2xl px-4 py-3',
+                        'bg-white/5 text-white',
+                        'ring-1 ring-white/10 focus:ring-2 focus:ring-orange-400/40 outline-none',
+                        'transition'
+                      )}
+                    >
+                      {isAdmin && (
+                        <option className="bg-zinc-950 text-white" value="">
+                          Todas las sedes
+                        </option>
+                      )}
+
+                      <optgroup
+                        className="bg-zinc-950 text-white"
+                        label="Sedes"
+                      >
+                        {sedesConConveniosSinAgrupador.map((s) => (
+                          <option
+                            key={s}
+                            value={`sede:${s}`}
+                            className="bg-zinc-950 text-white"
+                          >
+                            {s}
+                          </option>
+                        ))}
+                      </optgroup>
+
+                      <optgroup
+                        className="bg-zinc-950 text-white"
+                        label="Agrupadores"
+                      >
+                        {agrupadoresUnicos.map((a) => (
+                          <option
+                            key={a}
+                            value={`agrupador:${a}`}
+                            className="bg-zinc-950 text-white"
+                          >
+                            {a}
+                          </option>
+                        ))}
+                      </optgroup>
+
+                      <option
+                        className="bg-zinc-950 text-white"
+                        value="Archivados"
+                      >
+                        Archivados
+                      </option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
+          </motion.div>
+
+          {/* LISTADO */}
+          <div className="mt-7">
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </div>
+            ) : totalItems === 0 ? (
+              <div
+                className={cx(
+                  'rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl',
+                  'p-10 text-center shadow-[0_18px_55px_rgba(0,0,0,0.35)]'
+                )}
+              >
+                <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-white/5 ring-1 ring-white/10 flex items-center justify-center text-white/70">
+                  <FaBoxOpen size={22} />
+                </div>
+                <h3 className="text-lg font-extrabold text-white">
+                  Sin resultados
+                </h3>
+                <p className="mt-2 text-sm text-white/55">
+                  No encontramos convenios con los filtros actuales. Probá
+                  cambiando sede/agrupador o limpiando el buscador.
+                </p>
+
+                {isAdmin && (
+                  <button
+                    onClick={abrirModal}
+                    className={cx(
+                      'mt-6 inline-flex items-center gap-2 rounded-2xl px-5 py-3',
+                      'bg-orange-500 hover:bg-orange-400 text-white font-extrabold transition'
+                    )}
+                  >
+                    <FaPlus />
+                    Crear el primer convenio
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                >
+                  <AnimatePresence>
+                    {pageItems.map((c) => {
+                      const archivado = Number(c.archivado) === 0;
+                      const sedeLabel = c.sede || '—';
+                      const agrupadorLabel = c.agrupador?.trim()
+                        ? c.agrupador
+                        : 'Sin agrupador';
+
+                      return (
+                        <motion.div
+                          key={c.id}
+                          layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          whileHover={{ y: -4 }}
+                          transition={{
+                            type: 'spring',
+                            stiffness: 260,
+                            damping: 22
+                          }}
+                          className={cx(
+                            'group relative overflow-hidden rounded-3xl',
+                            'border border-white/10 bg-white/[0.05] backdrop-blur-xl',
+                            'shadow-[0_18px_55px_rgba(0,0,0,0.35)]'
+                          )}
+                        >
+                          {/* overlay hover */}
+                          <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="absolute -top-24 -right-24 h-60 w-60 rounded-full bg-orange-500/12 blur-[70px]" />
+                            <div className="absolute -bottom-24 -left-24 h-60 w-60 rounded-full bg-emerald-500/10 blur-[80px]" />
+                          </div>
+
+                          <div className="relative p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h2 className="text-base font-extrabold text-white truncate">
+                                    {c.nameConve}
+                                  </h2>
+                                </div>
+
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {isAdmin && (
+                                    <Badge icon={FaBuilding} tone="neutral">
+                                      {sedeLabel}
+                                    </Badge>
+                                  )}
+
+                                  {isAdmin && (
+                                    <Badge tone="neutral">
+                                      {agrupadorLabel}
+                                    </Badge>
+                                  )}
+
+                                  <Badge tone={archivado ? 'slate' : 'green'}>
+                                    {archivado ? 'Archivado' : 'Activo'}
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                {isAdmin && (
+                                  <>
+                                    {/* Mostrar Eliminar y Editar solo si NO está archivado */}
+                                    {!archivado && (
+                                      <>
+                                        <IconBtn
+                                          title="Editar"
+                                          onClick={() => handleEditarConve(c)}
+                                          className="hover:bg-yellow-500/15"
+                                        >
+                                          <FaEdit />
+                                        </IconBtn>
+
+                                        <IconBtn
+                                          title="Eliminar"
+                                          onClick={() =>
+                                            handleEliminarConve(c.id)
+                                          }
+                                          className="hover:bg-rose-500/15"
+                                        >
+                                          <FaTrash />
+                                        </IconBtn>
+                                      </>
+                                    )}
+
+                                    {/* Mostrar botón de Archivar o Desarchivar según el filtro actual */}
+                                    {filterSede === 'Archivados' ? (
+                                      <IconBtn
+                                        title="Desarchivar"
+                                        onClick={() =>
+                                          handleDesarchivarConve(c.id)
+                                        }
+                                        className="hover:bg-emerald-500/15"
+                                      >
+                                        <FaBoxOpen />
+                                      </IconBtn>
+                                    ) : (
+                                      <IconBtn
+                                        title="Archivar"
+                                        onClick={() =>
+                                          handleArchivarConve(c.id)
+                                        }
+                                        className="hover:bg-slate-500/15"
+                                      >
+                                        <FaArchive />
+                                      </IconBtn>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="mt-5">
+                              <Link
+                                to={`/dashboard/admconvenios/${c.id}/integrantes/`}
+                                className={cx(
+                                  'inline-flex w-full items-center justify-center gap-2',
+                                  'rounded-2xl px-4 py-3 font-extrabold',
+                                  'bg-[#fc4b08] hover:bg-orange-500 text-white transition',
+                                  'shadow-[0_16px_35px_rgba(252,75,8,0.25)]'
+                                )}
+                              >
+                                <FaEye />
+                                Ver Integrantes
+                              </Link>
+                              <div className="mt-3 flex items-center justify-between text-xs text-white/45">
+                                <span>ID #{c.id}</span>
+                                <span className="truncate">
+                                  {isAdmin
+                                    ? `Sede: ${sedeLabel}`
+                                    : 'Disponible'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </motion.div>
+
+                {/* PAGINACIÓN */}
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="text-sm text-white/55">
+                    Página{' '}
+                    <span className="text-white font-semibold">{safePage}</span>{' '}
+                    de{' '}
+                    <span className="text-white font-semibold">
+                      {totalPages}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={prevPage}
+                      disabled={safePage <= 1}
+                      className={cx(
+                        'inline-flex items-center gap-2 rounded-2xl px-4 py-2 font-semibold transition',
+                        safePage <= 1
+                          ? 'bg-white/5 text-white/30 ring-1 ring-white/10 cursor-not-allowed'
+                          : 'bg-white/5 hover:bg-white/10 text-white/80 hover:text-white ring-1 ring-white/10 hover:ring-white/20'
+                      )}
+                    >
+                      <FaChevronLeft />
+                      Anterior
+                    </button>
+
+                    <button
+                      onClick={nextPage}
+                      disabled={safePage >= totalPages}
+                      className={cx(
+                        'inline-flex items-center gap-2 rounded-2xl px-4 py-2 font-semibold transition',
+                        safePage >= totalPages
+                          ? 'bg-white/5 text-white/30 ring-1 ring-white/10 cursor-not-allowed'
+                          : 'bg-white/5 hover:bg-white/10 text-white/80 hover:text-white ring-1 ring-white/10 hover:ring-white/20'
+                      )}
+                    >
+                      Siguiente
+                      <FaChevronRight />
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Modal para abrir formulario de clase gratis */}
           <FormAltaConve
             isOpen={modalNewConve}
@@ -630,48 +909,10 @@ const AdmConveGet = () => {
           />
         </div>
       </div>
+
       <Footer />
     </>
   );
-};
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: '10px'
-  },
-  conveBox: {
-    border: '1px solid #ccc',
-    padding: '16px',
-    borderRadius: '8px',
-    boxSizing: 'border-box',
-    flex: '1 1 calc(33% - 20px)', // Ajusta el ancho para permitir más espacio entre cuadros
-    margin: '10px',
-    minWidth: '250px' // Ajusta el tamaño mínimo para que los cuadros no sean demasiado pequeños
-  },
-  button: {
-    margin: '10px 10px 0px 0px',
-    padding: '10px 20px',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    backgroundColor: '#007BFF',
-    color: 'white',
-    border: 'none',
-    fontSize: '14px'
-  },
-  // Media queries
-  '@media (max-width: 1200px)': {
-    conveBox: {
-      flex: '1 1 calc(50% - 20px)' // Dos columnas para pantallas medianas
-    }
-  },
-  '@media (max-width: 768px)': {
-    conveBox: {
-      flex: '1 1 calc(100% - 20px)' // Una columna para pantallas pequeñas
-    }
-  }
 };
 
 export default AdmConveGet;
