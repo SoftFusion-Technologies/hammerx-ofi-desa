@@ -1376,7 +1376,11 @@ const IntegranteConveGet = ({ integrantes }) => {
                       userLevel === 'administrador') &&
                       showFileUpload && (
                         <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-4">
-                          <FileUpload convenioId={id_conv} />
+                          <FileUpload
+                            convenioId={id_conv}
+                            monthStart={monthStart}
+                            onSuccess={() => fetchIntegrantesMes()}
+                          />
                         </div>
                       )}
                   </div>

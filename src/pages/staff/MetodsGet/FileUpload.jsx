@@ -33,7 +33,7 @@ const REQUIRED_HEADERS = [
   'userName'
 ];
 
-export default function FileUpload({ convenioId }) {
+export default function FileUpload({ convenioId, monthStart, onSuccess }) {
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | uploading | success | error
   const [message, setMessage] = useState('');
@@ -43,8 +43,15 @@ export default function FileUpload({ convenioId }) {
 
   const URL = useMemo(() => {
     if (!convenioId) return null;
-    return `${API_URL}/integrantesImport/import/${convenioId}`;
-  }, [convenioId]);
+
+    const qs = new URLSearchParams();
+    if (monthStart) qs.set('monthStart', monthStart); // 'YYYY-MM-01 00:00:00'
+
+    const q = qs.toString();
+    return `${API_URL}/integrantesImport/import/${convenioId}${
+      q ? `?${q}` : ''
+    }`;
+  }, [convenioId, monthStart]);
 
   const pickFile = () => inputRef.current?.click();
 
@@ -117,6 +124,10 @@ export default function FileUpload({ convenioId }) {
       setMessage(
         response?.data?.message || 'Importación realizada correctamente.'
       );
+      // NUEVO: refrescar listado en el padre
+      if (typeof onSuccess === 'function') {
+        await onSuccess(response?.data); // opcional pasar data
+      }
     } catch (error) {
       setStatus('error');
       setMessage(
