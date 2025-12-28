@@ -10,15 +10,17 @@
  * - Evitar “recargar la web”: refrescar estado + permitir callback al padre.
  *
  * Notas:
- * - El backend congela SOLO el “mes abierto” (último snapshot). Si estás viendo otro mes,
- *   se deshabilita el botón y se informa cuál es el mes abierto.
+ * - Antes el backend congelaba SOLO el “mes abierto” (último snapshot).
+ * - Ahora soporta también “catch-up”: congelar el mes inmediatamente anterior al abierto
+ *   para completar/mergear el mes abierto.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL =
+  import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 // Helpers
 const pad2 = (n) => String(n).padStart(2, '0');
@@ -36,6 +38,28 @@ const parseMonthStartLabel = (monthStart) => {
   if (!m) return '—';
   return `${m[2]}/${m[1]}`; // MM/YYYY
 };
+
+// Helpers de “clave de mes”
+const monthKey = (s) => (s ? String(s).slice(0, 7) : null); // 'YYYY-MM'
+
+const shiftMonthKey = (k, deltaMonths) => {
+  // k: 'YYYY-MM'
+  if (!k) return null;
+  const m = String(k).match(/^(\d{4})-(\d{2})$/);
+  if (!m) return null;
+
+  const y = Number(m[1]);
+  const mm = Number(m[2]); // 1..12
+  if (!Number.isFinite(y) || !Number.isFinite(mm)) return null;
+
+  const total = y * 12 + (mm - 1) + Number(deltaMonths || 0);
+  const ny = Math.floor(total / 12);
+  const nm = (total % 12) + 1;
+
+  return `${ny}-${pad2(nm)}`; // 'YYYY-MM'
+};
+
+const monthStartFromKey = (k) => (k ? `${k}-01 00:00:00` : null);
 
 const CongelarIntegrantes = ({
   id_conv,
@@ -120,11 +144,9 @@ const CongelarIntegrantes = ({
 
   const openMonth = metaLocal?.openMonth || null; // 'YYYY-MM-01 00:00:00'
   const isFrozen = !!metaLocal?.isFrozen;
-  const isOpenMonth = !!metaLocal?.isOpenMonth;
 
   const visibleLabel = parseMonthStartLabel(visibleMonthStart);
 
-  const monthKey = (s) => (s ? String(s).slice(0, 7) : null); // "2026-01"
   const monthLabel = (s) => {
     const k = monthKey(s);
     if (!k) return '—';
@@ -134,15 +156,23 @@ const CongelarIntegrantes = ({
 
   const openLabel = monthLabel(openMonth);
 
-  const canFreezeAction =
-    Number.isFinite(convenioIdNum) && convenioIdNum > 0 && isOpenMonth;
+  // ============================
+  // NUEVO: permitir también "catch-up"
+  // - visible == openMonth  -> modo normal
+  // - visible == openMonth-1 -> modo catch-up (completa el abierto)
+  // ============================
+  const openKey = monthKey(openMonth);
+  const visibleKey = monthKey(visibleMonthStart);
+  const prevOpenKey = shiftMonthKey(openKey, -1);
 
-  const parseMonthKeyLabel = (s) => {
-    if (!s) return '—';
-    const m = String(s).match(/^(\d{4})-(\d{2})/);
-    if (!m) return String(s);
-    return `${m[2]}/${m[1]}`; // MM/YYYY
-  };
+  const isVisibleOpen = !!openKey && !!visibleKey && openKey === visibleKey;
+  const isVisiblePrevOfOpen =
+    !!prevOpenKey && !!visibleKey && prevOpenKey === visibleKey;
+
+  const canFreezeAction =
+    Number.isFinite(convenioIdNum) &&
+    convenioIdNum > 0 &&
+    (isVisibleOpen || isVisiblePrevOfOpen);
 
   const safeStatusMessage = (err) => {
     const status = err?.response?.status;
@@ -157,10 +187,8 @@ const CongelarIntegrantes = ({
 
     // En tu backend, para 403 a veces viene openMonth/currentMonth
     if (status === 403) {
-      const om = data?.openMonth ? parseMonthKeyLabel(data.openMonth) : null;
-      const cm = data?.currentMonth
-        ? parseMonthKeyLabel(data.currentMonth)
-        : null;
+      const om = data?.openMonth ? monthLabel(data.openMonth) : null;
+      const cm = data?.currentMonth ? monthLabel(data.currentMonth) : null;
 
       if (om || cm) {
         return `${serverMsg}${om ? `\nMes abierto: ${om}` : ''}${
@@ -170,7 +198,6 @@ const CongelarIntegrantes = ({
     }
 
     if (status === 409) {
-      // Mes ya congelado o el mes siguiente ya existe
       return serverMsg;
     }
 
@@ -182,24 +209,39 @@ const CongelarIntegrantes = ({
       await Swal.fire({
         title: 'No disponible',
         text: openMonth
-          ? `Solo podés congelar el mes abierto (${openLabel}).`
+          ? `Solo podés congelar el mes abierto (${openLabel}) o el mes inmediatamente anterior.`
           : 'No se pudo determinar el mes abierto.',
         icon: 'info'
       });
       return;
     }
 
+    const isCatchUp = isVisiblePrevOfOpen;
+
     const confirm = await Swal.fire({
-      title: isFrozen ? 'Mes ya congelado' : 'Congelar mes abierto',
+      title: isFrozen
+        ? 'Mes ya congelado'
+        : isCatchUp
+        ? 'Completar mes abierto'
+        : 'Congelar mes abierto',
       html: isFrozen
-        ? `<div style="opacity:.9">El mes abierto (<b>${openLabel}</b>) ya está congelado.</div>`
+        ? `<div style="opacity:.9">El mes visible (<b>${visibleLabel}</b>) ya está congelado.</div>`
+        : isCatchUp
+        ? `<div style="opacity:.9">
+             Vas a congelar el mes <b>${visibleLabel}</b> (anterior al abierto).<br/>
+             El sistema <b>completará</b> el mes abierto <b>${openLabel}</b> con los integrantes faltantes (merge).
+           </div>`
         : `<div style="opacity:.9">
              Vas a congelar el mes abierto <b>${openLabel}</b>.<br/>
-             El sistema clonará integrantes al mes siguiente .
+             El sistema clonará integrantes al mes siguiente.
            </div>`,
       icon: isFrozen ? 'info' : 'warning',
       showCancelButton: true,
-      confirmButtonText: isFrozen ? 'Entendido' : 'Sí, congelar',
+      confirmButtonText: isFrozen
+        ? 'Entendido'
+        : isCatchUp
+        ? 'Sí, completar'
+        : 'Sí, congelar',
       cancelButtonText: 'Cancelar',
       reverseButtons: true,
       focusCancel: true,
@@ -220,14 +262,20 @@ const CongelarIntegrantes = ({
       });
 
       // POST /congelamientos/:convenio_id/congelar
-      // Enviamos vencimiento/openMonth por compatibilidad (si el backend lo usa).
+      // IMPORTANTE:
+      // - Antes se mandaba "openMonth".
+      // - Ahora se manda el MES QUE QUERÉS CONGELAR (el visible).
+      //   * Si visible == abierto -> modo normal.
+      //   * Si visible == abierto-1 -> catch-up (completa el mes abierto).
       await axios.post(`${API_URL}/congelamientos/${convenioIdNum}/congelar`, {
-        vencimiento: openMonth
+        vencimiento: visibleMonthStart
       });
 
       await Swal.fire({
         title: 'Listo',
-        text: `Mes abierto ${openLabel} congelado correctamente.`,
+        text: isCatchUp
+          ? `Mes ${visibleLabel} congelado. Mes abierto ${openLabel} completado correctamente.`
+          : `Mes abierto ${openLabel} congelado correctamente.`,
         icon: 'success',
         timer: 1900,
         showConfirmButton: false
@@ -262,6 +310,7 @@ const CongelarIntegrantes = ({
 
   const visibleFrozen = !!isFrozen; // isFrozen de meta del mes visible
 
+  // Nota: esto solo refleja congelado del mes visible; no del abierto si son distintos.
   const openFrozen =
     monthKey(openMonth) === monthKey(visibleMonthStart) ? visibleFrozen : false;
 
@@ -315,14 +364,22 @@ const CongelarIntegrantes = ({
         title={
           !canFreezeAction
             ? openMonth
-              ? `Solo se puede congelar el mes abierto (${openLabel}).`
+              ? `Solo se puede congelar el mes abierto (${openLabel}) o el mes inmediatamente anterior.`
               : 'Solo se puede congelar el mes abierto.'
             : isFrozen
             ? 'Este mes ya está congelado.'
+            : isVisiblePrevOfOpen
+            ? `Completar mes abierto (${openLabel}) congelando el mes anterior (${visibleLabel}).`
             : 'Congelar mes abierto'
         }
       >
-        {isFrozen ? 'Mes congelado' : loading ? 'Congelando…' : 'Congelar mes'}
+        {isFrozen
+          ? 'Mes congelado'
+          : loading
+          ? 'Congelando…'
+          : isVisiblePrevOfOpen
+          ? 'Completar mes'
+          : 'Congelar mes'}
       </button>
     </div>
   );

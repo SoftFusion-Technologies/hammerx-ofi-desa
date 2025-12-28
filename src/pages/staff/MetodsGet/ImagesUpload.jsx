@@ -9,7 +9,8 @@ import axios from 'axios';
 import { useAuth } from '../../../AuthContext';
 
 // Helpers
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE =
+  import.meta.env.VITE_API_URL || 'http://localhost:8080';
 const MAX_MB = 30;
 
 const monthLabelAR = (d) =>
@@ -50,10 +51,7 @@ export default function ImagesUpload({
   monthStart // string "YYYY-MM-01 00:00:00"
 }) {
   const { userLevel } = useAuth();
-  const canManage =
-    userLevel === 'admin' ||
-    userLevel === 'administrador' ||
-     userLevel === ''; ;
+  const canManage = userLevel === '';
 
   const fileInputRef = useRef(null);
 

@@ -37,7 +37,8 @@ import Footer from '../../../components/footer/Footer';
 import FormAltaConve from '../../../components/Forms/FormAltaConve';
 import { useAuth } from '../../../AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL =
+  import.meta.env.VITE_API_URL || 'http://localhost:8080';
 const URL = `${API_URL}/admconvenios/`;
 
 const Toast = Swal.mixin({
@@ -322,7 +323,11 @@ const AdmConveGet = () => {
   }, [conveArchivados, search]);
 
   const mostrarResultados = useMemo(() => {
-    if (!filterSede || filterSede === '' || filterSede === 'Todas las sedes') {
+    if (
+      !filterSede ||
+      filterSede === '' ||
+      filterSede === 'Selecciona un convenio'
+    ) {
       // Principal: solo sin agrupador
       return results.filter((c) => !c.agrupador || c.agrupador.trim() === '');
     }
@@ -619,7 +624,7 @@ const AdmConveGet = () => {
                     >
                       {isAdmin && (
                         <option className="bg-zinc-950 text-white" value="">
-                          Todas las sedes
+                          Selecciona un convenio
                         </option>
                       )}
 

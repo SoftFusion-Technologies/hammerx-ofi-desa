@@ -54,7 +54,9 @@ const FormAltaIntegranteConve = ({
   setSelectedUser,
   precio_concep,
   descuento_concep,
-  preciofinal_concep
+  preciofinal_concep,
+  monthStart,
+  permiteFec
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [errorModal, setErrorModal] = useState(false);
@@ -82,7 +84,9 @@ const FormAltaIntegranteConve = ({
         setLoadingSedesCiudad(true);
         setErrorSedesCiudad(null);
 
-        const resp = await fetch(`http://localhost:8080/sedes/ciudad`);
+        const resp = await fetch(
+          `http://localhost:8080/sedes/ciudad`
+        );
         if (!resp.ok) throw new Error(`Error sedes: ${resp.status}`);
         const data = await resp.json();
 
@@ -241,7 +245,7 @@ const FormAltaIntegranteConve = ({
     sedesCiudad
   ]);
   // Benjamin Orellana 26-12-2025 - FIN
-  
+
   const handleClose = () => {
     if (formikRef.current) {
       formikRef.current.resetForm();
@@ -265,46 +269,68 @@ const FormAltaIntegranteConve = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  // Submit (alta/edición) Integrante Convenio
+  // - En POST envía monthStart (mes seleccionado) para que el backend cree en ese mes cuando permiteFec=1.
+  // - En PUT NO lo envía (por defecto), para no cambiar mes de un registro existente salvo que lo habilites.
+
   const handleSubmitIntegrante = async (valores) => {
     try {
-      const url = integrante
+      const isEdit = Boolean(integrante && integrante.id);
+
+      const url = isEdit
         ? `http://localhost:8080/integrantes/${integrante.id}`
         : 'http://localhost:8080/integrantes/';
-      const method = integrante ? 'PUT' : 'POST';
+
+      const method = isEdit ? 'PUT' : 'POST';
+
+      // En ALTA: si permiteFec=1, mandamos monthStart al backend
+      const bodyPayload = {
+        ...valores,
+        ...(!isEdit && String(permiteFec) === '1' && monthStart
+          ? { monthStart }
+          : {})
+      };
+
+      console.log('[Integrantes] submit payload:', {
+        method,
+        url,
+        bodyPayload
+      });
 
       const respuesta = await fetch(url, {
         method,
-        body: JSON.stringify({ ...valores }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        body: JSON.stringify(bodyPayload),
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      if (method === 'PUT') {
-        setTextoModal('Integrante actualizado correctamente.');
-      } else {
-        setTextoModal('Integrante creado correctamente.');
-      }
-
       if (!respuesta.ok) {
-        throw new Error(`Error en la solicitud ${method}: ${respuesta.status}`);
+        let msg = `Error en la solicitud ${method}: ${respuesta.status}`;
+        try {
+          const errData = await respuesta.json();
+          if (errData?.mensajeError) msg = errData.mensajeError;
+          else if (errData?.message) msg = errData.message;
+        } catch {}
+        throw new Error(msg);
       }
 
       const data = await respuesta.json();
       console.log('Registro procesado correctamente:', data);
 
+      setTextoModal(
+        isEdit
+          ? 'Integrante actualizado correctamente.'
+          : 'Integrante creado correctamente.'
+      );
+
       setShowModal(true);
-      setTimeout(() => {
-        setShowModal(false);
-      }, 2700);
+      setTimeout(() => setShowModal(false), 2700);
     } catch (error) {
       console.error('Error al insertar/actualizar el registro:', error.message);
       setErrorModal(true);
-      setTimeout(() => {
-        setErrorModal(false);
-      }, 2700);
+      setTimeout(() => setErrorModal(false), 2700);
     }
   };
+
   const normTxt = (v) =>
     String(v || '')
       .trim()

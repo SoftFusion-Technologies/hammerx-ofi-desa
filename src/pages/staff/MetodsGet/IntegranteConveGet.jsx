@@ -100,7 +100,8 @@ const IntegranteConveGet = ({ integrantes }) => {
   // Estado para almacenar el término de búsqueda
   const [search, setSearch] = useState('');
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+  const API_URL =
+    import.meta.env.VITE_API_URL || 'http://localhost:8080';
   const URL = 'http://localhost:8080/integrantes/';
   const URL2 = `http://localhost:8080/admconvenios/${id_conv}/integrantes/`;
   // para recuperar los valores de precio INI
@@ -856,10 +857,37 @@ const IntegranteConveGet = ({ integrantes }) => {
     }
   };
 
+  const normalize = (s) =>
+    String(s ?? '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // saca tildes
+      .trim();
+
   const registrosFiltrados = useMemo(() => {
     const list = Array.isArray(integrante) ? integrante : [];
-    return list.filter((it) => monthKey(it.fechaCreacion) === currentMonthKey);
-  }, [integrante, currentMonthKey]);
+
+    const q = normalize(search);
+    const monthFiltered = list.filter(
+      (it) => monthKey(it.fechaCreacion) === currentMonthKey
+    );
+
+    if (!q) return monthFiltered;
+
+    return monthFiltered.filter((it) => {
+      const nombre = normalize(it?.nombre);
+      const dni = normalize(it?.dni);
+      const email = normalize(it?.email);
+      const tel = normalize(it?.telefono);
+
+      return (
+        nombre.includes(q) ||
+        dni.includes(q) ||
+        email.includes(q) ||
+        tel.includes(q)
+      );
+    });
+  }, [integrante, currentMonthKey, search]);
 
   const fmtARDateTime = (v) => {
     const d = toDateSafe(v);
@@ -2006,6 +2034,8 @@ const IntegranteConveGet = ({ integrantes }) => {
               precio_concep={precio_concep}
               descuento_concep={descuento_concep}
               preciofinal_concep={preciofinal_concep}
+              monthStart={monthCursor}
+              permiteFec={permiteFec}
             />
           </div>
         </div>
