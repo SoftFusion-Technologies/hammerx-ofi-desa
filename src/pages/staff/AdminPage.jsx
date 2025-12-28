@@ -315,12 +315,53 @@ const AdminPage = () => {
     autoOpenedConveniosInbox
   ]);
 
+  const safeJson = (s) => {
+    try {
+      if (!s) return null;
+      if (typeof s === 'object') return s;
+      return JSON.parse(String(s));
+    } catch {
+      return null;
+    }
+  };
+
+  const getTipoAccion = (it) =>
+    String(it?.tipo ?? it?.accion_tipo ?? '').trim();
+
+  const getMetaAccion = (it) => safeJson(it?.meta_json ?? it?.metadata_json);
+
+  const marcarChatLeido = async (item) => {
+    const tipo = getTipoAccion(item);
+    if (tipo !== 'CHAT_MENSAJE') return;
+
+    const meta = getMetaAccion(item);
+    const lastMessageId = Number(meta?.last_message_id || 0);
+    if (!lastMessageId) return;
+
+    // Registrar lectura del último mensaje (idempotente por UNIQUE)
+    await axios.post(
+      `${API_URL}/convenio-chat/messages/${lastMessageId}/read`,
+      {
+        // Enviamos ambas convenciones para compatibilidad con tu backend
+        reader_user_id: userId,
+        reader_user_name: nomyape,
+        user_id: userId,
+        user_name: nomyape
+      }
+    );
+  };
+
   const marcarAccionLeida = async (item) => {
     try {
+      // 1) Si es chat, registrar lectura del último mensaje
+      await marcarChatLeido(item);
+
+      // 2) Marcar leída la acción mensual
       await axios.patch(`${API_URL}/convenios-mes-acciones/${item.id}/leido`, {
         user_id: userId,
         user_name: nomyape
       });
+
       setConveniosPendientes((prev) => prev.filter((x) => x.id !== item.id));
       window.dispatchEvent(new Event('convenios-mes-acciones-updated'));
     } catch (e) {
@@ -332,16 +373,30 @@ const AdminPage = () => {
     if (!conveniosPendientes.length) return;
 
     try {
-      await Promise.all(
-        conveniosPendientes.map((it) =>
-          axios.patch(`${API_URL}/convenios-mes-acciones/${it.id}/leido`, {
-            user_id: userId,
-            user_name: nomyape
-          })
-        )
+      const results = await Promise.all(
+        conveniosPendientes.map(async (it) => {
+          try {
+            await marcarChatLeido(it);
+
+            await axios.patch(
+              `${API_URL}/convenios-mes-acciones/${it.id}/leido`,
+              {
+                user_id: userId,
+                user_name: nomyape
+              }
+            );
+
+            return { id: it.id, ok: true };
+          } catch (err) {
+            console.error('marcarTodasLeidas item error:', it?.id, err);
+            return { id: it.id, ok: false };
+          }
+        })
       );
 
-      setConveniosPendientes([]);
+      const okIds = new Set(results.filter((r) => r.ok).map((r) => r.id));
+      setConveniosPendientes((prev) => prev.filter((x) => !okIds.has(x.id)));
+
       window.dispatchEvent(new Event('convenios-mes-acciones-updated'));
     } catch (e) {
       console.error('marcarTodasLeidas error:', e);
@@ -400,23 +455,22 @@ const AdminPage = () => {
                     {nivelLabel}
                   </p>
                 </div>
-                {isAdmin ||
-                  (isVendedor && conveniosPendientes.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setModalConveniosInboxOpen(true)}
-                      className="relative rounded-2xl border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-md
+                {conveniosPendientes.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setModalConveniosInboxOpen(true)}
+                    className="relative rounded-2xl border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-md
                hover:bg-white/15 transition text-left"
-                      title="Ver pendientes de convenios"
-                    >
-                      <p className="text-[11px] uppercase tracking-wide text-slate-200/70">
-                        Pendientes Convenios
-                      </p>
-                      <p className="text-sm font-semibold text-white">
-                        {conveniosPendientes.length}
-                      </p>
-                    </button>
-                  ))}
+                    title="Ver pendientes de convenios"
+                  >
+                    <p className="text-[11px] uppercase tracking-wide text-slate-200/70">
+                      Pendientes Convenios
+                    </p>
+                    <p className="text-sm font-semibold text-white">
+                      {conveniosPendientes.length}
+                    </p>
+                  </button>
+                )}
               </motion.div>
             </div>
 
@@ -426,31 +480,52 @@ const AdminPage = () => {
               const showConvenios = isAdmin || isVendedor;
               const showQuejas = !isImagenes;
               const showPilates = (isAdmin || isVendedor) && !isImagenes;
-              const showGestion = showForo || showConvenios || showQuejas || showPilates;
+              const showGestion =
+                showForo || showConvenios || showQuejas || showPilates;
 
               const showVentas = (isAdmin || isVendedor) && !isImagenes;
               const showLeads = isAdmin || isVendedor;
               const showRecaptacion = (isAdmin || isVendedor) && !isImagenes;
               const showRemarketing = !isImagenes;
-              const showContactos = showVentas || showLeads || showRecaptacion || showRemarketing;
+              const showContactos =
+                showVentas || showLeads || showRecaptacion || showRemarketing;
 
               const showPreguntale = true;
               const showInstructores = isAdmin || isInstructor;
               const showEstadisticas = isAdmin || isInstructor;
               const showImagenesTile = isImagenes;
-              const showOtros = showPreguntale || showInstructores || showEstadisticas || showImagenesTile;
+              const showOtros =
+                showPreguntale ||
+                showInstructores ||
+                showEstadisticas ||
+                showImagenesTile;
 
-              const visibleCols = [showGestion, showContactos, showOtros].filter(Boolean).length;
-              const lgColsClass = visibleCols === 3 ? 'lg:grid-cols-3' : visibleCols === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-1';
+              const visibleCols = [
+                showGestion,
+                showContactos,
+                showOtros
+              ].filter(Boolean).length;
+              const lgColsClass =
+                visibleCols === 3
+                  ? 'lg:grid-cols-3'
+                  : visibleCols === 2
+                  ? 'lg:grid-cols-2'
+                  : 'lg:grid-cols-1';
 
               return (
-                <div className={`grid grid-cols-1 ${lgColsClass} gap-8 items-start`}>
+                <div
+                  className={`grid grid-cols-1 ${lgColsClass} gap-8 items-start`}
+                >
                   {/* === COLUMNA 1: GESTIÓN === */}
                   {showGestion && (
                     <div className="flex flex-col gap-5 w-full">
                       <div className="pb-2 border-b border-orange-500/30 mb-2">
-                        <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">GESTIÓN</h2>
-                        <p className="text-xs text-slate-300  font-semibold">Administración y novedades</p>
+                        <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">
+                          GESTIÓN
+                        </h2>
+                        <p className="text-xs text-slate-300  font-semibold">
+                          Administración y novedades
+                        </p>
                       </div>
 
                       {showForo && (
@@ -506,8 +581,12 @@ const AdminPage = () => {
                   {showContactos && (
                     <div className="flex flex-col gap-5 w-full">
                       <div className="pb-2 border-b border-orange-500/30 mb-2">
-                        <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">CONTACTOS</h2>
-                        <p className="text-xs text-slate-300 font-semibold">Ventas y seguimiento</p>
+                        <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">
+                          CONTACTOS
+                        </h2>
+                        <p className="text-xs text-slate-300 font-semibold">
+                          Ventas y seguimiento
+                        </p>
                       </div>
 
                       {showVentas && (
@@ -533,7 +612,7 @@ const AdminPage = () => {
                           description="Gestioná leads, prospectos y oportunidades comerciales."
                           to="/dashboard/testclass"
                           icon={ClipboardList}
-                          delay={0.20}
+                          delay={0.2}
                         />
                       )}
 
@@ -570,8 +649,12 @@ const AdminPage = () => {
                   {showOtros && (
                     <div className="flex flex-col gap-5 w-full">
                       <div className="pb-2 border-b border-orange-500/30 mb-2">
-                        <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">OTROS</h2>
-                        <p className="text-xs text-slate-300 font-semibold">Herramientas y soporte</p>
+                        <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">
+                          OTROS
+                        </h2>
+                        <p className="text-xs text-slate-300 font-semibold">
+                          Herramientas y soporte
+                        </p>
                       </div>
 
                       <DashboardTile
@@ -598,7 +681,7 @@ const AdminPage = () => {
                           description="Visualizá estadísticas de los instructores de HammerX."
                           to="/dashboard/estadisticas"
                           icon={BarChart2}
-                          delay={0.30}
+                          delay={0.3}
                         />
                       )}
 

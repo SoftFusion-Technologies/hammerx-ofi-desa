@@ -38,6 +38,8 @@ import FileUpload from './FileUpload.jsx';
 import FechasConvenios from './Novedad/FechasConvenios.jsx';
 import CongelarIntegrantes from './Integrantes/CongelarIntegrantes';
 import IntegranteNotasModal from '../Components/IntegranteNotasModal.jsx';
+import ConvenioChatWidget from '../Components/ConvenioChatWidget.jsx';
+
 import Swal from 'sweetalert2';
 import {
   FaFilePdf,
@@ -52,7 +54,7 @@ const IntegranteConveGet = ({ integrantes }) => {
   const [integrante, setIntegrantes] = useState([]);
   const [modalNewIntegrante, setModalNewIntegrant] = useState(false);
   const [totalPrecioFinal, setTotalPrecioFinal] = useState(0);
-  const { userLevel, userName } = useAuth();
+  const { userLevel, userName, userId, authToken } = useAuth();
 
   // Estado para tomar los nombres de los convenios
   const [convenioNombre, setConvenioNombre] = useState('');
@@ -100,8 +102,7 @@ const IntegranteConveGet = ({ integrantes }) => {
   // Estado para almacenar el término de búsqueda
   const [search, setSearch] = useState('');
 
-  const API_URL =
-    import.meta.env.VITE_API_URL || 'http://localhost:8080';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
   const URL = 'http://localhost:8080/integrantes/';
   const URL2 = `http://localhost:8080/admconvenios/${id_conv}/integrantes/`;
   // para recuperar los valores de precio INI
@@ -1266,6 +1267,17 @@ const IntegranteConveGet = ({ integrantes }) => {
                     </div>
                   )}
                 </div>
+
+                <ConvenioChatWidget
+                  convenioId={Number(id_conv)}
+                  monthStart={selectedMonth}
+                  apiBaseUrl={API_URL}
+                  authToken={authToken}
+                  userLevel={userLevel}
+                  userName={userName}
+                  userId={userId}
+                  convenioNombre={convenioNombre}
+                />
 
                 {/* Mensaje de error / loading (mes) */}
                 {loadingMes && (

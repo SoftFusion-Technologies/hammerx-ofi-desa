@@ -1,6 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle2, X, Search, FileText, Check } from 'lucide-react';
+import {
+  CheckCircle2,
+  X,
+  Search,
+  FileText,
+  Check,
+  MessageSquare
+} from 'lucide-react';
 
 const fmtARDateTime = (v) => {
   if (!v) return '—';
@@ -15,10 +22,18 @@ const fmtARDateTime = (v) => {
   });
 };
 
+// Evita problemas de timezone para el label del mes (no uses Date acá)
+const fmtMonthStartLabel = (monthStart) => {
+  const s = String(monthStart || '').trim();
+  const m = s.match(/^(\d{4})-(\d{2})-01/);
+  if (!m) return '—';
+  return `${m[2]}/${m[1]}`;
+};
+
 const safeJson = (s) => {
   try {
     if (!s) return null;
-    if (typeof s === 'object') return s; // por si ya viene parseado
+    if (typeof s === 'object') return s;
     return JSON.parse(String(s));
   } catch {
     return null;
@@ -28,14 +43,21 @@ const safeJson = (s) => {
 const badgeBase =
   'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold';
 
+const humanTipo = (t) => {
+  const v = String(t || '').trim();
+  if (!v) return 'ACCION';
+  return v.replaceAll('_', ' ');
+};
+
 export default function ConveniosAccionesInboxModal({
   isOpen,
   onClose,
   items = [],
   loading = false,
-  onMarkRead,
-  onMarkAllRead,
+  onMarkRead, // (it) => Promise
+  onMarkAllRead, // () => Promise
   onGoConvenios,
+  onOpenChat, // opcional: (it) => void
   userId,
   nomyape
 }) {
@@ -48,15 +70,19 @@ export default function ConveniosAccionesInboxModal({
     if (!s) return items;
 
     return items.filter((it) => {
-      const meta = safeJson(it?.metadata_json);
+      const meta = safeJson(it?.meta_json ?? it?.metadata_json);
+      const tipo = it?.tipo ?? it?.accion_tipo;
+      const monthStart = it?.monthStart ?? it?.month_start;
+
       const blob = [
         it?.descripcion,
-        it?.accion_tipo,
-        it?.month_start,
-        meta?.mes_label,
-        meta?.convenio_nombre,
+        tipo,
+        monthStart,
+        it?.convenio_nombre,
         String(it?.convenio_id ?? ''),
-        String(it?.id ?? '')
+        String(it?.id ?? ''),
+        meta?.mes_label,
+        meta?.convenio_nombre
       ]
         .filter(Boolean)
         .join(' ')
@@ -100,7 +126,7 @@ export default function ConveniosAccionesInboxModal({
 
                     <div>
                       <div className="text-[11px] uppercase tracking-[0.18em] text-white/55">
-                        Reportes y cierre
+                        Reportes y chat
                       </div>
                       <div className="mt-1 flex items-center gap-2">
                         <h3 className="text-white font-bignoodle text-2xl tracking-widest">
@@ -111,8 +137,8 @@ export default function ConveniosAccionesInboxModal({
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-white/55 max-w-2xl">
-                        Revisá los cierres mensuales (“Finalicé listado”), marcá
-                        como leído y llevá control de lo que ya fue comunicado.
+                        Acciones mensuales y mensajes de convenios. Podés marcar
+                        leído y abrir el chat cuando corresponda.
                       </p>
                     </div>
                   </div>
@@ -183,19 +209,29 @@ export default function ConveniosAccionesInboxModal({
                 ) : (
                   <div className="grid grid-cols-1 gap-3">
                     {filtered.map((it) => {
-                      const meta = safeJson(it?.metadata_json);
+                      const meta = safeJson(it?.meta_json ?? it?.metadata_json);
+                      const tipo = it?.tipo ?? it?.accion_tipo;
+                      const monthStart = it?.monthStart ?? it?.month_start;
+
                       const convenioNombre =
+                        it?.convenio_nombre ||
                         meta?.convenio_nombre ||
                         `Convenio #${it?.convenio_id ?? '—'}`;
+
                       const mesLabel =
-                        meta?.mes_label || it?.month_start || '—';
-                      const confirmadoEn =
-                        meta?.confirmado_en || it?.created_at || it?.updated_at;
+                        meta?.mes_label || fmtMonthStartLabel(monthStart);
+
+                      const confirmadoEn = it?.created_at || it?.updated_at;
+
+                      const isChat = String(tipo) === 'CHAT_MENSAJE';
+                      const lastMessageId = meta?.last_message_id ?? null;
 
                       return (
                         <div
                           key={it?.id}
-                          className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4"
+                          className={`relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4 ${
+                            it?.leido ? 'opacity-70' : ''
+                          }`}
                         >
                           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-orange-500/8 via-transparent to-emerald-500/8" />
 
@@ -205,10 +241,18 @@ export default function ConveniosAccionesInboxModal({
                                 <span
                                   className={`${badgeBase} bg-orange-500/15 border-orange-400/20 text-orange-200`}
                                 >
-                                  {String(
-                                    it?.accion_tipo || 'ACCION'
-                                  ).replaceAll('_', ' ')}
+                                  {humanTipo(tipo)}
                                 </span>
+
+                                {isChat && (
+                                  <span
+                                    className={`${badgeBase} bg-emerald-500/12 border-emerald-400/20 text-emerald-200`}
+                                  >
+                                    <MessageSquare className="h-3.5 w-3.5" />
+                                    CHAT
+                                  </span>
+                                )}
+
                                 <span
                                   className={`${badgeBase} bg-white/10 border-white/15 text-white/70`}
                                 >
@@ -232,11 +276,26 @@ export default function ConveniosAccionesInboxModal({
 
                               <div className="mt-2 text-xs text-white/45">
                                 ID #{it?.id} · Convenio #{it?.convenio_id} · Mes{' '}
-                                {it?.month_start || '—'}
+                                {monthStart || '—'}
+                                {isChat && lastMessageId
+                                  ? ` · Último mensaje #${lastMessageId}`
+                                  : ''}
                               </div>
                             </div>
 
                             <div className="flex items-center gap-2">
+                              {isChat && typeof onOpenChat === 'function' && (
+                                <button
+                                  type="button"
+                                  onClick={() => onOpenChat(it)}
+                                  className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold
+                                             bg-white/10 hover:bg-white/15 text-white border border-white/15 transition"
+                                >
+                                  <MessageSquare className="h-4 w-4" />
+                                  Abrir chat
+                                </button>
+                              )}
+
                               <button
                                 type="button"
                                 onClick={() => onMarkRead?.(it)}
