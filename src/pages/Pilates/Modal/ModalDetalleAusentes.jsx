@@ -8,7 +8,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../AuthContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import {
+  FaEdit,
+  FaTrash,
+  FaFacebookF,
+  FaWhatsapp,
+  FaInstagram,
+  FaLinkedinIn
+} from 'react-icons/fa';
 import {
   cargarHistorial,
   handleEditarHistorial,
@@ -524,7 +531,43 @@ const ModalDetalleAusentes = ({
         </div>
 
         {/* FOOTER */}
-        <div className="bg-gray-50 px-6 py-3 border-t flex justify-end shrink-0">
+        <div className="bg-gray-50 px-6 py-3 border-t flex justify-between items-center shrink-0">
+          {/* Soft Fusion Info */}
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-gray-400">
+                Diseñado y desarrollado por{' '}
+                <span className="font-bold text-pink-600">Soft Fusion</span>
+              </span>
+              <div className="flex items-center gap-3 mt-1">
+                <a
+                  href="https://www.facebook.com/profile.php?id=61551009572957&mibextid=wwXIfr&rdid=i9TyFp5jNmBtdYT8&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1JAMUqUEaQ%2F%3Fmibextid%3DwwXIfr#"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-gray-400 hover:text-blue-600 transition"
+                >
+                  <FaFacebookF size={14} />
+                </a>
+                <a
+                  href="https://api.whatsapp.com/send/?phone=5493815430503&text&type=phone_number&app_absent=0"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-gray-400 hover:text-green-500 transition"
+                >
+                  <FaWhatsapp size={14} />
+                </a>
+                <a
+                  href="https://www.instagram.com/softfusiontechnologies/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-gray-400 hover:text-pink-500 transition"
+                >
+                  <FaInstagram size={14} />
+                </a>
+              </div>
+            </div>
+          </div>
+
           <button
             onClick={onClose}
             className="px-6 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-red-50 shadow-sm transition"

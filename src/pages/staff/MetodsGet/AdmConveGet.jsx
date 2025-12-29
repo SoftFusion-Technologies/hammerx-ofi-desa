@@ -131,7 +131,9 @@ const AdmConveGet = () => {
 
   // Estado para almacenar el término de búsqueda
   const [search, setSearch] = useState('');
-  const [filterSede, setFilterSede] = useState('');
+  const [filterSede, setFilterSede] = useState(
+    () => sessionStorage.getItem('admConveFilterSede') || ''
+  );
 
   const [loading, setLoading] = useState(true);
 
@@ -292,6 +294,7 @@ const AdmConveGet = () => {
     // Si viene plano, lo normalizamos.
     const value = newValue.includes(':') ? newValue : normalizeSede(newValue);
     setFilterSede(value);
+    sessionStorage.setItem('admConveFilterSede', value);
   };
 
   useEffect(() => {
