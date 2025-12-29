@@ -5,13 +5,16 @@ Descripción: Componente ModalDetalleAusentes para gestionar alumnos ausentes en
 */
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../../AuthContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import Swal from 'sweetalert2';
-
-const API_BASE_URL = 'http://localhost:8080';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+import {
+  cargarHistorial,
+  handleEditarHistorial,
+  handleEliminarHistorial,
+  handleGuardarObservacion
+} from '../Logic/PilatesGestion/HistorialContactosAusentes';
 
 const ModalDetalleAusentes = ({
   isOpen,
@@ -50,87 +53,16 @@ const ModalDetalleAusentes = ({
   // 2. CARGAR HISTORIAL AL SELECCIONAR UN ALUMNO
   useEffect(() => {
     if (alumnoSeleccionado) {
-      cargarHistorial(alumnoSeleccionado.id);
+      cargarHistorial(
+        alumnoSeleccionado.id,
+        setLoadingHistorial,
+        setHistorialSeleccionado
+      );
     } else {
       setAlumnoSeleccionado(null);
       setHistorialSeleccionado([]);
     }
   }, [alumnoSeleccionado]);
-
-  // --- PETICIONES API ---
-  const cargarHistorial = async (idAlumno) => {
-    setLoadingHistorial(true);
-    try {
-      // GET /pilates/historial-contactos/:id
-      const response = await axios.get(
-        `${API_BASE_URL}/pilates/historial-contactos/${idAlumno}`
-      );
-      setHistorialSeleccionado(response.data);
-    } catch (err) {
-      console.error('Error cargando historial:', err);
-      alert('Error al cargar el historial del alumno.');
-    } finally {
-      setLoadingHistorial(false);
-    }
-  };
-
-  // Guardar nueva observación
-  const handleGuardarObservacion = async () => {
-    if (!nuevaObservacion.trim()) {
-      return Swal.fire({
-        icon: 'warning',
-        title: 'Campo vacío',
-        text: 'Por favor, escribe una observación antes de guardar.',
-        confirmButtonColor: '#3085d6'
-      });
-    }
-
-    // 1. Pregunta de confirmación
-    const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: 'Se agregará esta observación al historial de contacto del alumno.',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#3b82f6', // Azul acorde a tu UI
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, guardar contacto',
-      cancelButtonText: 'Cancelar'
-    });
-
-    // Si el usuario confirma, procedemos con el POST
-    if (result.isConfirmed) {
-      try {
-        await axios.post(`${API_BASE_URL}/pilates/historial-contactos`, {
-          id_cliente: Number(alumnoSeleccionado.id),
-          id_usuario: Number(userId),
-          observacion: nuevaObservacion.trim().toUpperCase(),
-          contacto_realizado: String(alumnoSeleccionado.racha_actual)
-        });
-
-        // 2. Mensaje de éxito
-        await Swal.fire({
-          icon: 'success',
-          title: '¡Guardado!',
-          text: 'La observación se ha guardado exitosamente.',
-          timer: 2000,
-          showConfirmButton: false
-        });
-
-        setNuevaObservacion('');
-        await cargarHistorial(alumnoSeleccionado.id);
-        refetchAusentesData();
-      } catch (err) {
-        console.error('Error guardando:', err);
-
-        // 3. Mensaje de error
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'No se pudo guardar la observación. Inténtalo de nuevo.'
-        });
-      }
-    }
-  };
 
   // --- LÓGICA DE FILTRADO ---
   const alumnosFiltrados = ausentesData.filter((alumno) => {
@@ -224,30 +156,47 @@ const ModalDetalleAusentes = ({
                       setPaginaActual(1);
                     }}
                   />
-                  {/* <div className="flex gap-2">
-                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => {
+                        setFiltroEstado('TODOS');
+                        setPaginaActual(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition shadow-sm ${
+                        filtroEstado === 'TODOS'
+                          ? 'bg-orange-500 text-white hover:bg-orange-600'
+                          : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
                       Todos
                     </button>
-                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
-                      🔴 No contactados
+                    <button
+                      onClick={() => {
+                        setFiltroEstado('ROJO');
+                        setPaginaActual(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition shadow-sm ${
+                        filtroEstado === 'ROJO'
+                          ? 'bg-red-500 text-white hover:bg-red-600'
+                          : 'bg-white text-gray-600 border border-gray-300 hover:bg-red-50'
+                      }`}
+                    >
+                      {filtroEstado != "ROJO" && "🔴"} No contactados
                     </button>
-                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
-                      🟢 Contactados
+                    <button
+                      onClick={() => {
+                        setFiltroEstado('VERDE');
+                        setPaginaActual(1);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition shadow-sm ${
+                        filtroEstado === 'VERDE'
+                          ? 'bg-green-500 text-white hover:bg-green-600'
+                          : 'bg-white text-gray-600 border border-gray-300 hover:bg-green-50'
+                      }`}
+                    >
+                      {filtroEstado != "VERDE" && "🟢"} Contactados
                     </button>
-                  </div> */}
-
-                  <select
-                    className="block w-full sm:w-48 pl-3 pr-8 py-2 border-gray-300 rounded-lg border bg-white focus:outline-none"
-                    value={filtroEstado}
-                    onChange={(e) => {
-                      setFiltroEstado(e.target.value);
-                      setPaginaActual(1);
-                    }}
-                  >
-                    <option value="TODOS">Todos los Estados</option>
-                    <option value="ROJO">🔴 No contactados</option>
-                    <option value="VERDE">🟢 Contactados</option>
-                  </select>
+                  </div>
                 </div>
                 <div className="text-sm text-gray-500 font-medium whitespace-nowrap">
                   Mostrando{' '}
@@ -290,8 +239,8 @@ const ModalDetalleAusentes = ({
                           key={alumno.id}
                           className={`hover:bg-opacity-80 transition duration-150 ${
                             alumno.estado_visual === 'ROJO'
-                              ? 'bg-red-50'
-                              : 'bg-green-50'
+                              ? '!bg-red-100'
+                              : '!bg-green-100'
                           }`}
                           onClick={() => setAlumnoSeleccionado(alumno)}
                         >
@@ -490,8 +439,39 @@ const ModalDetalleAusentes = ({
                                 {item.usuario?.apellido}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 shadow-sm mt-1">
-                              "{item.observacion}"
+                            <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 shadow-sm mt-1 flex justify-between items-start">
+                              <span className="flex-1">"{item.observacion}"</span>
+                              <div className="flex gap-2 ml-2">
+                                <button
+                                  onClick={() =>
+                                    handleEditarHistorial(
+                                      item,
+                                      alumnoSeleccionado,
+                                      setLoadingHistorial,
+                                      setHistorialSeleccionado
+                                    )
+                                  }
+                                  className="text-blue-500 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition"
+                                  title="Editar observación"
+                                >
+                                  <FaEdit size={16} />
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleEliminarHistorial(
+                                      item.id,
+                                      alumnoSeleccionado,
+                                      setLoadingHistorial,
+                                      setHistorialSeleccionado,
+                                      refetchAusentesData,
+                                    )
+                                  }
+                                  className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition"
+                                  title="Eliminar observación"
+                                >
+                                  <FaTrash size={16} />
+                                </button>
+                              </div>
                             </div>
                           </li>
                         ))}
@@ -520,7 +500,17 @@ const ModalDetalleAusentes = ({
                         Cancelar
                       </button>
                       <button
-                        onClick={handleGuardarObservacion}
+                        onClick={() =>
+                          handleGuardarObservacion(
+                            nuevaObservacion,
+                            alumnoSeleccionado,
+                            userId,
+                            setNuevaObservacion,
+                            refetchAusentesData,
+                            setLoadingHistorial,
+                            setHistorialSeleccionado
+                          )
+                        }
                         className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-lg shadow-md text-sm"
                       >
                         Guardar contacto
