@@ -39,7 +39,7 @@ import FechasConvenios from './Novedad/FechasConvenios.jsx';
 import CongelarIntegrantes from './Integrantes/CongelarIntegrantes';
 import IntegranteNotasModal from '../Components/IntegranteNotasModal.jsx';
 import ConvenioChatWidget from '../Components/ConvenioChatWidget.jsx';
-
+import DescripcionModal from './Components/DescripcionModal.jsx';
 import Swal from 'sweetalert2';
 import {
   FaFilePdf,
@@ -82,6 +82,12 @@ const IntegranteConveGet = ({ integrantes }) => {
 
   const [accionFinalizar, setAccionFinalizar] = useState(null); // registro de la acción del mes
   const [loadingFinalizar, setLoadingFinalizar] = useState(false);
+
+  // Modal Importación Masiva
+  const [modalImportOpen, setModalImportOpen] = useState(false);
+
+  const abrirModalImportacion = () => setModalImportOpen(true);
+  const cerrarModalImportacion = () => setModalImportOpen(false);
 
   const abrirModal = () => {
     setModalNewIntegrant(true);
@@ -1172,6 +1178,43 @@ const IntegranteConveGet = ({ integrantes }) => {
 
     setTotalPrecioFinal(total);
   }, [integrante]);
+
+  // Banderas para manejar la visualización de las columnas Descripción
+  // Agregado por Benjamín Orellana 29-12-2025
+  const canSeeConvenio =
+    userLevel === 'admin' || userLevel === '' || userLevel === 'administrador';
+
+  const canSeeUsuario =
+    userLevel === 'admin' ||
+    userLevel === 'gerente' ||
+    userLevel === 'vendedor' ||
+    userLevel === 'administrador';
+
+  const showTwoCols = canSeeConvenio && canSeeUsuario;
+
+  const [modal, setModal] = useState({
+    open: false,
+    title: '',
+    html: ''
+  });
+
+  const openModal = ({ title, html }) => setModal({ open: true, title, html });
+
+  const closeModal = () => setModal((m) => ({ ...m, open: false }));
+
+  const safeResults = Array.isArray(results) ? results : [];
+  const totalCount = safeResults.length;
+
+  const safeFiltrados = Array.isArray(registrosFiltrados)
+    ? registrosFiltrados
+    : [];
+  const visibleCount = safeFiltrados.length;
+
+  const hasSearch = String(search || '').trim().length > 0;
+
+  const isEmpty = totalCount === 0; // convenio sin integrantes
+  const isNoMatch = !isEmpty && visibleCount === 0; // hay data pero no coincide con filtro/búsqueda
+
   return (
     <>
       <NavbarStaff />
@@ -1184,7 +1227,7 @@ const IntegranteConveGet = ({ integrantes }) => {
           <div className="absolute -bottom-40 left-[-120px] h-[520px] w-[520px] rounded-full bg-sky-500/10 blur-[110px]" />
         </div>
 
-        <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 pb-10">
+        <div className="relative mx-auto w-full max-w-1xl px-4 sm:px-6 lg:px-8 pt-10 pb-10">
           {/* HEADER / HERO */}
           <div className="rounded-3xl border border-white/10 bg-white/[0.06] backdrop-blur-xl shadow-[0_22px_70px_rgba(0,0,0,0.42)] overflow-hidden">
             <div className="px-5 sm:px-7 py-6 sm:py-7">
@@ -1204,81 +1247,50 @@ const IntegranteConveGet = ({ integrantes }) => {
                         <h2 className="font-bignoodle text-xl sm:text-3xl font-extrabold tracking-tight text-orange-600">
                           {convenioNombre}
                         </h2>
-
-                        <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium bg-orange-500/15 text-orange-200 ring-1 ring-orange-400/20 backdrop-blur">
-                          Convenio
-                        </span>
-
-                        <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium bg-white/10 text-white/80 ring-1 ring-white/10 backdrop-blur">
-                          Cant. Integrantes:{' '}
-                          <span className="text-white font-semibold">
-                            {results.length}
-                          </span>
-                        </span>
-
-                        <span
-                          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1 backdrop-blur ${
-                            freeze
-                              ? 'bg-slate-500/15 text-slate-200 ring-slate-400/20'
-                              : 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/20'
-                          }`}
-                        >
-                          {freeze
-                            ? 'Mes / listado congelado'
-                            : 'Edición habilitada'}
-                        </span>
-
-                        {/* Chip de mes actual según backend (si viene) */}
-                        {meta?.monthStart && (
-                          <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium bg-white/10 text-white/80 ring-1 ring-white/10 backdrop-blur">
-                            Mes:{' '}
-                            <span className="text-white font-semibold">
-                              {fmtARDateTime(meta.monthStart)}
+                        {userLevel !== '' && (
+                          <>
+                            <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium bg-orange-500/15 text-orange-200 ring-1 ring-orange-400/20 backdrop-blur">
+                              Convenio
                             </span>
-                          </span>
+
+                            <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium bg-white/10 text-white/80 ring-1 ring-white/10 backdrop-blur">
+                              Cant. Integrantes:{' '}
+                              <span className="text-white font-semibold">
+                                {results.length}
+                              </span>
+                            </span>
+
+                            <span
+                              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1 backdrop-blur ${
+                                freeze
+                                  ? 'bg-slate-500/15 text-slate-200 ring-slate-400/20'
+                                  : 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/20'
+                              }`}
+                            >
+                              {freeze
+                                ? 'Mes / listado congelado'
+                                : 'Edición habilitada'}
+                            </span>
+
+                            {/* Chip de mes actual según backend (si viene) */}
+                            {meta?.monthStart && (
+                              <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium bg-white/10 text-white/80 ring-1 ring-white/10 backdrop-blur">
+                                Mes:{' '}
+                                <span className="text-white font-semibold">
+                                  {fmtARDateTime(meta.monthStart)}
+                                </span>
+                              </span>
+                            )}
+                            <p className="text-sm text-white/55 max-w-2xl">
+                              Gestión de integrantes, importaciones y control de
+                              autorización.
+                            </p>
+                          </>
                         )}
                       </div>
-
-                      <p className="mt-2 text-sm text-white/55 max-w-2xl">
-                        Gestión de integrantes, importaciones y control de
-                        autorización.
-                      </p>
                     </div>
                   </div>
-
-                  {/* CTA Nuevo Integrante */}
-                  {(userLevel === 'gerente' ||
-                    userLevel === 'admin' ||
-                    userLevel === 'vendedor' ||
-                    userLevel === '' ||
-                    userLevel === 'administrador') && (
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={freeze ? undefined : abrirModal}
-                        className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-extrabold shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition ${
-                          freeze
-                            ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
-                            : 'bg-emerald-500/90 hover:bg-emerald-500 text-emerald-950'
-                        }`}
-                        disabled={freeze}
-                      >
-                        Nuevo Integrante
-                      </button>
-                    </div>
-                  )}
                 </div>
-
-                <ConvenioChatWidget
-                  convenioId={Number(id_conv)}
-                  monthStart={selectedMonth}
-                  apiBaseUrl={API_URL}
-                  authToken={authToken}
-                  userLevel={userLevel}
-                  userName={userName}
-                  userId={userId}
-                  convenioNombre={convenioNombre}
-                />
-
                 {/* Mensaje de error / loading (mes) */}
                 {loadingMes && (
                   <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4 text-white/80">
@@ -1292,77 +1304,74 @@ const IntegranteConveGet = ({ integrantes }) => {
                 )}
 
                 {/* Descripciones */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                  {(userLevel === 'admin' ||
-                    userLevel === '' ||
-                    userLevel === 'administrador') && (
+                <div
+                  className={`grid grid-cols-1 gap-3 ${
+                    showTwoCols ? 'lg:grid-cols-2' : ''
+                  }`}
+                >
+                  {canSeeConvenio && (
                     <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4">
-                      <div className="text-xs uppercase tracking-[0.18em] text-white/50">
-                        Descripción Convenio
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white/50">
+                          Descripción Convenio
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openModal({
+                              title: 'Descripción Convenio',
+                              html: convenioDescripcion
+                            })
+                          }
+                          className="rounded-full px-3 py-1 text-xs font-semibold
+                           bg-white/10 text-white/80 ring-1 ring-white/10
+                           hover:bg-white/15 hover:text-white transition"
+                        >
+                          Ver más
+                        </button>
                       </div>
-                      <div className="mt-2 text-sm text-white/85 prose prose-invert max-w-none">
+
+                      {/* Preview corto opcional */}
+                      <div className="mt-2 text-sm text-white/85 prose prose-invert max-w-none line-clamp-4">
                         <span
                           dangerouslySetInnerHTML={{
-                            __html: convenioDescripcion
+                            __html: convenioDescripcion || ''
                           }}
                         />
                       </div>
                     </div>
                   )}
 
-                  {(userLevel === 'admin' ||
-                    userLevel === 'gerente' ||
-                    userLevel === 'vendedor' ||
-                    userLevel === 'administrador') && (
+                  {canSeeUsuario && (
                     <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4">
-                      <div className="text-xs uppercase tracking-[0.18em] text-white/50">
-                        Descripción Usuario
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white/50">
+                          Descripción Usuario
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openModal({
+                              title: 'Descripción Usuario',
+                              html: convenioDescripcionUsu
+                            })
+                          }
+                          className="rounded-full px-3 py-1 text-xs font-semibold
+                           bg-white/10 text-white/80 ring-1 ring-white/10
+                           hover:bg-white/15 hover:text-white transition"
+                        >
+                          Ver más
+                        </button>
                       </div>
-                      <div className="mt-2 text-sm text-white/85 prose prose-invert max-w-none">
+
+                      {/* Preview corto opcional */}
+                      <div className="mt-2 text-sm text-white/85 prose prose-invert max-w-none line-clamp-4">
                         <span
                           dangerouslySetInnerHTML={{
-                            __html: convenioDescripcionUsu
+                            __html: convenioDescripcionUsu || ''
                           }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Control bar: búsqueda + extras */}
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 sm:gap-4 items-center">
-                  <form className="relative">
-                    <input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      type="text"
-                      placeholder="Buscar integrante por nombre…"
-                      className="w-full rounded-2xl pl-4 pr-4 py-3 bg-white/5 text-white placeholder:text-white/35 ring-1 ring-white/10 focus:ring-2 focus:ring-orange-400/40 outline-none transition"
-                    />
-                  </form>
-
-                  {/* Admin actions row */}
-                  {(userLevel === 'admin' || userLevel === 'administrador') && (
-                    <div className="flex flex-wrap items-center gap-3 justify-start lg:justify-end">
-                      <button
-                        onClick={freeze ? undefined : autorizarConvenio}
-                        disabled={freeze}
-                        className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 font-extrabold transition shadow-[0_18px_45px_rgba(16,185,129,0.22)] ${
-                          freeze
-                            ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
-                            : 'bg-emerald-500/90 hover:bg-emerald-500 text-emerald-950'
-                        }`}
-                      >
-                        Autorizar Masivo
-                      </button>
-
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-2">
-                        <CongelarIntegrantes
-                          id_conv={id_conv}
-                          selectedMonth={selectedMonth}
-                          monthStart={monthStart}
-                          meta={meta}
-                          onChanged={fetchIntegrantesMes}
                         />
                       </div>
                     </div>
@@ -1370,7 +1379,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                 </div>
 
                 {/* Importar Excel */}
-                {(userLevel === 'admin' ||
+                {/* {(userLevel === 'admin' ||
                   userLevel === '' ||
                   userLevel === 'gerente' ||
                   userLevel === 'administrador') && (
@@ -1424,7 +1433,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                         </div>
                       )}
                   </div>
-                )}
+                )} */}
 
                 {/* Reportes + Finalización */}
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4">
@@ -1510,47 +1519,204 @@ const IntegranteConveGet = ({ integrantes }) => {
               </div>
             </div>
           </div>
-
           {/* CONTENT */}
           <div className="mt-7">
-            {Object.keys(results).length === 0 ? (
-              <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl p-10 text-center shadow-[0_18px_55px_rgba(0,0,0,0.35)]">
-                <h3 className="text-lg font-extrabold text-white">
-                  Sin resultados
-                </h3>
-                <p className="mt-2 text-sm text-white/55">
-                  El Integrante NO Existe ||{' '}
-                  <span className="text-white/80 font-semibold">
-                    Integrantes: {results.length}
-                  </span>
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* TABLE WRAPPER */}
-                <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] overflow-hidden">
-                  <div className="px-5 sm:px-7 py-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            {/* TABLE WRAPPER (SIEMPRE) */}
+            <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] overflow-hidden">
+              {/* HEADER */}
+              <div className="px-5 sm:px-7 py-4 border-b border-white/10">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  {/* TITULO + META */}
+                  <div>
                     <div className="font-bignoodle text-2xl text-white/80 font-extrabold">
                       Listado de Integrantes
                     </div>
-                    <div className="text-xs text-white/55">
+
+                    <div className="mt-1 text-xs text-white/55">
                       Cantidad de registros:{' '}
                       <span className="text-white font-semibold">
-                        {results.length}
+                        {totalCount}
                       </span>
+                      {hasSearch && (
+                        <>
+                          {' '}
+                          · visibles:{' '}
+                          <span className="text-white font-semibold">
+                            {visibleCount}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
 
+                  {/* SEARCH + CTA */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                    {/* Search (dentro del header) */}
+                    <form
+                      className="relative w-full sm:w-[360px]"
+                      onSubmit={(e) => e.preventDefault()}
+                    >
+                      <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        type="text"
+                        placeholder="Buscar integrante por nombre…"
+                        className="w-full rounded-2xl pl-4 pr-12 py-3 bg-white/5 text-white placeholder:text-white/35 ring-1 ring-white/10 focus:ring-2 focus:ring-orange-400/40 outline-none transition"
+                      />
+
+                      {/* Limpiar búsqueda */}
+                      {hasSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setSearch('')}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl px-3 py-1.5 text-xs font-extrabold
+                           bg-white/10 text-white/75 ring-1 ring-white/10 hover:bg-white/15 hover:text-white transition"
+                          aria-label="Limpiar búsqueda"
+                          title="Limpiar"
+                        >
+                          Limpiar
+                        </button>
+                      )}
+                    </form>
+
+                    {/* CTA Nuevo Integrante */}
+                    {(userLevel === 'gerente' ||
+                      userLevel === 'admin' ||
+                      userLevel === 'vendedor' ||
+                      userLevel === '' ||
+                      userLevel === 'administrador') && (
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={freeze ? undefined : abrirModal}
+                          className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-extrabold shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition w-full sm:w-auto ${
+                            freeze
+                              ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
+                              : 'bg-emerald-500/90 hover:bg-emerald-500 text-emerald-950'
+                          }`}
+                          disabled={freeze}
+                        >
+                          Nuevo Integrante
+                        </button>
+                        <button
+                          type="button"
+                          onClick={freeze ? undefined : abrirModalImportacion}
+                          disabled={freeze}
+                          className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-extrabold
+                shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition w-full sm:w-auto ${
+                  freeze
+                    ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
+                    : 'bg-white/10 hover:bg-white/15 text-white/85 ring-1 ring-white/10 hover:ring-white/20'
+                }`}
+                          title="Importación masiva desde Excel"
+                        >
+                          Importación masiva
+                        </button>
+                      </div>
+                    )}
+                    {/* Control bar: extras */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 sm:gap-4 items-center">
+                      {/* Admin actions row */}
+                      {(userLevel === 'admin' ||
+                        userLevel === 'administrador') && (
+                        <div className="flex flex-wrap items-center gap-3 justify-start lg:justify-end">
+                          <button
+                            onClick={freeze ? undefined : autorizarConvenio}
+                            disabled={freeze}
+                            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 font-extrabold transition shadow-[0_18px_45px_rgba(16,185,129,0.22)] ${
+                              freeze
+                                ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
+                                : 'bg-emerald-500/90 hover:bg-emerald-500 text-emerald-950'
+                            }`}
+                          >
+                            Autorizar Masivo
+                          </button>
+
+                          <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-2">
+                            <CongelarIntegrantes
+                              id_conv={id_conv}
+                              selectedMonth={selectedMonth}
+                              monthStart={monthStart}
+                              meta={meta}
+                              onChanged={fetchIntegrantesMes}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* BODY */}
+              {visibleCount === 0 ? (
+                // Empty State (dinámico: convenio sin integrantes vs sin coincidencias)
+                <div className="p-10 text-center">
+                  <div className="mx-auto w-14 h-14 rounded-2xl bg-white/5 ring-1 ring-white/10 flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-orange-400 shadow-[0_0_0_6px_rgba(252,75,8,0.14)]" />
+                  </div>
+
+                  <h3 className="mt-4 text-lg font-extrabold text-white">
+                    {isEmpty
+                      ? 'Todavía no hay integrantes'
+                      : 'Sin coincidencias'}
+                  </h3>
+
+                  <p className="mt-2 text-sm text-white/55 max-w-lg mx-auto">
+                    {isEmpty
+                      ? 'Este convenio aún no tiene integrantes cargados. Podés crear el primero desde el botón “Nuevo Integrante”.'
+                      : hasSearch
+                      ? 'No encontramos resultados para tu búsqueda. Probá con otro nombre o limpiá el filtro.'
+                      : 'No hay filas para mostrar con los filtros actuales.'}
+                  </p>
+
+                  <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-2">
+                    {!isEmpty && hasSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch('')}
+                        className="inline-flex items-center justify-center rounded-2xl px-5 py-3 font-extrabold
+                         bg-white/10 text-white/80 ring-1 ring-white/10 hover:bg-white/15 hover:text-white transition"
+                      >
+                        Limpiar búsqueda
+                      </button>
+                    )}
+
+                    {/* CTA duplicado en empty para que sea obvio (no bloquea alta con 0) */}
+                    {(userLevel === 'gerente' ||
+                      userLevel === 'admin' ||
+                      userLevel === 'vendedor' ||
+                      userLevel === '' ||
+                      userLevel === 'administrador') && (
+                      <button
+                        type="button"
+                        onClick={freeze ? undefined : abrirModal}
+                        disabled={freeze}
+                        className={`inline-flex items-center justify-center rounded-2xl px-5 py-3 font-extrabold transition ${
+                          freeze
+                            ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
+                            : 'bg-emerald-500/90 hover:bg-emerald-500 text-emerald-950'
+                        }`}
+                      >
+                        Crear integrante
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <>
                   <div
                     ref={tableScrollRef}
                     onMouseDown={onMouseDownTable}
                     onClickCapture={onClickCaptureTable}
-                    className={`overflow-x-auto ${
+                    className={`overflow-x-auto overflow-y-auto ${
                       isDraggingX
                         ? 'cursor-grabbing select-none'
                         : 'cursor-grab'
                     }`}
-                    style={{ touchAction: 'pan-x pan-y' }} // en mobile sigue el scroll nativo
+                    style={{
+                      touchAction: 'pan-x pan-y',
+                      maxHeight: '70vh'
+                    }}
                   >
                     <table className="min-w-[1400px] w-full bg-transparent table-auto border-collapse">
                       <thead className="bg-[#fc4b08] text-white sticky top-0 z-10">
@@ -1625,6 +1791,7 @@ const IntegranteConveGet = ({ integrantes }) => {
 
                           const canDelete = canBase && !locked;
                           const canEdit = canBase;
+
                           return (
                             <tr
                               key={integrante.id}
@@ -1905,134 +2072,136 @@ const IntegranteConveGet = ({ integrantes }) => {
                       </tbody>
                     </table>
                   </div>
-                </div>
+                </>
+              )}
+            </div>
 
-                {/* PAGINACIÓN */}
-                <nav className="flex justify-center items-center my-10">
-                  <ul className="pagination flex flex-wrap gap-2">
-                    <li className="page-item">
+            {/* PAGINACIÓN (solo si hay registros) */}
+            {totalCount > 0 && (
+              <nav className="flex justify-center items-center my-10">
+                <ul className="pagination flex flex-wrap gap-2">
+                  <li className="page-item">
+                    <a
+                      href="#"
+                      className="page-link px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-white/10 hover:ring-white/20 text-white/80 hover:text-white transition"
+                      onClick={prevPage}
+                    >
+                      Prev
+                    </a>
+                  </li>
+
+                  {numbers.map((number, index) => (
+                    <li
+                      className={`page-item ${
+                        currentPage === number ? 'active' : ''
+                      }`}
+                      key={index}
+                    >
                       <a
                         href="#"
-                        className="page-link px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-white/10 hover:ring-white/20 text-white/80 hover:text-white transition"
-                        onClick={prevPage}
-                      >
-                        Prev
-                      </a>
-                    </li>
-
-                    {numbers.map((number, index) => (
-                      <li
-                        className={`page-item ${
-                          currentPage === number ? 'active' : ''
+                        className={`page-link px-4 py-2 rounded-xl ring-1 transition ${
+                          currentPage === number
+                            ? 'bg-orange-500/25 ring-orange-400/30 text-white'
+                            : 'bg-white/5 hover:bg-white/10 ring-white/10 hover:ring-white/20 text-white/80 hover:text-white'
                         }`}
-                        key={index}
+                        onClick={(e) => changeCPage(number, e)}
                       >
-                        <a
-                          href="#"
-                          className={`page-link px-4 py-2 rounded-xl ring-1 transition ${
-                            currentPage === number
-                              ? 'bg-orange-500/25 ring-orange-400/30 text-white'
-                              : 'bg-white/5 hover:bg-white/10 ring-white/10 hover:ring-white/20 text-white/80 hover:text-white'
-                          }`}
-                          onClick={(e) => changeCPage(number, e)}
-                        >
-                          {number}
-                        </a>
-                      </li>
-                    ))}
-
-                    <li className="page-item">
-                      <a
-                        href="#"
-                        className="page-link px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-white/10 hover:ring-white/20 text-white/80 hover:text-white transition"
-                        onClick={nextPage}
-                      >
-                        Next
+                        {number}
                       </a>
                     </li>
-                  </ul>
-                </nav>
+                  ))}
 
-                {/* CBU + TOTAL */}
-                {(userLevel === 'admin' ||
-                  userLevel === '' ||
-                  userLevel === 'gerente' ||
-                  userLevel === 'administrador') && (
-                  <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-5 sm:p-6">
-                    <div className="text-center">
-                      <div className="text-xs uppercase tracking-[0.18em] text-white/45">
-                        Transferencias
-                      </div>
+                  <li className="page-item">
+                    <a
+                      href="#"
+                      className="page-link px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-white/10 hover:ring-white/20 text-white/80 hover:text-white transition"
+                      onClick={nextPage}
+                    >
+                      Next
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            )}
 
-                      {/* CBU Box */}
-                      <div className="mt-3 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                          <p className="text-xs sm:text-sm text-white/75 font-semibold">
-                            REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU:
-                          </p>
+            {/* CBU + TOTAL */}
+            {(userLevel === 'admin' ||
+              userLevel === '' ||
+              userLevel === 'gerente' ||
+              userLevel === 'administrador') && (
+              <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-5 sm:p-6">
+                <div className="text-center">
+                  <div className="text-xs uppercase tracking-[0.18em] text-white/45">
+                    Transferencias
+                  </div>
 
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                            <span className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm sm:text-base font-extrabold text-white font-mono break-all">
-                              2850156330094245972241
-                            </span>
+                  {/* CBU Box */}
+                  <div className="mt-3 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                      <p className="text-xs sm:text-sm text-white/75 font-semibold">
+                        REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU:
+                      </p>
 
-                            <button
-                              type="button"
-                              onClick={handleCopyClick}
-                              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold text-white/85 transition hover:bg-white/[0.06] active:scale-[0.99]"
-                              aria-label="Copiar CBU"
-                              title="Copiar CBU"
-                            >
-                              Copiar
-                            </button>
-                          </div>
-                        </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <span className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm sm:text-base font-extrabold text-white font-mono break-all">
+                          2850156330094245972241
+                        </span>
 
-                        <p className="mt-3 text-white/65 text-sm sm:text-lg font-semibold">
-                          Titular:{' '}
-                          <span className="text-white/85 font-extrabold">
-                            HAMMERX SAS
-                          </span>
-                        </p>
-                      </div>
-
-                      {/* Total */}
-                      <div className="mt-6 text-xs uppercase tracking-[0.18em] text-white/45">
-                        Total
-                      </div>
-                      <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-white">
-                        {formatearMoneda(totalPrecioFinal)}
+                        <button
+                          type="button"
+                          onClick={handleCopyClick}
+                          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold text-white/85 transition hover:bg-white/[0.06] active:scale-[0.99]"
+                          aria-label="Copiar CBU"
+                          title="Copiar CBU"
+                        >
+                          Copiar
+                        </button>
                       </div>
                     </div>
-                  </div>
-                )}
 
-                {/* Uploads */}
-                <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-4">
-                    {(userLevel === '' || userLevel === 'admin') && (
-                      <ImagesUpload
-                        convenioId={id_conv}
-                        selectedMonth={selectedMonth}
-                        setSelectedMonth={setSelectedMonth}
-                        monthCursor={monthCursor} // recomendado
-                        // monthStart={monthStart}     // opcional, si preferís string
-                      />
-                    )}
+                    <p className="mt-3 text-white/65 text-sm sm:text-lg font-semibold">
+                      Titular:{' '}
+                      <span className="text-white/85 font-extrabold">
+                        HAMMERX SAS
+                      </span>
+                    </p>
                   </div>
-                  <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-4">
-                    {(userLevel === '' || userLevel === 'admin') && (
-                      <InvoicesUpload
-                        convenioId={id_conv}
-                        selectedMonth={selectedMonth}
-                        setSelectedMonth={setSelectedMonth}
-                        monthCursor={monthCursor}
-                      />
-                    )}
+
+                  {/* Total */}
+                  <div className="mt-6 text-xs uppercase tracking-[0.18em] text-white/45">
+                    Total
+                  </div>
+                  <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-white">
+                    {formatearMoneda(totalPrecioFinal)}
                   </div>
                 </div>
-              </>
+              </div>
             )}
+
+            {/* Uploads */}
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-4">
+                {(userLevel === '' || userLevel === 'admin') && (
+                  <ImagesUpload
+                    convenioId={id_conv}
+                    selectedMonth={selectedMonth}
+                    setSelectedMonth={setSelectedMonth}
+                    monthCursor={monthCursor} // recomendado
+                    // monthStart={monthStart}     // opcional, si preferís string
+                  />
+                )}
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-4">
+                {(userLevel === '' || userLevel === 'admin') && (
+                  <InvoicesUpload
+                    convenioId={id_conv}
+                    selectedMonth={selectedMonth}
+                    setSelectedMonth={setSelectedMonth}
+                    monthCursor={monthCursor}
+                  />
+                )}
+              </div>
+            </div>
 
             {/* Modales */}
             <FormAltaIntegranteConve
@@ -2048,6 +2217,20 @@ const IntegranteConveGet = ({ integrantes }) => {
               preciofinal_concep={preciofinal_concep}
               monthStart={monthCursor}
               permiteFec={permiteFec}
+            />
+            {/* Modal Importación Masiva (Excel) */}
+            <FileUpload
+              isOpen={modalImportOpen}
+              onClose={cerrarModalImportacion}
+              convenioId={id_conv}
+              // Usá el que corresponda en tu pantalla:
+              // Si tu import depende del mes visible => monthCursor
+              // Si depende del mes abierto backend => monthStart / meta?.monthStart
+              monthStart={monthCursor || monthStart}
+              onSuccess={async () => {
+                await fetchIntegrantesMes();
+                cerrarModalImportacion();
+              }}
             />
           </div>
         </div>
@@ -2079,9 +2262,25 @@ const IntegranteConveGet = ({ integrantes }) => {
           }
           onCountChange={handleCountChange}
         />
+        <DescripcionModal
+          open={modal.open}
+          onClose={closeModal}
+          title={modal.title}
+          html={modal.html}
+        />
 
         <Footer />
       </div>
+      <ConvenioChatWidget
+        convenioId={Number(id_conv)}
+        monthStart={selectedMonth}
+        apiBaseUrl={API_URL}
+        authToken={authToken}
+        userLevel={userLevel}
+        userName={userName}
+        userId={userId}
+        convenioNombre={convenioNombre}
+      />
     </>
   );
 };

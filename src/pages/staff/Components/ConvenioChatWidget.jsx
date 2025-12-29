@@ -556,33 +556,53 @@ export default function ConvenioChatWidget({
       {/* Botón Chat + Badge */}
       <button
         onClick={() => setOpen(true)}
-        className="relative inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-extrabold
-                 shadow-[0_18px_45px_rgba(0,0,0,0.20)] transition
-                 bg-gradient-to-r from-orange-500/20 via-white/5 to-white/5
-                 hover:from-orange-500/25 hover:via-white/10 hover:to-white/10
-                 text-white ring-1 ring-white/10 hover:ring-orange-400/25
-                 backdrop-blur-xl"
         type="button"
         title="Abrir chat"
+        className="
+    fixed left-4 bottom-4 z-[90]
+    inline-flex items-center gap-3
+    rounded-2xl px-5 py-4
+    font-extrabold text-white
+    shadow-[0_18px_45px_rgba(0,0,0,0.30)]
+    transition
+    bg-gradient-to-r from-orange-500/25 via-white/5 to-white/5
+    hover:from-orange-500/30 hover:via-white/10 hover:to-white/10
+    ring-1 ring-white/10 hover:ring-orange-400/25
+    backdrop-blur-xl
+    active:scale-[0.99]
+    w-[calc(100vw-2rem)] sm:w-auto
+  "
+        style={{
+          paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+          paddingLeft: 'max(1.25rem, env(safe-area-inset-left))'
+        }}
       >
-        <span className="grid h-9 w-9 place-items-center rounded-2xl bg-orange-500/15 ring-1 ring-orange-400/20">
-          <FaComments className="text-orange-200" />
-        </span>
-        <span className="leading-none">Chat con HammerX</span>
+        {/* Texto */}
+        <span className="leading-none">Contactate con nosotros</span>
 
+        {/* Icono a la derecha */}
+        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-orange-500/15 ring-1 ring-orange-400/20">
+          <FaComments className="text-orange-200 text-lg" />
+        </span>
+
+        {/* Badge unread */}
         {unreadCount > 0 && (
           <span
-            className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1
-                     rounded-full bg-orange-500 text-orange-950
-                     text-[12px] font-extrabold grid place-items-center
-                     shadow-[0_10px_30px_rgba(249,115,22,0.35)]
-                     ring-2 ring-slate-950"
+            className="
+        absolute -top-2 -right-2
+        min-w-[22px] h-[22px] px-1
+        rounded-full bg-orange-500 text-orange-950
+        text-[12px] font-extrabold grid place-items-center
+        shadow-[0_10px_30px_rgba(249,115,22,0.35)]
+        ring-2 ring-slate-950
+      "
             title={`${unreadCount} mensajes no leídos`}
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
+
       {/* Modal */}
       {portalRoot &&
         createPortal(

@@ -1,5 +1,5 @@
 // FileUpload.jsx
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   FaCloudUploadAlt,
@@ -33,13 +33,42 @@ const REQUIRED_HEADERS = [
   'userName'
 ];
 
-export default function FileUpload({ convenioId, monthStart, onSuccess }) {
+export default function FileUpload({
+  convenioId,
+  monthStart,
+  onSuccess,
+  // NUEVO (modo modal)
+  isOpen,
+  onClose
+}) {
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | uploading | success | error
   const [message, setMessage] = useState('');
   const [dragOver, setDragOver] = useState(false);
 
   const inputRef = useRef(null);
+
+  const isModal = typeof isOpen === 'boolean';
+
+  // NUEVO: cerrar con ESC + lock scroll (solo si es modal)
+  useEffect(() => {
+    if (!isModal || !isOpen) return;
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+
+    // lock scroll
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = prev;
+    };
+  }, [isModal, isOpen, onClose]);
 
   const URL = useMemo(() => {
     if (!convenioId) return null;
@@ -155,7 +184,7 @@ export default function FileUpload({ convenioId, monthStart, onSuccess }) {
     </div>
   );
 
-  return (
+  const content = (
     <div className="w-full max-w-xl mx-auto">
       <div className="rounded-3xl border border-white/10 bg-zinc-950/70 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.45)] overflow-hidden">
         <div className="h-[3px] bg-gradient-to-r from-[#fc4b08] via-orange-400 to-amber-300" />
@@ -171,13 +200,28 @@ export default function FileUpload({ convenioId, monthStart, onSuccess }) {
             </div>
           </div>
 
-          <a
-            href="https://docs.google.com/uc?export=download&id=10RSS04B847B7MC4oWWkxRqzceXY5x7p1"
-            className="inline-flex items-center gap-2 shrink-0 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/85 hover:bg-white/10 transition"
-          >
-            <FaDownload />
-            Ejemplo
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="https://docs.google.com/uc?export=download&id=10RSS04B847B7MC4oWWkxRqzceXY5x7p1"
+              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/85 hover:bg-white/10 transition"
+            >
+              <FaDownload />
+              Descarga el ejemplo
+            </a>
+
+            {/* NUEVO: Botón cerrar (solo modal) */}
+            {isModal && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex items-center justify-center h-10 w-10 rounded-2xl border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
+                aria-label="Cerrar"
+                title="Cerrar"
+              >
+                <FaTimes />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Dropzone */}
@@ -326,4 +370,42 @@ export default function FileUpload({ convenioId, monthStart, onSuccess }) {
       </div>
     </div>
   );
+
+  // NUEVO: si es modal y está cerrado, no renderiza nada
+  if (isModal && !isOpen) return null;
+
+  // NUEVO: wrapper modal (overlay + click afuera)
+  if (isModal && isOpen) {
+    return (
+      <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
+        {/* Overlay */}
+        <button
+          type="button"
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+          aria-label="Cerrar modal"
+        />
+
+        {/* Panel */}
+        <div className="relative w-full max-w-4xl">
+          {content}
+
+          {/* Footer Cerrar (extra, por si querés botón textual) */}
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center justify-center rounded-2xl px-6 py-3 font-extrabold
+                         bg-white/10 text-white/85 ring-1 ring-white/10 hover:bg-white/15 hover:ring-white/20 transition"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Modo normal (no modal)
+  return content;
 }

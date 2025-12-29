@@ -519,10 +519,10 @@ const AdmConveGet = () => {
 
                     <div>
                       <div className="flex items-center gap-3 flex-wrap">
-                        <h1 className="font-bignoodle text-xl sm:text-3xl font-extrabold tracking-tight text-orange-600">
+                        <h1 className="font-bignoodle text-xl sm:text-4xl font-extrabold tracking-tight text-orange-600">
                           Convenios
                         </h1>
-                        <Badge icon={FaBuilding} tone="orange">
+                        {/* <Badge icon={FaBuilding} tone="orange">
                           {filterSede === 'Archivados'
                             ? 'Archivados'
                             : 'Activos'}
@@ -539,11 +539,11 @@ const AdmConveGet = () => {
                           <Badge tone="slate">
                             Sede: {normalizeSede(sede) || '—'}
                           </Badge>
-                        )}
+                        )} */}
                       </div>
-                      <p className="mt-1 text-sm text-white/60 max-w-2xl">
+                      {/* <p className="mt-1 text-sm text-white/60 max-w-2xl">
                         {headerSubtitle}
-                      </p>
+                      </p> */}
 
                       {/* mini info contextual */}
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -557,14 +557,14 @@ const AdmConveGet = () => {
                             {totalItems}
                           </span>
                         </Badge>
-                        {!!nombreInstructor && (
+                        {/* {!!nombreInstructor && (
                           <Badge tone="neutral">
                             Usuario:{' '}
                             <span className="text-white/90">
                               {nombreInstructor}
                             </span>
                           </Badge>
-                        )}
+                        )} */}
                       </div>
                     </div>
                   </div>

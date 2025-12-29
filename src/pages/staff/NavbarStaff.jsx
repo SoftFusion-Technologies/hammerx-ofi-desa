@@ -144,7 +144,7 @@ const NavbarStaff = () => {
                     Sesión activa
                   </span>
                   <span className="text-sm font-semibold text-white truncate">
-                    {displayUserName || 'Usuario'}
+                    {displayUserName || 'Softfusion - Usuario'}
                   </span>
                 </div>
                 <button
