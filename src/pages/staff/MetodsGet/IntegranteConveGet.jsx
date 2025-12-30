@@ -874,14 +874,19 @@ const IntegranteConveGet = ({ integrantes }) => {
   const registrosFiltrados = useMemo(() => {
     const list = Array.isArray(integrante) ? integrante : [];
 
+    // Normalizar búsqueda
     const q = normalize(search);
-    const monthFiltered = list.filter(
-      (it) => monthKey(it.fechaCreacion) === currentMonthKey
-    );
 
-    if (!q) return monthFiltered;
+    // 1) Base list según modo
+    const base =
+      meta?.filterMode === 'all' || Number(meta?.permiteFec) === 0
+        ? list // MODO GLOBAL: no filtra por mes
+        : list.filter((it) => monthKey(it.fechaCreacion) === currentMonthKey); // MODO MENSUAL
 
-    return monthFiltered.filter((it) => {
+    // 2) Aplicar búsqueda (en ambos modos)
+    if (!q) return base;
+
+    return base.filter((it) => {
       const nombre = normalize(it?.nombre);
       const dni = normalize(it?.dni);
       const email = normalize(it?.email);
@@ -894,7 +899,7 @@ const IntegranteConveGet = ({ integrantes }) => {
         tel.includes(q)
       );
     });
-  }, [integrante, currentMonthKey, search]);
+  }, [integrante, currentMonthKey, search, meta?.filterMode, meta?.permiteFec]);
 
   const fmtARDateTime = (v) => {
     const d = toDateSafe(v);
