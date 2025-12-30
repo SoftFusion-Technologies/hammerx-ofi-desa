@@ -390,60 +390,75 @@ const FormAltaConve = ({ isOpen, onClose, conve2, setConve2 }) => {
                             Contenido
                           </h3>
                           <p className="text-sm text-slate-500">
-                            Texto interno y texto visible para usuarios.
+                            Texto interno usuarios y texto visible para
+                            convenios.
                           </p>
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-4">
+                          {/* DESC CONVENIOS */}
                           <div>
                             <div className="flex items-center justify-between">
                               <label className="text-sm font-medium text-slate-700">
-                                Descripción para colaboradores
+                                Descripción para convenios
                               </label>
                               <span className="text-xs text-slate-500">
                                 {descConveCount}/{maxLength}
                               </span>
                             </div>
+
                             <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
                               <ReactQuill
                                 theme="snow"
                                 value={values.descConve}
-                                onChange={(content) => {
+                                onChange={(content, delta, source, editor) => {
                                   setFieldValue('descConve', content);
-                                  setDescConveCount(content.length);
+
+                                  // Opción A: contar texto plano visible (sin HTML)
+                                  const plain = editor
+                                    .getText()
+                                    .replace(/\n$/, ''); // quita el \n final de Quill
+                                  setDescConveCount(plain.length);
                                 }}
                                 // placeholder innecesario - quitado por Benjamin Orellana 21/12/2025
                                 // placeholder="Qué incluye el convenio, reglas internas, etc."
                                 className="custom-quill-editor"
                               />
                             </div>
+
                             {errors.descConve && touched.descConve && (
                               <Alerta>{errors.descConve}</Alerta>
                             )}
                           </div>
 
+                          {/* DESC COLABORADORES */}
                           <div>
                             <div className="flex items-center justify-between">
                               <label className="text-sm font-medium text-slate-700">
-                                Descripción para usuarios
+                                Descripción para colaboradores
                               </label>
                               <span className="text-xs text-slate-500">
                                 {descUsuCount}/{maxLength}
                               </span>
                             </div>
+
                             <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
                               <ReactQuill
                                 theme="snow"
                                 value={values.desc_usu}
-                                onChange={(content) => {
+                                onChange={(content, delta, source, editor) => {
                                   setFieldValue('desc_usu', content);
-                                  setDescUsuCount(content.length);
+
+                                  // Opción A: contar texto plano visible (sin HTML)
+                                  const plain = editor
+                                    .getText()
+                                    .replace(/\n$/, ''); // quita el \n final de Quill
+                                  setDescUsuCount(plain.length);
                                 }}
-                                // placeholder innecesario - quitado por Benjamin Orellana 21/12/2025
-                                // placeholder="Texto que verá el usuario final."
                                 className="custom-quill-editor"
                               />
                             </div>
+
                             {errors.desc_usu && touched.desc_usu && (
                               <Alerta>{errors.desc_usu}</Alerta>
                             )}

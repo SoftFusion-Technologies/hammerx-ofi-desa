@@ -99,7 +99,7 @@ const FechasConvenios = ({ onMonthChange, onDateChange, initialDate }) => {
   };
 
   return (
-    <div className="my-5 flex items-center justify-center">
+    <div className="my-5 flex flex-col items-center justify-center gap-2">
       <div className="flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3 backdrop-blur-xl shadow-[0_10px_30px_-18px_rgba(0,0,0,0.65)] transition hover:bg-white/[0.08]">
         <button
           type="button"
@@ -123,6 +123,13 @@ const FechasConvenios = ({ onMonthChange, onDateChange, initialDate }) => {
         >
           <span className="text-xl leading-none">{'›'}</span>
         </button>
+      </div>
+
+      {/* Nota informativa */}
+      <div className="max-w-[820px] text-center text-xs sm:text-sm text-white/60 font-messina">
+        La carga de colaboradores deberá efectuarse en el mes correspondiente al
+        entrenamiento efectivo, independientemente de la fecha en la que se
+        informe el alta.
       </div>
     </div>
   );

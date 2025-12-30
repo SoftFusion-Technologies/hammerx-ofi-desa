@@ -1316,68 +1316,72 @@ const IntegranteConveGet = ({ integrantes }) => {
                 >
                   {canSeeConvenio && (
                     <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="text-xs uppercase tracking-[0.18em] text-white/50">
-                          Descripción Convenio
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openModal({
-                              title: 'Descripción Convenio',
-                              html: convenioDescripcion
-                            })
-                          }
-                          className="rounded-full px-3 py-1 text-xs font-semibold
-                           bg-white/10 text-white/80 ring-1 ring-white/10
-                           hover:bg-white/15 hover:text-white transition"
-                        >
-                          Ver más
-                        </button>
+                      <div className="text-xs uppercase tracking-[0.18em] text-white/50">
+                        Descripción Convenio
                       </div>
 
-                      {/* Preview corto opcional */}
-                      <div className="mt-2 text-sm text-white/85 prose prose-invert max-w-none line-clamp-4">
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: convenioDescripcion || ''
-                          }}
-                        />
+                      {/* Preview + "Ver más" */}
+                      <div className="mt-2 relative">
+                        <div className="text-sm text-white/85 prose prose-invert max-w-none line-clamp-4 pr-24">
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html: convenioDescripcion || ''
+                            }}
+                          />
+                        </div>
+
+                        {!!String(convenioDescripcion || '').trim() && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openModal({
+                                title: 'Descripción Convenio',
+                                html: convenioDescripcion
+                              })
+                            }
+                            className="absolute bottom-0 right-0 rounded-full px-3 py-1 text-xs font-semibold
+                       bg-white/10 text-white/85 ring-1 ring-white/10 backdrop-blur-xl
+                       hover:bg-white/15 hover:text-white transition"
+                          >
+                            Ver más
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
 
                   {canSeeUsuario && (
                     <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="text-xs uppercase tracking-[0.18em] text-white/50">
-                          Descripción Usuario
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openModal({
-                              title: 'Descripción Usuario',
-                              html: convenioDescripcionUsu
-                            })
-                          }
-                          className="rounded-full px-3 py-1 text-xs font-semibold
-                           bg-white/10 text-white/80 ring-1 ring-white/10
-                           hover:bg-white/15 hover:text-white transition"
-                        >
-                          Ver más
-                        </button>
+                      <div className="text-xs uppercase tracking-[0.18em] text-white/50">
+                        Descripción Colaboradores
                       </div>
 
-                      {/* Preview corto opcional */}
-                      <div className="mt-2 text-sm text-white/85 prose prose-invert max-w-none line-clamp-4">
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: convenioDescripcionUsu || ''
-                          }}
-                        />
+                      {/* Preview + "Ver más" */}
+                      <div className="mt-2 relative">
+                        <div className="text-sm text-white/85 prose prose-invert max-w-none line-clamp-4 pr-24">
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html: convenioDescripcionUsu || ''
+                            }}
+                          />
+                        </div>
+
+                        {!!String(convenioDescripcionUsu || '').trim() && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openModal({
+                                title: 'Descripción Colaboradores',
+                                html: convenioDescripcionUsu
+                              })
+                            }
+                            className="absolute bottom-0 right-0 rounded-full px-3 py-1 text-xs font-semibold
+                       bg-white/10 text-white/85 ring-1 ring-white/10 backdrop-blur-xl
+                       hover:bg-white/15 hover:text-white transition"
+                          >
+                            Ver más
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1441,7 +1445,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                 )} */}
 
                 {/* Reportes + Finalización */}
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4">
+                {/* <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div>
                       <div className="text-xs uppercase tracking-[0.18em] text-white/50">
@@ -1457,7 +1461,6 @@ const IntegranteConveGet = ({ integrantes }) => {
                     </div>
 
                     <div className="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {/* Descargar */}
                       <button
                         type="button"
                         onClick={descargarListadoPDF}
@@ -1470,50 +1473,27 @@ const IntegranteConveGet = ({ integrantes }) => {
                         <span>Descargar listado</span>
                         <FaDownload className="opacity-80" />
                       </button>
-
-                      {/* Finalicé listado */}
-                      <button
-                        type="button"
-                        onClick={finaliceListado}
-                        disabled={loadingFinalizar || !!accionFinalizar}
-                        className={`w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
-    font-semibold border transition active:scale-[0.99]
-    ${
-      loadingFinalizar || !!accionFinalizar
-        ? 'bg-emerald-500/20 text-white/60 border-emerald-400/15 cursor-not-allowed'
-        : 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-emerald-400/30 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30'
-    }`}
-                      >
-                        <FaCheckCircle className="opacity-95" />
-                        <span>
-                          {accionFinalizar
-                            ? 'Finalizado'
-                            : loadingFinalizar
-                            ? 'Finalizando…'
-                            : 'Finalicé listado'}
-                        </span>
-                        <FaPaperPlane className="opacity-80" />
-                      </button>
                     </div>
                   </div>
-                  {accionFinalizar?.descripcion && (
-                    <div className="mt-3 rounded-xl border border-emerald-400/15 bg-emerald-500/[0.07] p-3">
-                      <div className="text-xs uppercase tracking-[0.18em] text-emerald-200/70">
-                        Estado del mes
-                      </div>
-                      <div className="mt-1 text-sm text-white/85 font-semibold">
-                        Carga finalizada
-                      </div>
-                      <div className="mt-1 text-xs text-white/60">
-                        {accionFinalizar.descripcion}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                </div> 
+                */}
 
                 {/* R8 Fechas */}
                 {permiteFec == 1 && (
                   <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-4">
+                    {accionFinalizar?.descripcion && (
+                      <div className="mt-3 rounded-xl border border-emerald-400/15 bg-emerald-500/[0.07] p-3">
+                        <div className="text-xs uppercase tracking-[0.18em] text-emerald-200/70">
+                          Estado del mes
+                        </div>
+                        <div className="mt-1 text-sm text-white/85 font-semibold">
+                          Carga finalizada
+                        </div>
+                        <div className="mt-1 text-xs text-white/60">
+                          {accionFinalizar.descripcion}
+                        </div>
+                      </div>
+                    )}
                     <FechasConvenios
                       onMonthChange={setSelectedMonth}
                       onDateChange={(d) => setMonthCursor(d)} // esto te deja monthStart perfecto
@@ -1530,11 +1510,28 @@ const IntegranteConveGet = ({ integrantes }) => {
             <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] overflow-hidden">
               {/* HEADER */}
               <div className="px-5 sm:px-7 py-4 border-b border-white/10">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                {/* 2 FILAS: (1) Título/Meta  (2) Search + CTAs */}
+                <div className="flex flex-col gap-3">
                   {/* TITULO + META */}
                   <div>
-                    <div className="font-bignoodle text-2xl text-white/80 font-extrabold">
-                      Listado de Integrantes
+                    <div className="flex items-center gap-3">
+                      <div className="font-bignoodle text-2xl text-white/80 font-extrabold">
+                        Listado de Integrantes
+                      </div>
+
+                      {/* Descargar listado (icono) */}
+                      <button
+                        type="button"
+                        onClick={descargarListadoPDF}
+                        className="inline-flex items-center justify-center rounded-xl p-2
+               bg-orange-500 text-orange-200 ring-1 ring-orange-400/25
+               hover:bg-orange-500/25 hover:ring-orange-400/35 transition
+               active:scale-[0.99]"
+                        title="Descargar listado (PDF)"
+                        aria-label="Descargar listado (PDF)"
+                      >
+                        <FaDownload className="text-[15px]" />
+                      </button>
                     </div>
 
                     <div className="mt-1 text-xs text-white/55">
@@ -1555,10 +1552,10 @@ const IntegranteConveGet = ({ integrantes }) => {
                   </div>
 
                   {/* SEARCH + CTA */}
-                  <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                    {/* Search (dentro del header) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(260px,360px)_1fr_auto] gap-3 sm:gap-4 items-start lg:items-center">
+                    {/* Search (izquierda) */}
                     <form
-                      className="relative w-full sm:w-[360px]"
+                      className="relative w-full"
                       onSubmit={(e) => e.preventDefault()}
                     >
                       <input
@@ -1575,7 +1572,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                           type="button"
                           onClick={() => setSearch('')}
                           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl px-3 py-1.5 text-xs font-extrabold
-                           bg-white/10 text-white/75 ring-1 ring-white/10 hover:bg-white/15 hover:text-white transition"
+                     bg-white/10 text-white/75 ring-1 ring-white/10 hover:bg-white/15 hover:text-white transition"
                           aria-label="Limpiar búsqueda"
                           title="Limpiar"
                         >
@@ -1584,70 +1581,99 @@ const IntegranteConveGet = ({ integrantes }) => {
                       )}
                     </form>
 
-                    {/* CTA Nuevo Integrante */}
+                    {/* CTAs (centro) */}
                     {(userLevel === 'gerente' ||
                       userLevel === 'admin' ||
                       userLevel === 'vendedor' ||
                       userLevel === '' ||
                       userLevel === 'administrador') && (
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 lg:justify-center">
                         <button
                           onClick={freeze ? undefined : abrirModal}
-                          className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-extrabold shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition w-full sm:w-auto ${
-                            freeze
-                              ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
-                              : 'bg-emerald-500/90 hover:bg-emerald-500 text-emerald-950'
-                          }`}
+                          className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-extrabold
+              shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition w-full sm:w-auto ${
+                freeze
+                  ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
+                  : 'bg-emerald-500/90 hover:bg-emerald-500 text-emerald-950'
+              }`}
                           disabled={freeze}
                         >
                           Nuevo Integrante
                         </button>
-                        <button
-                          type="button"
-                          onClick={freeze ? undefined : abrirModalImportacion}
-                          disabled={freeze}
-                          className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-extrabold
-                shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition w-full sm:w-auto ${
-                  freeze
-                    ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
-                    : 'bg-white/10 hover:bg-white/15 text-white/85 ring-1 ring-white/10 hover:ring-white/20'
-                }`}
-                          title="Importación masiva desde Excel"
-                        >
-                          Importación masiva
-                        </button>
-                      </div>
-                    )}
-                    {/* Control bar: extras */}
-                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 sm:gap-4 items-center">
-                      {/* Admin actions row */}
-                      {(userLevel === 'admin' ||
-                        userLevel === 'administrador') && (
-                        <div className="flex flex-wrap items-center gap-3 justify-start lg:justify-end">
+
+                        {/* Importación + Finalicé listado  */}
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
                           <button
-                            onClick={freeze ? undefined : autorizarConvenio}
+                            type="button"
+                            onClick={freeze ? undefined : abrirModalImportacion}
                             disabled={freeze}
-                            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 font-extrabold transition shadow-[0_18px_45px_rgba(16,185,129,0.22)] ${
-                              freeze
-                                ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
-                                : 'bg-emerald-500/90 hover:bg-emerald-500 text-emerald-950'
-                            }`}
+                            className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-extrabold
+      shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition w-full sm:w-auto ${
+        freeze
+          ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
+          : 'bg-white/10 hover:bg-white/15 text-white/85 ring-1 ring-white/10 hover:ring-white/20'
+      }`}
+                            title="Importación masiva desde Excel"
                           >
-                            Autorizar Masivo
+                            Importación masiva
                           </button>
 
-                          <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-2">
-                            <CongelarIntegrantes
-                              id_conv={id_conv}
-                              selectedMonth={selectedMonth}
-                              monthStart={monthStart}
-                              meta={meta}
-                              onChanged={fetchIntegrantesMes}
-                            />
-                          </div>
+                          <button
+                            type="button"
+                            onClick={finaliceListado}
+                            disabled={loadingFinalizar || !!accionFinalizar}
+                            className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+      font-semibold border transition active:scale-[0.99] w-full sm:w-auto
+      ${
+        loadingFinalizar || !!accionFinalizar
+          ? 'bg-emerald-500/20 text-white/60 border-emerald-400/15 cursor-not-allowed'
+          : 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-emerald-400/30 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30'
+      }`}
+                          >
+                            <FaCheckCircle className="opacity-95" />
+                            <span>
+                              {accionFinalizar
+                                ? 'Finalizado'
+                                : loadingFinalizar
+                                ? 'Finalizando…'
+                                : 'Finalicé listado'}
+                            </span>
+                            <FaPaperPlane className="opacity-80" />
+                          </button>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Extras admin (derecha) */}
+                    {(userLevel === 'admin' ||
+                      userLevel === 'administrador') && (
+                      <div className="flex flex-wrap items-center gap-3 justify-start lg:justify-end">
+                        <bImportautton
+                          onClick={freeze ? undefined : autorizarConvenio}
+                          disabled={freeze}
+                          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 font-extrabold transition
+              shadow-[0_18px_45px_rgba(16,185,129,0.22)] ${
+                freeze
+                  ? 'bg-white/10 text-white/40 ring-1 ring-white/10 cursor-not-allowed'
+                  : 'bg-emerald-500/90 hover:bg-emerald-500 text-emerald-950'
+              }`}
+                        >
+                          Autorizar Masivo
+                        </bImportautton>
+                      </div>
                       )}
-                    </div>
+                    {Number(permiteFec) === 1 && (
+
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-2">
+                        <CongelarIntegrantes
+                          id_conv={id_conv}
+                          selectedMonth={selectedMonth}
+                          monthStart={monthStart}
+                          meta={meta}
+                          onChanged={fetchIntegrantesMes}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2082,7 +2108,7 @@ const IntegranteConveGet = ({ integrantes }) => {
             </div>
 
             {/* PAGINACIÓN (solo si hay registros) */}
-            {totalCount > 0 && (
+            {/* {totalCount > 0 && (
               <nav className="flex justify-center items-center my-10">
                 <ul className="pagination flex flex-wrap gap-2">
                   <li className="page-item">
@@ -2127,86 +2153,89 @@ const IntegranteConveGet = ({ integrantes }) => {
                   </li>
                 </ul>
               </nav>
-            )}
+            )} */}
 
             {/* CBU + TOTAL */}
-            {(userLevel === 'admin' ||
-              userLevel === '' ||
-              userLevel === 'gerente' ||
-              userLevel === 'administrador') && (
-              <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-5 sm:p-6">
-                <div className="text-center">
-                  <div className="text-xs uppercase tracking-[0.18em] text-white/45">
-                    Transferencias
-                  </div>
-
-                  {/* CBU Box */}
-                  <div className="mt-3 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                      <p className="text-xs sm:text-sm text-white/75 font-semibold">
-                        REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU:
-                      </p>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <span className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm sm:text-base font-extrabold text-white font-mono break-all">
-                          2850156330094245972241
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={handleCopyClick}
-                          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold text-white/85 transition hover:bg-white/[0.06] active:scale-[0.99]"
-                          aria-label="Copiar CBU"
-                          title="Copiar CBU"
-                        >
-                          Copiar
-                        </button>
-                      </div>
+            {Number(permiteFec) === 1 &&
+              (userLevel === 'admin' ||
+                userLevel === '' ||
+                userLevel === 'gerente' ||
+                userLevel === 'administrador') && (
+                <div className="mt-2 rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-5 sm:p-6">
+                  <div className="text-center">
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/45">
+                      Transferencias
                     </div>
 
-                    <p className="mt-3 text-white/65 text-sm sm:text-lg font-semibold">
-                      Titular:{' '}
-                      <span className="text-white/85 font-extrabold">
-                        HAMMERX SAS
-                      </span>
-                    </p>
-                  </div>
+                    {/* CBU Box */}
+                    <div className="mt-3 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <p className="text-xs sm:text-sm text-white/75 font-semibold">
+                          REALIZÁ TUS TRANSFERENCIAS AL SIGUIENTE CBU:
+                        </p>
 
-                  {/* Total */}
-                  <div className="mt-6 text-xs uppercase tracking-[0.18em] text-white/45">
-                    Total
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                          <span className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm sm:text-base font-extrabold text-white font-mono break-all">
+                            2850156330094245972241
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={handleCopyClick}
+                            className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold text-white/85 transition hover:bg-white/[0.06] active:scale-[0.99]"
+                            aria-label="Copiar CBU"
+                            title="Copiar CBU"
+                          >
+                            Copiar
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="mt-3 text-white/65 text-sm sm:text-lg font-semibold">
+                        Titular:{' '}
+                        <span className="text-white/85 font-extrabold">
+                          HAMMERX SAS
+                        </span>
+                      </p>
+                    </div>
+
+                    {/* Total */}
+                    <div className="mt-6 text-xs uppercase tracking-[0.18em] text-white/45">
+                      Total
+                    </div>
+                    <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-white">
+                      {formatearMoneda(totalPrecioFinal)}
+                    </div>
                   </div>
-                  <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-white">
-                    {formatearMoneda(totalPrecioFinal)}
-                  </div>
+                </div>
+              )}
+
+            {/* Uploads */}
+            {Number(permiteFec) === 1 && (
+              <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-4">
+                  {(userLevel === '' || userLevel === 'admin') && (
+                    <ImagesUpload
+                      convenioId={id_conv}
+                      selectedMonth={selectedMonth}
+                      setSelectedMonth={setSelectedMonth}
+                      monthCursor={monthCursor} // recomendado
+                      // monthStart={monthStart}     // opcional, si preferís string
+                    />
+                  )}
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-4">
+                  {(userLevel === '' || userLevel === 'admin') && (
+                    <InvoicesUpload
+                      convenioId={id_conv}
+                      selectedMonth={selectedMonth}
+                      setSelectedMonth={setSelectedMonth}
+                      monthCursor={monthCursor}
+                    />
+                  )}
                 </div>
               </div>
             )}
-
-            {/* Uploads */}
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-4">
-                {(userLevel === '' || userLevel === 'admin') && (
-                  <ImagesUpload
-                    convenioId={id_conv}
-                    selectedMonth={selectedMonth}
-                    setSelectedMonth={setSelectedMonth}
-                    monthCursor={monthCursor} // recomendado
-                    // monthStart={monthStart}     // opcional, si preferís string
-                  />
-                )}
-              </div>
-              <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_18px_55px_rgba(0,0,0,0.35)] p-4">
-                {(userLevel === '' || userLevel === 'admin') && (
-                  <InvoicesUpload
-                    convenioId={id_conv}
-                    selectedMonth={selectedMonth}
-                    setSelectedMonth={setSelectedMonth}
-                    monthCursor={monthCursor}
-                  />
-                )}
-              </div>
-            </div>
 
             {/* Modales */}
             <FormAltaIntegranteConve
