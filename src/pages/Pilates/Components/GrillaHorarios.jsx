@@ -132,7 +132,7 @@ const GrillaHorarios = ({
                 <td className="p-1 text-center bg-orange-200 border-b border-white/20 align-middle">
                   <div className="flex flex-col items-center justify-center gap-1.5 py-1">
                     {/* Botón Ocultar/Mostrar Detalles */}
-                    {rol != "INSTRUCTOR" && ( // Solo Gestión puede minimizar
+                    {(rol === "GESTION" || rol === "INSTRUCTOR") && (
                       <button
                         type="button"
                         onClick={() => alternarMinimizacionHorario(hour)}

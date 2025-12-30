@@ -7,6 +7,7 @@ import { format, set } from "date-fns";
 import Swal from "sweetalert2";
 import useInsertar from "../ConsultaDb/Insertar";
 import useHistorialAlumnos from "./PilatesGestion/HistorialAlumnos";
+import useGrillaMinimizada from "./PilatesGestion/HorariosOcultos";
 
 const PilatesInstructorLogica = () => {
   const [isModalAsistencia, setIsModalAsistencia] = useState(false); // Estado que abre el modal que marca la asistencia
@@ -19,6 +20,12 @@ const PilatesInstructorLogica = () => {
   const [asistenciasHoy, setAsistenciasHoy] = useState({}); // Asistencias registradas para la fecha actual
   const { sedeId, instructorName } = useInstructorAuth(); // Obtener el ID de la sede del contexto de autenticación del instructor
   const { fecha } = ObtenerFechaInternet(); // Obtener la fecha actual de una API de internet
+
+  const {
+    horariosMinimizados, // Horarios colapsados
+    alternarMinimizacionHorario, // Minimiza/expande un turno
+    manejarMinimizacionGlobal, // Minimiza/expande todos los turnos
+  } = useGrillaMinimizada();
 
   // Consulta para obtener los horarios y alumnos asignados a la sede
   const { data: horariosData, refetch: refetchHorarios } = useConsultaDB(
@@ -314,6 +321,7 @@ const PilatesInstructorLogica = () => {
       asistenciasHoy,
       cupoMaximoPilates,
       loadingAsistencias,
+      horariosMinimizados,
     },
     setStates: {
       setIsModalAsistencia,
@@ -329,6 +337,8 @@ const PilatesInstructorLogica = () => {
       cambiarAsistencia,
       cambiarObservaciones,
       agregarQuejas,
+      alternarMinimizacionHorario,
+      manejarMinimizacionGlobal,
     },
   };
 };

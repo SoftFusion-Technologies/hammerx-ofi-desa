@@ -4,24 +4,26 @@ Fecha de creación: 23-12-2025
 Descripción: Componente ModalDetalleAusentes para gestionar alumnos ausentes en Pilates.
 */
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../../AuthContext';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import React, { useState, useEffect, useRef } from "react";
+import { useAuth } from "../../../AuthContext";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import {
   FaEdit,
   FaTrash,
   FaFacebookF,
   FaWhatsapp,
   FaInstagram,
-  FaLinkedinIn
-} from 'react-icons/fa';
+  FaQuestionCircle,
+} from "react-icons/fa";
+import AyudaAusentes from "../Components/AyudaAusentes";
 import {
   cargarHistorial,
   handleEditarHistorial,
   handleEliminarHistorial,
-  handleGuardarObservacion
-} from '../Logic/PilatesGestion/HistorialContactosAusentes';
+  handleGuardarObservacion,
+  obtenerAlumnosFiltrados,
+} from "../Logic/PilatesGestion/HistorialContactosAusentes";
 
 const ModalDetalleAusentes = ({
   isOpen,
@@ -29,7 +31,7 @@ const ModalDetalleAusentes = ({
   ausentesData,
   refetchAusentesData,
   isLoadingAusentesData,
-  errorAusentesData
+  errorAusentesData,
 }) => {
   const { userId } = useAuth();
   // --- ESTADOS DE DATOS ---
@@ -37,10 +39,14 @@ const ModalDetalleAusentes = ({
 
   // --- ESTADOS DE UI ---
   const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
-  const [busqueda, setBusqueda] = useState('');
-  const [filtroEstado, setFiltroEstado] = useState('TODOS');
+  const [mostrarAyuda, setMostrarAyuda] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("TODOS");
+  const [filtroAvanzado, setFiltroAvanzado] = useState("TODOS"); // Filtro avanzado
+  const [ordenamiento, setOrdenamiento] = useState("DEFECTO"); // Orden de resultados
   const [paginaActual, setPaginaActual] = useState(1);
-  const [nuevaObservacion, setNuevaObservacion] = useState('');
+  const [nuevaObservacion, setNuevaObservacion] = useState("");
+  const textareaRef = useRef(null);
 
   // --- ESTADOS DE CARGA Y ERROR ---
   const [loadingHistorial, setLoadingHistorial] = useState(false);
@@ -52,8 +58,11 @@ const ModalDetalleAusentes = ({
     if (!isOpen) {
       // Limpieza al cerrar
       setAlumnoSeleccionado(null);
-      setBusqueda('');
-      setFiltroEstado('TODOS');
+      setMostrarAyuda(false);
+      setBusqueda("");
+      setFiltroEstado("TODOS");
+      setFiltroAvanzado("TODOS");
+      setOrdenamiento("DEFECTO");
     }
   }, [isOpen]);
 
@@ -71,16 +80,14 @@ const ModalDetalleAusentes = ({
     }
   }, [alumnoSeleccionado]);
 
+  // --- FUNCIÓN: CALCULAR DÍAS DESDE ÚLTIMO CONTACTO ---
   // --- LÓGICA DE FILTRADO ---
-  const alumnosFiltrados = ausentesData.filter((alumno) => {
-    const texto = busqueda.toLowerCase();
-    const coincideTexto =
-      alumno.nombre?.toLowerCase().includes(texto) ||
-      alumno.telefono?.toLowerCase().includes(texto);
-    const coincideEstado =
-      filtroEstado === 'TODOS' || alumno.estado_visual === filtroEstado;
-    return coincideTexto && coincideEstado;
-  }); // El backend ya los devuelve ordenados (Rojos primero)
+  const alumnosFiltrados = obtenerAlumnosFiltrados(ausentesData, {
+    busqueda,
+    filtroEstado,
+    filtroAvanzado,
+    ordenamiento,
+  });
 
   // --- PAGINACIÓN ---
   const totalPaginas = Math.ceil(alumnosFiltrados.length / ITEMS_POR_PAGINA);
@@ -91,9 +98,27 @@ const ModalDetalleAusentes = ({
     indiceUltimoItem
   );
 
+  // Resetear página cuando cambian los filtros
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [filtroEstado, filtroAvanzado, ordenamiento, busqueda]);
+
+  // Evita combinaciones inválidas: en "Contactados" no aplica sin contacto ni con al menos un contacto
+  useEffect(() => {
+    const opcionesNoPermitidas = ["SIN_CONTACTO", "CON_CONTACTO"];
+    if (
+      filtroEstado === "VERDE" &&
+      opcionesNoPermitidas.includes(filtroAvanzado)
+    ) {
+      setFiltroAvanzado("TODOS");
+    }
+  }, [filtroEstado, filtroAvanzado]);
+
   const cambiarPagina = (n) => {
     if (n >= 1 && n <= totalPaginas) setPaginaActual(n);
   };
+
+  const deshabilitarFiltrosBasicos = filtroEstado === "VERDE";
 
   if (!isOpen) return null;
 
@@ -104,46 +129,67 @@ const ModalDetalleAusentes = ({
         <div className="bg-white px-6 py-4 border-b flex justify-between items-center shrink-0 shadow-sm z-10">
           <div>
             <h2 className="text-2xl font-bold text-gray-800 tracking-tight font-bignoodle">
-              {alumnoSeleccionado
-                ? 'FICHA DE SEGUIMIENTO'
-                : 'AUSENTES POR CLASES'}
+              {mostrarAyuda
+                ? "¿CÓMO USAR ESTA VENTANA?"
+                : alumnoSeleccionado
+                ? "FICHA DE SEGUIMIENTO"
+                : "AUSENTES POR CLASES"}
             </h2>
             <p className="text-sm text-gray-500">
-              {alumnoSeleccionado
+              {mostrarAyuda
+                ? "Guía paso a paso para usar este formulario"
+                : alumnoSeleccionado
                 ? `Gestionando a: ${alumnoSeleccionado.nombre}`
-                : 'Alumnos con 2 o más inasistencias'}
+                : "Alumnos con 2 o más inasistencias"}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-2 transition"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="flex gap-2">
+            <button
+              onClick={() => setMostrarAyuda(!mostrarAyuda)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition shadow-sm ${
+                mostrarAyuda
+                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+                  : "bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-200"
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
+              <FaQuestionCircle
+                className={mostrarAyuda ? "text-gray-500" : "text-orange-600"}
               />
-            </svg>
-          </button>
+              {mostrarAyuda ? "Volver a Ausentes" : "Ayuda"}
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-2 transition"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* CONTENIDO PRINCIPAL */}
         <div className="flex-1 overflow-hidden bg-gray-50 relative">
-          {isLoadingAusentesData && !ausentesData.length ? (
+          {mostrarAyuda ? (
+            <AyudaAusentes onCerrar={() => setMostrarAyuda(false)} />
+          ) : isLoadingAusentesData && !ausentesData.length ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
           ) : errorAusentesData ? (
             <div className="flex items-center justify-center h-full text-red-600 font-medium">
-              {'Se produjo un error al cargar los datos'}
+              {"Se produjo un error al cargar los datos"}
             </div>
           ) : !alumnoSeleccionado ? (
             // =========================
@@ -151,66 +197,131 @@ const ModalDetalleAusentes = ({
             // =========================
             <div className="h-full flex flex-col p-6">
               {/* FILTROS */}
-              <div className="flex flex-col md:flex-row gap-4 mb-4 justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto flex-1">
-                  <input
-                    type="text"
-                    className="block w-full max-w-md pl-4 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
-                    placeholder="Buscar por nombre o teléfono..."
-                    value={busqueda}
-                    onChange={(e) => {
-                      setBusqueda(e.target.value);
-                      setPaginaActual(1);
-                    }}
-                  />
-                  <div className="flex gap-2 flex-wrap">
-                    <button
-                      onClick={() => {
-                        setFiltroEstado('TODOS');
+              <div className="flex flex-col md:flex-row gap-4 mb-4 justify-between items-start bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <div className="flex flex-col gap-4 w-full md:w-auto flex-1">
+                  {/* BÚSQUEDA Y FILTROS DE ESTADO */}
+                  <div className="flex flex-col sm:flex-row gap-4 items-start">
+                    <input
+                      type="text"
+                      className="block w-full max-w-md pl-4 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      placeholder="Buscar por nombre o teléfono..."
+                      value={busqueda}
+                      onChange={(e) => {
+                        setBusqueda(e.target.value);
                         setPaginaActual(1);
                       }}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition shadow-sm ${
-                        filtroEstado === 'TODOS'
-                          ? 'bg-orange-500 text-white hover:bg-orange-600'
-                          : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      Todos
-                    </button>
-                    <button
-                      onClick={() => {
-                        setFiltroEstado('ROJO');
-                        setPaginaActual(1);
-                      }}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition shadow-sm ${
-                        filtroEstado === 'ROJO'
-                          ? 'bg-red-500 text-white hover:bg-red-600'
-                          : 'bg-white text-gray-600 border border-gray-300 hover:bg-red-50'
-                      }`}
-                    >
-                      {filtroEstado != "ROJO" && "🔴"} No contactados
-                    </button>
-                    <button
-                      onClick={() => {
-                        setFiltroEstado('VERDE');
-                        setPaginaActual(1);
-                      }}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition shadow-sm ${
-                        filtroEstado === 'VERDE'
-                          ? 'bg-green-500 text-white hover:bg-green-600'
-                          : 'bg-white text-gray-600 border border-gray-300 hover:bg-green-50'
-                      }`}
-                    >
-                      {filtroEstado != "VERDE" && "🟢"} Contactados
-                    </button>
+                    />
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => {
+                          setFiltroEstado("TODOS");
+                          setPaginaActual(1);
+                        }}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition shadow-sm ${
+                          filtroEstado === "TODOS"
+                            ? "bg-orange-500 text-white hover:bg-orange-600"
+                            : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        Todos
+                      </button>
+                      <button
+                        onClick={() => {
+                          setFiltroEstado("ROJO");
+                          setPaginaActual(1);
+                        }}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition shadow-sm ${
+                          filtroEstado === "ROJO"
+                            ? "bg-red-500 text-white hover:bg-red-600"
+                            : "bg-white text-gray-600 border border-gray-300 hover:bg-red-50"
+                        }`}
+                      >
+                        {filtroEstado != "ROJO" && "🔴"} No contactados
+                      </button>
+                      <button
+                        onClick={() => {
+                          setFiltroEstado("VERDE");
+                          setPaginaActual(1);
+                        }}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition shadow-sm ${
+                          filtroEstado === "VERDE"
+                            ? "bg-green-500 text-white hover:bg-green-600"
+                            : "bg-white text-gray-600 border border-gray-300 hover:bg-green-50"
+                        }`}
+                      >
+                        {filtroEstado != "VERDE" && "🟢"} Contactados
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {" "}
+                    {/* SELECTOR DE FILTROS AVANZADOS */}
+                    <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                      <label className="text-xs font-bold text-gray-600 uppercase whitespace-nowrap">
+                        Filtro Avanzado:
+                      </label>
+                      <select
+                        value={filtroAvanzado}
+                        onChange={(e) => {
+                          setFiltroAvanzado(e.target.value);
+                          setPaginaActual(1);
+                        }}
+                        className="block w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm bg-white shadow-sm"
+                      >
+                        <option value="TODOS">📋 Todos los alumnos</option>
+                        <optgroup label="━━━ Por Estado de Contacto ━━━">
+                          <option
+                            value="SIN_CONTACTO"
+                            disabled={deshabilitarFiltrosBasicos}
+                          >
+                            ❌ Sin ningún contacto realizado
+                          </option>
+                          <option
+                            value="CON_CONTACTO"
+                            disabled={deshabilitarFiltrosBasicos}
+                          >
+                            ✅ Con al menos 1 contacto
+                          </option>
+                          <option value="CONTACTO_MAS_15_DIAS">
+                            ⏰ Último contacto hace +15 días
+                          </option>
+                          <option value="CONTACTO_MENOS_15_DIAS">
+                            🕐 Último contacto hace -15 días
+                          </option>
+                        </optgroup>
+                      </select>
+                    </div>
+                    {/* SELECTOR DE ORDENAMIENTO */}
+                    <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                      <label className="text-xs font-bold text-gray-600 uppercase whitespace-nowrap">
+                        Ordenar por:
+                      </label>
+                      <select
+                        value={ordenamiento}
+                        onChange={(e) => {
+                          setOrdenamiento(e.target.value);
+                          setPaginaActual(1);
+                        }}
+                        className="block w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm bg-white shadow-sm"
+                      >
+                        <option value="DEFECTO">📌 Orden por defecto</option>
+                        <option value="MAS_FALTAS">
+                          ⬇️ Más faltas primero
+                        </option>
+                        <option value="MENOS_FALTAS">
+                          ⬆️ Menos faltas primero
+                        </option>
+                      </select>
+                    </div>
                   </div>
                 </div>
-                <div className="text-sm text-gray-500 font-medium whitespace-nowrap">
-                  Mostrando{' '}
+                <div className="text-sm text-gray-500 font-medium whitespace-nowrap mt-2 md:mt-0">
+                  Mostrando{" "}
                   <span className="font-bold text-gray-900">
                     {alumnosPaginados.length}
-                  </span>{' '}
-                  de{' '}
+                  </span>{" "}
+                  de{" "}
                   <span className="font-bold text-gray-900">
                     {alumnosFiltrados.length}
                   </span>
@@ -245,9 +356,9 @@ const ModalDetalleAusentes = ({
                         <tr
                           key={alumno.id}
                           className={`hover:bg-opacity-80 transition duration-150 ${
-                            alumno.estado_visual === 'ROJO'
-                              ? '!bg-red-100'
-                              : '!bg-green-100'
+                            alumno.estado_visual === "ROJO"
+                              ? "!bg-red-100"
+                              : "!bg-green-100"
                           }`}
                           onClick={() => setAlumnoSeleccionado(alumno)}
                         >
@@ -267,7 +378,7 @@ const ModalDetalleAusentes = ({
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
-                            {alumno.estado_visual === 'ROJO' ? (
+                            {alumno.estado_visual === "ROJO" ? (
                               <span className="inline-flex px-3 py-1 text-xs font-bold leading-5 text-red-800 bg-red-200 rounded-full border border-red-300 shadow-sm">
                                 No contactados
                               </span>
@@ -279,7 +390,7 @@ const ModalDetalleAusentes = ({
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <div className="flex flex-col items-center gap-2">
-                              {alumno.estado_visual === 'ROJO' ? (
+                              {alumno.estado_visual === "ROJO" ? (
                                 <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
                                   Contactar
                                 </button>
@@ -294,7 +405,7 @@ const ModalDetalleAusentes = ({
                                 </div>
                               )}
                               <span className="text-[10px] text-gray-500 mt-1">
-                                Contactos:{' '}
+                                Contactos:{" "}
                                 <strong className="text-gray-800">
                                   {alumno.total_contactos}
                                 </strong>
@@ -328,7 +439,7 @@ const ModalDetalleAusentes = ({
                     Anterior
                   </button>
                   <span className="text-sm text-gray-700">
-                    Página <span className="font-bold">{paginaActual}</span> de{' '}
+                    Página <span className="font-bold">{paginaActual}</span> de{" "}
                     <span className="font-bold">{totalPaginas}</span>
                   </span>
                   <button
@@ -394,7 +505,7 @@ const ModalDetalleAusentes = ({
                     <p className="text-sm text-orange-900 italic">
                       "
                       {alumnoSeleccionado.observaciones_cliente ||
-                        'Sin observaciones.'}
+                        "Sin observaciones."}
                       "
                     </p>
                   </div>
@@ -402,20 +513,36 @@ const ModalDetalleAusentes = ({
 
                 {/* HISTORIAL DERECHA */}
                 <div className="lg:w-2/3 flex flex-col gap-4 h-full">
-                  <div className="flex-1 bg-white border border-gray-200 rounded-xl p-6 overflow-y-auto shadow-sm">
-                    <h4 className="text-lg font-bold text-orange-600 uppercase mb-4 border-b pb-2 font-bignoodle">
-                      Historial de observaciones
-                    </h4>
-
-                    {loadingHistorial ? (
-                      <div className="flex justify-center py-10">
-                        <div className="animate-spin h-8 w-8 border-b-2 border-orange-600 rounded-full"></div>
+                  {loadingHistorial ? (
+                    <div className="flex-1 bg-white border border-gray-200 rounded-xl p-6 overflow-y-auto shadow-sm flex items-center justify-center">
+                      <div className="animate-spin h-8 w-8 border-b-2 border-orange-600 rounded-full"></div>
+                    </div>
+                  ) : historialSeleccionado.length === 0 ? (
+                    <div className="flex-1 bg-gradient-to-br from-orange-50 to-white border border-orange-100 rounded-xl p-8 shadow-sm flex flex-col items-center justify-center text-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-white border border-orange-200 flex items-center justify-center shadow-sm text-orange-500 text-2xl">
+                        📭
                       </div>
-                    ) : historialSeleccionado.length === 0 ? (
-                      <div className="text-center py-10 text-gray-400">
-                        <p>No hay registros previos.</p>
+                      <div>
+                        <h4 className="text-lg font-bold text-orange-700 mb-1">
+                          Sin contactos registrados
+                        </h4>
+                        <p className="text-sm text-gray-600 max-w-md">
+                          Aún no hay un historial para este alumno. Registrá el
+                          primer contacto y verás aquí la línea de tiempo.
+                        </p>
                       </div>
-                    ) : (
+                      <button
+                        onClick={() => textareaRef.current?.focus()}
+                        className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg shadow-sm text-sm"
+                      >
+                        Registrar primer contacto
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex-1 bg-white border border-gray-200 rounded-xl p-6 overflow-y-auto shadow-sm">
+                      <h4 className="text-lg font-bold text-orange-600 uppercase mb-4 border-b pb-2 font-bignoodle">
+                        Historial de observaciones
+                      </h4>
                       <ul className="space-y-6 ml-2">
                         {historialSeleccionado.map((item) => (
                           <li
@@ -426,10 +553,9 @@ const ModalDetalleAusentes = ({
                             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1">
                               <div>
                                 <span className="text-md font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded w-fit font-bignoodle">
-                                  {/* Línea modificada con date-fns */}
                                   {format(
                                     new Date(item.fecha_contacto),
-                                    'dd/MM/yyyy HH:mm',
+                                    "dd/MM/yyyy HH:mm",
                                     { locale: es }
                                   )}
                                 </span>
@@ -441,13 +567,15 @@ const ModalDetalleAusentes = ({
                               </div>
 
                               <span className="text-xs text-gray-400">
-                                Contactado por:{' '}
-                                {item.usuario?.name || 'Desconocido'}{' '}
+                                Contactado por:{" "}
+                                {item.usuario?.name || "Desconocido"}{" "}
                                 {item.usuario?.apellido}
                               </span>
                             </div>
                             <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 shadow-sm mt-1 flex justify-between items-start">
-                              <span className="flex-1">"{item.observacion}"</span>
+                              <span className="flex-1">
+                                "{item.observacion}"
+                              </span>
                               <div className="flex gap-2 ml-2">
                                 <button
                                   onClick={() =>
@@ -470,7 +598,7 @@ const ModalDetalleAusentes = ({
                                       alumnoSeleccionado,
                                       setLoadingHistorial,
                                       setHistorialSeleccionado,
-                                      refetchAusentesData,
+                                      refetchAusentesData
                                     )
                                   }
                                   className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition"
@@ -483,8 +611,8 @@ const ModalDetalleAusentes = ({
                           </li>
                         ))}
                       </ul>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {/* NUEVA NOTA */}
                   <div className="bg-white border border-gray-200 rounded-xl p-2 shadow-md mt-auto">
@@ -497,6 +625,7 @@ const ModalDetalleAusentes = ({
                       placeholder="Escribe el resultado..."
                       value={nuevaObservacion}
                       onChange={(e) => setNuevaObservacion(e.target.value)}
+                      ref={textareaRef}
                       maxLength={255}
                     ></textarea>
                     <div className="flex justify-end mt-4 gap-3">
@@ -536,7 +665,7 @@ const ModalDetalleAusentes = ({
           <div className="flex items-center gap-4">
             <div className="flex flex-col">
               <span className="text-[10px] text-gray-400">
-                Diseñado y desarrollado por{' '}
+                Diseñado y desarrollado por{" "}
                 <span className="font-bold text-pink-600">Soft Fusion</span>
               </span>
               <div className="flex items-center gap-3 mt-1">

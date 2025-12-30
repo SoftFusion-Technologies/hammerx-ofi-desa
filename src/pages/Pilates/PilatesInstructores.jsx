@@ -1,5 +1,5 @@
 import NavbarInstructor from "../staff/NavbarInstructor";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaCompressAlt, FaExpandAlt } from "react-icons/fa";
 import { VscDebugRestart } from "react-icons/vsc";
 import GrillaHorarios from "./Components/GrillaHorarios";
 import Footer from "../../components/footer/Footer";
@@ -25,7 +25,7 @@ const PilatesInstructores = () => {
                   Día habilitado: {states.hoy}
                 </span>
               </div>
-              <div className="flex justify-center sm:justify-start">
+              <div className="flex flex-col lg:flex-row items-center gap-4 lg:items-end">
                 <div className="relative w-full max-w-lg">
                   <input
                     type="text"
@@ -44,6 +44,32 @@ const PilatesInstructores = () => {
                     <span>Resetear</span>
                   </button>
                 </div>
+
+                <div className="w-full lg:w-auto flex gap-2">
+                  {states.horariosMinimizados.length === HOURS.length ? (
+                    <button
+                      onClick={() =>
+                        functions.manejarMinimizacionGlobal(HOURS, false)
+                      }
+                      className="flex-1 lg:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-blue-600 font-semibold text-white shadow-md hover:bg-blue-700 transition-colors duration-200"
+                      title="Ver todos los alumnos"
+                    >
+                      <FaExpandAlt />
+                      <span>Expandir</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        functions.manejarMinimizacionGlobal(HOURS, true)
+                      }
+                      className="flex-1 lg:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-white text-gray-700 border border-gray-300 font-semibold shadow-sm hover:bg-gray-50 transition-colors duration-200"
+                      title="Ocultar alumnos para ver solo los turnos"
+                    >
+                      <FaCompressAlt />
+                      <span>Compactar</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </header>
             {states.loadingAsistencias ? (
@@ -54,6 +80,7 @@ const PilatesInstructores = () => {
               <GrillaHorarios
                 schedule={states.schedule}
                 searchTerm={states.searchTerm}
+                setSearchTerm={setStates.setSearchTerm}
                 guardarAsistencia={functions.handleCellAsistencia}
                 DAYS={DAYS}
                 HOURS={HOURS}
@@ -62,6 +89,10 @@ const PilatesInstructores = () => {
                 rol={"INSTRUCTOR"}
                 hoy={states.hoy}
                 asistenciasHoy={states.asistenciasHoy}
+                horariosMinimizados={states.horariosMinimizados}
+                alternarMinimizacionHorario={
+                  functions.alternarMinimizacionHorario
+                }
               />
             )}
             {states.isModalAsistencia && (
