@@ -84,7 +84,11 @@ export default function ConvenioPlanesModal({
     precio_lista: '',
     descuento_valor: '',
     precio_final: '',
-    activo: 1
+    activo: 1,
+
+    // Benjamin Orellana - 30/12/2025
+    // Nuevo: flag de plan por defecto (NULL o 1)
+    es_default: null
   });
 
   const isEditing = Boolean(editingId);
@@ -97,22 +101,43 @@ export default function ConvenioPlanesModal({
 
   const resumen = useMemo(() => {
     const activos = planes.filter((p) => Number(p.activo) === 1).length;
-    return { total: planes.length, activos };
+    const defaults = planes.filter((p) => Number(p.es_default) === 1).length;
+    return { total: planes.length, activos, defaults };
+  }, [planes]);
+
+  // Benjamin Orellana - 30/12/2025
+  const defaultPlan = useMemo(() => {
+    return (planes || []).find((p) => Number(p.es_default) === 1) || null;
   }, [planes]);
 
   const planesFiltrados = useMemo(() => {
     const term = String(q || '')
       .trim()
       .toLowerCase();
-    if (!term) return planes;
+    let list = planes;
 
-    return planes.filter((p) => {
-      const nom = String(p.nombre_plan || '').toLowerCase();
-      const sedeNom =
-        p.sede_id == null
-          ? 'general'
-          : String(sedeMap.get(Number(p.sede_id)) || '').toLowerCase();
-      return nom.includes(term) || sedeNom.includes(term);
+    if (term) {
+      list = planes.filter((p) => {
+        const nom = String(p.nombre_plan || '').toLowerCase();
+        const sedeNom =
+          p.sede_id == null
+            ? 'general'
+            : String(sedeMap.get(Number(p.sede_id)) || '').toLowerCase();
+        return nom.includes(term) || sedeNom.includes(term);
+      });
+    }
+
+    // UX: default primero, luego activos, luego id desc
+    return [...list].sort((a, b) => {
+      const ad = Number(a.es_default) === 1 ? 1 : 0;
+      const bd = Number(b.es_default) === 1 ? 1 : 0;
+      if (bd !== ad) return bd - ad;
+
+      const aa = Number(a.activo) === 1 ? 1 : 0;
+      const ba = Number(b.activo) === 1 ? 1 : 0;
+      if (ba !== aa) return ba - aa;
+
+      return Number(b.id) - Number(a.id);
     });
   }, [planes, q, sedeMap]);
 
@@ -125,7 +150,8 @@ export default function ConvenioPlanesModal({
       precio_lista: '',
       descuento_valor: '',
       precio_final: '',
-      activo: 1
+      activo: 1,
+      es_default: null
     });
   };
 
@@ -175,6 +201,17 @@ export default function ConvenioPlanesModal({
     }
   }, [open, convenioId]);
 
+  // UX: Escape cierra
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') close();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const pickPlan = (p) => {
     setEditingId(p.id);
     setForm({
@@ -184,7 +221,8 @@ export default function ConvenioPlanesModal({
       precio_lista: p.precio_lista ?? '',
       descuento_valor: p.descuento_valor ?? '',
       precio_final: p.precio_final ?? '',
-      activo: Number(p.activo) === 1 ? 1 : 0
+      activo: Number(p.activo) === 1 ? 1 : 0,
+      es_default: Number(p.es_default) === 1 ? 1 : null
     });
   };
 
@@ -197,6 +235,35 @@ export default function ConvenioPlanesModal({
     }
 
     setForm(next);
+  };
+
+  // Benjamin Orellana - 30/12/2025
+  // Acción rápida: marcar como default
+  const setDefaultQuick = async (planId) => {
+    if (!planId) return;
+    setLoading(true);
+    setError('');
+    try {
+      const r = await fetch(`${API_URL}/convenios-planes/${planId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ es_default: 1 })
+      });
+      const data = await r.json();
+      if (!r.ok)
+        throw new Error(
+          data?.mensajeError || 'No se pudo marcar el plan por defecto'
+        );
+      await loadPlanes();
+
+      if (editingId === planId) {
+        setForm((prev) => ({ ...prev, es_default: 1 }));
+      }
+    } catch (e) {
+      setError(e.message || 'Error inesperado');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const validate = () => {
@@ -262,7 +329,10 @@ export default function ConvenioPlanesModal({
           String(form.precio_final || '').trim() === ''
             ? null
             : toNum(form.precio_final),
-        activo: Number(form.activo) === 1 ? 1 : 0
+        activo: Number(form.activo) === 1 ? 1 : 0,
+
+        // Nuevo: default
+        es_default: Number(form.es_default) === 1 ? 1 : null
       };
 
       const url = isEditing
@@ -343,11 +413,13 @@ export default function ConvenioPlanesModal({
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
             className="
               relative w-full sm:w-[92vw] sm:max-w-5xl
+              h-[92vh] sm:h-[86vh]
               rounded-t-3xl sm:rounded-3xl
               border border-white/10
               bg-white/95 backdrop-blur-xl
               shadow-2xl
               overflow-hidden
+              flex flex-col
             "
           >
             {/* Header */}
@@ -377,6 +449,12 @@ export default function ConvenioPlanesModal({
                         {resumen.activos}
                       </span>
                     </span>
+                    <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-white/90">
+                      Default:{' '}
+                      <span className="ml-1 font-semibold text-white">
+                        {defaultPlan ? 'Sí' : 'No'}
+                      </span>
+                    </span>
                     {sedesError ? (
                       <span className="inline-flex items-center rounded-full border border-red-200/40 bg-red-500/10 px-3 py-1 text-white">
                         Error sedes
@@ -397,16 +475,17 @@ export default function ConvenioPlanesModal({
                   type="button"
                   className="h-10 w-10 rounded-xl border border-white/20 bg-white/10 hover:bg-white/15 text-white text-xl font-bold"
                   aria-label="Cerrar"
+                  title="Cerrar (Esc)"
                 >
                   ×
                 </button>
               </div>
             </div>
 
-            {/* Body */}
-            <div className="min-h-[72vh] sm:min-h-[560px] max-h-[82vh] sm:max-h-[78vh] grid grid-cols-1 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+            {/* Body (ocupa el alto restante) */}
+            <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
               {/* Listado */}
-              <div className="border-b md:border-b-0 md:border-r border-slate-200 overflow-hidden flex flex-col">
+              <div className="min-h-0 border-b md:border-b-0 md:border-r border-slate-200 overflow-hidden flex flex-col">
                 <div className="px-5 sm:px-6 py-3 flex items-center justify-between bg-white">
                   <div className="text-sm font-semibold text-slate-900">
                     Planes
@@ -436,7 +515,7 @@ export default function ConvenioPlanesModal({
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-5">
+                <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pb-5">
                   {loading && (
                     <div className="py-6 text-sm text-slate-500">
                       Cargando...
@@ -453,6 +532,8 @@ export default function ConvenioPlanesModal({
                     <div className="space-y-3 py-4">
                       {planesFiltrados.map((p) => {
                         const active = Number(p.activo) === 1;
+                        const isDefault = Number(p.es_default) === 1;
+
                         const sedeLabel =
                           p.sede_id == null
                             ? 'General'
@@ -468,7 +549,9 @@ export default function ConvenioPlanesModal({
                               w-full text-left rounded-2xl border px-4 py-4 transition
                               ${
                                 editingId === p.id
-                                  ? 'border-orange-300 bg-orange-50'
+                                  ? 'border-orange-300 bg-orange-300'
+                                  : isDefault
+                                  ? 'border-orange-300 bg-orange-50/75 ring-2 ring-orange-200/60'
                                   : 'border-slate-200 bg-white hover:bg-slate-50'
                               }
                             `}
@@ -479,6 +562,12 @@ export default function ConvenioPlanesModal({
                                   <div className="text-sm font-semibold text-slate-900 truncate">
                                     {p.nombre_plan}
                                   </div>
+
+                                  {isDefault && (
+                                    <span className="text-[11px] px-2 py-0.5 rounded-full border border-orange-200 bg-orange-100 text-orange-800 font-semibold">
+                                      Por defecto
+                                    </span>
+                                  )}
 
                                   <span
                                     className={`text-[11px] px-2 py-0.5 rounded-full border ${
@@ -527,12 +616,33 @@ export default function ConvenioPlanesModal({
                                     </span>
                                   </div>
                                 </div>
+
+                                {!isDefault && (
+                                  <div className="mt-3">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setDefaultQuick(p.id);
+                                      }}
+                                      disabled={loading}
+                                      className="inline-flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700 hover:bg-orange-100 disabled:opacity-60"
+                                      title="Marcar este plan como por defecto"
+                                    >
+                                      Marcar como por defecto
+                                    </button>
+                                  </div>
+                                )}
                               </div>
 
-                              <div className="flex flex-col gap-2">
+                              <div className="flex flex-col gap-2 items-end">
                                 <span className="text-xs text-slate-500">
                                   #{p.id}
                                 </span>
+                                {isDefault && (
+                                  <span className="h-2 w-2 rounded-full bg-orange-500 shadow-[0_0_0_4px_rgba(249,115,22,0.15)]" />
+                                )}
                               </div>
                             </div>
                           </button>
@@ -544,7 +654,7 @@ export default function ConvenioPlanesModal({
               </div>
 
               {/* Editor */}
-              <div className="overflow-hidden flex flex-col">
+              <div className="min-h-0 overflow-hidden flex flex-col">
                 <div className="px-5 sm:px-6 py-3 border-b border-slate-200 bg-white">
                   <div className="text-sm font-semibold text-slate-900">
                     {isEditing ? `Editar plan #${editingId}` : 'Crear plan'}
@@ -554,7 +664,7 @@ export default function ConvenioPlanesModal({
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5">
+                <div className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-6 py-5">
                   {error && (
                     <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                       {error}
@@ -617,6 +727,58 @@ export default function ConvenioPlanesModal({
                       {sedesError && (
                         <div className="mt-2 text-xs text-red-600">
                           {sedesError}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Plan por defecto */}
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">
+                            Plan por defecto
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            Solo puede existir 1 por convenio. Podés dejarlo sin
+                            marcar (NULL).
+                          </div>
+                        </div>
+
+                        <div className="inline-flex rounded-xl border border-orange-200 bg-orange-50 p-1">
+                          <button
+                            type="button"
+                            disabled={loading}
+                            onClick={() => handleChange('es_default', 1)}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                              Number(form.es_default) === 1
+                                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-sm'
+                                : 'text-orange-700 hover:bg-orange-100'
+                            }`}
+                          >
+                            Sí
+                          </button>
+                          <button
+                            type="button"
+                            disabled={loading}
+                            onClick={() => handleChange('es_default', null)}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                              Number(form.es_default) !== 1
+                                ? 'bg-white shadow-sm text-slate-900'
+                                : 'text-slate-600 hover:bg-white/70'
+                            }`}
+                          >
+                            No
+                          </button>
+                        </div>
+                      </div>
+
+                      {defaultPlan && Number(form.es_default) !== 1 && (
+                        <div className="mt-3 text-xs text-slate-600">
+                          Actualmente el default es:{' '}
+                          <span className="font-semibold text-slate-900">
+                            {defaultPlan.nombre_plan}
+                          </span>
+                          .
                         </div>
                       )}
                     </div>
@@ -757,12 +919,17 @@ export default function ConvenioPlanesModal({
                             calcFinal(form.precio_lista, form.descuento_valor)
                           )}
                         </span>
+                        {Number(form.es_default) === 1 && (
+                          <span className="ml-2 inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs font-semibold text-orange-700">
+                            Por defecto
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Footer */}
+                {/* Footer (siempre visible) */}
                 <div className="border-t border-slate-200 bg-white/85 backdrop-blur-xl px-5 sm:px-6 py-3">
                   <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
                     {isEditing && (

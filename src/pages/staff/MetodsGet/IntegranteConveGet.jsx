@@ -647,12 +647,8 @@ const IntegranteConveGet = ({ integrantes }) => {
     if (d.getTime() <= 0) return 'Sin vencimiento';
 
     return new Intl.DateTimeFormat('es-AR', {
-      day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
     }).format(d);
   };
 
@@ -766,18 +762,24 @@ const IntegranteConveGet = ({ integrantes }) => {
     return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0);
   };
 
-  const isLockedByVencimiento = (integrante) => {
-    if (!integrante?.convenio_plan_id) return false;
+  const addMonthsMonthStart = (dateLike, months = 1) => {
+    const d = toDateSafe(dateLike);
+    if (!d) return null;
 
-    const vto = toDateSafe(integrante?.fecha_vencimiento);
-    if (!vto) return false; // si no hay vencimiento, no lock (según tu regla actual)
-
-    const ms = monthStartFromFechaCreacion(integrante?.fechaCreacion);
-    if (!ms) return false;
-
-    // Locked mientras el mes visible sea anterior al vencimiento
-    return ms < vto;
+    // Normalizar a "inicio de mes" manteniendo la misma lógica que ya uses
+    // (si tu monthStartFromFechaCreacion ya fija el inicio de mes, podés simplificar)
+    const x = new Date(d.getTime());
+    x.setMonth(x.getMonth() + months);
+    x.setDate(1);
+    x.setHours(0, 0, 0, 0);
+    return x;
   };
+
+  // Benjamin Orellana - 30/12/2025
+  // Regla: lock se aplica a partir del MES SIGUIENTE a la fechaCreacion
+  // (y mientras el mes visible sea anterior al vencimiento)
+  const isLockedByVencimiento = (integrante) =>
+    Number(integrante?.locked_este_mes || 0) === 1;
 
   const handleCountChange = useCallback((integranteId, count) => {
     setNotasCountMap((prev) => ({ ...prev, [integranteId]: count }));
@@ -1220,6 +1222,13 @@ const IntegranteConveGet = ({ integrantes }) => {
   const isEmpty = totalCount === 0; // convenio sin integrantes
   const isNoMatch = !isEmpty && visibleCount === 0; // hay data pero no coincide con filtro/búsqueda
 
+  const isAnyModalOpen =
+    !!modalNewIntegrante ||
+    !!modalImportOpen ||
+    !!modalNotasOpen ||
+    !!modalUserDetails ||
+    !!modal?.open;
+
   return (
     <>
       <NavbarStaff />
@@ -1661,9 +1670,8 @@ const IntegranteConveGet = ({ integrantes }) => {
                           Autorizar Masivo
                         </bImportautton>
                       </div>
-                      )}
+                    )}
                     {Number(permiteFec) === 1 && (
-
                       <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-2">
                         <CongelarIntegrantes
                           id_conv={id_conv}
@@ -1671,6 +1679,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                           monthStart={monthStart}
                           meta={meta}
                           onChanged={fetchIntegrantesMes}
+                          userLevel={userLevel}
                         />
                       </div>
                     )}
@@ -1804,7 +1813,10 @@ const IntegranteConveGet = ({ integrantes }) => {
 
                       <tbody className="bg-transparent divide-y divide-white/10">
                         {registrosFiltrados.map((integrante) => {
-                          const locked = isLockedByVencimiento(integrante);
+                          const locked = isLockedByVencimiento(
+                            integrante,
+                            selectedMonth
+                          );
 
                           const trClassName = `${freeze ? 'tr-gris' : ''}`;
 
@@ -2305,16 +2317,18 @@ const IntegranteConveGet = ({ integrantes }) => {
 
         <Footer />
       </div>
-      <ConvenioChatWidget
-        convenioId={Number(id_conv)}
-        monthStart={selectedMonth}
-        apiBaseUrl={API_URL}
-        authToken={authToken}
-        userLevel={userLevel}
-        userName={userName}
-        userId={userId}
-        convenioNombre={convenioNombre}
-      />
+      {!isAnyModalOpen && (
+        <ConvenioChatWidget
+          convenioId={Number(id_conv)}
+          monthStart={selectedMonth}
+          apiBaseUrl={API_URL}
+          authToken={authToken}
+          userLevel={userLevel}
+          userName={userName}
+          userId={userId}
+          convenioNombre={convenioNombre}
+        />
+      )}
     </>
   );
 };

@@ -299,6 +299,23 @@ const SedesGet = () => {
     setSelectedSedes(Sedes);
     setModalNewSedes(true);
   };
+  // Benjamin Orellana - 30-12-2025
+  // Agrego esta función para determinar si el registro 'Multisede' tiene pilates
+  // le muestro al usuario del front que NO tiene pilates
+  // me sirve que multisede en tabla tenga el valor SI, para utilizarla
+  // en la administración de planes de convenios
+  const esMultisede = (s) =>
+    String(s?.nombre ?? '')
+      .trim()
+      .toLowerCase() === 'multisede';
+
+  const tienePilates = (s) => {
+    // Regla: si es Multisede, SIEMPRE NO
+    if (esMultisede(s)) return false;
+
+    return Boolean(s?.es_ciudad);
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -350,68 +367,223 @@ const SedesGet = () => {
             </p>
           ) : (
             <>
-              <table className="w-11/12 mx-auto">
-                <thead className="text-white bg-[#fc4b08] ">
-                  <tr key={Sedes.id}>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Estado</th>
-                    <th>¿Tiene pilates?</th>
-                    <th>Capacidad</th>
-                    <th>Creado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {records
-                    .filter(applySedeFilter)
-                    .filter(applyLevelFilter)
-                    .map((Sedes) => (
-                      <tr key={Sedes.id}>
-                        <td onClick={() => obtenerSedes(Sedes.id)}>
-                          {Sedes.id}
-                        </td>
-                        <td onClick={() => obtenerSedes(Sedes.id)}>
-                          {Sedes.nombre}
-                        </td>
-                        <td onClick={() => obtenerSedes(Sedes.id)}>
-                          {Sedes.estado}
-                        </td>
-                        <td onClick={() => obtenerSedes(Sedes.id)}>
-                          {Sedes.es_ciudad ? 'SI' : 'NO'}
-                        </td>
-                        <td onClick={() => obtenerSedes(Sedes.id)}>
-                          {Sedes.cupo_maximo_pilates ? Sedes.cupo_maximo_pilates : 'N/A'}
-                        </td>
-                        <td onClick={() => obtenerSedes(Sedes.id)}>
-                          {Sedes.created_at
-                            ? format(parseISO(Sedes.created_at), 'dd/MM/yyyy HH:mm:ss')
-                            : ''}
-                        </td>
-                        {/* ACCIONES */}
-                        {(userLevel === 'admin' ||
-                          userLevel === 'administrador') && (
-                          <td className="">
-                            <button
-                              onClick={() => handleEliminarSedes(Sedes.id, Sedes.es_ciudad)}
-                              type="button"
-                              className="py-2 px-4 my-1 bg-red-500 text-white rounded-md hover:bg-red-600"
-                            >
-                              Eliminar
-                            </button>
-                            <button
-                              onClick={() => handleEditarSedes(Sedes)} // (NUEVO)
-                              type="button"
-                              className="py-2 px-4 my-1 ml-5 bg-yellow-500 text-black rounded-md hover:bg-red-600"
-                            >
-                              Editar
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+              {/* TABLA */}
+              <div className="w-11/12 mx-auto">
+                {/* Contenedor con borde, sombra y scroll */}
+                <div className="rounded-2xl border border-black/10 bg-white shadow-[0_18px_45px_rgba(0,0,0,0.08)] overflow-hidden">
+                  {/* Scroll horizontal + vertical */}
+                  <div className="max-h-[65vh] overflow-auto">
+                    <table className="min-w-[980px] w-full text-sm">
+                      <thead className="sticky top-0 z-10">
+                        <tr className="bg-gradient-to-r from-[#fc4b08] to-orange-500 text-white">
+                          <th className="text-left px-4 py-3 font-extrabold">
+                            ID
+                          </th>
+                          <th className="text-left px-4 py-3 font-extrabold">
+                            Nombre
+                          </th>
+                          <th className="text-left px-4 py-3 font-extrabold">
+                            Estado
+                          </th>
+                          <th className="text-left px-4 py-3 font-extrabold">
+                            ¿Tiene pilates?
+                          </th>
+                          <th className="text-left px-4 py-3 font-extrabold">
+                            Capacidad
+                          </th>
+                          <th className="text-left px-4 py-3 font-extrabold">
+                            Creado
+                          </th>
+                          <th className="text-left px-4 py-3 font-extrabold">
+                            Acciones
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {records
+                          .filter(applySedeFilter)
+                          .filter(applyLevelFilter)
+                          .map((s) => {
+                            const pilates = tienePilates(s); // <-- regla Multisede NO
+                            const estado = String(
+                              s?.estado ?? ''
+                            ).toLowerCase();
+
+                            const estadoBadge =
+                              estado === 'activo'
+                                ? 'bg-orange-500/15 text-orange-800 ring-orange-200'
+                                : 'bg-slate-500/10 text-slate-800 ring-slate-200';
+
+                            const pilatesBadge = pilates
+                              ? 'bg-orange-500/15 text-orange-800 ring-orange-200'
+                              : 'bg-slate-500/10 text-slate-800 ring-slate-200';
+
+                            const capacidadTexto = pilates
+                              ? s?.cupo_maximo_pilates
+                                ? s.cupo_maximo_pilates
+                                : 'N/A'
+                              : '—';
+
+                            return (
+                              <tr
+                                key={s.id}
+                                className="border-b border-black/5 hover:bg-orange-50/60 transition cursor-pointer"
+                              >
+                                <td
+                                  className="px-4 py-3"
+                                  onClick={() => obtenerSedes(s.id)}
+                                >
+                                  <span className="font-bold text-black/80">
+                                    {s.id}
+                                  </span>
+                                </td>
+
+                                <td
+                                  className="px-4 py-3"
+                                  onClick={() => obtenerSedes(s.id)}
+                                >
+                                  <div className="font-extrabold text-black/80">
+                                    {s.nombre}
+                                  </div>
+                                </td>
+
+                                <td
+                                  className="px-4 py-3"
+                                  onClick={() => obtenerSedes(s.id)}
+                                >
+                                  <span
+                                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-extrabold ring-1 ${estadoBadge}`}
+                                  >
+                                    {s.estado}
+                                  </span>
+                                </td>
+
+                                <td
+                                  className="px-4 py-3"
+                                  onClick={() => obtenerSedes(s.id)}
+                                >
+                                  <span
+                                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-extrabold ring-1 ${pilatesBadge}`}
+                                  >
+                                    {pilates ? 'SI' : 'NO'}
+                                  </span>
+                                </td>
+
+                                <td
+                                  className="px-4 py-3"
+                                  onClick={() => obtenerSedes(s.id)}
+                                >
+                                  <span className="font-bold text-black/70">
+                                    {capacidadTexto}
+                                  </span>
+                                </td>
+
+                                <td
+                                  className="px-4 py-3"
+                                  onClick={() => obtenerSedes(s.id)}
+                                >
+                                  <span className="text-black/70 font-semibold">
+                                    {s.created_at
+                                      ? format(
+                                          parseISO(s.created_at),
+                                          'dd/MM/yyyy HH:mm:ss'
+                                        )
+                                      : '—'}
+                                  </span>
+                                </td>
+
+                                {/* ACCIONES */}
+                                {(userLevel === 'admin' ||
+                                  userLevel === 'administrador') && (
+                                  <td className="px-4 py-3">
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEliminarSedes(
+                                            s.id,
+                                            s.es_ciudad
+                                          );
+                                        }}
+                                        type="button"
+                                        className="px-3 py-2 rounded-xl bg-red-500 text-white font-extrabold hover:bg-red-600 transition shadow-sm"
+                                      >
+                                        Eliminar
+                                      </button>
+
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEditarSedes(s);
+                                        }}
+                                        type="button"
+                                        className="px-3 py-2 rounded-xl bg-amber-400 text-black font-extrabold hover:bg-amber-500 transition shadow-sm"
+                                      >
+                                        Editar
+                                      </button>
+                                    </div>
+                                  </td>
+                                )}
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Footer: paginación */}
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-black/10 bg-white">
+                    <div className="text-sm font-bold text-black/60">
+                      Página{' '}
+                      <span className="text-black/80">{currentPage}</span> de{' '}
+                      <span className="text-black/80">{nPage || 1}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          currentPage > 1 && setCurrentPage((p) => p - 1)
+                        }
+                        className="px-3 py-2 rounded-xl bg-black/5 hover:bg-black/10 font-extrabold text-black/70 transition disabled:opacity-40"
+                        disabled={currentPage <= 1}
+                      >
+                        Prev
+                      </button>
+
+                      <div className="flex flex-wrap gap-1 justify-end">
+                        {numbers.map((number) => (
+                          <button
+                            key={number}
+                            type="button"
+                            onClick={() => setCurrentPage(number)}
+                            className={`px-3 py-2 rounded-xl font-extrabold transition ring-1 ${
+                              currentPage === number
+                                ? 'bg-[#fc4b08] text-white ring-orange-400/40'
+                                : 'bg-white text-black/70 ring-black/10 hover:bg-orange-50'
+                            }`}
+                          >
+                            {number}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          currentPage < nPage && setCurrentPage((p) => p + 1)
+                        }
+                        className="px-3 py-2 rounded-xl bg-black/5 hover:bg-black/10 font-extrabold text-black/70 transition disabled:opacity-40"
+                        disabled={currentPage >= nPage}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <nav className="flex justify-center items-center my-10">
                 <ul className="pagination">
                   <li className="page-item">

@@ -68,7 +68,8 @@ const CongelarIntegrantes = ({
   monthCursor,
   monthStart: monthStartProp,
   onChanged,
-  meta: metaFromParent
+  meta: metaFromParent,
+  userLevel
 }) => {
   const convenioIdNum = Number(id_conv);
 
@@ -346,41 +347,43 @@ const CongelarIntegrantes = ({
           </span>
         </div>
       </div>
-
       {/* Acción */}
-      <button
-        type="button"
-        onClick={handleFreeze}
-        disabled={loading || booting || !canFreezeAction || isFrozen}
-        className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 font-extrabold transition shadow-[0_18px_45px_rgba(0,0,0,0.25)] ring-1 ${
-          loading || booting
-            ? 'bg-white/10 text-white/40 ring-white/10 cursor-wait'
-            : !canFreezeAction
-            ? 'bg-white/10 text-white/40 ring-white/10 cursor-not-allowed'
-            : isFrozen
-            ? 'bg-slate-500/20 text-slate-200 ring-slate-400/20 cursor-not-allowed'
-            : 'bg-orange-500/90 hover:bg-orange-500 text-orange-950 ring-orange-400/25'
-        }`}
-        title={
-          !canFreezeAction
-            ? openMonth
-              ? `Solo se puede congelar el mes abierto (${openLabel}) o el mes inmediatamente anterior.`
-              : 'Solo se puede congelar el mes abierto.'
-            : isFrozen
-            ? 'Este mes ya está congelado.'
+
+      {userLevel === 'admin' && (
+        <button
+          type="button"
+          onClick={handleFreeze}
+          disabled={loading || booting || !canFreezeAction || isFrozen}
+          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 font-extrabold transition shadow-[0_18px_45px_rgba(0,0,0,0.25)] ring-1 ${
+            loading || booting
+              ? 'bg-white/10 text-white/40 ring-white/10 cursor-wait'
+              : !canFreezeAction
+              ? 'bg-white/10 text-white/40 ring-white/10 cursor-not-allowed'
+              : isFrozen
+              ? 'bg-slate-500/20 text-slate-200 ring-slate-400/20 cursor-not-allowed'
+              : 'bg-orange-500/90 hover:bg-orange-500 text-orange-950 ring-orange-400/25'
+          }`}
+          title={
+            !canFreezeAction
+              ? openMonth
+                ? `Solo se puede congelar el mes abierto (${openLabel}) o el mes inmediatamente anterior.`
+                : 'Solo se puede congelar el mes abierto.'
+              : isFrozen
+              ? 'Este mes ya está congelado.'
+              : isVisiblePrevOfOpen
+              ? `Completar mes abierto (${openLabel}) congelando el mes anterior (${visibleLabel}).`
+              : 'Congelar mes abierto'
+          }
+        >
+          {isFrozen
+            ? 'Mes congelado'
+            : loading
+            ? 'Congelando…'
             : isVisiblePrevOfOpen
-            ? `Completar mes abierto (${openLabel}) congelando el mes anterior (${visibleLabel}).`
-            : 'Congelar mes abierto'
-        }
-      >
-        {isFrozen
-          ? 'Mes congelado'
-          : loading
-          ? 'Congelando…'
-          : isVisiblePrevOfOpen
-          ? 'Completar mes'
-          : 'Congelar mes'}
-      </button>
+            ? 'Completar mes'
+            : 'Congelar mes'}
+        </button>
+      )}
     </div>
   );
 };

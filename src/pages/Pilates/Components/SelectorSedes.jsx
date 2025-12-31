@@ -1,8 +1,26 @@
-import { FaMapMarkerAlt } from "react-icons/fa";
-import { useAuth } from "../../../AuthContext";
+/*
+ * Benjamin Orellana - 30-12-2025
+ * Cambio: Excluir la sede "Multisede" del selector de sedes (UI) para evitar impacto
+ * en pantallas donde el filtro por sede debe representar una sede física.
+ */
+
+import { FaMapMarkerAlt } from 'react-icons/fa';
+import { useAuth } from '../../../AuthContext';
 
 const SelectorSedes = ({ states, functions }) => {
   const { sedeName: sedeActual, userLevel: rolUsuario } = useAuth();
+
+  // Benjamin Orellana - 30-12-2025
+  // Excluye "Multisede" del listado del selector sin alterar el array original.
+  const sedesFiltradas = (
+    Array.isArray(states?.sedesData) ? states.sedesData : []
+  ).filter(
+    (s) =>
+      String(s?.nombre || '')
+        .trim()
+        .toLowerCase() !== 'multisede'
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4">
       <div className="hidden sm:flex flex-col items-center sm:items-start gap-2">
@@ -65,7 +83,8 @@ const SelectorSedes = ({ states, functions }) => {
           <option value="" disabled>
             -- Seleccioná la sede --
           </option>
-          {states.sedesData.map((option) => (
+
+          {sedesFiltradas.map((option) => (
             <option key={option.id} value={option.id}>
               {option.nombre.toUpperCase()}
             </option>
