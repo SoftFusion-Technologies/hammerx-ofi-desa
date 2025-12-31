@@ -276,7 +276,6 @@ const PilatesGestionLogica = () => {
           const fecha_contacto = parseISO(alumno.ultimo_contacto);
           dias_pasados = differenceInDays(fecha_actual, fecha_contacto);
         }
-        console.log(ausentesData)
 
         const faltasUltimoContacto = Number(alumno?.contacto_realizado || 0);
         const rachaActual = Number(alumno?.racha_actual || 0);
