@@ -56,17 +56,20 @@ const ReservasWhatsApp = () => {
     const cargarSedes = async () => {
       try {
         const respuesta = await axios.get(`http://localhost:8080/sedes/ciudad`);
-        const sedesConPilates = respuesta.data.map((sede) => ({
-          ...sede,
-          telefono:
-            sede.telefono ||
-            sedes.find(
-              (s) =>
-                s.nombre.toUpperCase().trim() ===
-                sede.nombre.toUpperCase().trim()
-            )?.numero ||
-            "",
-        }));
+
+        const sedesConPilates = respuesta.data
+          .filter((sede) => sede.nombre.toLowerCase() !== "multisede")
+          .map((sede) => ({
+            ...sede,
+            telefono:
+              sede.telefono ||
+              sedes.find(
+                (s) =>
+                  s.nombre.toUpperCase().trim() ===
+                  sede.nombre.toUpperCase().trim()
+              )?.numero ||
+              "",
+          }));
         setSedesDisponibles(sedesConPilates);
       } catch (error) {
         console.error("Error cargando sedes:", error);
@@ -101,6 +104,7 @@ const ReservasWhatsApp = () => {
   const seleccionarSede = (sede) => {
     setSedeSeleccionada(sede);
     setPaso(2); // Avanzamos al paso 2
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const volverAlInicio = () => {
@@ -108,6 +112,7 @@ const ReservasWhatsApp = () => {
     setSedeSeleccionada(null);
     setListaHorarios([]); // Limpiamos para que no se vea lo anterior al volver
     setFiltroGrupo(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const horariosFiltrados = listaHorarios.filter(
@@ -330,7 +335,9 @@ const ReservasWhatsApp = () => {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => seleccionarSede(sede)}
                       disabled={isLoading}
-                      className={`group bg-white p-4 md:p-8 rounded-2xl md:rounded-3xl border-2 border-gray-100 hover:border-orange-500 transition-colors duration-300 text-left relative overflow-hidden shadow-sm ${isLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+                      className={`group bg-white p-4 md:p-8 rounded-2xl md:rounded-3xl border-2 border-gray-100 hover:border-orange-500 transition-colors duration-300 text-left relative overflow-hidden shadow-sm ${
+                        isLoading ? "opacity-60 cursor-not-allowed" : ""
+                      }`}
                     >
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-orange-50 via-white to-white" />
                       <div className="absolute -top-2 -right-2 md:top-0 md:right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
