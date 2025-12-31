@@ -74,13 +74,13 @@ const AyudaAusentes = ({ onCerrar }) => {
                 <div className="flex items-center gap-2">
                   <span className="text-xs">🔴</span>
                   <span className="text-xs text-gray-600">
-                    <strong>No contactados:</strong> ¡Prioridad!
+                    <strong>Rojo:</strong> Sin contacto, o volvió a faltar 2+ veces desde el último contacto, o pasó &gt; 15 días (aunque figure contactado).
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs">🟢</span>
                   <span className="text-xs text-gray-600">
-                    <strong>Contactados:</strong> Ya gestionados.
+                    <strong>Verde:</strong> Contactados recientes (sin superar +2 faltas y &lt;= 15 días).
                   </span>
                 </div>
               </div>
@@ -103,16 +103,19 @@ const AyudaAusentes = ({ onCerrar }) => {
               </p>
               <ul className="space-y-1 text-gray-600 text-xs">
                 <li>
-                  ❌ <strong>Sin contacto:</strong> Nunca contactados.
+                  ❌ <strong>Sin contacto:</strong> Nunca contactados (se ven en rojo).
                 </li>
                 <li>
-                  ✅ <strong>Con contacto:</strong> Al menos una vez.
+                  ✅ <strong>Con contacto:</strong> Al menos una vez (verdes si fue reciente; si pasaron &gt; 15 días se verán rojos aunque sigan “contactados”).
                 </li>
                 <li>
-                  ⏰ <strong>+15 días:</strong> Contacto antiguo.
+                  ⏰ <strong>+15 días:</strong> Contacto antiguo (se pinta rojo aunque siga como “contactado”).
                 </li>
                 <li>
-                  🕐 <strong>-15 días:</strong> Contacto reciente.
+                  🕐 <strong>-15 días:</strong> Contacto reciente (se mantiene verde).
+                </li>
+                <li>
+                  ↩️ <strong>Volvió a faltar +2:</strong> Si tiene contacto pero sumó 2+ inasistencias desde ese contacto, se verá en rojo y cuenta como “No contactados”.
                 </li>
               </ul>
             </div>

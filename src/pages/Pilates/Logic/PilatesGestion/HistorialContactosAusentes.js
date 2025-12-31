@@ -233,8 +233,36 @@ export const obtenerAlumnosFiltrados = (
     ordenamiento = "DEFECTO",
   }
 ) => {
-  let alumnosFiltrados = ausentesData.filter((alumno) => {
+  const alumnosNormalizados = ausentesData.map((alumno) => {
     const totalContactos = Number(alumno?.total_contactos || 0);
+    const faltasUltimoContacto = Number(alumno?.contacto_realizado || 0);
+    const rachaActual = Number(alumno?.racha_actual || 0);
+    const diasUltimoContacto = calcularDiasDesdeUltimoContacto(alumno);
+    const sinContacto = totalContactos === 0;
+    const superaDosFaltas =
+      faltasUltimoContacto > 0 && rachaActual >= faltasUltimoContacto + 2;
+    const alertaRojaPorDias = diasUltimoContacto !== null && diasUltimoContacto > 15;
+
+    // Etiqueta de contacto: rojo solo si nunca se lo contactó o si volvió a faltar 2+ veces desde el último contacto
+    const estadoVisual = sinContacto || superaDosFaltas ? "ROJO" : "VERDE";
+    // Color de alerta: rojo también cuando hace +15 días del último contacto, aunque siga etiquetado como contactado
+    const colorAlerta =
+      sinContacto || superaDosFaltas || alertaRojaPorDias ? "ROJO" : "VERDE";
+
+    return {
+      ...alumno,
+      estado_visual: estadoVisual, // se usa para filtros "No contactados" / "Contactados"
+      color_alerta: colorAlerta, // se usa para pintar rojo si >15 días aunque siga contactado
+      dias_calculados: diasUltimoContacto,
+      total_contactos_normalizado: totalContactos,
+      faltas_ultimo_contacto_normalizadas: faltasUltimoContacto,
+      supera_dos_faltas: superaDosFaltas,
+    };
+  });
+
+  let alumnosFiltrados = alumnosNormalizados.filter((alumno) => {
+    const totalContactos = alumno.total_contactos_normalizado;
+    const dias = alumno.dias_calculados;
 
     const texto = (busqueda || "").toLowerCase();
     const coincideTexto =
@@ -256,31 +284,14 @@ export const obtenerAlumnosFiltrados = (
         }
         break;
       case "CON_CONTACTO":
-        // Si ya está en ROJO (no contactados), no debería entrar aquí
-        if (filtroEstado === "ROJO") {
-          coincideFiltroAvanzado = false;
-        } else {
-          coincideFiltroAvanzado = totalContactos >= 1;
-        }
+        coincideFiltroAvanzado = totalContactos >= 1;
         break;
       case "CONTACTO_MAS_15_DIAS": {
-        const dias = calcularDiasDesdeUltimoContacto(alumno);
-        // Para los ROJO no hay contacto previo, por lo que se excluyen
-        if (filtroEstado === "ROJO") {
-          coincideFiltroAvanzado = false;
-        } else {
-          coincideFiltroAvanzado = dias !== null && dias > 15;
-        }
+        coincideFiltroAvanzado = dias !== null && dias > 15;
         break;
       }
       case "CONTACTO_MENOS_15_DIAS": {
-        const dias = calcularDiasDesdeUltimoContacto(alumno);
-        // Para los ROJO no hay contacto previo, por lo que se excluyen
-        if (filtroEstado === "ROJO") {
-          coincideFiltroAvanzado = false;
-        } else {
-          coincideFiltroAvanzado = dias !== null && dias <= 15;
-        }
+        coincideFiltroAvanzado = dias !== null && dias <= 15;
         break;
       }
       case "TODOS":

@@ -10,6 +10,13 @@
  *  Capa: Frontend
  */
 
+export const sedes = [
+  { nombre: "Monteros", numero: "3863564651" },
+  { nombre: "Concepción", numero: "3865855100" },
+  { nombre: "Barrio Sur", numero: "3813988383" },
+  { nombre: "Barrio norte", numero: "3815584172" },
+];
+
 import { FaWhatsapp, FaTimes } from "react-icons/fa";
 
 const ModalContactoSede = ({ showModal, closeModal, sede = "Todas" }) => {
@@ -29,12 +36,6 @@ const ModalContactoSede = ({ showModal, closeModal, sede = "Todas" }) => {
     )}-${numero.substring(6)}`;
   };
 
-  const sedes = [
-    { nombre: "Monteros", numero: "3863564651" },
-    { nombre: "Concepción", numero: "3865855100" },
-    { nombre: "Barrio Sur", numero: "3813988383" },
-    { nombre: "Barrio norte", numero: "3815584172" },
-  ];
 
   if (!showModal) return null;
 

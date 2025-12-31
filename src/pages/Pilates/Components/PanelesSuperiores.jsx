@@ -336,26 +336,48 @@ const PanelesSuperiores = ({
               className={`${allExpanded ? 'h-96' : 'h-64'} overflow-y-auto p-4`}
             >
               {alumnosAusentes.length > 0 ? (
-                <ul className="space-y-2">
-                  {alumnosAusentes.map((alumno) => (
-                    <li
-                      key={alumno.id}
-                      className={`flex items-center justify-between p-2.5 rounded-lg ${
-                        !alumno.dias_desde_ultimo_contacto
-                          ? 'bg-gray-50'
-                          : alumno.dias_desde_ultimo_contacto > 15
-                          ? 'bg-yellow-100'
-                          : 'bg-green-100'
-                      } hover:bg-amber-50 transition-colors border border-transparent hover:border-amber-100`}
-                    >
-                      <span className="text-sm font-medium text-gray-700 truncate pr-2">
-                        {alumno.name}
-                      </span>
-                      <span className="flex-shrink-0 bg-amber-100 text-amber-800 text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
-                        {alumno.cantidad}
-                      </span>
-                    </li>
-                  ))}
+                <ul className="space-y-1.5">
+                  {alumnosAusentes.map((alumno) => {
+                    const colorAlerta = alumno.color_alerta || 'VERDE';
+                    const sinContacto = (alumno.total_contactos ?? 0) === 0;
+                    const superaDosFaltas = alumno.supera_dos_faltas;
+                    const contactoVencido =
+                      typeof alumno.dias_desde_ultimo_contacto === 'number' &&
+                      alumno.dias_desde_ultimo_contacto > 15;
+                    const esRojo =
+                      colorAlerta === 'ROJO'
+                        ? true
+                        : sinContacto || superaDosFaltas || contactoVencido;
+
+                    return (
+                      <li
+                        key={alumno.id}
+                        className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${
+                          esRojo
+                            ? 'bg-red-100 text-red-800 border-red-200 hover:bg-red-50'
+                            : 'bg-green-100 text-green-800 border-green-200 hover:bg-green-50'
+                        }`}
+                        title={
+                          esRojo
+                            ? 'Sin contacto, +2 faltas desde el último contacto o último contacto hace más de 15 días'
+                            : 'Contactado reciente (sin superar +2 faltas y <= 15 días)'
+                        }
+                      >
+                        <span className="text-sm font-medium truncate pr-2">
+                          {alumno.name}
+                        </span>
+                        <span
+                          className={`flex-shrink-0 text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${
+                            esRojo
+                              ? 'bg-red-200 text-red-900'
+                              : 'bg-green-200 text-green-900'
+                          }`}
+                        >
+                          {alumno.cantidad}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">

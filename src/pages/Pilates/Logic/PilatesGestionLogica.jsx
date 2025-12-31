@@ -276,6 +276,17 @@ const PilatesGestionLogica = () => {
           const fecha_contacto = parseISO(alumno.ultimo_contacto);
           dias_pasados = differenceInDays(fecha_actual, fecha_contacto);
         }
+        console.log(ausentesData)
+
+        const faltasUltimoContacto = Number(alumno?.contacto_realizado || 0);
+        const rachaActual = Number(alumno?.racha_actual || 0);
+        const sinContacto = Number(alumno?.total_contactos || 0) === 0;
+        const superaDosFaltas =
+          faltasUltimoContacto > 0 && rachaActual >= faltasUltimoContacto + 2;
+        const alertaRojaPorDias = dias_pasados !== null && dias_pasados > 15;
+
+        const colorAlerta =
+          sinContacto || superaDosFaltas || alertaRojaPorDias ? 'ROJO' : 'VERDE';
 
         return {
           id: alumno.id,
@@ -283,7 +294,10 @@ const PilatesGestionLogica = () => {
           cantidad: alumno.racha_actual,
           total_contactos: alumno.total_contactos,
           contacto: alumno.telefono,
-          dias_desde_ultimo_contacto: dias_pasados
+          dias_desde_ultimo_contacto: dias_pasados,
+          color_alerta: colorAlerta,
+          faltas_ultimo_contacto_normalizadas: faltasUltimoContacto,
+          supera_dos_faltas: superaDosFaltas
         };
       });
 

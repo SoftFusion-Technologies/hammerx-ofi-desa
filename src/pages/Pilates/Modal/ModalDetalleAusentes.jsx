@@ -23,6 +23,7 @@ import {
   handleEliminarHistorial,
   handleGuardarObservacion,
   obtenerAlumnosFiltrados,
+  calcularDiasDesdeUltimoContacto,
 } from "../Logic/PilatesGestion/HistorialContactosAusentes";
 
 const ModalDetalleAusentes = ({
@@ -195,10 +196,10 @@ const ModalDetalleAusentes = ({
             // =========================
             // VISTA 1: LISTADO (TABLA)
             // =========================
-            <div className="h-full flex flex-col p-6">
+            <div className="h-full flex flex-col p-2">
               {/* FILTROS */}
               <div className="flex flex-col md:flex-row gap-4 mb-4 justify-between items-start bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                <div className="flex flex-col gap-4 w-full md:w-auto flex-1">
+                <div className="flex flex-col gap-1 w-full md:w-auto flex-1">
                   {/* BÚSQUEDA Y FILTROS DE ESTADO */}
                   <div className="flex flex-col sm:flex-row gap-4 items-start">
                     <input
@@ -352,68 +353,101 @@ const ModalDetalleAusentes = ({
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {alumnosPaginados.length > 0 ? (
-                      alumnosPaginados.map((alumno) => (
-                        <tr
-                          key={alumno.id}
-                          className={`hover:bg-opacity-80 transition duration-150 ${
-                            alumno.estado_visual === "ROJO"
-                              ? "!bg-red-100"
-                              : "!bg-green-100"
-                          }`}
-                          onClick={() => setAlumnoSeleccionado(alumno)}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-col">
-                              <span className="text-sm font-bold text-gray-900">
-                                {alumno.nombre}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            {alumno.telefono}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold bg-white border border-gray-300 shadow-sm text-gray-700">
-                              {alumno.racha_actual} clases
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            {alumno.estado_visual === "ROJO" ? (
-                              <span className="inline-flex px-3 py-1 text-xs font-bold leading-5 text-red-800 bg-red-200 rounded-full border border-red-300 shadow-sm">
-                                No contactados
-                              </span>
-                            ) : (
-                              <span className="inline-flex px-3 py-1 text-xs font-bold leading-5 text-green-800 bg-green-200 rounded-full border border-green-300 shadow-sm">
-                                Contactados
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <div className="flex flex-col items-center gap-2">
-                              {alumno.estado_visual === "ROJO" ? (
-                                <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
-                                  Contactar
-                                </button>
-                              ) : (
-                                <div className="flex flex-col items-center">
-                                  <span className="text-green-700 font-bold text-xs flex items-center gap-1 mb-1 bg-white px-2 py-0.5 rounded border border-green-200">
-                                    ✔ Contactado
+                      alumnosPaginados.map((alumno) => {
+                        const diasUltimoContacto =
+                          calcularDiasDesdeUltimoContacto(alumno);
+                        const totalContactos = Number(alumno?.total_contactos || 0);
+                        const faltasUltimoContacto = Number(alumno?.contacto_realizado || 0);
+                        const rachaActual = Number(alumno?.racha_actual || 0);
+                        const sinContacto = totalContactos === 0;
+                        const superaDosFaltas =
+                          faltasUltimoContacto > 0 &&
+                          rachaActual >= faltasUltimoContacto + 2;
+                        const alertaPorDias =
+                          diasUltimoContacto !== null && diasUltimoContacto > 15;
+
+                        const colorAlerta = alumno.color_alerta
+                          ? alumno.color_alerta
+                          : sinContacto || superaDosFaltas || alertaPorDias
+                          ? "ROJO"
+                          : "VERDE";
+
+                        const esRojo = colorAlerta === "ROJO";
+
+                        // Etiqueta: "No contactados" solo si nunca tuvo contacto o superó 2 faltas; si solo venció por días, sigue contactado
+                        const esNoContactado = sinContacto || superaDosFaltas;
+
+                        return (
+                          <tr
+                            key={alumno.id}
+                            className={`hover:bg-opacity-80 transition duration-150 ${
+                              esRojo ? "!bg-red-100" : "!bg-green-100"
+                            }`}
+                            onClick={() => setAlumnoSeleccionado(alumno)}
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-bold text-gray-900">
+                                  {alumno.nombre}
+                                </span>
+                                {diasUltimoContacto !== null && (
+                                  <span className="text-[11px] text-gray-600">
+                                    Último contacto: hace {diasUltimoContacto} días
                                   </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                              {alumno.telefono}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold bg-white border border-gray-300 shadow-sm text-gray-700">
+                                {alumno.racha_actual} clases
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              {esNoContactado ? (
+                                <span className="inline-flex px-3 py-1 text-xs font-bold leading-5 text-red-800 bg-red-200 rounded-full border border-red-300 shadow-sm">
+                                  No contactados
+                                </span>
+                              ) : (
+                                <span className="inline-flex px-3 py-1 text-xs font-bold leading-5 text-green-800 bg-green-200 rounded-full border border-green-300 shadow-sm">
+                                  Contactados
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <div className="flex flex-col items-center gap-0.5">
+                                {esRojo ? (
+                                  <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
+                                    Contactar
+                                  </button>
+                                ) : (
+                                  <div className="flex flex-col items-center">
+                                    <span className="text-green-700 font-bold text-xs flex items-center gap-1 mb-1 bg-white px-2 py-0.5 rounded border border-green-200">
+                                      ✔ Contactado
+                                    </span>
+                                    <button className="text-[11px] text-blue-600 hover:underline font-medium">
+                                      Ver Observación
+                                    </button>
+                                  </div>
+                                )}
+                                {alumno.total_contactos > 0 && esRojo && (
                                   <button className="text-[11px] text-blue-600 hover:underline font-medium">
                                     Ver Observación
                                   </button>
-                                </div>
-                              )}
-                              <span className="text-[10px] text-gray-500 mt-1">
-                                Contactos:{" "}
-                                <strong className="text-gray-800">
-                                  {alumno.total_contactos}
-                                </strong>
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                                )}
+                                <span className="text-[10px] text-gray-500 mt-1">
+                                  Contactos: {" "}
+                                  <strong className="text-gray-800">
+                                    {alumno.total_contactos}
+                                  </strong>
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr>
                         <td

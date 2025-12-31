@@ -45,6 +45,7 @@ import IntegranteDetails from './pages/staff/MetodsGet/IntegranteConveGetId';
 import FrequentDetails from './pages/staff/MetodsGet/FrequentAsksGetId';
 import TaskDetails from './pages/staff/MetodsGet/TaskGetId';
 import Marcas_v2 from './components/header/Marcas_v2.jsx';
+import ReservasWhatsApp from './pages/Pilates/Publica/ReservasWhatsApp.jsx';
 
 import TaskReminder2 from './components/TaskReminder2.jsx';
 
@@ -368,6 +369,10 @@ const App = memo(() => {
                   <Ruta
                     path="/comentarios-barrionorte"
                     element={<QuejasVist />}
+                  />{' '}
+                  <Ruta
+                    path="/reservas-pilates"
+                    element={<ReservasWhatsApp />}
                   />{' '}
                   <Ruta
                     path="/dashboard"
@@ -889,7 +894,7 @@ const App = memo(() => {
               </>
             )}
           </Suspense>
-          <HideOnPaths paths={['/innovation', '/login']}>
+          <HideOnPaths paths={['/innovation', '/login', "/reservas-pilates"]}>
             <Marcas_v2 />
           </HideOnPaths>{' '}
         </Router>
