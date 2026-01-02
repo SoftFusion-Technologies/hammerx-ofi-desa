@@ -1,4 +1,14 @@
-import { FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa";
+// Benjamin Orellana - 31/12/2025
+// Se añade LinkedIn: https://www.linkedin.com/in/soft-fusionsa/
+// Se añade Web (icono): https://softfusion.com.ar/
+
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaWhatsapp,
+  FaLinkedinIn,
+  FaGlobe
+} from 'react-icons/fa';
 
 const FooterV2 = () => {
   return (
@@ -34,24 +44,56 @@ const FooterV2 = () => {
               target="_blank"
               rel="noreferrer"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-orange-200 bg-white text-orange-600 transition-all hover:border-orange-500 hover:bg-orange-50 hover:scale-110"
+              aria-label="Facebook Soft Fusion"
+              title="Facebook"
             >
               <FaFacebookF className="text-sm" />
             </a>
+
+            {/* Benjamin Orellana - 31/12/2025: Web Soft Fusion */}
+            <a
+              href="https://softfusion.com.ar/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-orange-200 bg-white text-orange-600 transition-all hover:border-orange-500 hover:bg-orange-50 hover:scale-110"
+              aria-label="Web Soft Fusion"
+              title="Web"
+            >
+              <FaGlobe className="text-lg" />
+            </a>
+
             <a
               href="https://api.whatsapp.com/send/?phone=5493815430503&text&type=phone_number&app_absent=0"
               target="_blank"
               rel="noreferrer"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-orange-200 bg-white text-orange-600 transition-all hover:border-orange-500 hover:bg-orange-50 hover:scale-110"
+              aria-label="WhatsApp Soft Fusion"
+              title="WhatsApp"
             >
               <FaWhatsapp className="text-lg" />
             </a>
+
             <a
               href="https://www.instagram.com/softfusiontechnologies/"
               target="_blank"
               rel="noreferrer"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-orange-200 bg-white text-orange-600 transition-all hover:border-orange-500 hover:bg-orange-50 hover:scale-110"
+              aria-label="Instagram Soft Fusion"
+              title="Instagram"
             >
               <FaInstagram className="text-lg" />
+            </a>
+
+            {/* Benjamin Orellana - 31/12/2025: LinkedIn Soft Fusion */}
+            <a
+              href="https://www.linkedin.com/in/soft-fusionsa/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-orange-200 bg-white text-orange-600 transition-all hover:border-orange-500 hover:bg-orange-50 hover:scale-110"
+              aria-label="LinkedIn Soft Fusion"
+              title="LinkedIn"
+            >
+              <FaLinkedinIn className="text-lg" />
             </a>
           </div>
         </div>

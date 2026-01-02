@@ -24,11 +24,19 @@ import {
 } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 
-function HideOnPaths({ paths, children }) {
-  const { pathname } = useLocation(); // <- funciona porque está dentro del <Router>
-  const ocultar = paths.some(
-    (p) => pathname === p || pathname.startsWith(p + '/')
-  );
+function HideOnPaths({ paths = [], children }) {
+  const { pathname } = useLocation();
+
+  const ocultar = paths.some((p) => {
+    if (!p) return false;
+
+    // caso exacto
+    if (pathname === p) return true;
+
+    // caso "sección": /dashboard/*  (evita que "/dashboarding" matchee)
+    return pathname.startsWith(p.endsWith('/') ? p : p + '/');
+  });
+
   return ocultar ? null : children;
 }
 import Footer from './components/footer/Footer'; // Importa el componente del pie de página
@@ -232,40 +240,26 @@ import SoftFusionIntro from './pages/Innovation/SoftFusionIntro.jsx';
 const App = memo(() => {
   // Estado para controlar si se debe mostrar el componente de carga
   const [showLoading, setShowLoading] = useState(true);
-  const [tasks, setTasks] = useState([]);
-
-  // URL para obtener las tareas
-  // const URL = 'http://localhost:8080/schedulertask/';
-  const URL = 'http://localhost:8080/schedulertask/';
-  //const URL = 'http://localhos:8080/schedulertask';
-
-  // Función para obtener las tareas
-  const obtenerTasks = async () => {
-    try {
-      const response = await axios.get(URL);
-      setTasks(response.data);
-    } catch (error) {
-      // console.log('Error al obtener las tareas:', error);
-    }
-  };
+  const [loadingPhase, setLoadingPhase] = useState('open'); // 'open' | 'closing'
+  // const [tasks, setTasks] = useState([]);
+  // SE COMENTA TASK, COMPONENTE QUE NO SE USA
 
   useEffect(() => {
-    obtenerTasks(); // Carga las tareas cuando el componente se monte
-    const timer = setTimeout(() => {
-      setShowLoading(false);
-    }, 1700);
-    return () => clearTimeout(timer);
+    // Arranca visible
+    setLoadingPhase('open');
+    setShowLoading(true);
+
+    // Empieza a cerrar un poco antes
+    const t1 = setTimeout(() => setLoadingPhase('closing'), 1850);
+
+    // Se desmonta cuando terminó el fade-out
+    const t2 = setTimeout(() => setShowLoading(false), 2050);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, []);
-
-  useEffect(() => {
-    // Establece un temporizador para ocultar el componente de carga después de 2 segundos
-    const timer = setTimeout(() => {
-      setShowLoading(false);
-    }, 1700);
-
-    // Limpia el temporizador al desmontar el componente para evitar fugas de memoria
-    return () => clearTimeout(timer);
-  }, []); // Este efecto se ejecuta solo una vez, al montar el componente
 
   return (
     <AuthProvider>
@@ -273,10 +267,10 @@ const App = memo(() => {
         {/* <div className="back_v2"> */}
         <Router>
           {/* Componente de Suspense para manejar la carga de componentes lazy */}
-          <Suspense fallback={<Loading />}>
+          <Suspense fallback={<Loading compact phase="open" />}>
             {/* Condición para mostrar el componente de carga o el contenido de la aplicación */}
             {showLoading ? (
-              <Loading />
+              <Loading phase={loadingPhase} />
             ) : (
               <>
                 <ScrollToTop />
@@ -315,8 +309,8 @@ const App = memo(() => {
                     element={<Sedeconcepcion />}
                   />{' '}
                   <Ruta
-                    path="/nueva_sede_hammerx"
-                    element={<SedeBarrioNorte />}
+                    path="/Sedes/BarrioSur"
+                    element={<NewSede />}
                   />
                   <Ruta
                     path="/nueva_sede_hammerx_barrio_norte"
@@ -890,11 +884,13 @@ const App = memo(() => {
                   />{' '}
                   <Ruta path="/*" element={<NotFound />} />
                 </Rutas>
-                <TaskReminder2 tasks={tasks} />
+                {/* <TaskReminder2 tasks={tasks} /> */}
               </>
             )}
           </Suspense>
-          <HideOnPaths paths={['/innovation', '/login', "/reservas-pilates"]}>
+          <HideOnPaths
+            paths={['/innovation', '/login', '/reservas-pilates', '/dashboard']}
+          >
             <Marcas_v2 />
           </HideOnPaths>{' '}
         </Router>

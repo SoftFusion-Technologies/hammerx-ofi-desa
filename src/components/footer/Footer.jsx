@@ -175,62 +175,143 @@ const Footer = () => {
         </div>
       )}
 
-      {/* ====== FOOTER GLOBAL ====== */}
-      <footer className="bg-gray-200 shadow dark:bg-gray-900">
-        <div className="w-full max-w-screen-xl mx-auto p-4 md:py-8">
-          <div className="sm:flex sm:items-center sm:justify-between">
-            <a
-              href="/"
-              className="flex items-center mb-4 sm:mb-0 space-x-3 rtl:space-x-reverse"
-            >
-              <img src={logohammer} className="h-8" alt="Hammer Logo" />
-            </a>
+      {/* ====== FOOTER GLOBAL (LIGHT PREMIUM 2026) ====== */}
+      <footer className="relative isolate  overflow-hidden">
+        {/* Keyframes inline (sin config externa) */}
+        <style>{`
+    @keyframes ftrGlowLight {
+      0% { transform: translate3d(0,0,0) scale(1); opacity: .55; }
+      50% { transform: translate3d(16px,-10px,0) scale(1.06); opacity: .85; }
+      100% { transform: translate3d(0,0,0) scale(1); opacity: .55; }
+    }
+  `}</style>
 
-            <ul className="flex flex-wrap items-center mb-6 text-sm font-medium text-gray-500 sm:mb-0 dark:text-gray-400">
-              <p className="hover:underline me-4 md:me-6 max-sm:select-none md:ml-40">
-                Página web desarrollada por
+        {/* Base claro + gradiente */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-zinc-50" />
+
+        {/* Accentos premium (claros) */}
+        <div className="pointer-events-none absolute inset-0">
+          {/* hairline superior */}
+          <div className="absolute left-0 top-0 h-[1px] w-full bg-gradient-to-r from-[#fc4b08]/55 via-zinc-200/70 to-transparent" />
+
+          {/* blobs muy sutiles */}
+          <div className="absolute -top-44 -left-44 h-[520px] w-[520px] rounded-full bg-[#fc4b08]/10 blur-3xl animate-[ftrGlowLight_14s_ease-in-out_infinite] motion-reduce:animate-none" />
+          <div
+            className="absolute -bottom-48 -right-48 h-[560px] w-[560px] rounded-full bg-amber-300/12 blur-3xl animate-[ftrGlowLight_16s_ease-in-out_infinite] motion-reduce:animate-none"
+            style={{ animationDelay: '1.6s' }}
+          />
+
+          {/* micro-grid premium */}
+          <div
+            className="absolute inset-0 opacity-[0.08]"
+            style={{
+              backgroundImage:
+                'radial-gradient(circle at 1px 1px, rgba(24,24,27,0.18) 1px, transparent 0)',
+              backgroundSize: '28px 28px'
+            }}
+          />
+
+          {/* vignette suave */}
+          <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_0%,rgba(255,255,255,0.75)_0%,rgba(255,255,255,0)_55%,rgba(0,0,0,0.03)_100%)]" />
+        </div>
+
+        <div className="relative mx-auto w-full max-w-screen-xl px-4 py-10 md:py-12">
+          {/* Top */}
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+            {/* Brand */}
+            <div className="md:col-span-5">
+              <a
+                href="/"
+                aria-label="Ir al inicio"
+                className="group inline-flex items-center gap-3 rounded-2xl border border-zinc-200/70 bg-white/80 px-4 py-3 backdrop-blur-xl ring-1 ring-zinc-900/5 shadow-[0_18px_60px_rgba(0,0,0,0.08)] transition-all duration-200 hover:bg-white hover:-translate-y-[1px] hover:shadow-[0_26px_90px_rgba(0,0,0,0.10)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fc4b08]/50"
+              >
+                <span className="relative">
+                  <span className="absolute inset-0 rounded-xl bg-[#fc4b08]/18 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <img
+                    src={logohammer}
+                    className="relative h-8"
+                    alt="Hammer Logo"
+                    loading="lazy"
+                  />
+                </span>
+              </a>
+
+              {/* “Built by” pill */}
+              <div className="mt-4">
                 <a
                   href="https://www.instagram.com/softfusiontechnologies/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline text-blue-500"
-                  style={{ textDecoration: "none", color: "inherit" }}
+                  aria-label="Ir a Instagram de Soft Fusion (se abre en una nueva pestaña)"
+                  className="inline-flex items-center gap-2 rounded-full border border-zinc-200/70 bg-white/70 px-3 py-1.5 text-xs font-semibold text-zinc-700 backdrop-blur-xl ring-1 ring-zinc-900/5 shadow-[0_14px_40px_rgba(0,0,0,0.06)] transition-all duration-200 hover:bg-white hover:-translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fc4b08]/50"
                 >
-                  &nbsp;SOFT FUSION
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#fc4b08]" />
+                  Desarrollado por{' '}
+                  <span className="font-extrabold text-pink-600">
+                    Soft Fusion
+                  </span>
+                  <span className="text-zinc-400">·</span>
+                  <span className="text-zinc-600">Instagram</span>
                 </a>
+              </div>
+
+              <p className="mt-4 text-sm leading-relaxed text-zinc-600 max-w-md">
+                Experiencia premium orientada a rendimiento, claridad
+                operacional y automatizaciones.
               </p>
-            </ul>
+            </div>
 
-            <ul className="flex flex-wrap items-center mb-6 text-sm font-medium text-gray-500 sm:mb-0 dark:text-gray-400">
-              <li>
-                <Link to="/pautas">
-                  <p className="hover:underline me-4 md:me-6 max-sm:select-none">
-                    Pautas de Convivencia Hammer
-                  </p>
-                </Link>
-              </li>
-              <li>
-                <Link to="/legales">
-                  <p className="hover:underline me-4 md:me-6 max-sm:select-none">
-                    Legales
-                  </p>
-                </Link>
-              </li>
-              <li>
-                <Link to="/contacto">
-                  <p className="hover:underline max-sm:select-none">Contacto</p>
-                </Link>
-              </li>
-            </ul>
+            {/* Links */}
+            <div className="md:col-span-7">
+              <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+                <nav aria-label="Secciones" className="space-y-3">
+                  <div className="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
+                    Secciones
+                  </div>
+                  <ul className="space-y-2">
+                    <li>
+                      <Link
+                        to="/contacto"
+                        className="inline-flex items-center gap-2 text-sm text-zinc-700 transition-all duration-200 hover:text-zinc-950 hover:translate-x-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fc4b08]/45 rounded-lg"
+                      >
+                        Contacto
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+
+                <nav aria-label="Políticas" className="space-y-3">
+                  <div className="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
+                    Políticas
+                  </div>
+                  <ul className="space-y-2">
+                    <li>
+                      <Link
+                        to="/pautas"
+                        className="inline-flex items-center gap-2 text-sm text-zinc-700 transition-all duration-200 hover:text-zinc-950 hover:translate-x-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fc4b08]/45 rounded-lg"
+                      >
+                        Pautas de Convivencia
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/legales"
+                        className="inline-flex items-center gap-2 text-sm text-zinc-700 transition-all duration-200 hover:text-zinc-950 hover:translate-x-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fc4b08]/45 rounded-lg"
+                      >
+                        Legales
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
           </div>
-
-          <hr className="my-6 border-gray-200 sm:mx-auto dark:border-gray-700 lg:my-8" />
-
-          <span className="block text-sm text-gray-500 sm:text-center dark:text-gray-400 max-sm:select-none">
-            <a href="#" className="hover:underline max-sm:select-none">
-              HAMMERX © Copyright 2026 | Todos los derechos reservados.
-            </a>
-          </span>
+          {/* Bottom bar */}
+          <div className="mt-10 pt-5 border-t  border-zinc-200/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-sm text-zinc-600 select-none">
+              HAMMERX © Copyright 2030 · Todos los derechos reservados.
+            </span>
+          </div>
         </div>
       </footer>
     </>

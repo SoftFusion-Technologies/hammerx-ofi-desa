@@ -42,11 +42,12 @@ import ConvenioChatWidget from '../Components/ConvenioChatWidget.jsx';
 import DescripcionModal from './Components/DescripcionModal.jsx';
 import Swal from 'sweetalert2';
 import {
-  FaFilePdf,
   FaDownload,
   FaCheckCircle,
   FaPaperPlane
 } from 'react-icons/fa';
+import FaltaComprobanteModal from './Integrantes/FaltaComprobanteModal.jsx';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 const IntegranteConveGet = ({ integrantes }) => {
   // Estado para almacenar la lista de personas
@@ -86,6 +87,8 @@ const IntegranteConveGet = ({ integrantes }) => {
   // Modal Importación Masiva
   const [modalImportOpen, setModalImportOpen] = useState(false);
 
+  const [isFaltaCompModalOpen, setIsFaltaCompModalOpen] = useState(false);
+
   const abrirModalImportacion = () => setModalImportOpen(true);
   const cerrarModalImportacion = () => setModalImportOpen(false);
 
@@ -108,7 +111,6 @@ const IntegranteConveGet = ({ integrantes }) => {
   // Estado para almacenar el término de búsqueda
   const [search, setSearch] = useState('');
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
   const URL = 'http://localhost:8080/integrantes/';
   const URL2 = `http://localhost:8080/admconvenios/${id_conv}/integrantes/`;
   // para recuperar los valores de precio INI
@@ -245,7 +247,6 @@ const IntegranteConveGet = ({ integrantes }) => {
     };
 
     loadConvenioAndAccion();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id_conv, monthCursor, selectedMonth]);
 
   const [loadingMes, setLoadingMes] = useState(false);
@@ -648,7 +649,7 @@ const IntegranteConveGet = ({ integrantes }) => {
 
     return new Intl.DateTimeFormat('es-AR', {
       month: '2-digit',
-      year: 'numeric',
+      year: 'numeric'
     }).format(d);
   };
 
@@ -1227,7 +1228,8 @@ const IntegranteConveGet = ({ integrantes }) => {
     !!modalImportOpen ||
     !!modalNotasOpen ||
     !!modalUserDetails ||
-    !!modal?.open;
+    !!modal?.open ||
+    isFaltaCompModalOpen;
 
   return (
     <>
@@ -2316,6 +2318,17 @@ const IntegranteConveGet = ({ integrantes }) => {
         />
 
         <Footer />
+        <FaltaComprobanteModal
+          convenioId={Number(id_conv)}
+          monthStart={monthCursor}
+          apiBaseUrl={API_URL}
+          authToken={authToken}
+          userLevel={userLevel}
+          convenioNombre={convenioNombre}
+          dueDay={10}
+          onOpenChange={setIsFaltaCompModalOpen}
+          devLog={false}
+        />
       </div>
       {!isAnyModalOpen && (
         <ConvenioChatWidget
