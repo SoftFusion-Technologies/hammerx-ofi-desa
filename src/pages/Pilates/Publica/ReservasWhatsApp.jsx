@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { FaWhatsapp, FaHandPointer } from "react-icons/fa";
 import { logo } from "../../../images/svg/index";
+import fondoPilates from "../img/reservas-pilates-fondo.jpeg";
 
 // --- VARIANTS DE ANIMACIÓN (Configuración de movimientos) ---
 const containerVariants = {
@@ -211,7 +212,7 @@ const ReservasWhatsApp = () => {
       </header>
 
       {/* Stepper / Progreso */}
-      <div className="bg-white/80 backdrop-blur border-b border-gray-100">
+      <div className="bg-white/70 sm:bg-white/80 backdrop-blur border-b border-gray-100 z-10">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-3">
           <div className="flex items-center justify-between">
             {/* --- PASO 1 --- */}
@@ -283,97 +284,119 @@ const ReservasWhatsApp = () => {
         </div>
       </div>
 
-      <main className="lg:max-w-[97%] mx-auto p-4 md:p-8 flex-1 w-full">
+      <main
+        className={`flex-1 w-full transition-all duration-300 ${
+          paso === 1 ? "p-0 max-w-full" : "lg:max-w-[97%] mx-auto p-4 md:p-8"
+        }`}
+      >
         <AnimatePresence mode="wait">
           {/* ==================================================
-                PASO 1: SELECCIÓN DE SEDE
+                PASO 1: SELECCIÓN DE SEDE 
                ================================================== */}
           {paso === 1 && (
             <motion.div
               key="paso1"
-              initial={
-                reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
-              }
-              animate={{ opacity: 1, y: 0 }}
-              exit={
-                reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }
-              }
-              transition={reduceMotion ? { duration: 0 } : { duration: 0.3 }}
-              className="flex flex-col items-center justify-center min-h-[60vh]"
+              initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.1 }}
+              transition={{ duration: 0.4 }}
+              className="relative w-full flex flex-col items-center justify-center min-h-[calc(100vh-130px)] overflow-hidden"
             >
+              {/* --- FONDO --- */}
               <motion.div
-                variants={itemVariants}
-                className="text-center mb-8 md:mb-10"
+                className="absolute inset-0 z-0"
+                initial={{ opacity: 0, scale: 1.05 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.1 }}
+                transition={{ duration: 0.3 }}
               >
-                <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 text-orange-700 px-3 py-1 text-xs font-bold uppercase tracking-wider mb-3">
-                  Reservas Pilates
-                </div>
-                <h2 className="text-4xl md:text-5xl font-bignoodle text-gray-900 mb-2">
-                  ¿Dónde quieres entrenar?
-                </h2>
-                <p className="text-gray-500 max-w-xl">
-                  Elegí sede, días y horario.
-                </p>
+                <img
+                  src={fondoPilates}
+                  alt="Fondo Pilates"
+                  className="w-full h-full object-cover filter blur-[2px] sm:blur-[5px] scale-105 opacity-90"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/40 to-white/20" />
               </motion.div>
 
-              {cargandoSedes ? (
-                <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-              ) : (
+              {/* --- CONTENIDO  --- */}
+              <div className="relative z-10 w-full flex flex-col items-center px-4 py-10">
                 <motion.div
-                  variants={containerVariants}
-                  initial={motionInitialVariant}
-                  animate="visible"
-                  className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 w-full max-w-4xl md:max-w-5xl"
+                  variants={itemVariants}
+                  className="text-center mb-8 md:mb-10"
                 >
-                  {sedesDisponibles.map((sede) => (
-                    <motion.button
-                      key={sede.id}
-                      variants={itemVariants}
-                      whileHover={
-                        reduceMotion
-                          ? undefined
-                          : {
-                              scale: 1.03,
-                              y: -5,
-                              boxShadow: "0px 10px 20px rgba(0,0,0,0.1)",
-                            }
-                      }
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => seleccionarSede(sede)}
-                      disabled={isLoading}
-                      className={`group bg-white p-4 md:p-8 rounded-2xl md:rounded-3xl border-2 border-gray-100 hover:border-orange-500 transition-colors duration-300 text-left relative overflow-hidden shadow-sm ${
-                        isLoading ? "opacity-60 cursor-not-allowed" : ""
-                      }`}
-                    >
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-orange-50 via-white to-white" />
-                      <div className="absolute -top-2 -right-2 md:top-0 md:right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <MapPin
-                          size={60}
-                          className="text-orange-600 rotate-12 md:hidden"
-                        />
-                        <MapPin
-                          size={100}
-                          className="text-orange-600 rotate-12 hidden md:block"
-                        />
-                      </div>
-
-                      <div className="relative z-10">
-                        <h3 className="text-2xl md:text-3xl font-bignoodle text-gray-900 group-hover:text-orange-600 transition-colors leading-none">
-                          {sede.nombre.toUpperCase()}
-                        </h3>
-                        <p className="text-gray-500 mt-1 md:mt-2 text-xs md:text-sm flex items-center gap-1 md:gap-2">
-                          <span className="md:hidden">Ver horarios</span>
-                          <span className="hidden md:inline">
-                            Ver horarios disponibles
-                          </span>
-                          <ArrowRight size={14} className="md:hidden" />
-                          <ArrowRight size={16} className="hidden md:inline" />
-                        </p>
-                      </div>
-                    </motion.button>
-                  ))}
+                  <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 text-orange-600 px-3 py-1 text-xs font-bold uppercase tracking-wider mb-3">
+                    Reservas Pilates
+                  </div>
+                  <h2 className="text-4xl md:text-5xl font-bignoodle font-bold text-gray-900 mb-2">
+                    ¿Dónde quieres entrenar?
+                  </h2>
+                  <p className="text-orange-600 max-w-xl font-bold">
+                    Elegí sede, días y horario.
+                  </p>
                 </motion.div>
-              )}
+
+                {cargandoSedes ? (
+                  <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <motion.div
+                    variants={containerVariants}
+                    initial={motionInitialVariant}
+                    animate="visible"
+                    className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 w-full max-w-4xl md:max-w-5xl"
+                  >
+                    {sedesDisponibles.map((sede) => (
+                      <motion.button
+                        key={sede.id}
+                        variants={itemVariants}
+                        whileHover={
+                          reduceMotion
+                            ? undefined
+                            : {
+                                scale: 1.03,
+                                y: -5,
+                                boxShadow: "0px 10px 20px rgba(0,0,0,0.1)",
+                              }
+                        }
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => seleccionarSede(sede)}
+                        disabled={isLoading}
+                        className={`group bg-white p-4 md:p-8 rounded-2xl md:rounded-3xl border-2 border-gray-100 hover:border-orange-500 transition-colors duration-300 text-left relative overflow-hidden shadow-sm ${
+                          isLoading ? "opacity-60 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-orange-50 via-white to-white" />
+                        <div className="absolute -top-2 -right-2 md:top-0 md:right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                          <MapPin
+                            size={60}
+                            className="text-orange-600 rotate-12 md:hidden"
+                          />
+                          <MapPin
+                            size={100}
+                            className="text-orange-600 rotate-12 hidden md:block"
+                          />
+                        </div>
+
+                        <div className="relative z-10">
+                          <h3 className="text-2xl md:text-3xl font-bignoodle text-gray-900 group-hover:text-orange-600 transition-colors leading-none">
+                            {sede.nombre.toUpperCase()}
+                          </h3>
+                          <p className="text-gray-500 mt-1 md:mt-2 text-xs md:text-sm flex items-center gap-1 md:gap-2">
+                            <span className="md:hidden">Ver horarios</span>
+                            <span className="hidden md:inline">
+                              Ver horarios disponibles
+                            </span>
+                            <ArrowRight size={14} className="md:hidden" />
+                            <ArrowRight
+                              size={16}
+                              className="hidden md:inline"
+                            />
+                          </p>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
             </motion.div>
           )}
 
