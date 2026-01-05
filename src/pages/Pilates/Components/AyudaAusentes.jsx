@@ -5,8 +5,8 @@ import {
   FaSort,
   FaUser,
   FaEdit,
-  FaTrash,
   FaSave,
+  FaClock,
 } from "react-icons/fa";
 
 const AyudaAusentes = ({ onCerrar }) => {
@@ -57,30 +57,30 @@ const AyudaAusentes = ({ onCerrar }) => {
                 <FaFilter className="text-orange-600 text-sm" />
               </div>
               <h4 className="text-base font-bold text-gray-800">
-                2. Filtrar por Estado
+                2. ¿Qué significan los colores?
               </h4>
             </div>
             <div className="pl-10">
               <p className="text-gray-600 text-xs mb-2">
-                Usa los <strong>3 botones de colores</strong>:
+                Usa los botones superiores para filtrar por color:
               </p>
-              <div className="space-y-2">
+              <div className="space-y-2 bg-gray-50 p-2 rounded border border-gray-100">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs">🟠</span>
-                  <span className="text-xs text-gray-600">
-                    <strong>Todos:</strong> Sin filtro.
+                  <span className="text-sm">🔴</span>
+                  <span className="text-xs text-gray-700">
+                    <strong>Rojo (Urgente):</strong> Nunca se contactó, o volvió a faltar mucho.
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs">🔴</span>
-                  <span className="text-xs text-gray-600">
-                    <strong>Rojo:</strong> Sin contacto, o volvió a faltar 2+ veces desde el último contacto, o pasó &gt; 15 días (aunque figure contactado).
+                  <span className="text-sm">🟡</span>
+                  <span className="text-xs text-gray-700">
+                    <strong>Amarillo (Esperando):</strong> Le mandaste mensaje y estás esperando que responda.
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs">🟢</span>
-                  <span className="text-xs text-gray-600">
-                    <strong>Verde:</strong> Contactados recientes (sin superar +2 faltas y &lt;= 15 días).
+                  <span className="text-sm">🟢</span>
+                  <span className="text-xs text-gray-700">
+                    <strong>Verde (Ok):</strong> Ya fue contactado recientemente.
                   </span>
                 </div>
               </div>
@@ -103,19 +103,16 @@ const AyudaAusentes = ({ onCerrar }) => {
               </p>
               <ul className="space-y-1 text-gray-600 text-xs">
                 <li>
-                  ❌ <strong>Sin contacto:</strong> Nunca contactados (se ven en rojo).
+                  ❌ <strong>Sin contacto:</strong> Nunca contactados (Rojos).
                 </li>
                 <li>
-                  ✅ <strong>Con contacto:</strong> Al menos una vez (verdes si fue reciente; si pasaron &gt; 15 días se verán rojos aunque sigan “contactados”).
+                  ⌛ <strong>Esperando respuesta:</strong> Alumnos marcados en Amarillo.
                 </li>
                 <li>
-                  ⏰ <strong>+15 días:</strong> Contacto antiguo (se pinta rojo aunque siga como “contactado”).
+                  ✅ <strong>Con contacto:</strong> Historial existente.
                 </li>
                 <li>
-                  🕐 <strong>-15 días:</strong> Contacto reciente (se mantiene verde).
-                </li>
-                <li>
-                  ↩️ <strong>Volvió a faltar +2:</strong> Si tiene contacto pero sumó 2+ inasistencias desde ese contacto, se verá en rojo y cuenta como “No contactados”.
+                  ⏰ <strong>+15 días:</strong> Contacto muy viejo (Pasan a Rojo).
                 </li>
               </ul>
             </div>
@@ -137,13 +134,13 @@ const AyudaAusentes = ({ onCerrar }) => {
               </p>
               <ul className="space-y-1 text-gray-600 text-xs">
                 <li>
-                  📌 <strong>Defecto:</strong> Rojos primero.
+                  📌 <strong>Defecto:</strong> Prioridad a los Rojos.
                 </li>
                 <li>
-                  ⬇️ <strong>Más faltas:</strong> Mayor inasistencia arriba.
+                  ⬇️ <strong>Más faltas:</strong> Los que más faltaron arriba.
                 </li>
                 <li>
-                  ⬆️ <strong>Menos faltas:</strong> Menor inasistencia arriba.
+                  ⬆️ <strong>Menos faltas:</strong> Los que menos faltaron arriba.
                 </li>
               </ul>
             </div>
@@ -159,11 +156,11 @@ const AyudaAusentes = ({ onCerrar }) => {
             </div>
             <div className="pl-10">
               <p className="text-gray-600 text-xs mb-2">
-                Muestra Nombre, Teléfono, Faltas y Estado.
+                Muestra Nombre, Teléfono, Faltas y Estado actual.
               </p>
               <div className="bg-blue-50 border border-blue-100 rounded p-2">
                 <p className="text-blue-800 text-xs font-bold">
-                  🖱️ ¡Haz clic en la fila para ver la ficha!
+                  🖱️ ¡Haz clic en cualquier fila para abrir la ficha!
                 </p>
               </div>
             </div>
@@ -180,23 +177,12 @@ const AyudaAusentes = ({ onCerrar }) => {
               </h4>
             </div>
             <div className="pl-10">
-              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                <div>
-                  <strong>👤 Izquierda:</strong>
-                  <ul className="list-disc ml-3">
-                    <li>Datos personales</li>
-                    <li>Total faltas</li>
-                    <li>Observaciones cliente</li>
-                  </ul>
-                </div>
-                <div>
-                  <strong>📝 Derecha:</strong>
-                  <ul className="list-disc ml-3">
-                    <li>Historial de contactos</li>
-                    <li>Qué se habló</li>
-                    <li>Quién llamó</li>
-                  </ul>
-                </div>
+              <div className="text-xs text-gray-600 space-y-2">
+                <p>Al abrir un alumno verás dos partes:</p>
+                <ul className="list-disc ml-3">
+                  <li><strong>Izquierda:</strong> Datos del alumno y observación que dejó recepción.</li>
+                  <li><strong>Derecha:</strong> El historial de todo lo que se habló con él.</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -208,18 +194,51 @@ const AyudaAusentes = ({ onCerrar }) => {
                 <FaSave className="text-orange-600 text-sm" />
               </div>
               <h4 className="text-base font-bold text-gray-800">
-                7. Registrar Contacto
+                7. Registrar una Acción (IMPORTANTE)
               </h4>
             </div>
             <div className="pl-10">
-              <p className="text-gray-600 text-xs mb-2">
-                Escribe qué pasó en la caja de texto inferior y pulsa{" "}
-                <strong>"Guardar contacto"</strong>.
+              <p className="text-gray-600 text-xs mb-3">
+                Tienes dos botones para guardar, úsalos según corresponda:
               </p>
-              <div className="flex gap-4 text-xs text-gray-500 italic">
-                <span>Ej: "No contestó"</span>
-                <span>Ej: "Vuelve la próxima semana"</span>
-                <span>Ej: "De viaje"</span>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* OPCION A */}
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-2 font-bold text-orange-700 text-sm">
+                    <span className="bg-orange-600 text-white rounded px-1.5 py-0.5 text-xs">A</span>
+                    Guardar Contacto
+                  </div>
+                  <p className="text-xs text-gray-600 mb-2">
+                    Úsalo cuando <strong>tuviste una respuesta</strong> o una novedad concreta.
+                  </p>
+                  <ul className="text-[11px] text-gray-500 list-disc ml-4 italic">
+                    <li>"Dijo que viene mañana"</li>
+                    <li>"Está de viaje"</li>
+                    <li>"Está enfermo"</li>
+                  </ul>
+                  <div className="mt-2 text-[10px] text-orange-800 font-bold">
+                    👉 Debes escribir algo en la caja de texto.
+                  </div>
+                </div>
+
+                {/* OPCION B */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-2 font-bold text-yellow-700 text-sm">
+                    <FaClock/> 
+                    Marcar Esperando
+                  </div>
+                  <p className="text-xs text-gray-600 mb-2">
+                    Úsalo cuando <strong>le enviaste mensaje</strong> pero aún no contestó.
+                  </p>
+                  <ul className="text-[11px] text-gray-500 list-disc ml-4 italic">
+                    <li>Le mandaste WhatsApp</li>
+                    <li>Lo llamaste y no atendió</li>
+                  </ul>
+                  <div className="mt-2 text-[10px] text-yellow-800 font-bold">
+                    👉 No hace falta escribir nada. El alumno se pintará de AMARILLO.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -228,22 +247,24 @@ const AyudaAusentes = ({ onCerrar }) => {
         {/* CONSEJOS FINALES */}
         <div className="bg-orange-500 rounded-xl shadow-sm p-4 mt-4 text-white">
           <h4 className="text-lg font-bold mb-2 flex items-center gap-2">
-            💡 Consejos Rápidos
+            💡 Resumen Rápido
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
             <div className="flex items-center gap-2">
               <span>
-                🎯 Prioriza alumnos en <strong>ROJO</strong>.
+                🔴 <strong>Rojos:</strong> Atender primero (Urgente).
+              </span>
+            </div>
+             <div className="flex items-center gap-2">
+              <span>
+                🟡 <strong>Amarillos:</strong> Revisar si ya contestaron.
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span>📝 Sé claro en las observaciones.</span>
+              <span>📝 Escribe claro para que todos entiendan.</span>
             </div>
             <div className="flex items-center gap-2">
-              <span>🔄 Actualiza la ventana seguido.</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span>✖️ Usa la X o "Volver" para salir.</span>
+              <span>🔄 Si ya contestó el "Esperando", edítalo o crea uno nuevo.</span>
             </div>
           </div>
         </div>

@@ -1,5 +1,4 @@
-/* 
-Autor: Sergio Manrique
+/* Autor: Sergio Manrique
 Fecha de creación: 23-12-2025
 Descripción: Componente ModalDetalleAusentes para gestionar alumnos ausentes en Pilates.
 */
@@ -15,7 +14,9 @@ import {
   FaWhatsapp,
   FaInstagram,
   FaQuestionCircle,
+  FaClock,
 } from "react-icons/fa";
+import { FaPhone } from "react-icons/fa6";
 import AyudaAusentes from "../Components/AyudaAusentes";
 import {
   cargarHistorial,
@@ -25,6 +26,7 @@ import {
   obtenerAlumnosFiltrados,
   calcularDiasDesdeUltimoContacto,
 } from "../Logic/PilatesGestion/HistorialContactosAusentes";
+import { faLessThanEqual } from "@fortawesome/free-solid-svg-icons";
 
 const ModalDetalleAusentes = ({
   isOpen,
@@ -104,7 +106,7 @@ const ModalDetalleAusentes = ({
     setPaginaActual(1);
   }, [filtroEstado, filtroAvanzado, ordenamiento, busqueda]);
 
-  // Evita combinaciones inválidas: en "Contactados" no aplica sin contacto ni con al menos un contacto
+  // Evita combinaciones inválidas
   useEffect(() => {
     const opcionesNoPermitidas = ["SIN_CONTACTO", "CON_CONTACTO"];
     if (
@@ -256,7 +258,6 @@ const ModalDetalleAusentes = ({
                   </div>
 
                   <div className="flex gap-2">
-                    {" "}
                     {/* SELECTOR DE FILTROS AVANZADOS */}
                     <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                       <label className="text-xs font-bold text-gray-600 uppercase whitespace-nowrap">
@@ -289,6 +290,9 @@ const ModalDetalleAusentes = ({
                           </option>
                           <option value="CONTACTO_MENOS_15_DIAS">
                             🕐 Último contacto hace -15 días
+                          </option>
+                          <option value="ESPERANDO_RESPUESTA">
+                            ⌛ Esperando respuesta
                           </option>
                         </optgroup>
                       </select>
@@ -334,19 +338,19 @@ const ModalDetalleAusentes = ({
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-100 sticky top-0 z-10 shadow-sm">
                     <tr>
-                      <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Alumno.
+                      <th className="px-4 py-2 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Alumno
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-2 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                         Contacto
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-2 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                         Ausencias
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-2 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                         Estado
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-2 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                         Acción
                       </th>
                     </tr>
@@ -356,89 +360,92 @@ const ModalDetalleAusentes = ({
                       alumnosPaginados.map((alumno) => {
                         const diasUltimoContacto =
                           calcularDiasDesdeUltimoContacto(alumno);
-                        const totalContactos = Number(alumno?.total_contactos || 0);
-                        const faltasUltimoContacto = Number(alumno?.contacto_realizado || 0);
+                        const totalContactos = Number(
+                          alumno?.total_contactos || 0
+                        );
+                        const faltasUltimoContacto = Number(
+                          alumno?.contacto_realizado || 0
+                        );
                         const rachaActual = Number(alumno?.racha_actual || 0);
                         const sinContacto = totalContactos === 0;
                         const superaDosFaltas =
                           faltasUltimoContacto > 0 &&
                           rachaActual >= faltasUltimoContacto + 2;
-                        const alertaPorDias =
-                          diasUltimoContacto !== null && diasUltimoContacto > 15;
 
-                        const colorAlerta = alumno.color_alerta
-                          ? alumno.color_alerta
-                          : sinContacto || superaDosFaltas || alertaPorDias
-                          ? "ROJO"
-                          : "VERDE";
+                        const esAmarillo = alumno.estado_visual === "AMARILLO";
+                        const esRojo = alumno.color_alerta === "ROJO";
 
-                        const esRojo = colorAlerta === "ROJO";
+                        // Definir color de fondo de la fila
+                        let bgClass = "!bg-green-100";
+                        if (esRojo) bgClass = "!bg-red-100";
+                        if (esAmarillo) bgClass = "!bg-yellow-50";
 
-                        // Etiqueta: "No contactados" solo si nunca tuvo contacto o superó 2 faltas; si solo venció por días, sigue contactado
                         const esNoContactado = sinContacto || superaDosFaltas;
 
                         return (
                           <tr
                             key={alumno.id}
-                            className={`hover:bg-opacity-80 transition duration-150 ${
-                              esRojo ? "!bg-red-100" : "!bg-green-100"
-                            }`}
+                            className={`hover:bg-opacity-80 transition duration-150 ${bgClass}`}
                             onClick={() => setAlumnoSeleccionado(alumno)}
                           >
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-4 py-2 whitespace-nowrap">
                               <div className="flex flex-col">
-                                <span className="text-sm font-bold text-gray-900">
+                                <span className="text-sm font-bold text-gray-900 leading-tight">
                                   {alumno.nombre}
                                 </span>
                                 {diasUltimoContacto !== null && (
-                                  <span className="text-[11px] text-gray-600">
-                                    Último contacto: hace {diasUltimoContacto} días
+                                  <span className="text-[10px] text-gray-600">
+                                    Último: hace {diasUltimoContacto} días
                                   </span>
                                 )}
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
                               {alumno.telefono}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold bg-white border border-gray-300 shadow-sm text-gray-700">
+                            <td className="px-4 py-2 whitespace-nowrap text-center">
+                              <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-white border border-gray-300 shadow-sm text-gray-700">
                                 {alumno.racha_actual} clases
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              {esNoContactado ? (
-                                <span className="inline-flex px-3 py-1 text-xs font-bold leading-5 text-red-800 bg-red-200 rounded-full border border-red-300 shadow-sm">
+                            <td className="px-4 py-2 whitespace-nowrap text-center">
+                              {esAmarillo ? (
+                                <span className="inline-flex px-2 py-0.5 text-[11px] font-bold leading-4 text-yellow-800 bg-yellow-200 rounded-full border border-yellow-300 shadow-sm">
+                                  Esperando
+                                </span>
+                              ) : esNoContactado ? (
+                                <span className="inline-flex px-2 py-0.5 text-[11px] font-bold leading-4 text-red-800 bg-red-200 rounded-full border border-red-300 shadow-sm">
                                   No contactados
                                 </span>
                               ) : (
-                                <span className="inline-flex px-3 py-1 text-xs font-bold leading-5 text-green-800 bg-green-200 rounded-full border border-green-300 shadow-sm">
+                                <span className="inline-flex px-2 py-0.5 text-[11px] font-bold leading-4 text-green-800 bg-green-200 rounded-full border border-green-300 shadow-sm">
                                   Contactados
                                 </span>
                               )}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <td className="px-4 py-2 whitespace-nowrap text-center">
                               <div className="flex flex-col items-center gap-0.5">
                                 {esRojo ? (
-                                  <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-xs transition transform hover:scale-105 uppercase tracking-wide">
+                                  <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-1 px-3 rounded shadow-sm text-[11px] transition transform hover:scale-105 uppercase tracking-wide">
                                     Contactar
                                   </button>
                                 ) : (
                                   <div className="flex flex-col items-center">
-                                    <span className="text-green-700 font-bold text-xs flex items-center gap-1 mb-1 bg-white px-2 py-0.5 rounded border border-green-200">
+                                    <span className="text-green-700 font-bold text-[10px] flex items-center gap-1 mb-0.5 bg-white px-1.5 py-0 rounded border border-green-200">
                                       ✔ Contactado
                                     </span>
-                                    <button className="text-[11px] text-blue-600 hover:underline font-medium">
+                                    <button className="text-[10px] text-blue-600 hover:underline font-medium leading-tight">
                                       Ver Observación
                                     </button>
                                   </div>
                                 )}
                                 {alumno.total_contactos > 0 && esRojo && (
-                                  <button className="text-[11px] text-blue-600 hover:underline font-medium">
+                                  <button className="text-[10px] text-blue-600 hover:underline font-medium leading-tight">
                                     Ver Observación
                                   </button>
                                 )}
-                                <span className="text-[10px] text-gray-500 mt-1">
-                                  Contactos: {" "}
+                                <span className="text-[10px] text-gray-500 mt-0.5 leading-none">
+                                  Contactos:{" "}
                                   <strong className="text-gray-800">
                                     {alumno.total_contactos}
                                   </strong>
@@ -452,7 +459,7 @@ const ModalDetalleAusentes = ({
                       <tr>
                         <td
                           colSpan="5"
-                          className="px-6 py-12 text-center text-gray-500"
+                          className="px-6 py-8 text-center text-gray-500"
                         >
                           No se encontraron alumnos.
                         </td>
@@ -573,20 +580,29 @@ const ModalDetalleAusentes = ({
                       </button>
                     </div>
                   ) : (
-                    <div className="flex-1 bg-white border border-gray-200 rounded-xl p-6 overflow-y-auto shadow-sm">
-                      <h4 className="text-lg font-bold text-orange-600 uppercase mb-4 border-b pb-2 font-bignoodle">
+                    <div className="flex-1 bg-white border border-gray-200 rounded-xl p-3 overflow-y-auto shadow-sm">
+                      <h4 className="text-base font-bold text-orange-600 uppercase mb-2 border-b pb-1 font-bignoodle">
                         Historial de observaciones
                       </h4>
-                      <ul className="space-y-6 ml-2">
+                      <ul className="space-y-3 ml-1">
+                        {console.log(historialSeleccionado)}
                         {historialSeleccionado.map((item) => (
                           <li
                             key={item.id}
-                            className="relative pl-8 border-l-2 border-gray-200"
+                            className="relative pl-5 border-l-2 border-gray-200"
                           >
-                            <div className="absolute -left-[9px] top-0 w-4 h-4 bg-white rounded-full border-4 border-blue-500"></div>
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1">
-                              <div>
-                                <span className="text-md font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded w-fit font-bignoodle">
+                            {/* Punto de línea de tiempo reducido y ajustado */}
+                            <div className="absolute -left-[7px] top-1 w-3 h-3 bg-white rounded-full border-2 border-blue-500"></div>
+
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-0.5">
+                              <div className="flex items-center flex-wrap gap-1">
+                                <span
+                                  className={`text-sm font-bold ${
+                                    item.esperando_respuesta
+                                      ? "text-yellow-600 bg-yellow-50"
+                                      : "text-orange-600 bg-orange-100"
+                                  } px-1.5 py-0 rounded w-fit font-bignoodle`}
+                                >
                                   {format(
                                     new Date(item.fecha_contacto),
                                     "dd/MM/yyyy HH:mm",
@@ -594,37 +610,48 @@ const ModalDetalleAusentes = ({
                                   )}
                                 </span>
                                 {item.contacto_realizado && (
-                                  <span className="text-md font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded w-fit ml-5 font-bignoodle">
-                                    {`Inasistencias al momento: ${item.contacto_realizado}`}
+                                  <span
+                                    className={`text-[14px] font-bold ${
+                                      item.esperando_respuesta
+                                        ? "text-yellow-600 bg-yellow-50"
+                                        : "text-orange-600 bg-orange-50"
+                                    } px-1.5 py-0 rounded w-fit font-bignoodle`}
+                                  >
+                                    {`Inasistencias: ${item.contacto_realizado}`}
                                   </span>
                                 )}
                               </div>
 
-                              <span className="text-xs text-gray-400">
-                                Contactado por:{" "}
+                              <span className="text-[10px] text-gray-400 mt-0.5 sm:mt-0">
+                                {!item.esperando_respuesta
+                                  ? "Registrado: "
+                                  : "Contactado: "}{" "}
                                 {item.usuario?.name || "Desconocido"}{" "}
                                 {item.usuario?.apellido}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 shadow-sm mt-1 flex justify-between items-start">
-                              <span className="flex-1">
+
+                            <div className="text-xs text-gray-700 bg-gray-50 p-2 rounded border border-gray-100 shadow-sm mt-0.5 flex justify-between items-start">
+                              <span className="flex-1 leading-tight">
                                 "{item.observacion}"
                               </span>
-                              <div className="flex gap-2 ml-2">
-                                <button
-                                  onClick={() =>
-                                    handleEditarHistorial(
-                                      item,
-                                      alumnoSeleccionado,
-                                      setLoadingHistorial,
-                                      setHistorialSeleccionado
-                                    )
-                                  }
-                                  className="text-blue-500 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition"
-                                  title="Editar observación"
-                                >
-                                  <FaEdit size={16} />
-                                </button>
+                              <div className="flex gap-1 ml-2">
+                                {!item.esperando_respuesta && (
+                                  <button
+                                    onClick={() =>
+                                      handleEditarHistorial(
+                                        item,
+                                        alumnoSeleccionado,
+                                        setLoadingHistorial,
+                                        setHistorialSeleccionado
+                                      )
+                                    }
+                                    className="text-blue-500 hover:text-blue-700 p-0.5 rounded hover:bg-blue-50 transition"
+                                    title="Editar observación"
+                                  >
+                                    <FaEdit size={14} />
+                                  </button>
+                                )}
                                 <button
                                   onClick={() =>
                                     handleEliminarHistorial(
@@ -635,10 +662,10 @@ const ModalDetalleAusentes = ({
                                       refetchAusentesData
                                     )
                                   }
-                                  className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition"
+                                  className="text-red-500 hover:text-red-700 p-0.5 rounded hover:bg-red-50 transition"
                                   title="Eliminar observación"
                                 >
-                                  <FaTrash size={16} />
+                                  <FaTrash size={14} />
                                 </button>
                               </div>
                             </div>
@@ -662,29 +689,58 @@ const ModalDetalleAusentes = ({
                       ref={textareaRef}
                       maxLength={255}
                     ></textarea>
-                    <div className="flex justify-end mt-4 gap-3">
+
+                    <div className="flex justify-between mt-4 gap-3">
+                      {/* Boton marcar como esperando respuesta */}
                       <button
-                        onClick={() => setAlumnoSeleccionado(null)}
-                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium"
-                      >
-                        Cancelar
-                      </button>
-                      <button
+                        className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-lg shadow-md text-sm transition-all"
                         onClick={() =>
                           handleGuardarObservacion(
-                            nuevaObservacion,
+                            "",
                             alumnoSeleccionado,
                             userId,
                             setNuevaObservacion,
                             refetchAusentesData,
                             setLoadingHistorial,
-                            setHistorialSeleccionado
+                            setHistorialSeleccionado,
+                            true
                           )
                         }
-                        className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-lg shadow-md text-sm"
                       >
-                        Guardar contacto
+                        <span>
+                          Marcar como{" "}
+                          <span className="text-yellow-300">
+                            esperando respuesta
+                          </span>
+                        </span>
+                        <FaClock className="text-base" />
                       </button>
+                      {/* Otros botones de acciones */}
+                      <div>
+                        <button
+                          onClick={() => setAlumnoSeleccionado(null)}
+                          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium mr-1"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleGuardarObservacion(
+                              nuevaObservacion,
+                              alumnoSeleccionado,
+                              userId,
+                              setNuevaObservacion,
+                              refetchAusentesData,
+                              setLoadingHistorial,
+                              setHistorialSeleccionado,
+                              false
+                            )
+                          }
+                          className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-lg shadow-md text-sm"
+                        >
+                          Guardar contacto
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,4 @@
-/* 
-Autor: Sergio Manrique
+/* Autor: Sergio Manrique
 Fecha de creación: 23-12-2025
 */
 import axios from "axios";
@@ -133,6 +132,7 @@ export const handleEliminarHistorial = async (
 };
 
 // Guardar nueva observación
+// MODIFICADO: Si esperandoRespuesta es true, NO valida texto vacío.
 export const handleGuardarObservacion = async (
   nuevaObservacion,
   alumnoSeleccionado,
@@ -140,9 +140,12 @@ export const handleGuardarObservacion = async (
   setNuevaObservacion,
   refetchAusentesData,
   setLoadingHistorial,
-  setHistorialSeleccionado
+  setHistorialSeleccionado,
+  esperandoRespuesta
 ) => {
-  if (!nuevaObservacion.trim()) {
+  
+  // Validamos SOLO si no es una espera automática
+  if (!esperandoRespuesta && !nuevaObservacion.trim()) {
     return Swal.fire({
       icon: "warning",
       title: "Campo vacío",
@@ -151,15 +154,21 @@ export const handleGuardarObservacion = async (
     });
   }
 
+  // Textos dinámicos según el caso
+  const tituloSwal = esperandoRespuesta ? "Iniciar espera" : "¿Estás seguro?";
+  const textoSwal = esperandoRespuesta 
+    ? "Se marcará al alumno en AMARILLO (Esperando Respuesta) y se creará un registro automático." 
+    : "Se agregará esta observación al historial de contacto del alumno.";
+
   // 1. Pregunta de confirmación
   const result = await Swal.fire({
-    title: "¿Estás seguro?",
-    text: "Se agregará esta observación al historial de contacto del alumno.",
+    title: tituloSwal,
+    text: textoSwal,
     icon: "question",
     showCancelButton: true,
     confirmButtonColor: "#3b82f6",
     cancelButtonColor: "#d33",
-    confirmButtonText: "Sí, guardar contacto",
+    confirmButtonText: "Sí, guardar",
     cancelButtonText: "Cancelar",
   });
 
@@ -169,15 +178,17 @@ export const handleGuardarObservacion = async (
       await axios.post(`${API_BASE_URL}/pilates/historial-contactos`, {
         id_cliente: Number(alumnoSeleccionado.id),
         id_usuario: Number(userId),
-        observacion: nuevaObservacion.trim().toUpperCase(),
+        // Si es espera y está vacío, mandamos string vacío y el backend se encarga de rellenar
+        observacion: nuevaObservacion.trim().toUpperCase(), 
         contacto_realizado: String(alumnoSeleccionado.racha_actual),
+        esperando_respuesta: esperandoRespuesta
       });
 
       // 2. Mensaje de éxito
       await Swal.fire({
         icon: "success",
         title: "¡Guardado!",
-        text: "La observación se ha guardado exitosamente.",
+        text: "La gestión se ha registrado exitosamente.",
         timer: 2000,
         showConfirmButton: false,
       });
@@ -196,7 +207,7 @@ export const handleGuardarObservacion = async (
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "No se pudo guardar la observación. Inténtalo de nuevo.",
+        text: "No se pudo guardar. Inténtalo de nuevo.",
       });
     }
   }
@@ -238,21 +249,28 @@ export const obtenerAlumnosFiltrados = (
     const faltasUltimoContacto = Number(alumno?.contacto_realizado || 0);
     const rachaActual = Number(alumno?.racha_actual || 0);
     const diasUltimoContacto = calcularDiasDesdeUltimoContacto(alumno);
+    const estaEsperando = alumno.esperando_respuesta === true || alumno.esperando_respuesta === 1;
+
     const sinContacto = totalContactos === 0;
     const superaDosFaltas =
       faltasUltimoContacto > 0 && rachaActual >= faltasUltimoContacto + 2;
     const alertaRojaPorDias = diasUltimoContacto !== null && diasUltimoContacto > 15;
 
-    // Etiqueta de contacto: rojo solo si nunca se lo contactó o si volvió a faltar 2+ veces desde el último contacto
-    const estadoVisual = sinContacto || superaDosFaltas ? "ROJO" : "VERDE";
-    // Color de alerta: rojo también cuando hace +15 días del último contacto, aunque siga etiquetado como contactado
-    const colorAlerta =
-      sinContacto || superaDosFaltas || alertaRojaPorDias ? "ROJO" : "VERDE";
+    // --- PRIORIDADES VISUALES ---
+    // 1. Si está esperando respuesta -> AMARILLO
+    // 2. Si debe rojo -> ROJO
+    // 3. Sino -> VERDE
+    let estadoVisual = "VERDE";
+    if (sinContacto || superaDosFaltas) estadoVisual = "ROJO";
+    if (estaEsperando) estadoVisual = "AMARILLO"; 
+
+    // Color alerta (borde o fondo fuerte)
+    const colorAlerta = (estadoVisual === "ROJO" || (alertaRojaPorDias && estadoVisual !== "AMARILLO")) ? "ROJO" : estadoVisual;
 
     return {
       ...alumno,
-      estado_visual: estadoVisual, // se usa para filtros "No contactados" / "Contactados"
-      color_alerta: colorAlerta, // se usa para pintar rojo si >15 días aunque siga contactado
+      estado_visual: estadoVisual, 
+      color_alerta: colorAlerta, 
       dias_calculados: diasUltimoContacto,
       total_contactos_normalizado: totalContactos,
       faltas_ultimo_contacto_normalizadas: faltasUltimoContacto,
@@ -274,9 +292,10 @@ export const obtenerAlumnosFiltrados = (
 
     let coincideFiltroAvanzado = true;
 
+    console.log(alumno)
+
     switch (filtroAvanzado) {
       case "SIN_CONTACTO":
-        // Si ya está en VERDE (contactados), no tiene sentido mostrar sin contacto
         if (filtroEstado === "VERDE") {
           coincideFiltroAvanzado = false;
         } else {
@@ -292,6 +311,10 @@ export const obtenerAlumnosFiltrados = (
       }
       case "CONTACTO_MENOS_15_DIAS": {
         coincideFiltroAvanzado = dias !== null && dias <= 15;
+        break;
+      }
+      case "ESPERANDO_RESPUESTA": {
+        coincideFiltroAvanzado = alumno.esperando_respuesta === true;
         break;
       }
       case "TODOS":

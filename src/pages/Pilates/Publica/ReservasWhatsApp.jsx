@@ -5,7 +5,6 @@ import axios from "axios";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { sedes } from "../../../components/ModalContactoSede";
 import {
-  MessageCircle,
   MapPin,
   Calendar,
   Clock,
@@ -13,7 +12,7 @@ import {
   ChevronLeft,
   ArrowRight,
 } from "lucide-react";
-import { FaFacebookF, FaWhatsapp, FaInstagram } from "react-icons/fa";
+import { FaWhatsapp, FaHandPointer } from "react-icons/fa";
 import { logo } from "../../../images/svg/index";
 
 // --- VARIANTS DE ANIMACIÓN (Configuración de movimientos) ---
@@ -214,10 +213,11 @@ const ReservasWhatsApp = () => {
       {/* Stepper / Progreso */}
       <div className="bg-white/80 backdrop-blur border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between">
+            {/* --- PASO 1 --- */}
+            <div className="flex items-center gap-2 sm:gap-3">
               <div
-                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border ${
+                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border flex-shrink-0 ${
                   paso === 1
                     ? "bg-orange-600 text-white border-orange-600"
                     : "bg-white text-orange-600 border-orange-200"
@@ -229,18 +229,20 @@ const ReservasWhatsApp = () => {
                 <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
                   Paso 1
                 </div>
-                <div className="text-sm font-semibold text-gray-900">
+                {/* Texto principal siempre visible*/}
+                <div className="text-xs sm:text-sm font-semibold text-gray-900">
                   Elegí tu sede
                 </div>
               </div>
             </div>
 
-            <div className="flex-1 hidden sm:block">
+            {/* --- BARRA PROGRESIVA (Ahora visible en mobile) --- */}
+            <div className="flex-1 mx-2 sm:mx-4 min-w-[1rem]">
               <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
                 <motion.div
                   className="h-full bg-orange-600"
                   initial={false}
-                  animate={{ width: paso === 1 ? "50%" : "100%" }}
+                  animate={{ width: paso === 1 ? "0%" : "100%" }}
                   transition={
                     reduceMotion
                       ? { duration: 0 }
@@ -250,13 +252,25 @@ const ReservasWhatsApp = () => {
               </div>
             </div>
 
+            {/* --- PASO 2 --- */}
             <div
-              className={`flex items-center gap-3 ${
+              className={`flex items-center gap-2 sm:gap-3 ${
                 paso === 1 ? "opacity-50" : "opacity-100"
               }`}
             >
+              {/* Texto del Paso 2*/}
+              <div className="leading-tight text-right block">
+                {/* Ocultamos "Paso 2" en mobile */}
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  Paso 2
+                </div>
+                <div className="text-xs sm:text-sm font-semibold text-gray-900">
+                  Días y horario
+                </div>
+              </div>
+
               <div
-                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border ${
+                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border flex-shrink-0 ${
                   paso === 2
                     ? "bg-orange-600 text-white border-orange-600"
                     : "bg-white text-gray-400 border-gray-200"
@@ -264,20 +278,12 @@ const ReservasWhatsApp = () => {
               >
                 2
               </div>
-              <div className="leading-tight text-right hidden sm:block">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  Paso 2
-                </div>
-                <div className="text-sm font-semibold text-gray-900">
-                  Días y horario
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <main className="max-w-[1600px] mx-auto p-4 md:p-8 flex-1 w-full">
+      <main className="lg:max-w-[97%] mx-auto p-4 md:p-8 flex-1 w-full">
         <AnimatePresence mode="wait">
           {/* ==================================================
                 PASO 1: SELECCIÓN DE SEDE
@@ -389,15 +395,15 @@ const ReservasWhatsApp = () => {
               <motion.button
                 whileHover={reduceMotion ? undefined : { x: -5 }}
                 onClick={volverAlInicio}
-                className="flex items-center gap-2 text-gray-500 hover:text-orange-600 mb-6 font-medium transition-colors"
+                className="inline-flex items-center gap-2 text-gray-700 hover:text-orange-600 mb-6 font-medium transition-colors border-2 border-gray-100 bg-white px-3 py-2 rounded-2xl shadow-sm hover:border-orange-500"
               >
                 <ChevronLeft size={20} />
-                Volver a elegir sede
+                Volver atrás
               </motion.button>
 
               <div className="flex flex-col lg:flex-row gap-8 w-full">
                 {/* PANEL IZQUIERDO: FILTROS */}
-                <div className="w-full lg:w-[280px] lg:flex-shrink-0">
+                <div className="w-full lg:w-[300px] lg:flex-shrink-0">
                   <motion.div
                     className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm sticky top-24"
                     initial={false}
@@ -415,20 +421,21 @@ const ReservasWhatsApp = () => {
                     }
                   >
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 block">
-                      Filtro de Días
+                      Seleccioná tu plan
                     </label>
                     <div className="space-y-3">
+                      {/* --- BOTÓN LUNES / MIÉRCOLES / VIERNES --- */}
                       <motion.button
                         whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                         onClick={() => setFiltroGrupo("LMV")}
-                        className={`w-full p-4 rounded-xl text-left transition-all duration-200 border-2 relative overflow-hidden ${
+                        className={`w-full p-2 rounded-xl text-left transition-all duration-200 border-2 relative overflow-hidden ${
                           filtroGrupo === "LMV"
                             ? "bg-orange-600 border-orange-600 text-white shadow-lg"
                             : "bg-gray-50 border-transparent text-gray-600 hover:bg-white hover:border-gray-200"
                         }`}
                       >
                         <div className="font-bold text-xl relative z-10">
-                          Lunes - Miér - Vier
+                          Lunes / Miércoles / Viernes
                         </div>
                         <div
                           className={`text-xs relative z-10 ${
@@ -437,21 +444,47 @@ const ReservasWhatsApp = () => {
                               : "text-gray-400"
                           }`}
                         >
-                          Intensivo 3x semana
+                          Con este plan entrenas 3 veces por semana.
                         </div>
+
+                        {/* --- MANITO ANIMADA (REACT ICONS) --- */}
+                        <motion.div
+                          className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 ${
+                            filtroGrupo === "LMV"
+                              ? "text-orange-100"
+                              : "text-orange-500"
+                          }`}
+                          animate={{
+                            scale: [1, 0.8, 1],
+                            rotate: [0, -10, 0], // Le agregué una rotación sutil para que parezca más natural
+                          }}
+                          transition={{
+                            duration: 1.2,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          {/* Le doy un rotate-90 o 45 si queres que apunte desde otro lado, 
+                              pero por defecto apunta bien hacia el texto si esta a la derecha */}
+                          <FaHandPointer
+                            size={24}
+                            className="transform -rotate-45"
+                          />
+                        </motion.div>
                       </motion.button>
 
+                      {/* --- BOTÓN MARTES / JUEVES --- */}
                       <motion.button
                         whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                         onClick={() => setFiltroGrupo("MJ")}
-                        className={`w-full p-4 rounded-xl text-left transition-all duration-200 border-2 relative overflow-hidden ${
+                        className={`w-full p-4 rounded-xl text-left transition-all duration-200 border-2 relative overflow-hidden pr-12 ${
                           filtroGrupo === "MJ"
                             ? "bg-orange-600 border-orange-600 text-white shadow-lg"
                             : "bg-gray-50 border-transparent text-gray-600 hover:bg-white hover:border-gray-200"
                         }`}
                       >
                         <div className="font-bold text-xl relative z-10">
-                          Martes - Jueves
+                          Martes / Jueves
                         </div>
                         <div
                           className={`text-xs relative z-10 ${
@@ -460,8 +493,31 @@ const ReservasWhatsApp = () => {
                               : "text-gray-400"
                           }`}
                         >
-                          Regular 2x semana
+                          Con este plan entrenas 2 veces por semana.
                         </div>
+
+                        {/* --- MANITO ANIMADA (REACT ICONS) --- */}
+                        <motion.div
+                          className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 ${
+                            filtroGrupo === "MJ"
+                              ? "text-orange-100"
+                              : "text-orange-500"
+                          }`}
+                          animate={{
+                            scale: [1, 0.8, 1],
+                            rotate: [0, -10, 0],
+                          }}
+                          transition={{
+                            duration: 1.2,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          <FaHandPointer
+                            size={24}
+                            className="transform -rotate-45"
+                          />
+                        </motion.div>
                       </motion.button>
                     </div>
                   </motion.div>
@@ -476,9 +532,6 @@ const ReservasWhatsApp = () => {
                         HORARIOS
                       </span>
                     </h2>
-                    <span className="text-xs font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-                      {horariosFiltrados.length} opciones
-                    </span>
                   </div>
 
                   {cargandoHorarios ? (
@@ -509,7 +562,7 @@ const ReservasWhatsApp = () => {
                     </div>
                   ) : (
                     <motion.div
-                      className="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 w-full"
+                      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 w-full"
                       variants={containerVariants}
                       initial={motionInitialVariant}
                       animate="visible"
@@ -523,10 +576,6 @@ const ReservasWhatsApp = () => {
                           <Calendar className="w-12 h-12 text-orange-400 mx-auto mb-3" />
                           <p className="text-orange-800 font-bold text-lg">
                             ¡Primero selecciona tus días!
-                          </p>
-                          <p className="text-orange-600 text-sm">
-                            Elige una opción en el filtro de días para ver los
-                            horarios.
                           </p>
                         </motion.div>
                       ) : horariosFiltrados.length === 0 ? (
@@ -560,14 +609,61 @@ const ReservasWhatsApp = () => {
                                   : {}
                               }
                               layout
-                              className={`relative bg-white rounded-2xl p-3 min-[380px]:p-4 sm:p-5 border transition-colors ${
+                              className={`relative bg-white rounded-2xl p-2 min-[380px]:p-3 sm:p-5 border transition-colors flex flex-col gap-2 sm:gap-0 ${
                                 lleno
                                   ? "border-gray-100 opacity-60 grayscale bg-gray-50"
                                   : "border-gray-200 hover:border-orange-400"
                               }`}
                             >
-                              {/* Encabezado Card */}
-                              <div className="flex justify-between items-start mb-4">
+                              {/* Layout ultra compacto para mobile: todo en una línea */}
+                              <div className="sm:hidden flex items-center gap-2 justify-between">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <div
+                                    className={`p-2 rounded-lg flex-shrink-0 ${
+                                      lleno
+                                        ? "bg-gray-200"
+                                        : "bg-orange-50 text-orange-600"
+                                    }`}
+                                  >
+                                    <Clock size={16} />
+                                  </div>
+                                  <div className="flex-1 min-w-0 leading-tight">
+                                    <div className="text-lg font-bignoodle text-gray-900 tracking-wide leading-none truncate">
+                                      {formatearHoraAmPm(item.hhmm)}
+                                    </div>
+                                    {/* <div className="text-[10px] text-gray-400 uppercase font-bold tracking-widest truncate">
+                                      {item.grupo_label ===
+                                      "Lunes-Miercoles-Viernes"
+                                        ? "Lunes-Miércoles-Viernes"
+                                        : "Martes-Jueves"}
+                                    </div> */}
+                                    <div className="text-[11px] text-gray-500">
+                                      {lleno
+                                        ? "Sin cupos"
+                                        : `${cuposLibres} cupos disponibles`}
+                                    </div>
+                                  </div>
+                                </div>
+                                <motion.button
+                                  whileTap={
+                                    reduceMotion || lleno
+                                      ? undefined
+                                      : { scale: 0.95 }
+                                  }
+                                  onClick={() => reservarTurno(item)}
+                                  disabled={lleno || isLoading}
+                                  className={`flex-shrink-0 h-10 px-3 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition-colors ${
+                                    lleno || isLoading
+                                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                      : "bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-600/20"
+                                  }`}
+                                >
+                                  {lleno ? "Agotado" : "¡Quiero reservar!"}
+                                </motion.button>
+                              </div>
+
+                              {/* Encabezado Card (desktop/tablet) */}
+                              <div className="hidden sm:flex justify-between items-start mb-4">
                                 <div
                                   className={`p-2 rounded-lg ${
                                     lleno
@@ -591,7 +687,7 @@ const ReservasWhatsApp = () => {
                               </div>
 
                               {/* Cuerpo Card */}
-                              <div className="text-center mb-4 sm:mb-6">
+                              <div className="hidden sm:block text-center sm:mb-6">
                                 <div className="text-3xl min-[380px]:text-4xl sm:text-5xl font-bignoodle text-gray-900 tracking-wider">
                                   {formatearHoraAmPm(item.hhmm)}
                                 </div>
@@ -604,34 +700,30 @@ const ReservasWhatsApp = () => {
                               </div>
 
                               {/* Footer / Botón */}
-                              <motion.button
-                                whileTap={
-                                  reduceMotion || lleno
-                                    ? undefined
-                                    : { scale: 0.95 }
-                                }
-                                onClick={() => reservarTurno(item)}
-                                disabled={lleno || isLoading}
-                                className={`w-full py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors ${
-                                  lleno || isLoading
-                                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                    : "bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-600/20"
-                                }`}
-                              >
-                                {lleno ? (
-                                  "Agotado"
-                                ) : (
-                                  <>
-                                    Reservar Turno <MessageCircle size={16} />
-                                  </>
-                                )}
-                              </motion.button>
-
-                              {!lleno && (
-                                <div className="mt-2 text-[10px] text-gray-400 text-center">
-                                  Confirmación por WhatsApp
-                                </div>
-                              )}
+                              <div className="hidden sm:block">
+                                <motion.button
+                                  whileTap={
+                                    reduceMotion || lleno
+                                      ? undefined
+                                      : { scale: 0.95 }
+                                  }
+                                  onClick={() => reservarTurno(item)}
+                                  disabled={lleno || isLoading}
+                                  className={`w-full py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors ${
+                                    lleno || isLoading
+                                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                      : "bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-600/20"
+                                  }`}
+                                >
+                                  {lleno ? (
+                                    "Agotado"
+                                  ) : (
+                                    <>
+                                      ¡Quiero reservar! <FaWhatsapp size={16} />
+                                    </>
+                                  )}
+                                </motion.button>
+                              </div>
                             </motion.div>
                           );
                         })
