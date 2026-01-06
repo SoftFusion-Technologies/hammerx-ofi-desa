@@ -338,12 +338,14 @@ const PanelesSuperiores = ({
               {alumnosAusentes.length > 0 ? (
                 <ul className="space-y-1.5">
                   {alumnosAusentes.map((alumno) => {
+                    console.log(alumno)
                     const colorAlerta = alumno.color_alerta || 'VERDE';
                     const sinContacto = (alumno.total_contactos ?? 0) === 0;
                     const superaDosFaltas = alumno.supera_dos_faltas;
                     const contactoVencido =
                       typeof alumno.dias_desde_ultimo_contacto === 'number' &&
                       alumno.dias_desde_ultimo_contacto > 15;
+                    const esAmarillo = alumno.color_alerta === 'AMARILLO';
                     const esRojo =
                       colorAlerta === 'ROJO'
                         ? true
@@ -353,14 +355,18 @@ const PanelesSuperiores = ({
                       <li
                         key={alumno.id}
                         className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${
-                          esRojo
-                            ? 'bg-red-100 text-red-800 border-red-200 hover:bg-red-50'
-                            : 'bg-green-100 text-green-800 border-green-200 hover:bg-green-50'
+                          esAmarillo
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-50"
+                            : esRojo
+                            ? "bg-red-100 text-red-800 border-red-200 hover:bg-red-50"
+                            : "bg-green-100 text-green-800 border-green-200 hover:bg-green-50"
                         }`}
                         title={
-                          esRojo
-                            ? 'Sin contacto, +2 faltas desde el último contacto o último contacto hace más de 15 días'
-                            : 'Contactado reciente (sin superar +2 faltas y <= 15 días)'
+                          esAmarillo
+                            ? "Sin contacto, +2 faltas desde el último contacto o último contacto hace más de 15 días"
+                            : esRojo
+                            ? "Sin contacto, +2 faltas desde el último contacto o último contacto hace más de 15 días"
+                            : "Contactado reciente (sin superar +2 faltas y <= 15 días)"
                         }
                       >
                         <span className="text-sm font-medium truncate pr-2">
@@ -368,9 +374,11 @@ const PanelesSuperiores = ({
                         </span>
                         <span
                           className={`flex-shrink-0 text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${
-                            esRojo
-                              ? 'bg-red-200 text-red-900'
-                              : 'bg-green-200 text-green-900'
+                            esAmarillo
+                              ? "bg-yellow-200 text-yellow-900"
+                              : esRojo
+                              ? "bg-red-200 text-red-900"
+                              : "bg-green-200 text-green-900"
                           }`}
                         >
                           {alumno.cantidad}

@@ -134,8 +134,8 @@ const ReservasWhatsApp = () => {
     if (Number.isNaN(horas24)) return hhmm;
 
     const sufijo = horas24 >= 12 ? "pm" : "am";
-    const horas12 = ((horas24 + 11) % 12) + 1;
-    return `${horas12}:${minutos} ${sufijo}`;
+    // Mostrar SIEMPRE en formato 24hs pero con am/pm
+    return `${String(horas24).padStart(2, "0")}:${minutos} ${sufijo}`;
   };
 
   const reservarTurno = (horario) => {
@@ -328,7 +328,7 @@ const ReservasWhatsApp = () => {
                     Reservas Pilates
                   </div>
                   <h2 className="text-4xl md:text-5xl font-bignoodle font-bold text-gray-900 mb-2">
-                    ¿Dónde quieres entrenar?
+                    ¡Elegí tu sede más cercana!
                   </h2>
                   <p className="text-orange-600 max-w-xl font-bold">
                     Elegí sede, días y horario.

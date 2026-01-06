@@ -268,6 +268,7 @@ const PilatesGestionLogica = () => {
    */
   useEffect(() => {
     if (ausentesData && ausentesData.length > 0) {
+      /* console.log(ausentesData) */
       const fecha_actual = new Date();
       const lista_formateada = ausentesData.map((alumno) => {
         let dias_pasados = null;
@@ -279,13 +280,15 @@ const PilatesGestionLogica = () => {
 
         const faltasUltimoContacto = Number(alumno?.contacto_realizado || 0);
         const rachaActual = Number(alumno?.racha_actual || 0);
+        const esperandoRespuesta = alumno?.esperando_respuesta === true || alumno?.esperando_respuesta === 1;
         const sinContacto = Number(alumno?.total_contactos || 0) === 0;
         const superaDosFaltas =
           faltasUltimoContacto > 0 && rachaActual >= faltasUltimoContacto + 2;
         const alertaRojaPorDias = dias_pasados !== null && dias_pasados > 15;
 
-        const colorAlerta =
+        let colorAlerta =
           sinContacto || superaDosFaltas || alertaRojaPorDias ? 'ROJO' : 'VERDE';
+        colorAlerta = esperandoRespuesta ? 'AMARILLO' : colorAlerta;
 
         return {
           id: alumno.id,
