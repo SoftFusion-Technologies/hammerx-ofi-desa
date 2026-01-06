@@ -338,7 +338,6 @@ const PanelesSuperiores = ({
               {alumnosAusentes.length > 0 ? (
                 <ul className="space-y-1.5">
                   {alumnosAusentes.map((alumno) => {
-                    console.log(alumno)
                     const colorAlerta = alumno.color_alerta || 'VERDE';
                     const sinContacto = (alumno.total_contactos ?? 0) === 0;
                     const superaDosFaltas = alumno.supera_dos_faltas;
