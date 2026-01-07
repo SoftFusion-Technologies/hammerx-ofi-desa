@@ -1802,14 +1802,9 @@ const IntegranteConveGet = ({ integrantes }) => {
                           <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.16em] whitespace-nowrap">
                             Estado de Autorización
                           </th>
-                          {(userLevel === 'admin' ||
-                            userLevel === '' ||
-                            userLevel === 'gerente' ||
-                            userLevel === 'administrador') && (
-                            <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.16em] whitespace-nowrap">
+                          <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.16em] whitespace-nowrap">
                               Acciones
-                            </th>
-                          )}
+                          </th>
                         </tr>
                       </thead>
 
@@ -2057,11 +2052,7 @@ const IntegranteConveGet = ({ integrantes }) => {
                               </td>
 
                               {/* ACCIONES */}
-                              {(userLevel === 'admin' ||
-                                userLevel === '' ||
-                                userLevel === 'gerente' ||
-                                userLevel === 'administrador') && (
-                                <td className="px-4 py-3 !bg-transparent whitespace-nowrap">
+                              <td className="px-4 py-3 !bg-transparent whitespace-nowrap">
                                   <div className="flex flex-wrap items-center gap-2">
                                     <button
                                       onClick={(e) => {
@@ -2077,6 +2068,11 @@ const IntegranteConveGet = ({ integrantes }) => {
                                       </span>
                                     </button>
 
+                                     {(userLevel === 'admin' ||
+                                      userLevel === '' ||
+                                      userLevel === 'gerente' ||
+                                      userLevel === 'administrador') && (  
+                                  <>
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -2108,9 +2104,10 @@ const IntegranteConveGet = ({ integrantes }) => {
                                     >
                                       Editar
                                     </button>
+                                  </>
+                                  )}
                                   </div>
-                                </td>
-                              )}
+                              </td>
                             </tr>
                           );
                         })}
