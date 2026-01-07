@@ -665,6 +665,7 @@ const { data: auditoriaData } = useConsultaDB(
                 <MdHistory className="text-lg" />
                 <span>Historial</span>
               </button>
+              {cellData.student.status === "plan" && (
               <button
                 className="flex items-center space-x-2 px-2 py-2 rounded-lg bg-gradient-to-r hover:from-orange-500 hover:to-orange-600  text-orange-600 hover:text-white border-[1px] border-orange-600 hover:border-orange-600 font-medium transition-all duration-300 shadow hover:shadow-lg"
                 onClick={() => setSeccion("CONGELAR")}
@@ -673,6 +674,7 @@ const { data: auditoriaData } = useConsultaDB(
                 <span>Congelar</span>
               </button>
 
+              )}
               </div>
             </div>
           ) : (
