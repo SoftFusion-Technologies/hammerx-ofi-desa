@@ -7,6 +7,9 @@ import { FaEye } from "react-icons/fa";
 import useConsultaDB from "../ConsultaDb/Consulta";
 import HistorialAlumno from "../Components/HistorialAlumno";
 import {MdHistory} from "react-icons/md";
+import { TbReplace } from "react-icons/tb";
+import {Snowflake} from "lucide-react"
+import CongelarPlanAlumno from "../Components/CongelarPlanAlumno";
 
 const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambioTurno }) => {
   /**
@@ -95,6 +98,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
   const [esClientePlanParaProgramado, setEsClientePlanParaProgramado] = useState(false); // Cambio de plan a renovación programada
   const [esClienteProgramadoAContratado, setEsClienteProgramadoAContratado] = useState(false); // Cambio de renovación a nuevo plan
   const [habilitarRenovacionProgramanda, setHabilitarRenovacionProgramada] = useState(true); // Permite seleccionar opción "Renovación programada"
+  const [debeGuardarPorCongelamiento, setDebeGuardarPorCongelamiento] = useState(false); // Indica si se debe guardar por congelamiento de plan
   const [habilitarClasePrueba, setHabilitarClasePrueba] = useState(true); // Permite seleccionar opción "Clase de prueba"
   const [esClienteParaRenovar, setEsClienteParaRenovar] = useState(false); // Indica si hay plan anterior vencido pendiente de renovación
   const [alumnoNuevo, setAlumnoNuevo] = useState(false); // Diferencia entre agregar nuevo alumno vs editar existente
@@ -109,7 +113,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
   // ============ UI MODAL ============
   const [mostrarDetallesAuditoria, setMostrarDetallesAuditoria] = useState(false); // Alterna entre vista principal y vista de auditoría
   // ============ COMPONENTS ============
-  const [mostrarHistorialAlumno, setMostrarHistorialAlumno] = useState(false); // Muestra el componente de Historial de Alumno
+  const [seccion, setSeccion] = useState("PRINCIPAL"); // Muestra el componente de Historial de Alumno
   /**
    * ================================================================
    * SECCIÓN 2: EFFECTS - SINCRONIZACIÓN DE FECHAS CON REACT-DATEPICKER
@@ -363,6 +367,14 @@ const { data: auditoriaData } = useConsultaDB(
     }
   }, [planStartDate, planDuration]);
 
+  // Effect para guardar automáticamente tras el congelamiento
+  useEffect(() => {
+    if (debeGuardarPorCongelamiento) {
+      handleSave();
+      setDebeGuardarPorCongelamiento(false);
+    }
+  }, [planEndDate, detailsAuditoria, debeGuardarPorCongelamiento]);
+
   /**
    * ================================================================
    * SECCIÓN 9: FUNCIONES DE MANEJO DE EVENTOS (HANDLERS)
@@ -576,12 +588,38 @@ const { data: auditoriaData } = useConsultaDB(
     return "Actualizar";
   };
 
+
+  //Función para confirmar el congelamiento del plan
+ const confirmarCongelamiento = (fechaVencimientoCongelada) => {
+   try {
+     if (!fechaVencimientoCongelada) {
+       throw new Error("Fecha de vencimiento congelada no proporcionada.");
+     }
+     setPlanEndDate(fechaVencimientoCongelada);
+     setDetailsAuditoria((previo) => {
+      const base = previo ? previo.trim() : "";
+      const mensaje = "Congelamiento de plan solicitado.";
+
+      if (base.includes(mensaje)) {
+        return base;
+      }
+
+      return base.length > 0 
+        ? `${base}. ${mensaje}` 
+        : mensaje;
+    });
+     setDebeGuardarPorCongelamiento(true);
+   } catch (error) {
+     console.error("Error al confirmar congelamiento:", error);
+   }
+ };
+
   // Ocultar modal si no está abierto
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start z-50 overflow-y-auto p-4">
-      {!mostrarHistorialAlumno ? (
+      {seccion === "PRINCIPAL" ? (
         <>
               {!mostrarDetallesAuditoria ? (
         <div className="bg-white rounded-lg p-8 w-full max-w-4xl shadow-2xl">
@@ -592,10 +630,12 @@ const { data: auditoriaData } = useConsultaDB(
             {cellData?.student ? "Modificar Alumno" : "Agregar Alumno"}
           </h2>
           {cellData?.student ? (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 ">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 ">
               <p className="text-gray-600 text-center">
                 {cellData?.day} a las {cellData?.time}
               </p>
+
+              <div className="flex gap-2">
               <button
                 onClick={() => {
                   if (onOpenCambioTurno) {
@@ -613,17 +653,27 @@ const { data: auditoriaData } = useConsultaDB(
                     onClose();
                   }
                 }}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
+                className="flex items-center space-x-2 px-2 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
               >
-                Cambiar turno
+                <TbReplace className="text-lg" />
+                <span>Cambiar turno</span>
               </button>
               <button
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
-                onClick={() => setMostrarHistorialAlumno(true)}
+                className="flex items-center space-x-2 px-2 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg"
+                onClick={() => setSeccion("HISTORIAL")}
               >
                 <MdHistory className="text-lg" />
                 <span>Historial</span>
               </button>
+              <button
+                className="flex items-center space-x-2 px-2 py-2 rounded-lg bg-gradient-to-r hover:from-orange-500 hover:to-orange-600  text-orange-600 hover:text-white border-[1px] border-orange-600 hover:border-orange-600 font-medium transition-all duration-300 shadow hover:shadow-lg"
+                onClick={() => setSeccion("CONGELAR")}
+              >
+                <Snowflake className="text-sm" />
+                <span>Congelar</span>
+              </button>
+
+              </div>
             </div>
           ) : (
             <p className="text-gray-600 text-center">
@@ -847,7 +897,7 @@ const { data: auditoriaData } = useConsultaDB(
                 <div className="mt-4">
                   <label
                     htmlFor="motivoEdicion"
-                    className="block text-gray-700 text-sm font-bold mb-2"
+                    className="block text-orange-600 font-messina text-sm font-bold mb-2"
                   >
                     Motivo de la edición de la fecha de vencimiento:
                   </label>
@@ -1071,10 +1121,11 @@ const { data: auditoriaData } = useConsultaDB(
         </div>
       )}
         </>
-      ) : (
-        <HistorialAlumno volver={setMostrarHistorialAlumno} cerrar={onClose} idCliente={cellData.student.id} nombreCliente={cellData.student.name}></HistorialAlumno>
-      )}
-
+      ) : seccion === "HISTORIAL" ? (
+        <HistorialAlumno volver={() => setSeccion("PRINCIPAL")} cerrar={onClose} idCliente={cellData.student.id} nombreCliente={cellData.student.name}></HistorialAlumno>
+      ) : seccion === "CONGELAR" ? (
+        <CongelarPlanAlumno fechaVencimientoActual={planEndDateAux} idCliente={cellData.student.id} nombreCliente={cellData.student.name} volver={() => setSeccion("PRINCIPAL")} cerrar={onClose} confirmarCongelamiento={confirmarCongelamiento}></CongelarPlanAlumno>
+      ) : null}
     </div>
   );
 };
