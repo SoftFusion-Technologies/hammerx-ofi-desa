@@ -591,12 +591,12 @@ const PilatesGestionLogica = () => {
   };
 
   /**
-   * FUNCTION: Cuenta cuántas clases de prueba hay en otros días del mismo grupo horario
+   * FUNCTION: Obtiene información de clases de prueba en otros días del mismo grupo horario
    * Agrupa los días en: L-M-V (lunes, miércoles, viernes) y M-J (martes, jueves).
-   * Usado para calcular cupos disponibles evitando sobrecargar un grupo horario.
+   * Usado para calcular cupos disponibles y mostrar tarjetas informativas.
    * @param {string} day - Día de la semana (ej: "LUNES")
    * @param {string} hour - Hora del horario (ej: "09:00")
-   * @returns {number} Cantidad de clases de prueba en otros días del grupo
+   * @returns {object} { count: number, alumnos: array } - Cantidad y datos de alumnos de prueba
    */
   const countTrialsInOtherDaysOfGroup = (day, hour) => {
     const lmv = ['LUNES', 'MIÉRCOLES', 'VIERNES'];
@@ -604,22 +604,28 @@ const PilatesGestionLogica = () => {
     let group = [];
     if (lmv.includes(day)) group = lmv;
     if (mj.includes(day)) group = mj;
-    if (group.length === 0) return 0;
+    if (group.length === 0) return { count: 0, alumnos: [] };
 
-    // Contar clases de prueba en otros días del grupo (no en el día actual)
+    // Recopilar clases de prueba en otros días del grupo (no en el día actual)
     let totalTrials = 0;
+    let alumnosPrueba = [];
     group.forEach((d) => {
       if (d !== day) {
         // Solo contar otros días, no el día actual
         const students = schedule[`${d}-${hour}`]?.alumnos || [];
-        const trialsInDay = students.filter(
-          (s) => s.status === 'prueba'
-        ).length;
-        totalTrials += trialsInDay;
+        const trialsInDay = students.filter((s) => s.status === 'prueba');
+        totalTrials += trialsInDay.length;
+        // Agregar información del alumno y su día de inscripción
+        trialsInDay.forEach((alumno) => {
+          alumnosPrueba.push({
+            ...alumno,
+            diaInscrito: d
+          });
+        });
       }
     });
 
-    return totalTrials;
+    return { count: totalTrials, alumnos: alumnosPrueba };
   };
 
   /**
@@ -1658,23 +1664,23 @@ const PilatesGestionLogica = () => {
       const lunesLibres =
         cupoMaximoPilates -
         (schedule[`LUNES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup('LUNES', hour);
+        countTrialsInOtherDaysOfGroup('LUNES', hour).count;
       const miercolesLibres =
         cupoMaximoPilates -
         (schedule[`MIÉRCOLES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup('MIÉRCOLES', hour);
+        countTrialsInOtherDaysOfGroup('MIÉRCOLES', hour).count;
       const viernesLibres =
         cupoMaximoPilates -
         (schedule[`VIERNES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup('VIERNES', hour);
+        countTrialsInOtherDaysOfGroup('VIERNES', hour).count;
       const martesLibres =
         cupoMaximoPilates -
         (schedule[`MARTES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup('MARTES', hour);
+        countTrialsInOtherDaysOfGroup('MARTES', hour).count;
       const juevesLibres =
         cupoMaximoPilates -
         (schedule[`JUEVES-${hour}`]?.alumnos || []).length -
-        countTrialsInOtherDaysOfGroup('JUEVES', hour);
+        countTrialsInOtherDaysOfGroup('JUEVES', hour).count;
 
       const lmvCount = Math.max(
         0,

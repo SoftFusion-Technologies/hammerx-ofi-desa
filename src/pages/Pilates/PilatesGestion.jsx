@@ -23,6 +23,8 @@ import HorariosDeshabilitados from './Components/HorariosDeshabilitados';
 import { FaQuestionCircle } from 'react-icons/fa';
 import SelectorSedes from './Components/SelectorSedes';
 import ModalDetalleAusentes from './Modal/ModalDetalleAusentes';
+import {Download} from 'lucide-react';
+import InstructivoPilates from "../../../public/Intructivo pilates.pdf"
 
 const EyeIcon = ({ className }) => (
   <svg
@@ -257,6 +259,16 @@ const PilatesGestion = () => {
                           <FaQuestionCircle />
                           Ayuda
                         </button>
+                        <div >
+                          <a
+                            href={InstructivoPilates}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                            download="Instructivo_pilates.pdf" 
+                          >
+                            <Download />
+                            Descargar instructivo
+                          </a>
+                        </div>
                       </div>
                     </div>
                   </header>

@@ -11,7 +11,6 @@ const CongelarPlanAlumno = ({
 }) => {
   const [dias, setDias] = useState(7);
   const [loading, setLoading] = useState(false);
-  let fechaVencimientoCongelada = null;
 
   // Calcula la nueva fecha de vencimiento sumando los días seleccionados
   const nuevaFecha = useMemo(() => {
@@ -25,12 +24,16 @@ const CongelarPlanAlumno = ({
   const formatearFecha = (fechaStr) => {
     if (!fechaStr) return "";
     const [y, m, d] = fechaStr.split("-");
-    fechaVencimientoCongelada = fechaStr;
     return `${d}/${m}/${y}`;
   };
 
   const handleCongelar = async () => {
-    confirmarCongelamiento(fechaVencimientoCongelada);
+    try {
+      setLoading(true);
+      await confirmarCongelamiento(nuevaFecha);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,22 +68,42 @@ const CongelarPlanAlumno = ({
         </p>
       </div>
 
-      {/* Opciones de días */}
-      <div className="flex justify-center gap-4 mb-6">
-        {[7, 14].map((op) => (
-          <button
-            key={op}
-            onClick={() => setDias(op)}
-            className={`px-5 py-2 rounded-xl font-bold border-2 transition-colors duration-200 text-lg focus:outline-none ${
-              dias === op
-                ? "bg-orange-600 border-orange-600 text-white shadow-lg"
-                : "bg-white border-orange-200 text-orange-600 hover:bg-orange-50"
-            }`}
+      {/* Selector interactivo de días (7-14) */}
+      <div className="mb-6">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-gray-600">Días:</span>
+            <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-sm font-bold">
+              {dias} días
+            </span>
+          </div>
+          <input
+            type="range"
+            min={7}
+            max={14}
+            step={1}
+            value={dias}
+            onChange={(e) => setDias(Number(e.target.value))}
             disabled={loading}
-          >
-            {op} días
-          </button>
-        ))}
+            className="w-full max-w-md accent-orange-600"
+          />
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 w-full max-w-md mt-2">
+            {[7, 8, 9, 10, 11, 12, 13, 14].map((op) => (
+              <button
+                key={op}
+                onClick={() => setDias(op)}
+                disabled={loading}
+                className={`px-3 py-1 rounded-lg text-sm font-bold border transition-colors duration-200 ${
+                  dias === op
+                    ? "bg-orange-600 border-orange-600 text-white shadow"
+                    : "bg-white border-orange-200 text-orange-600 hover:bg-orange-50"
+                }`}
+              >
+                {op}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Fechas antes y después */}
@@ -103,6 +126,9 @@ const CongelarPlanAlumno = ({
               {formatearFecha(nuevaFecha)}
             </div>
           </div>
+        </div>
+        <div className="mt-3 text-xs font-semibold text-orange-700 text-center">
+          Checkea vencimiento con socio plus
         </div>
       </div>
 
