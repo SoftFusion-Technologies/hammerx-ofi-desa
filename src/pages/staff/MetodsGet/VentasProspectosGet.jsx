@@ -22,6 +22,8 @@ import VendedorComisionesPanel from './Components/VendedorComisionesPanel';
 import ComisionesVigentesModal from '../Components/ComisionesVigentesModal';
 import useInsertClientePilates from '../../Pilates/ConsultaDb/Insertar_ModificarCliente';
 import 'sweetalert2/dist/sweetalert2.min.css';
+import {Download} from 'lucide-react';
+import InstructivosVentas from "../../../../public/Instructivo Ventas.pdf"
 
 const getBgClass = (p) => {
   if (p.comision_estado === 'en_revision') return 'bg-amber-400';
@@ -1613,7 +1615,7 @@ const VentasProspectosGet = ({ currentUser }) => {
               setAnio={setAnio}
             />
           </section>
-
+          <div className='flex gap-1 mb-1 ml-1'>
           <button
             onClick={() =>
               exportProspectosExcel({
@@ -1628,10 +1630,20 @@ const VentasProspectosGet = ({ currentUser }) => {
                 formatDate // tu helper
               })
             }
-            className="ml-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-500"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-emerald-600 font-semibold text-white shadow-md hover:bg-emerald-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300"
           >
             Exportar Excel
-          </button>
+          </button>          <div >
+            <a
+              href={InstructivosVentas}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+              download="Instructivo_ventas.pdf" 
+            >
+              <Download />
+              Descargar instructivo
+            </a>
+          </div>
+          </div>
           <FilterToolbar
             search={search}
             setSearch={setSearch}
@@ -1693,12 +1705,12 @@ const VentasProspectosGet = ({ currentUser }) => {
 
           <div className="flex justify-center gap-3 pb-10 flex-wrap">
             <Link to="#">
-              <button
-                onClick={abrirModal}
+            <button
+              onClick={abrirModal}
                 className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
-              >
-                Nuevo Registro
-              </button>
+            >
+              Nuevo Registro
+            </button>
             </Link>
 
             <button
