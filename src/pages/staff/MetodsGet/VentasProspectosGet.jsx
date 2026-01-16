@@ -399,23 +399,30 @@ const VentasProspectosGet = ({ currentUser }) => {
   }, [sedesEsCiudad, selectedSede]);
 
   // Traer horarios disponibles para Pilates para las clases de prueba cuando cambia sedeId o prospectos
-  const traerHorariosDisponibles = async () => {
+  const traerHorariosDisponibles = async (idSede = sedeId) => {
+    if (!idSede) {
+      setHorariosDisponiblesPilates([]);
+      return;
+    }
     axios
       .get(
-        `http://localhost:8080/clientes-pilates/horarios-disponibles/ventas?sedeId=${sedeId}`
+        `http://localhost:8080/clientes-pilates/horarios-disponibles/ventas?sedeId=${idSede}`
       )
       .then((res) => {
         setHorariosDisponiblesPilates(res.data);
       })
-      .catch(() => setHorariosDisponiblesPilates([]));
+      .catch((err) => {
+        console.error('Error al traer horarios disponibles:', err);
+        setHorariosDisponiblesPilates([]);
+      });
   };
 
-  // Cada vez que cambia sedeId o prospectos, traemos los horarios disponibles
+  // Cada vez que cambia sedeId, traemos los horarios disponibles
   useEffect(() => {
     if (sedeId) {
-      traerHorariosDisponibles();
+      traerHorariosDisponibles(sedeId);
     }
-  }, [sedeId, prospectos]);
+  }, [sedeId]);
 
   useEffect(() => {
     const loadAgendaVentasCount = async () => {
@@ -835,7 +842,7 @@ const VentasProspectosGet = ({ currentUser }) => {
           `http://localhost:8080/ventas-prospectos-horarios`,
           horarioSeleccionadoProspecto
         );
-        traerHorariosDisponibles();
+        traerHorariosDisponibles(sedeId);
       } else {
         await axios.put(
           `http://localhost:8080/ventas-prospectos-horarios/modificar-por-prospecto`,
