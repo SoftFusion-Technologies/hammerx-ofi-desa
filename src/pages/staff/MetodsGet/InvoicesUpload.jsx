@@ -12,6 +12,9 @@ import { useAuth } from '../../../AuthContext';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 const MAX_MB = 30;
 
+// Benjamin Orellana - 18/01/2026
+// Descripción breve: se habilita carga de facturas en PDF además de imágenes (JPG/PNG). Se ajusta validación y accept, sin alterar el flujo de subida/listado/eliminación.
+
 const monthLabelAR = (d) =>
   new Intl.DateTimeFormat('es-AR', { month: 'long', year: 'numeric' }).format(
     d
@@ -48,8 +51,7 @@ export default function InvoicesUpload({
   const { userLevel } = useAuth();
 
   // Solo admin puede subir facturas
-  const canManage =
-     userLevel === 'admin' || userLevel === 'administrador';
+  const canManage = userLevel === 'admin' || userLevel === 'administrador';
 
   const fileInputRef = useRef(null);
 
@@ -91,6 +93,7 @@ export default function InvoicesUpload({
       if (typeof selectedMonth === 'number' && selectedMonth !== m)
         setSelectedMonth(m);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetDate]);
 
   const fetchList = useCallback(async () => {
@@ -123,11 +126,18 @@ export default function InvoicesUpload({
 
   const validateFile = (f) => {
     if (!f) return 'Por favor seleccioná un archivo.';
+
+    // Benjamin Orellana - 18/01/2026 - Se habilita PDF además de JPG/PNG. Validación por mimetype + fallback por extensión.
     const isImage =
       f.type === 'image/jpeg' ||
       f.type === 'image/png' ||
       f.type === 'image/jpg';
-    if (!isImage) return 'Formato inválido. Solo JPG/PNG.';
+
+    const isPdf =
+      f.type === 'application/pdf' || /\.pdf$/i.test(String(f.name || ''));
+
+    if (!isImage && !isPdf) return 'Formato inválido. Solo JPG/PNG o PDF.';
+
     const mb = f.size / (1024 * 1024);
     if (mb > MAX_MB) return `El archivo supera ${MAX_MB}MB.`;
     return '';
@@ -198,7 +208,7 @@ export default function InvoicesUpload({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold tracking-wide text-white/90">
-            Facturas emitidas (Imágenes)
+            Facturas emitidas (Imágenes / PDF)
           </h3>
           <p className="mt-1 text-xs text-white/60">
             Mes:{' '}
@@ -224,7 +234,7 @@ export default function InvoicesUpload({
             <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-4 transition hover:bg-white/[0.05]">
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-semibold text-white/80">
-                  Subir imagen (JPG/PNG) hasta {MAX_MB}MB
+                  Subir factura (JPG/PNG/PDF) hasta {MAX_MB}MB
                 </p>
                 <p className="text-[11px] text-white/55">
                   Se guardará asociada al mes seleccionado.
@@ -233,7 +243,8 @@ export default function InvoicesUpload({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/png,image/jpeg"
+                  // Benjamin Orellana - 18/01/2026 - Se agrega application/pdf al accept para permitir subir PDFs.
+                  accept="image/png,image/jpeg,application/pdf"
                   onChange={(e) => onPickFile(e.target.files?.[0] || null)}
                   className="mt-2 block w-full text-xs text-white/80 file:mr-3 file:rounded-xl file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white/80 hover:file:bg-white/15"
                 />
@@ -317,6 +328,10 @@ export default function InvoicesUpload({
                     minute: '2-digit'
                   }) || '—';
 
+                const rawPath = it.image_path || it.path || it.nombre || '—';
+                // Benjamin Orellana - 18/01/2026 - Detectamos PDF por extensión para mejorar label/botón.
+                const isPdf = /\.pdf(\?|$)/i.test(String(rawPath));
+
                 return (
                   <li
                     key={it.id ?? `${idx}`}
@@ -329,9 +344,13 @@ export default function InvoicesUpload({
                           <span className="ml-2 text-[11px] font-normal text-white/50">
                             {label}
                           </span>
+                          <span className="ml-2 rounded-lg border border-white/10 bg-white/10 px-2 py-[2px] text-[10px] font-bold text-white/70">
+                            {isPdf ? 'PDF' : 'IMG'}
+                          </span>
                         </p>
+
                         <p className="mt-1 truncate text-[11px] text-white/55">
-                          {it.image_path || it.path || it.nombre || '—'}
+                          {rawPath}
                         </p>
                       </div>
 
@@ -342,7 +361,7 @@ export default function InvoicesUpload({
                           rel="noreferrer"
                           className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-white/80 transition hover:bg-white/[0.06]"
                         >
-                          Ver
+                          {isPdf ? 'Ver PDF' : 'Ver Imagen'}
                         </a>
 
                         {canManage && (
