@@ -71,6 +71,7 @@ const ModalCambioTurno = ({
                 hour: schedule.hour,
                 day: day,
                 count: schedule.count || 0,
+                /* disbled:  */
               });
             }
           });
@@ -86,6 +87,7 @@ const ModalCambioTurno = ({
                 hour: schedule.hour,
                 day: day,
                 count: schedule.count || 0,
+                /* disbled:  */
               });
             }
           });
@@ -100,12 +102,32 @@ const ModalCambioTurno = ({
     );
 
     // Filtrar horarios deshabilitados
-    const horariosDisponibles = hoursForPlan.filter(h => !horariosDeshabilitados.includes(h.hour));
+    const horariosDisponibles = hoursForPlan.filter((hour) => {
+      const estaDeshabilitado = horariosDeshabilitados?.some(
+        (deshabilitado) => {
+          const mismaHora = deshabilitado.hora_label === hour.hour;
+          
+          // Si es plan L-M-V, bloquear si tipo_bloqueo es "lmv" o "todos"
+          if (selectedPlan === "L-M-V") {
+            return mismaHora && (deshabilitado.tipo_bloqueo === "lmv" || deshabilitado.tipo_bloqueo === "todos");
+          }
+          
+          // Si es plan M-J, bloquear si tipo_bloqueo es "mj" o "todos"
+          if (selectedPlan === "M-J") {
+            return mismaHora && (deshabilitado.tipo_bloqueo === "mj" || deshabilitado.tipo_bloqueo === "todos");
+          }
+          
+          return false;
+        }
+      );
+      
+      return !estaDeshabilitado;
+    });
 
     setAllHoursForPlan(horariosDisponibles);
     setSelectedHour("");
     setSelectedSlotStatus("available");
-  }, [selectedPlan, allSchedules]);
+  }, [selectedPlan, allSchedules, horariosDeshabilitados]);
 
   if (!isOpen) return null;
 

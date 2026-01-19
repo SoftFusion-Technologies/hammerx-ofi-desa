@@ -2,7 +2,7 @@
   Componente: GrillaHorarios
   Autor: Sergio Manrique
   Propósito: Mostrar y gestionar la grilla de horarios, instructores y alumnos para clases de Pilates.
-  Fecha modificación: 24/12/2025
+  Fecha modificación: 15/01/2026
 */
 
 import { useAuth } from "../../../AuthContext";
@@ -10,6 +10,7 @@ import { FaEyeSlash, FaEye, FaPlus } from "react-icons/fa";
 import { MdOutlineSearchOff } from "react-icons/md";
 import { logo } from "../../../images/svg/index";
 import {TriangleAlert} from "lucide-react"
+import { motion } from 'framer-motion';
 
 const GrillaHorarios = ({
   schedule, // Objeto que contiene la información de horarios, instructores y alumnos
@@ -42,9 +43,15 @@ const GrillaHorarios = ({
 
   const esGestionEditable = rol === "GESTION" && puedeEditarSede;
 
-  const horasVisibles = HOURS.filter(
-    (hora) => !horariosDeshabilitados.includes(hora)
-  );
+  // Modificamos la lógica de filtrado.
+  // Antes ocultaba si existía CUALQUIER registro. Ahora solo oculta la fila si el tipo es 'todos'.
+  const horasVisibles = HOURS.filter((hora) => {
+    const bloqueo = horariosDeshabilitados.find(h => h.hora_label === hora);
+    // Si existe bloqueo y es 'todos', ocultamos la fila entera.
+    if (bloqueo && bloqueo.tipo_bloqueo === 'todos') return false;
+    // Si es 'lmv' o 'mj', la fila debe mostrarse (se bloquearán celdas individuales).
+    return true;
+  });
 
   // Función simple para limpiar acentos y mayúsculas
   const normalizarTexto = (texto) => {
@@ -53,6 +60,20 @@ const GrillaHorarios = ({
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
+  };
+
+  //  Función auxiliar para verificar si un grupo de días tiene alumnos en una hora específica
+  const verificarOcupacionPorGrupo = (grupoDias, hora) => {
+    return grupoDias.some(diaNombre => {
+        // Buscamos el día real en el array DAYS que coincida con el nombre (ej: "lunes")
+        const diaReal = DAYS.find(d => normalizarTexto(d) === diaNombre);
+        if (!diaReal) return false;
+        
+        const key = `${diaReal}-${hora}`;
+        const celda = schedule[key];
+        // Retorna true si hay al menos un alumno
+        return celda && celda.alumnos && celda.alumnos.length > 0;
+    });
   };
 
   // Filtramos las horas: Si hay búsqueda, solo dejamos las horas que tengan al alumno
@@ -78,7 +99,9 @@ const GrillaHorarios = ({
   });
 
   return (
-    <div className="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-200">
+    <motion.div  initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }} className="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-200">
       <table className="w-full border-collapse">
         {/* ENCABEZADO DE LA TABLA */}
         <thead className="bg-slate-900 text-white sticky top-0 z-30 shadow-lg">
@@ -120,9 +143,16 @@ const GrillaHorarios = ({
             const estaMinimizado = horariosMinimizados.includes(hour);
             const alturaCelda = estaMinimizado ? "auto" : "240px";
 
-            const puedeDeshabilitarse = puedeDeshabilitarHorario
-              ? puedeDeshabilitarHorario(hour)
-              : false;
+            //  Calculamos la ocupación por grupos para decidir si habilitar el botón
+            const tieneAlumnosLMV = verificarOcupacionPorGrupo(['lunes', 'miercoles', 'viernes'], hour);
+            const tieneAlumnosMJ = verificarOcupacionPorGrupo(['martes', 'jueves'], hour);
+            
+            // El botón se deshabilita SOLO si AMBOS grupos tienen gente. 
+            // Si al menos uno está libre, permitimos clickear para elegir qué bloquear.
+            const estaTotalmenteOcupado = tieneAlumnosLMV && tieneAlumnosMJ;
+            
+            // Obtenemos la configuración de bloqueo para esta hora específica
+            const bloqueoConfig = horariosDeshabilitados.find(h => h.hora_label === hour);
 
             return (
               <tr
@@ -173,17 +203,17 @@ const GrillaHorarios = ({
                           className={`
                         flex items-center justify-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-200 shadow-sm
                         ${
-                          puedeDeshabilitarse
+                          !estaTotalmenteOcupado
                             ? "bg-white/60 text-orange-900 hover:bg-red-500 hover:text-white hover:shadow-md cursor-pointer border border-white/40"
                             : "bg-gray-100/50 text-gray-400 cursor-not-allowed border border-transparent"
                         }
                       `}
-                          disabled={!puedeDeshabilitarse}
-                          onClick={() => alDeshabilitarHorario(hour)}
+                          disabled={estaTotalmenteOcupado}
+                          onClick={() => alDeshabilitarHorario(hour, { tieneAlumnosLMV, tieneAlumnosMJ })}
                           title={
-                            puedeDeshabilitarse
-                              ? "Ocultar turno vacío"
-                              : "Turno con alumnos"
+                            !estaTotalmenteOcupado
+                              ? "Ocultar turno vacío o parcial"
+                              : "Turno completo con alumnos"
                           }
                         >
                           <FaEyeSlash size={10} />
@@ -195,6 +225,39 @@ const GrillaHorarios = ({
 
                 {/* CELDAS DE DÍAS (Lunes, Martes, etc.) */}
                 {visibleDays.map((day) => {
+                  
+                  // Analizamos si ESTE día específico está bloqueado por la regla LMV o MJ
+                  let esDiaBloqueadoPorRegla = false;
+                  if (bloqueoConfig) {
+                    const diaNormalizado = normalizarTexto(day);
+                    const esLMV = ['lunes', 'miercoles', 'viernes'].includes(diaNormalizado);
+                    const esMJ = ['martes', 'jueves'].includes(diaNormalizado);
+
+                    // Si el bloqueo es 'lmv' y hoy es L, M o V -> Bloqueado
+                    if (bloqueoConfig.tipo_bloqueo === 'lmv' && esLMV) esDiaBloqueadoPorRegla = true;
+                    // Si el bloqueo es 'mj' y hoy es Martes o Jueves -> Bloqueado
+                    if (bloqueoConfig.tipo_bloqueo === 'mj' && esMJ) esDiaBloqueadoPorRegla = true;
+                  }
+
+                  // Si está bloqueado por regla, renderizamos directamente la celda vacía/gris
+                  if (esDiaBloqueadoPorRegla) {
+                    return (
+                        <td 
+                            key={`${day}-${hour}-blocked`}
+                            className="p-2 border border-gray-200 text-center align-middle bg-gray-200/70"
+                            style={{ height: alturaCelda }}
+                        >
+                            <div className="flex flex-col items-center justify-center h-full text-gray-400 select-none">
+                                <MdOutlineSearchOff size={24} className="mb-2 opacity-50" />
+                                <span className="text-xs font-bold uppercase tracking-wide">
+                                    Este día no está disponible
+                                </span>
+                            </div>
+                        </td>
+                    );
+                  }
+
+                  // --- FLUJO NORMAL SI NO ESTÁ BLOQUEADO POR REGLA ---
                   const key = `${day}-${hour}`;
                   const cellData = schedule[key] || {
                     coach: "",
@@ -453,7 +516,7 @@ const GrillaHorarios = ({
                                   })}
 
                                   {/* Renderizar tarjetas informativas de alumnos de prueba de otros días */}
-                                  {infoTrials.alumnos.map((alumno, index) => (
+                                  {rol === "GESTION" && infoTrials.alumnos.map((alumno, index) => (
                                     <div
                                       key={`trial-info-${alumno.id}-${index}`}
                                       className="flex-grow p-2 text-xs md:text-sm flex items-center justify-left rounded-lg border-2 border-dashed border-amber-400 bg-amber-50 shadow-sm cursor-default"
@@ -576,7 +639,7 @@ const GrillaHorarios = ({
           )}
         </tbody>
       </table>
-    </div>
+    </motion.div>
   );
 };
 

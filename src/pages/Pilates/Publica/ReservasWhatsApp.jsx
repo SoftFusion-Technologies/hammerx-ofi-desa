@@ -116,7 +116,7 @@ const ReservasWhatsApp = () => {
   };
 
   const horariosFiltrados = listaHorarios.filter(
-    (item) => item.grp === filtroGrupo
+    (item) => item.grp === filtroGrupo && item.tipo_bloqueo === false
   );
 
   const calcularDisponibilidad = (cupoTotal, inscriptos) => {

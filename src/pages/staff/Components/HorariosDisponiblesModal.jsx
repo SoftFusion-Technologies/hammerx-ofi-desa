@@ -13,8 +13,13 @@ const HorariosDisponiblesModal = ({
     setSelected(horarioInicial);
   }, [horarioInicial]);
 
+  // Filtrar solo los horarios habilitados (tipo_bloqueo === false)
+  const horariosHabilitados = horariosDisponiblesPilates.filter(
+    (h) => h.tipo_bloqueo === false
+  );
+
   // Agrupar por grupo
-  const grupos = horariosDisponiblesPilates.reduce((acc, h) => {
+  const grupos = horariosHabilitados.reduce((acc, h) => {
     if (!acc[h.grp]) acc[h.grp] = [];
     acc[h.grp].push(h);
     return acc;

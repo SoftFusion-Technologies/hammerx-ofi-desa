@@ -18,8 +18,9 @@ import {
   FaCheckCircle,
   FaExclamationTriangle
 } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { Copy } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-
 const PanelesSuperiores = ({
   freeSlots,
   expiredStudents,
@@ -28,35 +29,47 @@ const PanelesSuperiores = ({
   onToggle,
   alumnosAusentes = [],
   onOpenModalDetalleAusentes,
-  horariosDeshabilitados = []
+  horariosDeshabilitados = [],
+  sedeActualFiltro,
+  sedesDatos
 }) => {
   // Estado para controlar si los paneles se muestran con altura completa o reducida
   const [allExpanded, setAllExpanded] = useState(false);
+  const [copiado, setCopiado] = useState(false);
 
   // Función simple para alternar el estado de expansión visual
   const handleExpandAllToggle = () => {
     setAllExpanded(!allExpanded);
   };
 
+  console.log(horariosDeshabilitados)
+
   // 1. Filtra los TURNOS LIBRES
   // Objetivo: Eliminar de la visualización los cupos libres que corresponden a horarios que el admin ocultó.
   const freeSlotsFiltrados = useMemo(() => {
-    // Sub-función para filtrar un array de slots
-    const filtrarHorarios = (slots) => {
-      // Si no hay horarios ocultos, devolvemos la lista original intacta
+    const filtrarHorarios = (slots, grupo) => {
       if (!horariosDeshabilitados || horariosDeshabilitados.length === 0) {
         return slots;
       }
-      // Retornamos solo los slots cuya hora NO esté en la lista de deshabilitados
-      return slots.filter(
-        (slot) => !horariosDeshabilitados.includes(slot.hour)
-      );
+      // Determina los tipos de bloqueo que afectan a este grupo
+      let tiposPermitidos = [];
+      if (grupo === 'lmv') {
+        tiposPermitidos = ['lmv', 'todos'];
+      } else if (grupo === 'mj') {
+        tiposPermitidos = ['mj', 'todos'];
+      }
+      // Obtiene las horas bloqueadas para este grupo
+      const horasBloqueadas = horariosDeshabilitados
+        .filter((bloqueo) => tiposPermitidos.includes(bloqueo.tipo_bloqueo))
+        .map((bloqueo) => bloqueo.hora_label);
+      // Filtra los slots que NO están bloqueados para este grupo
+      return slots.filter((slot) => !horasBloqueadas.includes(slot.hour));
     };
 
     // Aplicamos el filtro a ambos grupos (Lunes-Miércoles-Viernes y Martes-Jueves)
     return {
-      lmv: filtrarHorarios(freeSlots.lmv || []),
-      mj: filtrarHorarios(freeSlots.mj || [])
+      lmv: filtrarHorarios(freeSlots.lmv || [], 'lmv'),
+      mj: filtrarHorarios(freeSlots.mj || [], 'mj')
     };
   }, [freeSlots, horariosDeshabilitados]);
 
@@ -105,7 +118,10 @@ const PanelesSuperiores = ({
   };
 
   return (
-    <div className="w-full">
+    <motion.div  initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }} 
+      className="w-full">
       {/* --- SECCIÓN: BARRA DE CONTROL Y FILTROS --- */}
       <div className="flex flex-col xl:flex-row items-center justify-between gap-4 mb-6 w-full bg-zinc-900 bg-opacity-40 p-4 rounded-2xl shadow-sm border border-gray-400">
         {/* GRUPO DE BOTONES FILTROS */}
@@ -187,6 +203,49 @@ const PanelesSuperiores = ({
               <div className="flex items-center gap-2 text-blue-700">
                 {panelStyles.freeSlots.icon}
                 <h3 className="font-bold">{panelStyles.freeSlots.title}</h3>
+                <motion.button
+                  className={`p-1 rounded-full flex items-center gap-1 text-xs font-semibold
+                    ${copiado ? 'bg-green-500 text-white' : 'text-blue-700 bg-blue-100 hover:bg-blue-200'}
+                  `}
+                  whileTap={{ scale: 0.95 }}
+                  animate={copiado ? { scale: 1.05, boxShadow: '0 0 5px #22c55e' } : { scale: 1, boxShadow: '0 0 0px transparent' }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                  onClick={() => {
+                    // Formatear los turnos libres para WhatsApp
+                    const formatSlots = (label, slots) => {
+                      if (!slots.length) return '';
+                      // Convierte hora 24hs a string con AM/PM
+                      const formatHour = (hourStr) => {
+                        if (/am|pm/i.test(hourStr)) return hourStr;
+                        const [h, m] = hourStr.split(':');
+                        const hour = parseInt(h, 10);
+                        const suffix = hour < 12 ? 'AM' : 'PM';
+                        return `${hourStr} ${suffix}`;
+                      };
+                      return `*${label}:*\n` +
+                        slots.map(slot => `- ${formatHour(slot.hour)} (${slot.count} cupos disponibles)`).join('\n') + '\n';
+                    };
+                    let sede;
+                    if (sedesDatos && sedeActualFiltro) {
+                      const sedeSeleccionada = sedesDatos.find(
+                        (sede) => String(sede.id) === String(sedeActualFiltro)
+                      );
+                      const nombreSedeSeleccionada =
+                        (sedeSeleccionada && (sedeSeleccionada.nombre || sedeSeleccionada.ciudad || sedeSeleccionada.sede)) || '';
+                      sede = nombreSedeSeleccionada;
+                    }
+                    const lmvText = formatSlots('Lunes-Miércoles-Viernes', freeSlotsFiltrados.lmv);
+                    const mjText = formatSlots('Martes-Jueves', freeSlotsFiltrados.mj);
+                    const finalText = `${sede ? `Sede: ${sede}\n` : ''}${lmvText}${mjText}`.trim() || 'Sin turnos disponibles';
+                    navigator.clipboard.writeText(finalText);
+                    setCopiado(true);
+                    setTimeout(() => setCopiado(false), 1200);
+                  }}
+                  title="Copiar turnos libres para WhatsApp"
+                >
+                  <Copy size={16} className="inline-block" />
+                  {copiado ? 'Copiado' : 'Copiar'}
+                </motion.button>
               </div>
               <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">
                 {freeSlotsFiltrados.lmv.length + freeSlotsFiltrados.mj.length}
@@ -498,7 +557,7 @@ const PanelesSuperiores = ({
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

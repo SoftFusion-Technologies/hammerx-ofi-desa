@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { es } from "date-fns/locale";
+import { isBefore, parseISO, set } from "date-fns";
 import { FaEye } from "react-icons/fa";
 import useConsultaDB from "../ConsultaDb/Consulta";
 import HistorialAlumno from "../Components/HistorialAlumno";
@@ -94,7 +95,7 @@ const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambi
   const [detailsAuditoria, setDetailsAuditoria] = useState(null); // Motivo de cambios en fechas personalizadas
   
   // ============ FLAGS DE CAMBIOS DE ESTADO ============
-  const [statusAux, setStatusAux] = useState(""); // Estado anterior del alumno
+  const [statusAux, setStatusAux] = useState(null); // Estado anterior del alumno
   const [esClientePlanParaProgramado, setEsClientePlanParaProgramado] = useState(false); // Cambio de plan a renovación programada
   const [esClienteProgramadoAContratado, setEsClienteProgramadoAContratado] = useState(false); // Cambio de renovación a nuevo plan
   const [habilitarRenovacionProgramanda, setHabilitarRenovacionProgramada] = useState(true); // Permite seleccionar opción "Renovación programada"
@@ -741,31 +742,123 @@ const { data: auditoriaData } = useConsultaDB(
 
           {/* SECCIÓN: Selector de estado/tipo de plan */}
           <div className="mb-6">
-            <label
-              className="block text-orange-600 font-messina text-sm font-bold mb-2"
-              htmlFor="status"
-            >
-              Estado / Plan
-            </label>
+            <div className="flex gap-x-2 items-center">
+              <label
+                className="block text-orange-600 font-messina text-sm font-bold mb-2"
+                htmlFor="status"
+              >
+                Estado / Plan <span className="!text-green-600">{statusAux === "plan" ? "(Plan contratado)" : statusAux === "prueba" ? "(Clase de prueba)" : statusAux === "programado" ? "(Programado)" : null}</span>
+              </label>
+              {cellData?.student && statusAux && (statusAux !== status || renovacionDirectaActiva) && (
+              <button  onClick={() => {
+                setStatus(statusAux)
+                if (renovacionDirectaActiva) {
+                  const originalStart = planStartDateAux || today;
+                  setPlanStartDate(originalStart);
+                  setEsClienteProgramadoAContratado(false);
+                  setEsClientePlanParaProgramado(false);
+                  setEsClienteParaRenovar(false);
+                  setRenovacionDirectaActiva(false);
+                }
+              }}                       
+              className="flex items-center space-x-2 px-2 py-1 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-300 shadow hover:shadow-lg mb-2">
+              Cancelar
+              </button>
+              )}
+            </div>
             <select
               id="status"
               value={renovacionDirectaActiva ? "renovacion_directa" : status}
               onChange={handleStatusChange}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {cellData?.student && status === "plan" && (
-                <option value="renovacion_directa">Renovación Directa</option>
-              )}
-              <option value="plan">Plan Contratado</option>
+              {(() => {
+                const estadoAlumnoActual = cellData?.student?.status;
+                
+                const opcionesEstado = [
+                  {
+                    id: "plan",
+                    estaVisible: true,
+                    componente: (esActual, estaDesactivada) => (
+                      <option 
+                        key="plan" 
+                        value="plan" 
+                        disabled={estaDesactivada}
+                        className={esActual ? "!text-gray-600 font-bold" : ""}
+                        style={esActual ? { color: '#ea580c', fontWeight: 'bold' } : {}}
+                      >
+                        {(cellData?.student?.status === "programado" && cellData?.student?.scheduledDetails?.promisedDate != null ) ? "Renovación de plan" : "Plan contratado"}
+                      </option>
+                    )
+                  },
+                  {
+                    id: "renovacion_directa",
+                    estaVisible: cellData?.student && cellData.student.status === "plan",
+                    componente: (esActual, estaDesactivada) => (
+                      <option 
+                        key="renovacion_directa" 
+                        value="renovacion_directa"
+                        disabled={estaDesactivada}
+                        className={esActual ? "!text-gray-600 font-bold" : ""}
+                        style={esActual ? { color: '#ea580c', fontWeight: 'bold' } : {}}
+                      >
+                        {isBefore(new Date(), planEndDateAux) ? "Renovación anticipada" : "Renovación del plan"}
+                      </option>
+                    )
+                  },
+                  {
+                    id: "programado",
+                    estaVisible: habilitarRenovacionProgramanda,
+                    componente: (esActual, estaDesactivada) => (
+                      cellData?.student?.status === "plan" && isBefore(new Date(), planEndDateAux) ? null : (
+                      <option 
+                        key="programado" 
+                        value="programado"
+                        disabled={estaDesactivada}
+                        className={esActual ? "!text-gray-600 font-bold" : ""}
+                        style={esActual ? { color: '#ea580c', fontWeight: 'bold' } : {}}
+                      >
+                        {!cellData.student ? "Visita programada" : (
+                          isBefore(new Date(), planEndDateAux) ? "Visita o renovación programada" : "Renovación programada"
+                        )}
+                      </option>
+                      )
+                    )
+                  },
+                  {
+                    id: "prueba",
+                    estaVisible: habilitarClasePrueba,
+                    componente: (esActual, estaDesactivada) => (
+                      <option 
+                        key="prueba" 
+                        value="prueba"
+                        disabled={estaDesactivada}
+                        className={esActual ? "!text-gray-600 font-bold" : ""}
+                        style={esActual ? { color: '#ea580c', fontWeight: 'bold' } : {}}
+                      >
+                        Clase de Prueba
+                      </option>
+                    )
+                  }
+                ];
 
-              {habilitarRenovacionProgramanda && (
-                <option value="programado">
-                  Visita o Renovación programada
-                </option>
-              )}
-              {habilitarClasePrueba && (
-                <option value="prueba">Clase de Prueba</option>
-              )}
+                return opcionesEstado
+                  .filter(opcion => opcion.estaVisible)
+                  .sort((a, b) => {
+                    if (a.id === estadoAlumnoActual) return -1;
+                    if (b.id === estadoAlumnoActual) return 1;
+                    return 0;
+                  })
+                  .map(opcion => {
+                    const esLaOriginal = opcion.id === estadoAlumnoActual;
+                    
+                    /* 1. CAMBIO AQUI: Ahora desactivamos la opción original si el status cambió 
+                       O si la renovación directa está activada (aunque el status siga siendo 'plan') */
+                    const debeDesactivarse = esLaOriginal && (status !== estadoAlumnoActual || renovacionDirectaActiva);
+                    
+                    return opcion.componente(esLaOriginal, debeDesactivarse);
+                  });
+              })()}
             </select>
           </div>
 

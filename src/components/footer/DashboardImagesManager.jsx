@@ -6,25 +6,20 @@ import {
   Trash2,
   ImagePlus,
   Link as LinkIcon,
+  Star, // Asegúrate de importar Star
 } from "lucide-react";
 
 const API = "http://localhost:8080/";
 
-
-// --- Componente Principal ---
 export default function DashboardImagesManager() {
-  // 'imagenes' ahora se llama 'elementos' para más claridad
   const [elementos, setElementos] = useState([]);
   const [file, setFile] = useState(null);
   const [titulo, setTitulo] = useState("");
-  const [descripcion, setDescripcion] = useState(""); // Comentado en tu JSX, pero lo dejamos
+  const [descripcion, setDescripcion] = useState(""); 
   const [orden, setOrden] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [tipo, setTipo] = useState("IMAGEN_SIMPLE"); 
 
-  // --- NUEVO ESTADO PARA EL FORMULARIO ---
-  const [tipo, setTipo] = useState("IMAGEN_SIMPLE"); // 'IMAGEN_SIMPLE' o 'GRUPO_PROMOCION'
-
-  // --- NUEVOS ESTADOS PARA LOS MODALES ---
   const [modalTarjeta, setModalTarjeta] = useState({
     isOpen: false,
     elemento_id: null,
@@ -62,7 +57,7 @@ export default function DashboardImagesManager() {
     form.append("titulo", titulo);
     form.append("descripcion", descripcion);
     form.append("orden", orden);
-    form.append("tipo", tipo); // --- AÑADIMOS EL TIPO ---
+    form.append("tipo", tipo); 
 
     setLoading(true);
     try {
@@ -94,7 +89,7 @@ export default function DashboardImagesManager() {
     setLoading(true);
     try {
       await axios.delete(`${API}dashboard-images/${id}`);
-      fetchElementos(); // Refrescamos
+      fetchElementos(); 
     } catch {
       alert("Error al eliminar elemento");
     } finally {
@@ -102,13 +97,12 @@ export default function DashboardImagesManager() {
     }
   };
 
-  // --- NUEVA FUNCIÓN: Eliminar una "Tarjetita" (Hijo) ---
   const handleDeleteTarjeta = async (tarjetaId) => {
     if (!window.confirm("¿Seguro que querés eliminar esta tarjetita?")) return;
     setLoading(true);
     try {
       await axios.delete(`${API}promocion-tarjetas/${tarjetaId}`);
-      fetchElementos(); // Refrescamos todo
+      fetchElementos(); 
     } catch {
       alert("Error al eliminar la tarjetita");
     } finally {
@@ -116,14 +110,31 @@ export default function DashboardImagesManager() {
     }
   };
 
-  // --- NUEVA FUNCIÓN: Guardar la nueva tarjetita (llamada desde el modal) ---
+  // 1. Función para manejar el toggle del estado destacado
+  const handleToggleDestacado = async (tarjetaId, estadoActual) => {
+    const nuevoEstado = !estadoActual;
+    
+    setLoading(true); 
+    try {
+      await axios.put(`${API}promocion-tarjetas/${tarjetaId}/destacado`, {
+        destacado: nuevoEstado
+      });
+      fetchElementos();
+    } catch (error) {
+      console.error(error);
+      alert("Error al cambiar el estado destacado.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubirTarjeta = async (formData) => {
     setLoading(true);
     try {
       await axios.post(`${API}promocion-tarjetas`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      fetchElementos(); // Refrescamos
+      fetchElementos(); 
       alert("Tarjeta de promoción subida correctamente.");
     } catch {
       alert("Error al subir la tarjetita.");
@@ -132,7 +143,6 @@ export default function DashboardImagesManager() {
     }
   };
 
-  // --- NUEVA FUNCIÓN: Guardar el instructivo (llamada desde el modal) ---
   const handleSubirInstructivo = async (tarjetaId, formData) => {
     setLoading(true);
     try {
@@ -143,7 +153,7 @@ export default function DashboardImagesManager() {
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
-      fetchElementos(); // Refrescamos
+      fetchElementos(); 
       alert("Instructivo vinculado correctamente.");
     } catch {
       alert("Error al vincular el instructivo.");
@@ -152,7 +162,6 @@ export default function DashboardImagesManager() {
     }
   };
 
-  // --- Helper: descargar instructivo (fuerza descarga en cliente) ---
   const descargarArchivo = async (instructivoPath) => {
     if (!instructivoPath) return alert('No hay instructivo disponible');
     try {
@@ -182,7 +191,6 @@ export default function DashboardImagesManager() {
         <ImagePlus size={28} /> Gestión del Dashboard
       </h2>
 
-      {/* --- FORMULARIO DE CARGA MODIFICADO --- */}
       <form
         className="flex flex-wrap items-end gap-4 mb-8 bg-orange-50 dark:bg-zinc-800 p-4 rounded-xl shadow"
         onSubmit={handleUpload}
@@ -237,7 +245,6 @@ export default function DashboardImagesManager() {
         </button>
       </form>
 
-      {/* --- GALERÍA DE ELEMENTOS MODIFICADA --- */}
       <div className="grid grid-cols-1 gap-6">
         {loading && elementos.length === 0 && (
           <div className="text-gray-400 col-span-1 text-center">
@@ -250,7 +257,6 @@ export default function DashboardImagesManager() {
           </div>
         )}
 
-        {/* Bucle principal que renderiza "Padres" */}
         {elementos.map((elemento) => (
           <div
             key={elemento.id}
@@ -266,9 +272,6 @@ export default function DashboardImagesManager() {
               <Trash2 size={16} />
             </button>
 
-            {/* Renderizado condicional */}
-
-            {/* CASO 1: IMAGEN SIMPLE */}
             {elemento.tipo === "IMAGEN_SIMPLE" && (
               <img
                 src={`${API}${elemento.url.replace(/^uploads\//, "public/")}`}
@@ -278,10 +281,8 @@ export default function DashboardImagesManager() {
               />
             )}
 
-            {/* CASO 2: GRUPO DE PROMOCIÓN */}
             {elemento.tipo === "GRUPO_PROMOCION" && (
               <div className="w-full">
-                {/* Imagen Principal del Grupo */}
                 <img
                   src={`${API}${elemento.url.replace(/^uploads\//, "public/")}`}
                   alt={elemento.titulo || "Imagen Título"}
@@ -289,14 +290,34 @@ export default function DashboardImagesManager() {
                   loading="lazy"
                 />
 
-                {/* Contenedor de "Tarjetitas" (Hijos) */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 bg-gray-200 dark:bg-zinc-700 rounded-lg">
-                  {/* Bucle de Tarjetitas */}
                   {elemento.tarjetas.map((tarjeta) => (
                     <div
                       key={tarjeta.id}
-                      className="relative bg-white dark:bg-zinc-800 p-2 rounded shadow-md flex flex-col"
+                      className={`relative bg-white dark:bg-zinc-800 p-2 rounded shadow-md flex flex-col transition-all ${
+                        tarjeta.destacado 
+                          ? "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)] scale-[1.02]" 
+                          : ""
+                      }`}
                     >
+                      {/* 2. BOTÓN ESTRELLA INTERACTIVO */}
+                      <button
+                        onClick={() => handleToggleDestacado(tarjeta.id, tarjeta.destacado)}
+                        className={`absolute -top-2 -left-2 p-1.5 rounded-full z-20 shadow-sm transition-colors border ${
+                            tarjeta.destacado 
+                            ? "bg-yellow-400 text-yellow-900 border-yellow-500 hover:bg-yellow-300" 
+                            : "bg-gray-100 text-gray-400 border-gray-300 hover:text-yellow-400 hover:bg-white"
+                        }`}
+                        title={tarjeta.destacado ? "Quitar destacado" : "Destacar esta tarjeta"}
+                      >
+                        {/* Si está destacado, la estrella se rellena (fill). Si no, solo borde. */}
+                        <Star 
+                            size={14} 
+                            fill={tarjeta.destacado ? "currentColor" : "none"} 
+                            strokeWidth={2.5}
+                        />
+                      </button>
+
                       <img
                         src={`${API}${tarjeta.imagen_tarjeta_url.replace(
                           /^uploads\//,

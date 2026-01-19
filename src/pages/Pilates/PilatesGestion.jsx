@@ -25,6 +25,7 @@ import SelectorSedes from './Components/SelectorSedes';
 import ModalDetalleAusentes from './Modal/ModalDetalleAusentes';
 import {Download} from 'lucide-react';
 import InstructivoPilates from "../../../public/Intructivo pilates.pdf"
+import {motion} from "framer-motion"
 
 const EyeIcon = ({ className }) => (
   <svg
@@ -187,14 +188,19 @@ const PilatesGestion = () => {
                       visiblePanels={states.visiblePanels}
                       onToggle={functions.handlePanelToggle}
                       alumnosAusentes={states.ausentesAlumnos}
-                      horariosDeshabilitados={states.horariosDeshabilitados}
+                      horariosDeshabilitados={states.detalleHorariosDeshabilitados}
                       onOpenModalDetalleAusentes={
                         functions.handleOpenModalDetalleAusentes
                       }
+                      sedeActualFiltro={states.sedeActualFiltro}
+                      sedesDatos={states.sedesData}
                     />
                   )}
 
-                  <header className="mb-6">
+                  <motion.header  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="mb-6">
                     <h1 className="text-4xl font-bold text-gray-50 mb-2">
                       {states.section === 'GESTION'
                         ? 'Gestión de Clases de Pilates'
@@ -271,7 +277,7 @@ const PilatesGestion = () => {
                         </div>
                       </div>
                     </div>
-                  </header>
+                  </motion.header>
                   <GrillaHorarios
                     schedule={states.schedule}
                     searchTerm={states.searchTerm}
@@ -287,7 +293,7 @@ const PilatesGestion = () => {
                     }
                     onInstructorClick={functions.handleOpenModalProfesor}
                     puedeEditarSede={states.puedeEditarSede}
-                    horariosDeshabilitados={states.horariosDeshabilitados}
+                    horariosDeshabilitados={states.detalleHorariosDeshabilitados}
                     alDeshabilitarHorario={functions.manejarDeshabilitarHorario}
                     puedeDeshabilitarHorario={
                       functions.puedeDeshabilitarHorario
@@ -346,7 +352,7 @@ const PilatesGestion = () => {
                       onSaveDirect={functions.handleSaveCambioTurno}
                       onSaveWaitingList={functions.handleSaveWaitingListCambio}
                       maxCapacity={states.cupoMaximoPilates}
-                      horariosDeshabilitados={states.horariosDeshabilitados}
+                      horariosDeshabilitados={states.detalleHorariosDeshabilitados}
                     />
                   )}
                 </>

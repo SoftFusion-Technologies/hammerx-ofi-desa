@@ -15,6 +15,7 @@ function ModalAñadirTarjeta({ isOpen, onClose, onSave, elemento_id }) {
   const [tarjetaFile, setTarjetaFile] = useState(null);
   const [instructivoFile, setInstructivoFile] = useState(null);
   const [orden, setOrden] = useState(1);
+  const [destacado, setDestacado] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   if (!isOpen) return null;
@@ -28,6 +29,7 @@ function ModalAñadirTarjeta({ isOpen, onClose, onSave, elemento_id }) {
     const form = new FormData();
     form.append("elemento_id", elemento_id);
     form.append("orden", orden);
+    form.append("destacado", destacado);
     form.append("imagen_tarjeta", tarjetaFile);
     if (instructivoFile) {
       form.append("instructivo", instructivoFile);
@@ -74,16 +76,34 @@ function ModalAñadirTarjeta({ isOpen, onClose, onSave, elemento_id }) {
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-full"
             />
           </div>
-          <div className="mb-6">
-            <label className="block text-sm font-semibold mb-1">Orden</label>
-            <input
-              type="number"
-              min={1}
-              value={orden}
-              onChange={(e) => setOrden(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24"
-            />
+          
+          {/* Estructura para mostrar Orden y el Checkbox */}
+          <div className="flex gap-4 mb-6">
+            <div className="w-24">
+              <label className="block text-sm font-semibold mb-1">Orden</label>
+              <input
+                type="number"
+                min={1}
+                value={orden}
+                onChange={(e) => setOrden(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-full"
+              />
+            </div>
+            {/* Checkbox de destacado */}
+            <div className="flex items-center pt-6">
+              <input
+                id="checkDestacado"
+                type="checkbox"
+                checked={destacado}
+                onChange={(e) => setDestacado(e.target.checked)}
+                className="w-4 h-4 text-[#fc4b08] bg-gray-100 border-gray-300 rounded focus:ring-[#fc4b08] cursor-pointer"
+              />
+              <label htmlFor="checkDestacado" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer select-none">
+                ¿Destacar tarjeta?
+              </label>
+            </div>
           </div>
+
           <div className="flex justify-end gap-3">
             <button type="button" onClick={onClose} className="text-gray-600">
               Cancelar

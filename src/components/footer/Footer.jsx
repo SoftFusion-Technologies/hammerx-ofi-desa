@@ -6,7 +6,7 @@ import { useAuth } from '../../AuthContext';
 import DashboardImagesManager from './DashboardImagesManager';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { LinkIcon } from 'lucide-react'; 
+import { LinkIcon, Star } from 'lucide-react'; 
 
 const Footer = () => {
   const location = useLocation();
@@ -125,46 +125,62 @@ const Footer = () => {
                   {/* --- 3. SI ES GRUPO DE PROMO, RENDERIZAR TARJETITAS --- */}
                   {elemento.tipo === "GRUPO_PROMOCION" && (
                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {/* Mapear las tarjetitas hijas */}
-                        {elemento.tarjetas?.map((tarjeta) => (
-                          <div
-                            key={tarjeta.id}
-                            className="relative bg-gray-50 dark:bg-zinc-700 p-2 rounded-lg shadow-sm flex flex-col"
-                          >
-                            <img
-                              src={`${API_BASE}${tarjeta.imagen_tarjeta_url.replace(
-                                /^uploads\//,
-                                "public/"
-                              )}`}
-                              alt="Tarjeta de promoción"
-                              className="w-full rounded-md"
-                            />
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"> 
+                        {elemento.tarjetas?.map((tarjeta) => {
+                          const esDestacado = tarjeta.destacado === 1 || tarjeta.destacado === true;
+                          return (
+                            <div
+                              key={tarjeta.id}
+                              className={`relative p-3 rounded-xl transition-all duration-500 flex flex-col group ${
+                                esDestacado
+                                  ? "bg-gradient-to-b from-amber-50/50 to-white dark:from-amber-900/10 dark:to-zinc-800 border-2 border-amber-400 shadow-[0_8px_30px_rgb(251,191,36,0.15)] z-10 scale-[1.03]"
+                                  : "bg-white dark:bg-zinc-800 shadow-sm border border-gray-100 dark:border-zinc-700 hover:shadow-md"
+                              }`}
+                            >
+                              {/* Badge de DESTACADO Estilizado */}
+                              {esDestacado && (
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 z-20 tracking-wider uppercase">
+                                  <Star size={12} fill="currentColor" className="animate-pulse" />
+                                  <span>Destacado</span>
+                                </div>
+                              )}
 
-                            {/* Link al instructivo (si existe) */}
-                            {tarjeta.instructivo_url ? (
-                              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-zinc-600">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    descargarArchivo(tarjeta.instructivo_url)
-                                  }
-                                  className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1.5"
-                                >
-                                  <LinkIcon size={14} />
-                                  Ver Instructivo
-                                </button>
+                              {/* Contenedor de Imagen con Efecto Zoom al pasar el mouse */}
+                              <div className="overflow-hidden rounded-lg mb-3">
+                                <img
+                                  src={`${API_BASE}${tarjeta.imagen_tarjeta_url.replace(/^uploads\//, "public/")}`}
+                                  alt="Tarjeta de promoción"
+                                  className={`w-full h-auto object-cover transition-transform duration-500 ${esDestacado ? 'group-hover:scale-110' : 'group-hover:scale-105'}`}
+                                />
                               </div>
-                            ) : (
-                              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-zinc-600">
-                                {" "}
-                                <span className="text-xs text-red-500 font-semibold">
-                                  Sin Instructivo
-                                </span>
+
+                              {/* Sección de Instructivo */}
+                              <div className="mt-auto pt-3 border-t border-gray-100 dark:border-zinc-700">
+                                {tarjeta.instructivo_url ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => descargarArchivo(tarjeta.instructivo_url)}
+                                    className={`w-full py-1.5 rounded-md text-xs font-bold transition-colors flex items-center justify-center gap-2 ${
+                                      esDestacado 
+                                      ? "bg-amber-100 text-amber-700 hover:bg-amber-200" 
+                                      : "text-blue-600 hover:bg-blue-50"
+                                    }`}
+                                  >
+                                    <LinkIcon size={14} />
+                                    VER INSTRUCTIVO
+                                  </button>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-1 py-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-tight">
+                                      Sin Instructivo
+                                    </span>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
