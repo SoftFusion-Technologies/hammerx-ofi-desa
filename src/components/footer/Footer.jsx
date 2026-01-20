@@ -141,7 +141,7 @@ const Footer = () => {
                               {esDestacado && (
                                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 z-20 tracking-wider uppercase">
                                   <Star size={12} fill="currentColor" className="animate-pulse" />
-                                  <span>Destacado</span>
+                                  <span>Disponible hoy</span>
                                 </div>
                               )}
 

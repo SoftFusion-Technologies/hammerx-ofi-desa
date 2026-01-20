@@ -33,7 +33,7 @@ import ComisionEditModal from './ComisionEditModal';
  * - Mantiene filtros, paginación, aprobar/rechazar/editar/eliminar.
  * - Incluye fondo con partículas canvas ultra-liviano.
  *************************************************/
-const API_URL = 'http://localhost:8080/ventas-comisiones';
+
 
 // ========================= Constantes =========================
 const PLANES = [
@@ -163,7 +163,8 @@ export default function ComisionesModal({
   onClose,
   userLevel,
   userId,
-  onComisionStateChange
+  onComisionStateChange,
+  origen = "ventas-prospectos" //Sirve para distinguir si es llamado desde Ventas o Remarketing y así usar el endpoint correcto
 }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -176,6 +177,8 @@ export default function ComisionesModal({
   const [total, setTotal] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const [refreshSpin, setRefreshSpin] = useState(false);
+  let endpoint = origen === "ventas-prospectos" ? "ventas-comisiones" : "ventas-comisiones-remarketing";
+  const API_URL = 'http://localhost:8080/' + endpoint;
 
   const puedeGestionar = useMemo(
     () => ['admin', 'gerente'].includes(String(userLevel).toLowerCase()),
@@ -304,8 +307,9 @@ export default function ComisionesModal({
     );
 
     try {
+      endpoint = origen === "ventas-prospectos" ? "ventas-comisiones" : "ventas-comisiones-remarketing";
       await axios.put(
-        `http://localhost:8080/ventas-comisiones/${row.id}/aprobar`,
+        `http://localhost:8080/${endpoint}/${row.id}/aprobar`,
         {
           monto_comision: Number(monto),
           moneda: 'ARS',
@@ -371,8 +375,9 @@ export default function ComisionesModal({
     );
 
     try {
+      endpoint = origen === "ventas-prospectos" ? "ventas-comisiones" : "ventas-comisiones-remarketing";
       await axios.put(
-        `http://localhost:8080/ventas-comisiones/${row.id}/rechazar`,
+        `http://localhost:8080/${endpoint}/${row.id}/rechazar`,
         { motivo_rechazo: motivo.trim(), user_id: userId, userLevel },
         { headers: { 'x-user-id': userId, 'x-user-role': userLevel } }
       );
@@ -421,8 +426,9 @@ export default function ComisionesModal({
     if (!isConfirmed) return;
 
     try {
+      endpoint = origen === "ventas-prospectos" ? "ventas-comisiones" : "ventas-comisiones-remarketing";
       await axios.delete(
-        `http://localhost:8080/ventas-comisiones/${row.id}`,
+        `http://localhost:8080/${endpoint}/${row.id}`,
         {
           data: { actor_id: userId } // <<<<<< clave para que el back identifique al actor
         }

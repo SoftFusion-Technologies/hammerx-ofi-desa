@@ -195,7 +195,7 @@ export function ComisionesTable({ rows, editar, eliminar, PrimaryAction }) {
               </td>
               <td className="px-4 py-3">
                 <div className="text-slate-100">
-                  {row?.prospecto?.nombre || '-'}
+                  {row?.prospecto?.nombre || row?.prospecto?.nombre_socio || '-'}
                 </div>
                 {row?.prospecto?.dni && (
                   <div className="text-[12px] text-slate-400">

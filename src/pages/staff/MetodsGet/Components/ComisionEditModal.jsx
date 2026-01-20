@@ -57,7 +57,8 @@ export default function ComisionEditModal({ open, row, onClose, onSaved }) {
     [
       'fedekap@hotmail.com',
       'solciruiz098@gmail.com.ar',
-      'lourdesbsoraire@gmail.com'
+      'lourdesbsoraire@gmail.com',
+      'rosario.nieva24@gmail.com'
     ].map((e) => e.toLowerCase())
   );
 

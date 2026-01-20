@@ -4,7 +4,7 @@ import { Calendar, Bell, X } from 'lucide-react';
 
 const URL = 'http://localhost:8080/';
 
-export default function AgendasVentas({
+export default function AgendasVentasRemarketing({
   userId,
   level = 'vendedor',
   open,
@@ -39,7 +39,7 @@ export default function AgendasVentas({
     setNotis(null);
     try {
       const res = await axios.get(
-        `${URL}notifications/clases-prueba/${userId}`
+        `${URL}notifications/clases-prueba-remarketing/${userId}`
       );
       setNotis(Array.isArray(res.data) ? res.data : []);
     } catch {
@@ -57,8 +57,7 @@ export default function AgendasVentas({
         ...(level !== 'admin' ? { usuario_id: String(userId) } : {}),
         with_prospect: '1'
       });
-      console.log(`${URL}ventas/agenda/hoy?${qs.toString()}`)
-      const r = await fetch(`${URL}ventas/agenda/hoy?${qs.toString()}`);
+      const r = await fetch(`${URL}ventas-remarketing/agenda/hoy?${qs.toString()}`);
       const d = await r.json();
       const arr = Array.isArray(d) ? d : [];
       console.log(arr)
@@ -114,7 +113,7 @@ export default function AgendasVentas({
     // onVentasCountChange?.((cnt) => Math.max(0, (typeof cnt === 'number' ? cnt : 0) - 1));
 
     try {
-      const r = await fetch(`${URL}ventas/agenda/${id}/done`, {
+      const r = await fetch(`${URL}ventas-remarketing/agenda/${id}/done`, {
         method: 'PATCH'
       });
       if (!r.ok) throw new Error();
@@ -151,7 +150,7 @@ export default function AgendasVentas({
 
     try {
       const r = await fetch(
-        `${URL}notifications/clases-prueba/${prospectoId}/enviado`,
+        `${URL}notifications/clases-prueba-remarketing/${prospectoId}/enviado`,
         { method: 'PATCH' }
       );
       if (!r.ok) throw new Error('patch-failed');
@@ -466,7 +465,7 @@ export default function AgendasVentas({
                             ].join(' ')}
                           />
                           <div className="text-sm sm:text-base font-semibold text-gray-800 truncate">
-                            {it.prospecto?.nombre ??
+                            {it.prospecto?.nombre_socio ??
                               `Prospecto #${it.prospecto_id}`}
                           </div>
                         </div>

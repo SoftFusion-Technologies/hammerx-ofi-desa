@@ -1549,7 +1549,8 @@ const VentasProspectosGet = ({ currentUser }) => {
     [
       'fedekap@hotmail.com',
       'solciruiz098@gmail.com.ar',
-      'lourdesbsoraire@gmail.com'
+      'lourdesbsoraire@gmail.com',
+      'rosario.nieva24@gmail.com'
     ].map((e) => e.toLowerCase())
   );
 
@@ -2617,12 +2618,14 @@ const VentasProspectosGet = ({ currentUser }) => {
           userLevel={userLevel}
           userId={userId}
           onComisionStateChange={handleComisionStateChange} // <- NUEVO
+          origen="ventas-prospectos"
         />
       )}
       <ComisionesVigentesModal
         open={openComi}
         onClose={() => setOpenComi(false)}
         userLevel={userLevel}
+        
       />
     </>
   );

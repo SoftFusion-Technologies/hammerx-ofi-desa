@@ -24,7 +24,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import StatsVentasModal from "../../../components/StatsVentasModal";
-import AgendasVentas from "../../../components/AgendasVentas";
+import AgendasVentasRemarketing from "../../../components/AgendasVentasRemarketing";
 import { useLocation } from "react-router-dom";
 import FiltroMesAnio from "../Components/FiltroMesAnio";
 import ObservacionField from "../Components/ObservacionField";
@@ -32,11 +32,14 @@ import AgendaDeHoyModal from "../Components/AgendaDeHoyModal";
 import Swal from "sweetalert2";
 import ComisionesModal from "./Components/ComisionesModal";
 import VendedorComisionesPanel from "./Components/VendedorComisionesPanel";
-import ComisionesVigentesModal from "../Components/ComisionesVigentesModal";
+import ComisionesVigentesRemarketingModal from "../Components/ComisionesVigentesRemarketingModal";
 import FormAltaVentasRemarketing from "../../../components/Forms/FormAltaVentasRemarketing";
 import styles from "../../../styles/MetodsGet/VentasRemarketingGet.module.css";
-import ClasePruebaModal from "../Components/ClasePruebaModal";
+import ClasePruebaModalRemarketing from "../Components/ClasePruebaModalRemarketing";
 import ContactoRapidoModal from "./Components/ContactoRapidoModal";
+import { set } from "date-fns";
+import useInsertClientePilates from "../../Pilates/ConsultaDb/Insertar_ModificarCliente";
+import ArrastradosModal from "./Components/ArrastradosModal";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -432,6 +435,8 @@ const VentasRemarketingGet = ({ currentUser }) => {
 
   const [selectedProspecto, setSelectedProspecto] = useState(null);
 
+  const [alumnosArrastrados, setAlumnosArrastrados] = useState([]); //Alumnos que se arrastran del mes anterior a el actual. (Son los alumnos que corresponden a la ultima semana del mes anterior)
+
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
 
@@ -443,7 +448,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
   const [modalClaseOpen, setModalClaseOpen] = useState(false);
   const [modalNew, setModalNew] = useState(false);
   const [claseSeleccionada, setClaseSeleccionada] = useState(null); // {id, num}
-  // const [tipoSeleccionado, setTipoSeleccionado] = useState(null); // para el modal de clase
+  const [tipoSeleccionado, setTipoSeleccionado] = useState(null); // para el modal de clase
 
   const [userSede, setUserSede] = useState(null);
   const [selectedSede, setSelectedSede] = useState(null); // null = todas o ninguna sede seleccionada
@@ -458,6 +463,8 @@ const VentasRemarketingGet = ({ currentUser }) => {
 
   const [observaciones, setObservaciones] = useState({});
 
+  const { insertCliente } = useInsertClientePilates();
+
   const location = useLocation();
   const prospectoIdToScroll = location.state?.prospectoId;
   const dataLoaded = useRef(false); // Para evitar scroll antes de que llegue la data
@@ -469,6 +476,12 @@ const VentasRemarketingGet = ({ currentUser }) => {
 
   const [modalTipo, setModalTipo] = useState(null);
   const [prospectoActual, setProspectoActual] = useState(null);
+
+  const [horariosDisponiblesPilates, setHorariosDisponiblesPilates] = useState([]); // Lista de horarios disponibles para Pilates
+
+  const [sedesEsCiudad, setSedesEsCiudad] = useState([]); // Lista de sedes desde el backend
+
+  const [sedeId, setSedeId] = useState(null);   
 
   const [mes, setMes] = useState(() => {
     // Intenta recuperar del localStorage
@@ -591,6 +604,87 @@ const VentasRemarketingGet = ({ currentUser }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Traer horarios disponibles para Pilates para las clases de prueba cuando cambia sedeId o prospectos
+  const traerHorariosDisponibles = async (idSede = sedeId) => {
+    if (!idSede) {
+      setHorariosDisponiblesPilates([]);
+      return;
+    }
+    axios
+      .get(
+        `http://localhost:8080/clientes-pilates/horarios-disponibles/ventas?sedeId=${idSede}`
+      )
+      .then((res) => {
+        setHorariosDisponiblesPilates(res.data);
+      })
+      .catch((err) => {
+        console.error('Error al traer horarios disponibles:', err);
+        setHorariosDisponiblesPilates([]);
+      });
+  };
+
+  // Cada vez que cambia sedeId, traemos los horarios disponibles
+  useEffect(() => {
+    if (sedeId) {
+      traerHorariosDisponibles(sedeId);
+    }
+  }, [sedeId]);
+
+
+  //Una vez que tenemos las sedes y la sede del usuario, buscamos el id numérico y lo seteamos
+    useEffect(() => {
+      if (sedesEsCiudad && sedesEsCiudad.length > 0 && selectedSede) {
+        const normalize = (str) =>
+          str
+            .toString()
+            .normalize('NFD') // descompone caracteres con acentos
+            .replace(/\p{Diacritic}/gu, '') // elimina diacríticos
+            .toLowerCase()
+            .trim();
+  
+        // Normalizamos la sede seleccionada
+        let sedeABuscar = normalize(selectedSede);
+  
+        // Mapeo rápido: UI → nombre en BD
+        if (sedeABuscar === 'barrionorte' || sedeABuscar === 'sanmiguelbn')
+          sedeABuscar = 'barrio norte';
+        if (sedeABuscar === 'smt') sedeABuscar = 'barrio sur';
+  
+        const sedeEncontrada = sedesEsCiudad.find(
+          (s) => normalize(s.nombre) === sedeABuscar
+        );
+  
+        if (sedeEncontrada) {
+          setSedeId(sedeEncontrada.id);
+        } else {
+          console.log('No se encontró la sede');
+        }
+      }
+    }, [sedesEsCiudad, selectedSede]);  
+
+    useEffect(() => {
+    axios
+      .get(`http://localhost:8080/sedes/ciudad`)
+      .then((res) => {
+        setSedesEsCiudad(res.data);
+      })
+      .catch(() => setSedesEsCiudad([]));
+  }, []);
+
+
+  useEffect(() => {
+    try{
+      const fetch = async () => {
+        const response = await axios.get(`${URL}/ventas_prospectos/alumnos-ultima-semana-mes-anterior`);
+          setAlumnosArrastrados(response.data);
+      };
+      fetch();
+    }catch(error){
+      console.error("Error cargando sedes desde el backend:", error);
+    }
+
+  }, []);
+
   useEffect(() => {
     const loadData = async () => {
       if (!mes || !anio) {
@@ -602,7 +696,6 @@ const VentasRemarketingGet = ({ currentUser }) => {
           params: {
             mes,
             anio,
-            offset: 0,
           },
         });
 
@@ -677,7 +770,6 @@ const VentasRemarketingGet = ({ currentUser }) => {
 
           return normalized;
         });
-
         setProspectos(normalizedData);
         dataLoaded.current = true;
       } catch (error) {
@@ -703,6 +795,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
       setUserLoading(true);
       setCurrentUser(userFromAuth);
 
+      
       try {
         // 🔧 Intenta obtener desde /users/:id
         const { data } = await axios.get(`${URL}/users/${userId}`);
@@ -755,7 +848,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
     if (!userId) return;
 
     axios
-      .get(`${URL}/notifications/clases-prueba/${userId}`)
+      .get(`${URL}/notifications/clases-prueba-remarketing/${userId}`)
       .then((res) =>
         setProspectosConAgendaHoy(res.data.map((p) => p.prospecto_id))
       )
@@ -827,7 +920,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
 
   useEffect(() => {
     axios
-      .get(`${URL}/prospectos-alertas`)
+      .get(`${URL}/prospectos-remarketing-alertas`)
       .then((res) => {
         const obj = {};
         res.data.forEach((p) => {
@@ -862,7 +955,8 @@ const VentasRemarketingGet = ({ currentUser }) => {
     };
   }, [search]);
 
-  const handleChange = async (id, campo, valor) => {
+  const handleChange = async (id, campo, valor) =>
+    {
     try {
       // Actualizar localmente
       setProspectos((prev) =>
@@ -1068,6 +1162,8 @@ const VentasRemarketingGet = ({ currentUser }) => {
           convertido: true,
           comision: false,
           comision_estado: null,
+          vendedor_id: userId,
+          prospecto_id: prospectoId,
         };
 
         await axios.put(`${URL}/ventas-remarketing/${prospectoId}`, updates);
@@ -1118,6 +1214,8 @@ const VentasRemarketingGet = ({ currentUser }) => {
         comision_estado: "en_revision",
         comision_tipo_plan: tipo_plan,
         ...(tipo_plan === "Otros" ? { comision_tipo_plan_custom } : {}),
+        prospecto_id: prospectoId,
+        vendedor_id: userId,
       };
 
       await axios.put(`${URL}/ventas-remarketing/${prospectoId}`, payload);
@@ -1188,6 +1286,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
     // Si ya tiene datos, ábrelo directamente.
     if (yaTieneDatos) {
       setClaseSeleccionada({ id: prospecto.id, num, prospecto });
+       setTipoSeleccionado(prospecto?.[tipoKey] || '');
       setModalClaseOpen(true);
       return;
     }
@@ -1210,28 +1309,21 @@ const VentasRemarketingGet = ({ currentUser }) => {
       allowOutsideClick: false,
     }).then((res) => {
       if (res.isConfirmed && res.value) {
-        // Crea un *nuevo* objeto prospecto (una copia)
-        const prospectoConTipo = {
+        const prospectoConTipoTemporal = {
           ...prospecto,
-          // Inserta el tipo seleccionado (res.value) en el campo correcto
           [`clase_prueba_${num}_tipo`]: res.value,
         };
 
-        setProspectos((prev) =>
-          prev.map((p) => (p.id === prospecto.id ? prospectoConTipo : p))
-        );
-
-        // Guarda este *nuevo* objeto prospecto en el estado
         setClaseSeleccionada({
           id: prospecto.id,
           num,
-          prospecto: prospectoConTipo,
+          prospecto: prospectoConTipoTemporal,
         });
+        setTipoSeleccionado(res.value);
         setModalClaseOpen(true);
       }
     });
   };
-
   const abrirModal = () => {
     setSelectedProspecto(null);
     setModalNew(true);
@@ -1617,6 +1709,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
       "fedekap@hotmail.com",
       "solciruiz098@gmail.com.ar",
       "lourdesbsoraire@gmail.com",
+      'rosario.nieva24@gmail.com'
     ].map((e) => e.toLowerCase())
   ); // 👈 Ajusta según tu BD
 
@@ -1655,6 +1748,18 @@ const VentasRemarketingGet = ({ currentUser }) => {
     return byId || byEmail;
   };
 
+  const verificarClientePruebaPorNombre = async (nombre) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/clientes-pilates/existe-prueba-por-nombre?nombre=${nombre}`
+      );
+      return response.data;
+    } catch (error) {
+      return { existe: false };
+    }
+  };
+
+
   const loadAllowedSellers = async () => {
     if (vendedoresAllowed.length) return vendedoresAllowed;
     const res = await fetch("http://localhost:8080/users");
@@ -1665,6 +1770,125 @@ const VentasRemarketingGet = ({ currentUser }) => {
     setVendedoresAllowed(list);
     return list;
   };
+
+    const insertarModificarClaseDePrueba = async (id, cambios) => {
+    try {
+      const fechaInicio = new Date(cambios.fecha);
+      // Clonar y sumar un día
+      const fechaFin = new Date(fechaInicio);
+      fechaFin.setDate(fechaFin.getDate() + 1);
+
+      // Formatear fechaFin a YYYY-MM-DD
+      const fechaFinStr = fechaFin.toISOString().split('T')[0];
+
+      const datosClasePrueba = {
+        id: cambios.idProspecto || null,
+        nombre: cambios.nombre,
+        telefono: cambios.contacto,
+        fecha_inicio: cambios.fecha,
+        fecha_fin: fechaFinStr,
+        estado:
+          cambios.tipo === 'Clase de prueba'
+            ? 'Clase de prueba'
+            : 'Renovacion programada'
+      };
+
+      const inscripcionData = {
+        dia: cambios.diaSeleccionado,
+        horario: cambios.horarioSeleccionado.hhmm,
+        fecha_inscripcion: cambios.fecha,
+        id_sede: sedeId
+      };
+
+      const horarioSeleccionadoProspecto = {
+        hhmm: cambios.horarioSeleccionado.hhmm,
+        grp: cambios.horarioSeleccionado.grp,
+        clase_num: cambios.numeroClase,
+        prospecto_id: cambios.idProspecto
+      };
+
+
+      if (!cambios.esModificacion) {
+        // Verificar si existe cliente en clase de prueba
+        const verificacion = await verificarClientePruebaPorNombre(
+          cambios.nombre
+        );
+
+        // Si existe, eliminar antes de insertar
+        if (verificacion.existe && verificacion.id) {
+          try {
+            await axios.delete(
+              `http://localhost:8080/clientes-pilates/con-inscripciones/${verificacion.id}`
+            );
+          } catch (error) {
+            throw new Error(
+              `No se pudo eliminar el cliente existente con id ${verificacion.id}: ${error.message}`
+            );
+          }
+        }
+        await insertCliente(datosClasePrueba, inscripcionData);
+        await axios.post(
+          `http://localhost:8080/ventas-remarketing-horarios`,
+          horarioSeleccionadoProspecto
+        );
+        traerHorariosDisponibles(sedeId);
+      } else {
+        await axios.put(
+          `http://localhost:8080/ventas-remarketing-horarios/modificar-por-remarketing`,
+          horarioSeleccionadoProspecto
+        );
+      }
+    } catch (error) {
+      console.error('Error al insertar/modificar clase de prueba:', error);
+    }
+  };
+
+  const manejarGuardadoClasePrueba = async (id, datos) => {
+  const { fecha, tipo, clase_prueba_1_obs, clase_prueba_2_obs, clase_prueba_3_obs } = datos;
+  const num = claseSeleccionada.num;
+
+
+  if (
+    datos.tipo === "Clase de prueba" || datos.tipo === "Visita programada"
+  ){
+    await insertarModificarClaseDePrueba(id, datos);
+  }
+
+  let observacion = clase_prueba_1_obs || clase_prueba_2_obs || clase_prueba_3_obs || null;
+
+  const updates = {
+    [`clase_prueba_${num}_fecha`]: fecha || null,
+    [`clase_prueba_${num}_tipo`]: tipo || null,
+    [`clase_prueba_${num}_obs`]:  observacion ? observacion.trim() : null,
+  };
+  const prospectoOriginal = { ...claseSeleccionada.prospecto };
+
+  setProspectos((prev) =>
+    prev.map((p) =>
+      p.id === claseSeleccionada.id ? { ...p, ...updates } : p
+    )
+  );
+
+  try {
+    await axios.put(
+      `${URL}/ventas-remarketing/${claseSeleccionada.id}`,
+      updates
+    );
+    setModalClaseOpen(false);
+  } catch (error) {
+    console.error("Error al guardar la clase:", error);
+    Swal.fire(
+      "Error",
+      "No se pudo guardar la información de la clase.",
+      "error"
+    );
+    setProspectos((prev) =>
+      prev.map((p) =>
+        p.id === claseSeleccionada.id ? { ...p, ...prospectoOriginal } : p
+      )
+    );
+  }
+};
 
   return (
     <>
@@ -1792,19 +2016,17 @@ const VentasRemarketingGet = ({ currentUser }) => {
               }}
             />
             <div className="flex justify-center gap-3 pb-10 flex-wrap">
-              <Link to="#">
-                <button
-                  onClick={abrirModal}
-                  className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
-                >
-                  Nuevo Registro
-                </button>
-              </Link>
+              <button
+                onClick={abrirModal}
+                className="bg-green-500 hover:bg-green-600 text-white py-2 px-5 rounded-lg font-semibold shadow transition-colors duration-100 focus:outline-none focus:ring-2 focus:ring-green-400"
+              >
+                Nuevo Registro
+              </button>
               <button
                 onClick={() => {
                   setShowStats(true);
                 }}
-                className="bg-[#fc4b08] hover:bg-orange-500 text-white py-2 px-4 rounded transition-colors duration-100 font-semibold"
+                className="bg-orange-500 hover:bg-orange-600 text-white py-2 px-5 rounded-lg font-semibold shadow transition-colors duration-100 focus:outline-none focus:ring-2 focus:ring-orange-400"
               >
                 Ver Estadísticas
               </button>
@@ -1819,17 +2041,30 @@ const VentasRemarketingGet = ({ currentUser }) => {
                 <span className="text-xl font-black">⚠️</span>
                 <span>Agendas de hoy:</span>
                 <span className="text-lg">
+                  {console.log('prospectosConAgendaHoy:', prospectosConAgendaHoy)}
+                  {console.log('agendaVentasCant:', agendaVentasCant)}
                   {prospectosConAgendaHoy.length + agendaVentasCant}
                 </span>
               </div>
               {canSeeComisionesBtn && (
                 <button
                   onClick={() => setOpenComi(true)}
-                  className="relative bg-emerald-400 text-zinc-900 border border-zinc-200 hover:bg-emerald-600 py-2 px-4 rounded-xl font-semibold transition"
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-5 rounded-lg font-semibold shadow transition-colors duration-100 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   title="Ver comisiones vigentes"
                 >
                   Comisiones vigentes
                 </button>
+              )}
+              {selectedSede && (
+                <div className="flex items-center">
+                  <ArrastradosModal
+                    alumnos={alumnosArrastrados.filter(
+                      (alumno) =>
+                        selectedSede.toLowerCase().trim() ===
+                        alumno.sede.toLowerCase().trim()
+                    )}
+                  />
+                </div>
               )}
             </div>
             {/* Botones de sedes con control de acceso */}
@@ -1914,7 +2149,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
               </h1>
             </div>
             {/* Modal de agendas automáticas */}
-            <AgendasVentas
+            <AgendasVentasRemarketing
               userId={userId}
               level={userLevel} // 👈 pasar el nivel
               open={showAgendasModal}
@@ -2166,24 +2401,6 @@ const VentasRemarketingGet = ({ currentUser }) => {
                               />
                             </svg>
                             Sede
-                          </div>
-                        </th>
-                        <th className="px-4 py-3 text-center font-semibold border-b-2 border-orange-500">
-                          <div className="flex items-center justify-center gap-2">
-                            <svg
-                              className="w-4 h-4 text-white"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            Contactado
                           </div>
                         </th>
                         <th className="px-4 py-3 text-center font-semibold border-b-2 border-orange-500">
@@ -2554,46 +2771,6 @@ const VentasRemarketingGet = ({ currentUser }) => {
                                     }`}
                                   ></div>
                                 </div>
-                              </div>
-                            </td>
-                            {/* 8. CONTACTADO */}
-                            <td
-                              className={`px-4 py-4 text-center border border-gray-200 align-middle ${bgClass}`}
-                            >
-                              <div className="flex justify-center items-center">
-                                {p.contactado ? (
-                                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-800 border-2 border-green-500 shadow-sm">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                    Contactado
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border-2 border-gray-300">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                      />
-                                    </svg>
-                                    Sin contactar
-                                  </span>
-                                )}
                               </div>
                             </td>
                             {/* 9. VISITAS (#1, #2, #3) */}
@@ -3147,7 +3324,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
       <Footer />
       {/* 🔧 MODALES FALTANTES */}
       {showAgendasModal && (
-        <AgendasVentas
+        <AgendasVentasRemarketing
           userId={userId}
           level={userLevel}
           open={showAgendasModal}
@@ -3160,57 +3337,19 @@ const VentasRemarketingGet = ({ currentUser }) => {
         />
       )}
       {modalClaseOpen && (
-        <ClasePruebaModal
+        <ClasePruebaModalRemarketing
           isOpen={modalClaseOpen}
           onClose={() => {
             setModalClaseOpen(false);
             setClaseSeleccionada(null);
+            setTipoSeleccionado(null);
           }}
           prospectoId={claseSeleccionada?.id}
           numeroClase={claseSeleccionada?.num}
           prospecto={claseSeleccionada?.prospecto}
-          onSave={async (datos) => {
-            // Actualizar prospecto con nueva info de clase
-            const { fecha, tipo, observacion } = datos;
-            const num = claseSeleccionada.num;
-
-            // Construir el objeto
-            const updates = {
-              [`clase_prueba_${num}_fecha`]: fecha || null,
-              [`clase_prueba_${num}_tipo`]: tipo || null,
-              [`clase_prueba_${num}_obs`]: observacion || null,
-            };
-
-            const prospectoOriginal = { ...claseSeleccionada.prospecto };
-
-            setProspectos((prev) =>
-              prev.map((p) =>
-                p.id === claseSeleccionada.id ? { ...p, ...updates } : p
-              )
-            );
-
-            // Guardamos los cambios en el backend
-            try {
-              await axios.put(
-                `${URL}/ventas-remarketing/${claseSeleccionada.id}`,
-                updates
-              );
-              setModalClaseOpen(false);
-            } catch (error) {
-              console.error("Error al guardar la clase:", error);
-              Swal.fire(
-                "Error",
-                "No se pudo guardar la información de la clase.",
-                "error"
-              );
-              // Revertir en caso de error
-              setProspectos((prev) =>
-                prev.map((p) =>
-                  p.id === claseSeleccionada.id ? prospectoOriginal : p
-                )
-              );
-            }
-          }}
+          onSave={manejarGuardadoClasePrueba}
+          horariosDisponiblesPilates={horariosDisponiblesPilates}
+          tipoSeleccionado={tipoSeleccionado}
         />
       )}
       {modalNew && (
@@ -3246,10 +3385,11 @@ const VentasRemarketingGet = ({ currentUser }) => {
           userLevel={userLevel}
           userId={userId}
           onComisionStateChange={handleComisionStateChange} // <- NUEVO
+          origen="remarketing"
         />
       )}
       {openComi && (
-        <ComisionesVigentesModal
+        <ComisionesVigentesRemarketingModal
           open={openComi}
           onClose={() => setOpenComi(false)}
           mes={mes}

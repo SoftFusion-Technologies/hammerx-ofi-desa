@@ -14,6 +14,7 @@ import ModalTareasDiarias from './ModalTareasDiarias';
 import { motion } from 'framer-motion';
 import CardRecaptacion from './Components/CardRecaptacion';
 import BadgeAgendaVentas from './MetodsGet/Details/BadgeAgendaVentas';
+import BadgeAgendaVentasRemarketing from './MetodsGet/Details/BadgeAgendaVentasRemarketing';
 // Benjamin Orellana 22-12-2025 se adiciona badge de agenda convenios
 import BadgeAgendaConvenios from './MetodsGet/Details/BadgeAgendaConvenios';
 import ConveniosAccionesInboxModal from './MetodsGet/Details/ConveniosAccionesInboxModal';
@@ -634,7 +635,7 @@ const AdminPage = () => {
                           icon={ShoppingBag}
                           delay={0.24}
                           badgeSlot={
-                            <BadgeAgendaVentas
+                            <BadgeAgendaVentasRemarketing
                               userId={userId}
                               userLevel={userLevel}
                               size="sm"
