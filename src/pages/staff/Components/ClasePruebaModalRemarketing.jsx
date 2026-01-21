@@ -50,8 +50,6 @@ const ClasePruebaModalRemarketing = ({
 
     useEffect(() => {
     if (prospecto?.id && numeroClase) {
-            console.log(prospecto.id)
-      console.log(numeroClase)
       axios
         .get(`http://localhost:8080/ventas-remarketing-horarios/${prospecto.id}`)
         .then((res) => {

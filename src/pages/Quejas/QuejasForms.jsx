@@ -1,22 +1,24 @@
 /*
  * Programador: Manrique Sergio Gustavo
  * Fecha Cración: 24 / 05 / 2025
- * Versión: 1.0
- * Última modificacion: -
- * Descripción: Componente formulario para registro de quejas y comentarios con validación de campos y manejo de estados
+ * Versión: 1.1
+ * Última modificacion: 19 / 01 / 2026
+ * Descripción: Componente formulario para registro de quejas y comentarios con validación de campos, manejo de estados y carga de imágenes.
  *
  *
- *  Tema: Portal de Atención - Formulario de Quejas
- *  Capa: Frontend
+ * Tema: Portal de Atención - Formulario de Quejas
+ * Capa: Frontend
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; 
 import {
   FaUser,
   FaPhone,
   FaCommentDots,
   FaCheckCircle,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaCamera, 
+  FaTrashAlt 
 } from 'react-icons/fa';
 
 // Benjamin Orellana - 25-05-2025, se agrega para saber de donde viene la URL
@@ -30,13 +32,53 @@ const QuejasForms = () => {
     queja: ''
   });
 
-  // Benjamin Orellana - 25-05-2025 INICIO
-
-  // Benjamin Orellana - 25-05-2025 FINAL
-
+  const [lista_imagenes, setListaImagenes] = useState([]); 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
+
+ //Liberar URLs de imágenes al desmontar el componente
+  useEffect(() => {
+    return () => {
+      lista_imagenes.forEach(img => URL.revokeObjectURL(img.url));
+    };
+  }, [lista_imagenes]);
+
+  // Función para manejar selección de imágenes, validar cantidad y peso
+  const manejarCambioImagen = (e) => {
+    const archivos = Array.from(e.target.files);
+    const limite_peso = 2 * 1024 * 1024; // 2MB
+    let error_actual = "";
+
+    if (lista_imagenes.length + archivos.length > 3) {
+      error_actual = "Máximo 3 imágenes permitidas.";
+    }
+
+    const validos = archivos.filter(f => {
+      if (f.size > limite_peso) {
+        error_actual = "Las fotos deben pesar menos de 2MB.";
+        return false;
+      }
+      return true;
+    }).map(f => ({
+      archivo: f,
+      url: URL.createObjectURL(f)
+    }));
+
+    if (error_actual) {
+      setErrors(prev => ({ ...prev, imagenes: error_actual }));
+    } else {
+      setErrors(prev => ({ ...prev, imagenes: "" }));
+      setListaImagenes(prev => [...prev, ...validos]);
+    }
+    e.target.value = null; // Reset input
+  };
+
+  //Función para eliminar una imagen de la lista de previsualización
+  const quitarImagen = (indice) => {
+    URL.revokeObjectURL(lista_imagenes[indice].url);
+    setListaImagenes(prev => prev.filter((_, i) => i !== indice));
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -60,7 +102,6 @@ const QuejasForms = () => {
     }
 
     setErrors(newErrors);
-    console.log(Object.keys(newErrors).length === 0);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -106,26 +147,39 @@ const QuejasForms = () => {
         cargado_por = "QR-PÁGINA";
       }
 
-      const payload = {
-        fecha: new Date().toISOString(),
-        cargado_por,
-        nombre: formData.nombre.trim(),
-        tipo_usuario: 'cliente',
-        contacto: formData.telefono.trim(),
-        motivo: formData.queja.trim(),
-        resuelto: 0,
-        sede
-      };
+      //Usamos FormData en lugar de JSON para enviar archivos + texto
+      const data_final = new FormData();
+      data_final.append('fecha', new Date().toISOString());
+      data_final.append('cargado_por', cargado_por);
+      data_final.append('nombre', formData.nombre.trim());
+      data_final.append('tipo_usuario', 'cliente');
+      data_final.append('contacto', formData.telefono.trim());
+      data_final.append('motivo', formData.queja.trim());
+      data_final.append('resuelto', 0);
+      data_final.append('sede', sede);
+      data_final.append('tipo', 'QR-PAGINA'); // Campo extra para la tabla de imágenes
 
-      console.log('Payload a enviar:', payload);
+      lista_imagenes.forEach(img => {
+        data_final.append('imagenes', img.archivo);
+      });
 
-      await axios.post('http://localhost:8080/quejas/', payload);
+
+      await axios.post('http://localhost:8080/quejas/', data_final, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
 
       setFormData({ nombre: '', telefono: '', queja: '' });
+      // Limpiamos las imágenes tras el envío exitoso
+      lista_imagenes.forEach(img => URL.revokeObjectURL(img.url));
+      setListaImagenes([]);
+      
       setSubmitStatus('success');
       setTimeout(() => setSubmitStatus(null), 5000);
     } catch (error) {
       console.error('Error al enviar:', error);
+      const errorMsg = error.response?.data?.mensajeError;
+      if (errorMsg) console.log("Detalle del error:", errorMsg);
+      
       setSubmitStatus('error');
       setTimeout(() => setSubmitStatus(null), 5000);
     } finally {
@@ -235,6 +289,32 @@ const QuejasForms = () => {
                     value={field.value}
                     onChange={handleInputChange}
                   />
+                )}
+
+                {field.name === 'telefono' && (
+                  <div className="pt-2">
+                    <label className="flex items-center gap-2 text-lg font-messina text-gray-700 mb-2">
+                      <FaCamera className="text-orange-600" /> Adjuntar fotos (Máx. 3)
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {lista_imagenes.length < 3 && (
+                        <label className="h-24 border-2 border-dashed border-orange-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-orange-50 transition-all">
+                          <FaCamera className="text-orange-400 text-xl" />
+                          <span className="text-xs text-orange-600 font-messina">Subir</span>
+                          <input type="file" className="hidden" accept="image/*" multiple onChange={manejarCambioImagen} />
+                        </label>
+                      )}
+                      {lista_imagenes.map((img, i) => (
+                        <div key={i} className="relative h-24 group">
+                          <img src={img.url} className="w-full h-full object-cover rounded-lg border" alt="preview" />
+                          <button type="button" onClick={() => quitarImagen(i)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:scale-110 transition-all">
+                            <FaTrashAlt size={10} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    {errors.imagenes && <p className="text-red-500 text-sm mt-1">{errors.imagenes}</p>}
+                  </div>
                 )}
 
                 {errors[field.name] && (

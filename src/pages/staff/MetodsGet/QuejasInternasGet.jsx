@@ -38,6 +38,9 @@ import Footer from '../../../components/footer/Footer';
 import FormAltaQueja from '../../../components/Forms/FormAltaQueja';
 import QuejasDetails from './QuejasInternasGetId';
 import '../../../styles/staff/background.css';
+import { MdRemoveRedEye } from "react-icons/md";
+import { IoQrCodeSharp } from "react-icons/io5";
+import { FaUserFriends } from "react-icons/fa";
 
 // ===================== Helpers =====================
 const toCanonical = (str = '') =>
@@ -87,6 +90,7 @@ const QuejasInternasGet = () => {
   // Controles UI
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('todos'); // todos | resueltas | pendientes
+  const [origenFilter, setOrigenFilter] = useState('todos'); // todos | qr | empleados
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [soloPropias, setSoloPropias] = useState(false);
@@ -101,7 +105,6 @@ const QuejasInternasGet = () => {
   const showSkeleton = loading && quejas?.length === 0;
 
   const getQuejaEndpoint = (tipoUsuario) => {
-    /*     console.log("El tipo de usuario es: ", tipoUsuario); */
     return (tipoUsuario || '').toLowerCase() === 'cliente pilates'
       ? `${API_BASE}/quejas-pilates`
       : `${API_BASE}/quejas`;
@@ -150,24 +153,29 @@ const QuejasInternasGet = () => {
     }
   };
 
-  // ===================== Obtener detalle si viene :id =====================
+
+  const handleVerDetalle = async (quejaId) => {
+    try {
+      // Agregamos { params: { userLevel, userName } } para que el backend no devuelva 400
+      const { data } = await axios.get(`${URL}${quejaId}`, {
+        params: { userLevel, userName }
+      });
+      setSelectedQueja(data); 
+      setModalUserDetails(true);
+    } catch (error) {
+      console.error("Error cargando detalles:", error);
+      const msg = error.response?.data?.mensajeError || "No se pudo cargar el detalle";
+      toast(msg, "error");
+    }
+  };
+
+  // ===================== Obtener detalle si viene :id por URL =====================
   useEffect(() => {
-    const fetchQuejaDetails = async () => {
-      try {
-        const qs = new URLSearchParams({ userLevel, userName }).toString();
-        const response = await fetch(`${URL}${id}?${qs}`);
-        const data = await response.json();
-        if (data) {
-          setSelectedQueja(data);
-          setModalUserDetails(true);
-        }
-      } catch (e) {
-        console.error('Error al obtener los detalles de la queja:', e);
-      }
-    };
-    if (id) fetchQuejaDetails();
+    if (id && userName) { // Esperamos a tener userName para hacer la petición
+        handleVerDetalle(id);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, userName]);
 
   // ===================== Acciones =====================
   const commonHeaders = {
@@ -335,6 +343,13 @@ const QuejasInternasGet = () => {
           : Number(d.resuelto) !== 1
       );
     }
+    // origen (QR vs empleados)
+    if (origenFilter !== 'todos') {
+      data = data.filter((d) => {
+        const esQR = (d.cargado_por || '').toUpperCase().startsWith('QR-');
+        return origenFilter === 'qr' ? esQR : !esQR;
+      });
+    }
     // rango fechas (por campo fecha)
     if (fromDate) {
       const from = new Date(fromDate);
@@ -351,6 +366,7 @@ const QuejasInternasGet = () => {
     quejas,
     search,
     estadoFilter,
+    origenFilter,
     fromDate,
     toDate,
     soloPropias,
@@ -369,7 +385,7 @@ const QuejasInternasGet = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, estadoFilter, fromDate, toDate, itemsPerPage, soloPropias]);
+  }, [search, estadoFilter, origenFilter, fromDate, toDate, itemsPerPage, soloPropias]);
 
   const lastIndex = currentPage * itemsPerPage;
   const firstIndex = lastIndex - itemsPerPage;
@@ -460,8 +476,8 @@ const QuejasInternasGet = () => {
             </div>
 
             {/* Filtros */}
-            <div className="grid grid-cols-1 gap-3 p-6 md:grid-cols-12">
-              <div className="md:col-span-5">
+            <div className="grid grid-cols-1 gap-3 p-6 lg:grid-cols-12">
+              <div className="lg:col-span-4">
                 <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2">
                   <FaSearch className="shrink-0" />
                   <input
@@ -483,7 +499,7 @@ const QuejasInternasGet = () => {
                 </div>
               </div>
 
-              <div className="md:col-span-3">
+              <div className="lg:col-span-2">
                 <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2">
                   <select
                     value={estadoFilter}
@@ -497,7 +513,22 @@ const QuejasInternasGet = () => {
                 </div>
               </div>
 
-              <div className="md:col-span-2">
+              <div className="lg:col-span-2">
+                <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2">
+                  <select
+                    value={origenFilter}
+                    onChange={(e) => setOrigenFilter(e.target.value)}
+                    className="w-full bg-transparent text-sm outline-none"
+                    title="Filtrar por quién cargó la queja"
+                  >
+                    <option value="todos">Todas</option>
+                    <option value="qr"><IoQrCodeSharp className="" /> Cargadas por QR</option>
+                    <option value="empleados"><FaUserFriends className="" /> Cargadas por empleados</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="lg:col-span-2">
                 <input
                   type="date"
                   value={fromDate}
@@ -505,7 +536,7 @@ const QuejasInternasGet = () => {
                   className="w-full rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none"
                 />
               </div>
-              <div className="md:col-span-2">
+              <div className="lg:col-span-2">
                 <input
                   type="date"
                   value={toDate}
@@ -586,6 +617,7 @@ const QuejasInternasGet = () => {
                         <th className="px-3 py-3 text-left">Tipo</th>
                         <th className="px-3 py-3 text-left">Contacto</th>
                         <th className="px-3 py-3 text-left">Motivo</th>
+                        <th className="px-3 py-3 text-left">Imágenes</th>
                         <th className="px-3 py-3 text-left">Sede</th>
                         <th className="px-3 py-3 text-left">Estado</th>
                         <th className="px-3 py-3 text-left">Detalle</th>
@@ -600,23 +632,11 @@ const QuejasInternasGet = () => {
                           (queja.cargado_por || '').toLowerCase() ===
                             (userName || '').toLowerCase();
                         return (
-                          <tr key={i} className="hover:bg-orange-500 ">
-                            <td
-                              className="px-3 py-3 font-medium text-zinc-800 cursor-pointer"
-                              onClick={() => {
-                                setSelectedQueja(queja);
-                                setModalUserDetails(true);
-                              }}
-                            >
+                          <tr key={i} className="hover:bg-orange-50 transition-colors">
+                            <td className="px-3 py-3 font-medium text-zinc-800">
                               {queja.id}
                             </td>
-                            <td
-                              className="px-3 py-3 text-zinc-700 cursor-pointer"
-                              onClick={() => {
-                                setSelectedQueja(queja);
-                                setModalUserDetails(true);
-                              }}
-                            >
+                            <td className="px-3 py-3 text-zinc-700">
                               {formatDateTimeAR(queja.fecha)}
                             </td>
                             <td className="px-3 py-3 text-zinc-700">
@@ -660,7 +680,17 @@ const QuejasInternasGet = () => {
                                 {queja.motivo}
                               </div>
                             </td>
-
+                            <td className="px-3 py-3">
+                              {queja.imagenes ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm">
+                                  Fotos
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-600">
+                                  Sin fotos
+                                </span>
+                              )}
+                            </td>
                             <td className="px-3 py-3 text-zinc-700 uppercase">
                               {sede2Barrio[queja?.sede] ?? queja?.sede ?? '-'}
                             </td>
@@ -694,75 +724,88 @@ const QuejasInternasGet = () => {
                               )}
                             </td>
                             <td className="px-3 py-3">
-                              <div className="flex flex-wrap gap-2">
-                                {puedeEliminar && (
+                              <div className="flex flex-col gap-2">
+                                {/* Fila 1: Ver detalle + Editar */}
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleVerDetalle(queja.id)}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600"
+                                    title="Ver detalle"
+                                  >
+                                    <MdRemoveRedEye /> Ver
+                                  </button>
                                   <button
                                     onClick={() =>
-                                      handleEliminarQueja(
-                                        queja.id,
-                                        queja.tipo_usuario
-                                      )
+                                      handleEditarQueja(queja, queja.tipo_usuario)
                                     }
-                                    className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600"
-                                    title="Eliminar queja"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600"
+                                    title="Editar queja"
                                   >
-                                    <FaTrash /> Eliminar
+                                    <FaEdit /> Editar
                                   </button>
-                                )}
-                                <button
-                                  onClick={() =>
-                                    handleEditarQueja(queja, queja.tipo_usuario)
-                                  }
-                                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600"
-                                  title="Editar queja"
-                                >
-                                  <FaEdit /> Editar
-                                </button>
-                                {Number(queja.resuelto) !== 1 ? (
-                                  <button
-                                    disabled={!puedeResolver}
-                                    onClick={() =>
-                                      handleResolverQueja(
-                                        queja.id,
-                                        queja.tipo_usuario
-                                      )
-                                    }
-                                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
-                                      puedeResolver
-                                        ? 'bg-emerald-600 hover:bg-emerald-700'
-                                        : 'bg-emerald-300 cursor-not-allowed'
-                                    }`}
-                                    title={
-                                      puedeResolver
-                                        ? 'Marcar como resuelta'
-                                        : 'No tenés permisos para resolver esta queja'
-                                    }
-                                  >
-                                    <FaCheck /> Resolver
-                                  </button>
-                                ) : (
-                                  <button
-                                    disabled={!puedeResolver}
-                                    onClick={() =>
-                                      handleNoResueltoQueja(
-                                        queja.id,
-                                        queja.tipo_usuario
-                                      )
-                                    }
-                                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
-                                      puedeResolver
-                                        ? 'bg-zinc-700 hover:bg-zinc-800'
-                                        : 'bg-zinc-300 cursor-not-allowed'
-                                    }`}
-                                    title={
-                                      puedeResolver
-                                        ? 'Marcar como no resuelta'
-                                        : 'No tenés permisos'
-                                    }
-                                  >
-                                    Reabrir
-                                  </button>
-                                )}
+                                </div>
+                                {/* Fila 2: Resolver/Reabrir + Eliminar (condicional) */}
+                                <div className="flex gap-2">
+                                  {Number(queja.resuelto) !== 1 ? (
+                                    <button
+                                      disabled={!puedeResolver}
+                                      onClick={() =>
+                                        handleResolverQueja(
+                                          queja.id,
+                                          queja.tipo_usuario
+                                        )
+                                      }
+                                      className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
+                                        puedeResolver
+                                          ? 'bg-emerald-600 hover:bg-emerald-700'
+                                          : 'bg-emerald-300 cursor-not-allowed'
+                                      }`}
+                                      title={
+                                        puedeResolver
+                                          ? 'Marcar como resuelta'
+                                          : 'No tenés permisos para resolver esta queja'
+                                      }
+                                    >
+                                      <FaCheck /> Resolver
+                                    </button>
+                                  ) : (
+                                    <button
+                                      disabled={!puedeResolver}
+                                      onClick={() =>
+                                        handleNoResueltoQueja(
+                                          queja.id,
+                                          queja.tipo_usuario
+                                        )
+                                      }
+                                      className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
+                                        puedeResolver
+                                          ? 'bg-zinc-700 hover:bg-zinc-800'
+                                          : 'bg-zinc-300 cursor-not-allowed'
+                                      }`}
+                                      title={
+                                        puedeResolver
+                                          ? 'Marcar como no resuelta'
+                                          : 'No tenés permisos'
+                                      }
+                                    >
+                                      Reabrir
+                                    </button>
+                                  )}
+                                  {puedeEliminar && (
+                                    <button
+                                      onClick={() =>
+                                        handleEliminarQueja(
+                                          queja.id,
+                                          queja.tipo_usuario
+                                        )
+                                      }
+                                      className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600"
+                                      title="Eliminar queja"
+                                    >
+                                      <FaTrash /> Eliminar
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </td>
                           </tr>

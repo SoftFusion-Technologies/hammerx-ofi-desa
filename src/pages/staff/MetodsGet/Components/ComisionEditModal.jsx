@@ -30,7 +30,7 @@ function shapeFromRow(r) {
   };
 }
 
-export default function ComisionEditModal({ open, row, onClose, onSaved }) {
+export default function ComisionEditModal({ open, row, onClose, onSaved, origen }) {
   const [form, setForm] = useState(shapeFromRow(row));
   const [saving, setSaving] = useState(false);
   const [vendedores, setVendedores] = useState([]);
@@ -149,8 +149,10 @@ export default function ComisionEditModal({ open, row, onClose, onSaved }) {
     if (!row?.id) return;
     try {
       setSaving(true);
+      const endpoint = origen === "ventas-prospectos" ? "ventas-comisiones" : "ventas-comisiones-remarketing";
+
       const res = await fetch(
-        `http://localhost:8080/ventas-comisiones/${row.id}`,
+        `http://localhost:8080/${endpoint}/${row.id}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

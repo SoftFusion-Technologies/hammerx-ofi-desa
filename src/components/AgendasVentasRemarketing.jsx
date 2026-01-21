@@ -60,7 +60,6 @@ export default function AgendasVentasRemarketing({
       const r = await fetch(`${URL}ventas-remarketing/agenda/hoy?${qs.toString()}`);
       const d = await r.json();
       const arr = Array.isArray(d) ? d : [];
-      console.log(arr)
       setVentas(arr);
 
       // Si tu badge del pill muestra solo PENDIENTES, descomentá estas líneas:

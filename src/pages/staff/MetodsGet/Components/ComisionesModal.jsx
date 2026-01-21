@@ -230,7 +230,7 @@ export default function ComisionesModal({
           title: 'Error',
           text: 'No se pudo cargar la lista.'
         });
-        console.log(e);
+        /* console.log(e); */
       } finally {
         if (!opts.silent) setLoading(false);
       }
@@ -737,6 +737,7 @@ export default function ComisionesModal({
       <ComisionEditModal
         key="edit-modal"
         open={editOpen}
+        origen={origen}
         row={editRow}
         onClose={() => {
           setEditOpen(false);

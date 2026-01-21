@@ -57,11 +57,9 @@ export default function AgendasVentas({
         ...(level !== 'admin' ? { usuario_id: String(userId) } : {}),
         with_prospect: '1'
       });
-      console.log(`${URL}ventas/agenda/hoy?${qs.toString()}`)
       const r = await fetch(`${URL}ventas/agenda/hoy?${qs.toString()}`);
       const d = await r.json();
       const arr = Array.isArray(d) ? d : [];
-      console.log(arr)
       setVentas(arr);
 
       // Si tu badge del pill muestra solo PENDIENTES, descomentá estas líneas:

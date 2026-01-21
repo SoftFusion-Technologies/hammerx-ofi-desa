@@ -28,7 +28,7 @@ import AgendasVentasRemarketing from "../../../components/AgendasVentasRemarketi
 import { useLocation } from "react-router-dom";
 import FiltroMesAnio from "../Components/FiltroMesAnio";
 import ObservacionField from "../Components/ObservacionField";
-import AgendaDeHoyModal from "../Components/AgendaDeHoyModal";
+import AgendaDeHoyModalRemarketing from "../Components/AgendaDeHoyModalRemarketing";
 import Swal from "sweetalert2";
 import ComisionesModal from "./Components/ComisionesModal";
 import VendedorComisionesPanel from "./Components/VendedorComisionesPanel";
@@ -866,7 +866,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
         });
 
         const resVentas = await fetch(
-          `${URL}/ventas/agenda/hoy?${qsVentas.toString()}`
+          `${URL}/ventas-remarketing/agenda/hoy?${qsVentas.toString()}`
         );
 
         if (!resVentas.ok) {
@@ -2041,8 +2041,6 @@ const VentasRemarketingGet = ({ currentUser }) => {
                 <span className="text-xl font-black">⚠️</span>
                 <span>Agendas de hoy:</span>
                 <span className="text-lg">
-                  {console.log('prospectosConAgendaHoy:', prospectosConAgendaHoy)}
-                  {console.log('agendaVentasCant:', agendaVentasCant)}
                   {prospectosConAgendaHoy.length + agendaVentasCant}
                 </span>
               </div>
@@ -3379,6 +3377,12 @@ const VentasRemarketingGet = ({ currentUser }) => {
           tipo="remarketing"
         />
       )}
+        <AgendaDeHoyModalRemarketing
+          open={openAgenda}
+          onClose={() => setOpenAgenda(false)}
+          userId={userId}
+          level={userLevel}
+        />
       {showComisiones && (
         <ComisionesModal
            onClose={() => setShowComisiones(false)}
