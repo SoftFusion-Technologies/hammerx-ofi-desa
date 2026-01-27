@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { theme } from '../../images';
 import Menu from './Menu';
-import Marcas from './Marcas';
 import { Link, useLocation } from 'react-router-dom'; // Importar useLocation
 import DropdownMenu from './DropdownMenu';
 import '../../styles/header/animacionlinks.css';
