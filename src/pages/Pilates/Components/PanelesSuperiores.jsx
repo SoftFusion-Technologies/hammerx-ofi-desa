@@ -118,12 +118,19 @@ const PanelesSuperiores = ({
   };
 
   return (
-    <motion.div  initial={{ opacity: 0, y: -20 }}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }} 
-      className="w-full">
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="w-full"
+    >
       {/* --- SECCIÓN: BARRA DE CONTROL Y FILTROS --- */}
-      <div className="flex flex-col xl:flex-row items-center justify-between gap-4 mb-6 w-full bg-zinc-900 bg-opacity-40 p-4 rounded-2xl shadow-sm border border-gray-400">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.3 }}
+        className="flex flex-col xl:flex-row items-center justify-between gap-4 mb-6 w-full bg-zinc-900 bg-opacity-40 p-4 rounded-2xl shadow-sm border border-gray-400"
+      >
         {/* GRUPO DE BOTONES FILTROS */}
         <div className="flex flex-wrap items-center justify-center sm:justify-start p-1.5 rounded-xl gap-2 w-full xl:w-auto">
           {[
@@ -150,10 +157,12 @@ const PanelesSuperiores = ({
             const isDisabled = isActive && visibleCount <= 1;
 
             return (
-              <button
+              <motion.button
                 key={btn.key}
                 onClick={() => !isDisabled && onToggle(btn.key)}
                 disabled={isDisabled}
+                whileHover={!isDisabled ? { scale: 1.05 } : {}}
+                whileTap={!isDisabled ? { scale: 0.95 } : {}}
                 className={`
                   flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
                   ${
@@ -169,14 +178,16 @@ const PanelesSuperiores = ({
                 `}
               >
                 {btn.name}
-              </button>
+              </motion.button>
             );
           })}
         </div>
 
         {/* BOTÓN PARA EXPANDIR/CONTRAER PANELES */}
-        <button
+        <motion.button
           onClick={handleExpandAllToggle}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           className="
             group w-full xl:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
             bg-white border-2 border-slate-100 text-slate-500 font-bold
@@ -190,14 +201,20 @@ const PanelesSuperiores = ({
             <FaExpandAlt className="text-slate-400 group-hover:text-slate-600 transition-colors" />
           )}
           <span>{allExpanded ? 'Contraer vista' : 'Expandir vista'}</span>
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* --- SECCIÓN: GRILLA CONTENEDORA DE PANELES --- */}
       <div className={gridClasses}>
         {/* --- PANEL 1: TURNOS LIBRES --- */}
         {visiblePanels.freeSlots && (
-          <div className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-blue-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+            whileHover={{ y: -4 }}
+            className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-blue-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl"
+          >
             {/* Header Turnos Libres */}
             <div className="bg-blue-50/50 p-4 border-b border-blue-100 flex items-center justify-between">
               <div className="flex items-center gap-2 text-blue-700">
@@ -265,9 +282,13 @@ const PanelesSuperiores = ({
                       Lun - Mié - Vie
                     </p>
                     <ul className="space-y-1">
-                      {freeSlotsFiltrados.lmv.map((slot) => (
-                        <li
+                      {freeSlotsFiltrados.lmv.map((slot, idx) => (
+                        <motion.li
                           key={`lmv-${slot.hour}`}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.03, duration: 0.2 }}
+                          whileHover={{ scale: 1.02, x: 4 }}
                           className="flex flex-wrap gap-1 justify-between items-center p-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors group"
                         >
                           <span className="text-gray-700 font-mono font-medium">
@@ -276,7 +297,7 @@ const PanelesSuperiores = ({
                           <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-md group-hover:bg-blue-200 transition-colors">
                             {slot.count} cupos
                           </span>
-                        </li>
+                        </motion.li>
                       ))}
                     </ul>
                     {freeSlotsFiltrados.lmv.length === 0 && (
@@ -292,9 +313,13 @@ const PanelesSuperiores = ({
                       Mar - Jue
                     </p>
                     <ul className="space-y-1">
-                      {freeSlotsFiltrados.mj.map((slot) => (
-                        <li
+                      {freeSlotsFiltrados.mj.map((slot, idx) => (
+                        <motion.li
                           key={`mj-${slot.hour}`}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.03, duration: 0.2 }}
+                          whileHover={{ scale: 1.02, x: 4 }}
                           className="flex flex-wrap gap-1 justify-between items-center p-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors group"
                         >
                           <span className="text-gray-700 font-mono font-medium">
@@ -303,7 +328,7 @@ const PanelesSuperiores = ({
                           <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-md group-hover:bg-blue-200 transition-colors">
                             {slot.count} cupos
                           </span>
-                        </li>
+                        </motion.li>
                       ))}
                     </ul>
                     {freeSlotsFiltrados.mj.length === 0 && (
@@ -320,12 +345,18 @@ const PanelesSuperiores = ({
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* --- PANEL 2: ALUMNOS VENCIDOS --- */}
         {visiblePanels.expiredStudents && (
-          <div className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-rose-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.25, duration: 0.3 }}
+            whileHover={{ y: -4 }}
+            className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-rose-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl"
+          >
             <div className="bg-rose-50/50 p-4 border-b border-rose-100 flex items-center justify-between">
               <div className="flex items-center gap-2 text-rose-700">
                 {panelStyles.expiredStudents.icon}
@@ -344,8 +375,12 @@ const PanelesSuperiores = ({
               {expiredStudents.length > 0 ? (
                 <ul className="space-y-2">
                   {expiredStudents.map((student, idx) => (
-                    <li
+                    <motion.li
                       key={`${student.name}-${idx}`}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.04, duration: 0.2 }}
+                      whileHover={{ scale: 1.02, x: 4 }}
                       className="p-3 rounded-xl border border-rose-100 bg-rose-50/30 hover:bg-rose-50 transition-colors"
                     >
                       <div className="flex justify-between items-start mb-1">
@@ -360,7 +395,7 @@ const PanelesSuperiores = ({
                         <span>{student.type}</span>
                         <span className="font-mono">{student.date}</span>
                       </div>
-                    </li>
+                    </motion.li>
                   ))}
                 </ul>
               ) : (
@@ -370,12 +405,18 @@ const PanelesSuperiores = ({
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* --- PANEL 3: ALUMNOS AUSENTES --- */}
         {visiblePanels.absentStudents && (
-          <div className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-amber-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+            whileHover={{ y: -4 }}
+            className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-amber-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl"
+          >
             <div className="bg-amber-50/50 p-4 border-b border-amber-100 flex items-center justify-between">
               <div className="flex items-center gap-2 text-amber-700">
                 {panelStyles.absentStudents.icon}
@@ -396,7 +437,7 @@ const PanelesSuperiores = ({
             >
               {alumnosAusentes.length > 0 ? (
                 <ul className="space-y-1.5">
-                  {alumnosAusentes.map((alumno) => {
+                  {alumnosAusentes.map((alumno, idx) => {
                     const colorAlerta = alumno.color_alerta || 'VERDE';
                     const sinContacto = (alumno.total_contactos ?? 0) === 0;
                     const superaDosFaltas = alumno.supera_dos_faltas;
@@ -410,8 +451,12 @@ const PanelesSuperiores = ({
                         : sinContacto || superaDosFaltas || contactoVencido;
 
                     return (
-                      <li
+                      <motion.li
                         key={alumno.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.03, duration: 0.2 }}
+                        whileHover={{ scale: 1.02, x: 4 }}
                         className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${
                           esAmarillo
                             ? "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-50"
@@ -441,7 +486,7 @@ const PanelesSuperiores = ({
                         >
                           {alumno.cantidad}
                         </span>
-                      </li>
+                      </motion.li>
                     );
                   })}
                 </ul>
@@ -452,12 +497,18 @@ const PanelesSuperiores = ({
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* --- PANEL 4: COINCIDENCIAS LISTA ESPERA --- */}
         {visiblePanels.waitingListMatches && (
-          <div className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-emerald-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.35, duration: 0.3 }}
+            whileHover={{ y: -4 }}
+            className="bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)] border border-emerald-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl"
+          >
             <div className="bg-emerald-50/50 p-4 border-b border-emerald-100 flex items-center justify-between">
               <div className="flex items-center gap-2 text-emerald-700">
                 {panelStyles.waitingListMatches.icon}
@@ -477,7 +528,7 @@ const PanelesSuperiores = ({
               {/* Usa el array filtrado para no mostrar coincidencias en horarios ocultos */}
               {waitingListMatchesFiltrados.length > 0 ? (
                 <ul className="space-y-3">
-                  {waitingListMatchesFiltrados.map((person) => {
+                  {waitingListMatchesFiltrados.map((person, idx) => {
                     // Lógica para detectar si TODOS los horarios que quiere el alumno están deshabilitados
                     const todosDeshabilitados =
                       horariosDeshabilitados &&
@@ -490,8 +541,12 @@ const PanelesSuperiores = ({
                       person.contacto_cliente &&
                       person.contacto_cliente.estado_contacto === 'Pendiente';
                     return (
-                      <li
+                      <motion.li
                         key={person.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05, duration: 0.2 }}
+                        whileHover={{ scale: 1.02, y: -2 }}
                         className={`p-3 rounded-xl border transition-all hover:shadow-sm
                           ${
                             contactoPendiente
@@ -544,7 +599,7 @@ const PanelesSuperiores = ({
                             {person.hours.join(', ')}
                           </p>
                         </div>
-                      </li>
+                      </motion.li>
                     );
                   })}
                 </ul>
@@ -554,7 +609,7 @@ const PanelesSuperiores = ({
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </motion.div>

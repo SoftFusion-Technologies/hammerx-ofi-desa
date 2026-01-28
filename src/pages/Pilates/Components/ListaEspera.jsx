@@ -132,30 +132,53 @@ const ListaEspera = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="bg-white p-6 rounded-lg shadow-md"
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="bg-gradient-to-br from-white to-purple-50 p-8 rounded-2xl shadow-2xl border border-purple-100"
     >
-      <div className="flex justify-end mb-4">
-        <button
+      {/* Header con botón */}
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1, duration: 0.2 }}
+        className="flex justify-between items-center mb-6"
+      >
+        <h2 className="text-2xl font-bold text-purple-900">Lista de Espera</h2>
+        <motion.button
           onClick={handleAddNew}
           disabled={!puedeEditar}
-          className={`font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform ${
+          whileHover={puedeEditar ? { scale: 1.05, y: -2 } : {}}
+          whileTap={puedeEditar ? { scale: 0.95 } : {}}
+          className={`font-bold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 ${
             puedeEditar
-              ? "bg-purple-700 hover:bg-purple-900 text-white hover:scale-105"
+              ? "bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white shadow-purple-300"
               : "bg-gray-400 text-gray-200 cursor-not-allowed"
           }`}
         >
-          + Agregar a Lista de Espera
-        </button>
-      </div>
+          <span className="flex items-center gap-2">
+            <span className="text-xl">+</span>
+            Agregar a Lista de Espera
+          </span>
+        </motion.button>
+      </motion.div>
 
       {/* --- SECCIÓN DE FILTROS Y BÚSQUEDA --- */}
-      <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.2 }}
+        className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
         {/* Búsqueda */}
-        <div className="col-span-1">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          className="col-span-1"
+        >
+          <label className="block text-purple-900 text-sm font-bold mb-2 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
             Buscar
           </label>
           <input
@@ -163,34 +186,46 @@ const ListaEspera = ({
             placeholder="Nombre, Tipo o Contacto..."
             value={terminoDeBusqueda}
             onChange={(e) => setTerminoDeBusqueda(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full p-3 border-2 border-purple-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
           />
-        </div>
+        </motion.div>
         {/* Filtro 1: Tipo */}
-        <div className="col-span-1">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          className="col-span-1"
+        >
+          <label className="block text-purple-900 text-sm font-bold mb-2 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
             Filtrar por Tipo
           </label>
           <select
             value={filtroTipo}
             onChange={(e) => setFiltroTipo(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full p-3 border-2 border-purple-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white cursor-pointer"
           >
             <option value="todos">Todos los Tipos</option>
             <option value="espera">Lista de Espera</option>
             <option value="cambio">Lista de Cambio</option>
           </select>
-        </div>
+        </motion.div>
 
         {/* Filtro 2: Estado */}
-        <div className="col-span-1">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          className="col-span-1"
+        >
+          <label className="block text-purple-900 text-sm font-bold mb-2 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             Filtrar por Estado
           </label>
           <select
             value={filtroEstado}
             onChange={(e) => setFiltroEstado(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full p-3 border-2 border-purple-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white cursor-pointer"
           >
             <option value="todos">Todos los Estados</option>
             <option value="sin-estado">Sin Estado (Nuevos)</option>
@@ -198,124 +233,166 @@ const ListaEspera = ({
             <option value="Confirmado">Confirmado</option>
             <option value="Rechazado">Rechazado / Sin Respuesta</option>
           </select>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
       {/* --- FIN DE FILTROS Y BÚSQUEDA --- */}
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead className="bg-purple-900">
-            <tr>
-              {HEADERS.map((header) => (
-                <th
-                  key={header}
-                  className="p-3 font-semibold text-center text-white uppercase text-sm border-b-2 border-purple-800"
-                >
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {elementosPaginados.length > 0 ? (
-              elementosPaginados.map((person) => (
-                <tr
-                  key={person.id}
-                  className={`border-b border-gray-200  transition-colors ${
-                    person.contacto_cliente?.estado_contacto === "Confirmado"
-                      ? "!bg-green-300 hover:!bg-green-400" // Verde si está confirmado
-                      : person.contacto_cliente?.estado_contacto === "Pendiente"
-                      ? "!bg-yellow-200 hover:!bg-yellow-300" // Amarillo si está pendiente
-                      : person.contacto_cliente?.estado_contacto ===
-                        "Rechazado/Sin Respuesta"
-                      ? "!bg-red-400 hover:!bg-red-500" // Rojo si está rechazado
-                      : "odd:bg-white even:bg-gray-50 hover:!bg-gray-200" // Colores alternos por defecto
-                  }`}
-                >
-                  <td className="p-3 text-gray-800 font-medium text-center">
-                    {person.name}
-                  </td>
-                  <td className="p-3 text-gray-700 text-center capitalize">
-                    {person.type}
-                  </td>
-                  <td className="p-3 text-gray-700 text-center">
-                    {person.contact}
-                  </td>
-                  <td className="p-3 text-gray-700 text-center">
-                    {person.plan}
-                  </td>
-                  <td className="p-3 text-gray-700 text-center">
-                    {person.hours.join(", ")}
-                  </td>
-                  <td className="p-3 text-gray-700 italic text-center max-w-xs truncate">
-                    {person.obs}
-                  </td>
-                  <td className="p-3 text-gray-500 text-center">
-                    {new Date(person.date + "T00:00:00").toLocaleDateString(
-                      "es-ES"
-                    )}{" "}
-                    {person.hour}
-                  </td>
-                  <td className="p-3 text-gray-700 italic text-center max-w-xs truncate">
-                    {person.nombre_usuario_cargado}
-                  </td>
-                  <td className="p-3 text-center">
-                    <button
-                      onClick={
-                        puedeEditar ? () => handleRowClick(person) : undefined
-                      }
-                      disabled={!puedeEditar}
-                      className={`font-bold py-1 px-3 rounded-lg text-sm ${
-                        puedeEditar
-                          ? "bg-gray-200 hover:bg-gray-300 text-gray-700"
-                          : "bg-gray-300 text-gray-400 cursor-not-allowed"
-                      }`}
-                    >
-                      Editar
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
+      {/* Tabla con diseño moderno */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1, duration: 0.2 }}
+        className="overflow-hidden rounded-xl shadow-xl border border-purple-200"
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead className="bg-gradient-to-r from-purple-900 to-purple-800">
               <tr>
-                <td
-                  colSpan={HEADERS.length}
-                  className="text-center p-8 text-gray-500 italic"
-                >
-                  {/* Mensaje dinámico si no hay resultados */}
-                  {listaFiltrada.length === 0 &&
-                  (filtroTipo !== "todos" ||
-                    filtroEstado !== "todos" ||
-                    terminoDeBusqueda !== "")
-                    ? "No se encontraron resultados para los filtros aplicados."
-                    : "La lista de espera está vacía."}
-                </td>
+                {HEADERS.map((header, index) => (
+                  <motion.th
+                    key={header}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + index * 0.05, duration: 0.3 }}
+                    className="p-4 font-semibold text-center text-white uppercase text-xs tracking-wider"
+                  >
+                    {header}
+                  </motion.th>
+                ))}
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex justify-center items-center mt-4 space-x-4">
-        <button
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {elementosPaginados.length > 0 ? (
+                elementosPaginados.map((person, index) => (
+                  <motion.tr
+                    key={person.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                    whileHover={{ scale: 1.01, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                    className={`transition-all duration-300 cursor-pointer ${
+                      person.contacto_cliente?.estado_contacto === "Confirmado"
+                        ? "!bg-gradient-to-r from-green-100 to-green-200 hover:!from-green-200 hover:!to-green-300" // Verde si está confirmado
+                        : person.contacto_cliente?.estado_contacto === "Pendiente"
+                        ? "!bg-gradient-to-r from-yellow-100 to-yellow-200 hover:!from-yellow-200 hover:!to-yellow-300" // Amarillo si está pendiente
+                        : person.contacto_cliente?.estado_contacto ===
+                          "Rechazado/Sin Respuesta"
+                        ? "!bg-gradient-to-r from-red-100 to-red-200 hover:!from-red-200 hover:!to-red-300" // Rojo si está rechazado
+                        : "hover:bg-purple-50" // Color hover por defecto
+                    }`}
+                  >
+                    <td className="p-2 text-gray-800 font-semibold text-center">
+                      {person.name}
+                    </td>
+                    <td className="p-2 text-gray-700 text-center">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 capitalize">
+                        {person.type}
+                      </span>
+                    </td>
+                    <td className="p-2 text-gray-700 text-center font-medium">
+                      {person.contact}
+                    </td>
+                    <td className="p-2 text-gray-700 text-center">
+                      {person.plan}
+                    </td>
+                    <td className="p-2 text-gray-700 text-center text-sm">
+                      {person.hours.join(", ")}
+                    </td>
+                    <td className="p-2 text-gray-600 italic text-center max-w-xs truncate text-sm">
+                      {person.obs}
+                    </td>
+                    <td className="p-2 text-gray-500 text-center text-sm">
+                      {new Date(person.date + "T00:00:00").toLocaleDateString(
+                        "es-ES"
+                      )}{" "}
+                      {person.hour}
+                    </td>
+                    <td className="p-2 text-gray-600 italic text-center max-w-xs truncate text-sm">
+                      {person.nombre_usuario_cargado}
+                    </td>
+                    <td className="p-2 text-center">
+                      <motion.button
+                        onClick={
+                          puedeEditar ? () => handleRowClick(person) : undefined
+                        }
+                        disabled={!puedeEditar}
+                        whileHover={puedeEditar ? { scale: 1.1 } : {}}
+                        whileTap={puedeEditar ? { scale: 0.95 } : {}}
+                        className={`font-bold py-2 px-4 rounded-lg text-sm shadow-md transition-all duration-300 ${
+                          puedeEditar
+                            ? "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
+                            : "bg-gray-300 text-gray-400 cursor-not-allowed"
+                        }`}
+                      >
+                        Editar
+                      </motion.button>
+                    </td>
+                  </motion.tr>
+                ))
+              ) : (
+                <motion.tr
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <td
+                    colSpan={HEADERS.length}
+                    className="text-center p-12"
+                  >
+                    <div className="flex flex-col items-center gap-3">
+                      <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                      <p className="text-gray-500 italic text-lg">
+                        {listaFiltrada.length === 0 &&
+                        (filtroTipo !== "todos" ||
+                          filtroEstado !== "todos" ||
+                          terminoDeBusqueda !== "")
+                          ? "No se encontraron resultados para los filtros aplicados."
+                          : "La lista de espera está vacía."}
+                      </p>
+                    </div>
+                  </td>
+                </motion.tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </motion.div>
+
+      {/* Paginación con diseño moderno */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.5 }}
+        className="flex justify-center items-center mt-6 space-x-4"
+      >
+        <motion.button
           onClick={() => setPaginaActual(paginaActual - 1)}
           disabled={paginaActual === 1}
-          className="bg-purple-700 hover:bg-purple-900 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+          whileHover={paginaActual !== 1 ? { scale: 1.05, x: -3 } : {}}
+          whileTap={paginaActual !== 1 ? { scale: 0.95 } : {}}
+          className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-3 px-6 rounded-xl shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-300 transition-all duration-300"
         >
-          Anterior
-        </button>
+          ← Anterior
+        </motion.button>
 
-        <span className="text-gray-700 font-semibold">
-          Página {paginaActual} de {totalPaginas > 0 ? totalPaginas : 1}
-        </span>
+        <div className="bg-white px-6 py-3 rounded-xl shadow-md border-2 border-purple-200">
+          <span className="text-purple-900 font-bold text-lg">
+            Página {paginaActual} de {totalPaginas > 0 ? totalPaginas : 1}
+          </span>
+        </div>
 
-        <button
+        <motion.button
           onClick={() => setPaginaActual(paginaActual + 1)}
           disabled={paginaActual >= totalPaginas}
-          className="bg-purple-700 hover:bg-purple-900 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+          whileHover={paginaActual < totalPaginas ? { scale: 1.05, x: 3 } : {}}
+          whileTap={paginaActual < totalPaginas ? { scale: 0.95 } : {}}
+          className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-3 px-6 rounded-xl shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-300 transition-all duration-300"
         >
-          Siguiente
-        </button>
-      </div>
+          Siguiente →
+        </motion.button>
+      </motion.div>
       {isModalOpen && (
         <ModalListaEspera
           isOpen={isModalOpen}
