@@ -163,10 +163,10 @@ const verificarEstadoComision = async (prospecto) => {
 };
 
 const SEDES = [
-  { value: "Monteros", label: "Monteros" },
-  { value: "Concepción", label: "Concepción" },
-  { value: "barrio sur", label: "Barrio Sur" },
-  { value: "barrio norte", label: "Barrio Norte" },
+  { value: 'monteros', label: 'Monteros' },
+  { value: 'concepcion', label: 'Concepción' },
+  { value: 'barrio sur', label: 'Barrio Sur' },
+  { value: 'barrio norte', label: 'Barrio Norte' }
 ];
 
 // const normalizeSede = (sede) => {
