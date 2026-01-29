@@ -65,6 +65,27 @@ const formatDateTimeAR = (value) => {
   }
 };
 
+// Normalizar sedes
+const normalizarSede = (sede = '') => {
+  const s = (sede || '').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
+  // Normalizar variaciones
+  if (s.includes('BARRIO NORTE') || s === 'BARRIONORTE' || s === 'SANBUMIGUELBN') {
+    return 'TUCUMÁN - BARRIO NORTE';
+  }
+  if (s.includes('BARRIO SUR') || s.includes('BARRIO') && s.includes('SUR') || s === 'SMT') {
+    return 'TUCUMÁN - BARRIO SUR';
+  }
+  if (s.includes('CONCEPCION') || s.includes('CONCEPCIÓN')) {
+    return 'CONCEPCIÓN';
+  }
+  if (s.includes('MONTEROS')) {
+    return 'MONTEROS';
+  }
+  
+  return s;
+};
+
 // Toast SweetAlert2
 const toast = (title, icon = 'success') =>
   Swal.fire({
@@ -91,6 +112,7 @@ const QuejasInternasGet = () => {
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('todos'); // todos | resueltas | pendientes
   const [origenFilter, setOrigenFilter] = useState('todos'); // todos | qr | empleados
+  const [sedeFilter, setSedeFilter] = useState('todas'); // todas | sede específica (solo admin)
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [soloPropias, setSoloPropias] = useState(false);
@@ -350,6 +372,10 @@ const QuejasInternasGet = () => {
         return origenFilter === 'qr' ? esQR : !esQR;
       });
     }
+    // sede (solo aplica si admin selecciona una sede específica)
+    if (sedeFilter !== 'todas' && isCoordinator(userLevelCanon)) {
+      data = data.filter((d) => normalizarSede(d.sede) === sedeFilter);
+    }
     // rango fechas (por campo fecha)
     if (fromDate) {
       const from = new Date(fromDate);
@@ -367,6 +393,7 @@ const QuejasInternasGet = () => {
     search,
     estadoFilter,
     origenFilter,
+    sedeFilter,
     fromDate,
     toDate,
     soloPropias,
@@ -385,7 +412,7 @@ const QuejasInternasGet = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, estadoFilter, origenFilter, fromDate, toDate, itemsPerPage, soloPropias]);
+  }, [search, estadoFilter, origenFilter, sedeFilter, fromDate, toDate, itemsPerPage, soloPropias]);
 
   const lastIndex = currentPage * itemsPerPage;
   const firstIndex = lastIndex - itemsPerPage;
@@ -476,73 +503,111 @@ const QuejasInternasGet = () => {
             </div>
 
             {/* Filtros */}
-            <div className="grid grid-cols-1 gap-3 p-6 lg:grid-cols-12">
-              <div className="lg:col-span-4">
-                <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2">
-                  <FaSearch className="shrink-0" />
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    type="text"
-                    placeholder="Buscar por ID, nombre, motivo, contacto, sede..."
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400"
-                  />
-                  {search && (
-                    <button
-                      onClick={() => setSearch('')}
-                      className="rounded-full p-1 text-zinc-500 hover:bg-zinc-100"
-                      aria-label="Limpiar búsqueda"
+            <div className="border-t border-zinc-100 bg-zinc-50/50 p-6">
+              {/* Título de filtros */}
+              <p className="mb-4 text-xs font-semibold uppercase text-zinc-600">Filtros</p>
+              
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+                {/* Búsqueda - Grande */}
+                <div className="sm:col-span-2 lg:col-span-4">
+                  <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm hover:border-zinc-300 transition">
+                    <FaSearch className="shrink-0 text-zinc-400" />
+                    <input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      type="text"
+                      placeholder="ID, nombre, motivo..."
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400"
+                    />
+                    {search && (
+                      <button
+                        onClick={() => setSearch('')}
+                        className="rounded-full p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition"
+                        aria-label="Limpiar búsqueda"
+                      >
+                        <FaTimes className="text-xs" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Estado */}
+                <div className="sm:col-span-1 lg:col-span-2">
+                  <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm hover:border-zinc-300 transition">
+                    <select
+                      value={estadoFilter}
+                      onChange={(e) => setEstadoFilter(e.target.value)}
+                      className="w-full bg-transparent text-sm font-medium outline-none text-zinc-700"
                     >
-                      <FaTimes />
-                    </button>
-                  )}
+                      <option value="todos">Todos los estados</option>
+                      <option value="pendientes">Pendientes</option>
+                      <option value="resueltas">Resueltas</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              <div className="lg:col-span-2">
-                <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2">
-                  <select
-                    value={estadoFilter}
-                    onChange={(e) => setEstadoFilter(e.target.value)}
-                    className="w-full bg-transparent text-sm outline-none"
-                  >
-                    <option value="todos">Todos los estados</option>
-                    <option value="pendientes">Pendientes</option>
-                    <option value="resueltas">Resueltas</option>
-                  </select>
+                {/* Origen */}
+                <div className="sm:col-span-1 lg:col-span-2">
+                  <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm hover:border-zinc-300 transition">
+                    <select
+                      value={origenFilter}
+                      onChange={(e) => setOrigenFilter(e.target.value)}
+                      className="w-full bg-transparent text-sm font-medium outline-none text-zinc-700"
+                      title="Filtrar por quién cargó la queja"
+                    >
+                      <option value="todos">Todas (origen)</option>
+                      <option value="qr">📱 QR</option>
+                      <option value="empleados">👥 Empleados</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              <div className="lg:col-span-2">
-                <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2">
-                  <select
-                    value={origenFilter}
-                    onChange={(e) => setOrigenFilter(e.target.value)}
-                    className="w-full bg-transparent text-sm outline-none"
-                    title="Filtrar por quién cargó la queja"
-                  >
-                    <option value="todos">Todas</option>
-                    <option value="qr"><IoQrCodeSharp className="" /> Cargadas por QR</option>
-                    <option value="empleados"><FaUserFriends className="" /> Cargadas por empleados</option>
-                  </select>
+                {/* Sedes - Solo Admin */}
+                {isCoordinator(userLevelCanon) && (
+                  <div className="sm:col-span-1 lg:col-span-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm hover:border-zinc-300 transition">
+                      <select
+                        value={sedeFilter}
+                        onChange={(e) => setSedeFilter(e.target.value)}
+                        className="w-full bg-transparent text-sm font-medium outline-none text-zinc-700"
+                        title="Filtrar por sede"
+                      >
+                        <option value="todas">Todas las sedes</option>
+                        {[...new Set(
+                          quejas
+                            .map(q => normalizarSede(q.sede))
+                            .filter(Boolean)
+                        )].sort().map((sede) => (
+                          <option key={sede} value={sede}>
+                            {sede}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Fecha Desde */}
+                <div className={`${isCoordinator(userLevelCanon) ? 'sm:col-span-1' : 'sm:col-span-1'} lg:col-span-1`}>
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm outline-none shadow-sm hover:border-zinc-300 transition font-medium text-zinc-700"
+                    title="Fecha desde"
+                  />
                 </div>
-              </div>
 
-              <div className="lg:col-span-2">
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none"
-                />
-              </div>
-              <div className="lg:col-span-2">
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none"
-                />
+                {/* Fecha Hasta */}
+                <div className={`${isCoordinator(userLevelCanon) ? 'sm:col-span-1' : 'sm:col-span-1'} lg:col-span-1`}>
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm outline-none shadow-sm hover:border-zinc-300 transition font-medium text-zinc-700"
+                    title="Fecha hasta"
+                  />
+                </div>
               </div>
             </div>
 
@@ -692,7 +757,7 @@ const QuejasInternasGet = () => {
                               )}
                             </td>
                             <td className="px-3 py-3 text-zinc-700 uppercase">
-                              {sede2Barrio[queja?.sede] ?? queja?.sede ?? '-'}
+                              {normalizarSede(queja?.sede) ?? '-'}
                             </td>
                             <td className="px-3 py-3">
                               {Number(queja.resuelto) === 1 ? (
