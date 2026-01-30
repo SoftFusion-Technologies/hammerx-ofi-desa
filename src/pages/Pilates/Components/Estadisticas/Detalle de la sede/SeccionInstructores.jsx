@@ -40,27 +40,33 @@ const SeccionInstructores = ({ datosEstadisticas }) => {
               <div className="space-y-2">
                 <div>
                   <span className="font-semibold text-blue-700 bg-blue-100 rounded px-1">
-                    Iniciales
+                    Al inicio
                   </span>
-                  : alumnos al inicio del mes.
+                  : alumnos que tenía el instructor al comienzo del período.
                 </div>
                 <div>
                   <span className="font-semibold text-red-700 bg-red-100 rounded px-1">
-                    Perdidos
+                    Bajas iniciales
                   </span>
-                  : alumnos que iniciaron el mes pero se dieron de baja.
+                  : de los alumnos iniciales, cuántos se dieron de baja durante el período.
                 </div>
                 <div>
                   <span className="font-semibold text-green-700 bg-green-100 rounded px-1">
-                    Agregados
+                    Altas
                   </span>
-                  : alumnos nuevos que se sumaron durante el mes.
+                  : alumnos nuevos que se sumaron al instructor durante el período.
                 </div>
                 <div>
+                  <span className="font-semibold text-slate-700 bg-slate-100 rounded px-1">
+                    Actuales
+                  </span>
+                  : total de alumnos que tiene el instructor actualmente.
+                </div>
+                <div className="border-t border-slate-200 pt-2">
                   <span className="font-semibold text-yellow-700 bg-yellow-100 rounded px-1">
                     % Retención
                   </span>
-                  : variación del padrón del profe en el mes.
+                  : variación del padrón del instructor en el período.
                 </div>
                 <div className="border-t border-slate-200 pt-2">
                   <span className="font-semibold text-emerald-700 bg-emerald-100 rounded px-1">
@@ -93,28 +99,10 @@ const SeccionInstructores = ({ datosEstadisticas }) => {
                 transition={{ delay: idx * 0.1 }}
                 className="rounded-xl border border-orange-600 bg-orange-50/30 p-3 shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center">
                   <span className="font-bold text-gray-800 text-sm">
                     {instructor.nombre}
                   </span>
-                  <span className="text-xs text-gray-700 font-bold">
-                    Actuales: {instructor.alumnos_actuales}
-                  </span>
-                </div>
-
-                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                  <div className="bg-gray-50 rounded-md px-2 py-1 text-center">
-                    <span className="font-semibold text-blue-700 bg-blue-100 rounded px-1">Iniciales:</span> <span className="font-bold text-blue-900">{instructor.alumnos_iniciales}</span>
-                  </div>
-                  <div className="bg-gray-50 rounded-md px-2 py-1 text-center">
-                    <span className="font-semibold text-red-700 bg-red-100 rounded px-1">Perdidos:</span> <span className="font-bold text-red-900">{instructor.alumnos_perdidos}</span>
-                  </div>
-                  <div className="bg-gray-50 rounded-md px-2 py-1 text-center">
-                    <span className="font-semibold text-green-700 bg-green-100 rounded px-1">Agregados:</span>{" "}
-                    <span className="font-bold text-green-900">
-                      {instructor.alumnos_nuevos}
-                    </span>
-                  </div>
                 </div>
 
                 {/* RETENCIÓN + ASISTENCIA (compacto) */}
@@ -149,6 +137,34 @@ const SeccionInstructores = ({ datosEstadisticas }) => {
                             : 'bg-gradient-to-r from-yellow-500 to-yellow-600'
                         }`}
                       />
+                    </div>
+
+                    {/* Datos de alumnos debajo de retención */}
+                    <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="rounded-md bg-white px-2 py-1 text-center border border-slate-100">
+                        <div className="font-semibold text-blue-700">Al inicio</div>
+                        <div className="font-black text-blue-900">
+                          {instructor.alumnos_iniciales}
+                        </div>
+                      </div>
+                      <div className="rounded-md bg-white px-2 py-1 text-center border border-slate-100">
+                        <div className="font-semibold text-red-700">Bajas iniciales</div>
+                        <div className="font-black text-red-900">
+                          {instructor.alumnos_perdidos}
+                        </div>
+                      </div>
+                      <div className="rounded-md bg-white px-2 py-1 text-center border border-slate-100">
+                        <div className="font-semibold text-green-700">Altas</div>
+                        <div className="font-black text-green-900">
+                          {instructor.alumnos_nuevos}
+                        </div>
+                      </div>
+                      <div className="rounded-md bg-white px-2 py-1 text-center border border-slate-100">
+                        <div className="font-semibold text-slate-700">Actuales</div>
+                        <div className="font-black text-slate-900">
+                          {instructor.alumnos_actuales}
+                        </div>
+                      </div>
                     </div>
                   </div>
 

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { FaFacebookF, FaWhatsapp, FaInstagram } from "react-icons/fa";
+import RedesSoft from "./RedesSoft";
 
 /*
  * Programador: Sergio Manrique
@@ -131,7 +132,7 @@ const BajasPilates = ({ sedeActual }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="bg-gradient-to-br from-white to-orange-50 p-8 rounded-2xl shadow-2xl border border-orange-200"
+      className="bg-gradient-to-br from-white to-orange-50 p-8 rounded-2xl shadow-2xl border border-orange-200 font-messina"
     >
       {/* Modal de Detalle */}
       {detalleAbierto && registroDetalle && (
@@ -251,7 +252,7 @@ const BajasPilates = ({ sedeActual }) => {
         transition={{ delay: 0.1, duration: 0.2 }}
         className="mb-6"
       >
-        <h2 className="text-2xl font-bold text-orange-900 mb-2">
+        <h2 className="text-2xl font-bold font-bignoodle text-orange-900 mb-2">
           Bajas de Pilates
         </h2>
         <motion.div
@@ -308,40 +309,7 @@ const BajasPilates = ({ sedeActual }) => {
             ))}
           </div>
           {/* FOOTER */}
-          <div className="flex flex-col md:flex-row md:justify-end md:items-center mt-6">
-            <div className="flex flex-col md:flex-row md:items-center md:gap-2">
-              <span className="text-[11px] text-gray-400 md:mr-2 text-right md:text-left">
-                Diseñado y desarrollado por{' '}
-                <span className="font-bold text-pink-600">Soft Fusion</span>
-              </span>
-              <div className="flex items-center gap-2 mt-1 md:mt-0 justify-end">
-                <a
-                  href="https://www.facebook.com/profile.php?id=61551009572957&mibextid=wwXIfr&rdid=i9TyFp5jNmBtdYT8&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1JAMUqUEaQ%2F%3Fmibextid%3DwwXIfr#"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-gray-400 hover:text-blue-600 transition"
-                >
-                  <FaFacebookF size={14} />
-                </a>
-                <a
-                  href="https://api.whatsapp.com/send/?phone=5493815430503&text&type=phone_number&app_absent=0"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-gray-400 hover:text-green-500 transition"
-                >
-                  <FaWhatsapp size={14} />
-                </a>
-                <a
-                  href="https://www.instagram.com/softfusiontechnologies/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-gray-400 hover:text-pink-500 transition"
-                >
-                  <FaInstagram size={14} />
-                </a>
-              </div>
-            </div>
-          </div>
+          <RedesSoft />
         </div>
         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white border border-orange-200 rounded-xl p-4 shadow-sm">

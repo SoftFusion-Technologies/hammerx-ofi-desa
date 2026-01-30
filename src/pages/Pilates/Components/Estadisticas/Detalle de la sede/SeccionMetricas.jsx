@@ -29,7 +29,7 @@ const SeccionMetricas = ({ datosEstadisticas }) => {
         <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
           <Clock className="w-6 h-6 text-blue-500" />
           Vida Media del Socio (LTV)
-          <AyudaInfo texto="Tiempo promedio (en meses) que un socio se mantiene activo. Sirve para entender permanencia y fidelidad." />
+          <AyudaInfo texto="Tiempo promedio (en meses) que un socio se mantiene activo hasta que se da de baja." />
         </h2>
 
         <div className="flex flex-col sm:flex-row items-center gap-8">
@@ -64,7 +64,7 @@ const SeccionMetricas = ({ datosEstadisticas }) => {
         <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
           <Target className="w-6 h-6 text-purple-500" />
           Retención del Mes
-          <AyudaInfo texto="Resumen del mes: cuántos arrancaron, cuántos siguen desde el día 1 y el % de retención (mientras más alto, mejor)." />
+          <AyudaInfo texto="Resumen del mes: cuántos arrancaron, cuántos siguen desde el día 1 y el % de retención." />
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">

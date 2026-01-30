@@ -25,10 +25,7 @@ const CardMostrador = ({
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: 1.03, y: -2 }}
       transition={{ type: 'spring', stiffness: 300 }}
-      className={`${color} rounded-xl shadow-md text-white p-6 relative overflow-hidden ${
-        onClick ? 'cursor-pointer' : ''
-      }`}
-      onClick={onClick}
+      className={`${color} rounded-xl shadow-md text-white p-6 relative overflow-hidden`}
     >
       {/* Fondo decorativo */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-8 translate-x-8"></div>
@@ -54,11 +51,6 @@ const CardMostrador = ({
         </div>
         <div className="opacity-40">{icono}</div>
       </div>
-
-      {/* Indicador de click si aplica */}
-      {onClick && (
-        <p className="text-xs mt-3 opacity-75 relative z-10">Click para ver detalles</p>
-      )}
     </motion.div>
   );
 };

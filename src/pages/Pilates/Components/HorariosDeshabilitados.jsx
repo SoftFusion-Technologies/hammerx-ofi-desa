@@ -58,7 +58,7 @@ const HorariosDeshabilitados = ({ states, functions }) => {
       className="w-full max-w-auto mx-auto mb-8"
     >
       {/* Contenedor Principal Estilo Tarjeta */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden font-messina">
         {/* --- HEADER DE LA SECCIÓN --- */}
         <div className="bg-gradient-to-r from-zinc-950/90 via-zinc-900/90 to-zinc-950/90 backdrop-blur-xl p-6 sm:p-8 text-white flex flex-col sm:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-5">
@@ -66,7 +66,7 @@ const HorariosDeshabilitados = ({ states, functions }) => {
               <FaRegClock className="text-3xl text-white" />
             </div>
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-semibold font-bignoodle tracking-tight">
                 Horarios Deshabilitados
               </h2>
               <p className="text-slate-400 text-sm sm:text-base mt-1">

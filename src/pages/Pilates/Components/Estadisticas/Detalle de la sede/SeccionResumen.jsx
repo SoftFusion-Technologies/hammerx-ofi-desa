@@ -16,7 +16,6 @@ import {
   UserMinus,
   UserPlus,
   TrendingUp,
-  TrendingDown,
 } from 'lucide-react';
 import CardMostrador from './CardMostrador';
 import AyudaInfo from './AyudaInfo';
@@ -28,8 +27,6 @@ const SeccionResumen = ({
   datosEstadisticas,
   panelesVisibles,
   alternarPanel,
-  mostrarDetalleBajas,
-  setMostrarDetalleBajas,
 }) => {
   return (
     <motion.div
@@ -94,7 +91,6 @@ const SeccionResumen = ({
             color="bg-gradient-to-br from-orange-500 to-orange-600"
             visible={panelesVisibles.bajas}
             onToggle={() => alternarPanel('bajas')}
-            onClick={() => setMostrarDetalleBajas(!mostrarDetalleBajas)}
           />
 
           <CardMostrador
@@ -138,58 +134,6 @@ const SeccionResumen = ({
           </div>
         </div>
       </div>
-      {/* Evolución mensual (oculta por ahora) */}
-{/*       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-white rounded-xl shadow-md p-4 sm:p-6"
-      >
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-green-500" />
-          Evolución de Alumnos Activos
-          <AyudaInfo
-            texto="Cantidad de alumnos activos al cierre de cada mes. El número grande es el total al final del mes."
-          />
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {datosEstadisticas.evolucionMensual.map((item, idx) => {
-            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const nombreMes = meses[item.mes - 1];
-            
-            return (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.1 }}
-                className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border-2 border-slate-200 !hover:border-orange-300 transition-all"
-              >
-                <p className="text-sm font-medium text-gray-600 mb-2">{nombreMes} {item.anio}</p>
-                <p className="text-4xl font-bold text-gray-800 mb-2">
-                  {item.cantidad_fin_mes}
-                </p>
-                {item.variacion_porcentual !== 0 && (
-                  <div
-                    className={`flex items-center gap-1 text-sm font-semibold ${
-                      item.variacion_porcentual > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {item.variacion_porcentual > 0 ? (
-                      <TrendingUp className="w-4 h-4" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4" />
-                    )}
-                    {item.variacion_porcentual > 0 ? '+' : ''}
-                    {item.variacion_porcentual.toFixed(1)}%
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.div> */}
     </motion.div>
   );
 };

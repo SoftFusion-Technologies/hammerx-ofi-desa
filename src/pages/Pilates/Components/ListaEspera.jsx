@@ -135,7 +135,7 @@ const ListaEspera = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="bg-gradient-to-br from-white to-purple-50 p-8 rounded-2xl shadow-2xl border border-purple-100"
+      className="bg-gradient-to-br from-white to-purple-50 p-8 rounded-2xl shadow-2xl border border-purple-100 font-messina"
     >
       {/* Header con botón */}
       <motion.div 
@@ -144,7 +144,7 @@ const ListaEspera = ({
         transition={{ delay: 0.1, duration: 0.2 }}
         className="flex justify-between items-center mb-6"
       >
-        <h2 className="text-2xl font-bold text-purple-900">Lista de Espera</h2>
+        <h2 className="text-2xl font-bold font-bignoodle text-purple-900">Lista de Espera</h2>
         <motion.button
           onClick={handleAddNew}
           disabled={!puedeEditar}

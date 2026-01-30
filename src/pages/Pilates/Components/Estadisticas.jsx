@@ -18,6 +18,7 @@ import SeccionMetricas from "./Estadisticas/Detalle de la sede/SeccionMetricas";
 import SeccionInstructores from "./Estadisticas/Detalle de la sede/SeccionInstructores";
 import SeccionPlanes from "./Estadisticas/Detalle de la sede/SeccionPlanes";
 import SeccionMesConMes from "./Estadisticas/Mes con mes/SeccionMesConMes";
+import RedesSoft from "./RedesSoft";
 
 const obtenerAnioMesActual = () => {
   const ahora = new Date();
@@ -47,8 +48,6 @@ const Estadisticas = ({ sedeActual, sedes }) => {
     altas: false,
   });
 
-  // Detalle de bajas
-  const [mostrarDetalleBajas, setMostrarDetalleBajas] = useState(false);
   // Periodo seleccionado (histórico)
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState(null);
   // Datos del backend
@@ -477,7 +476,7 @@ const Estadisticas = ({ sedeActual, sedes }) => {
     : "";
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full">
+    <div className="min-h-screen bg-gray-50 w-full font-messina">
       <div className="mx-auto space-y-6 pb-8 w-full px-2 sm:px-4">
         {/* ============================================ */}
         {/* HEADER CON SELECTOR DE SECCIONES */}
@@ -488,16 +487,20 @@ const Estadisticas = ({ sedeActual, sedes }) => {
           className="bg-white rounded-xl shadow-md p-2 sm:p-4 md:p-6 mb-6 w-full"
         >
           <div className="flex flex-col gap-4 w-full">
+            {/* Título */}
             <div className="text-center sm:text-left w-full">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 break-words">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 break-words font-bignoodle">
                 📊 Estadísticas de Pilates
               </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-x-3 w-full">
-                <p className="text-gray-600 mt-1 text-sm sm:text-base">
+            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-x-3">
+                <p className="text-gray-600 text-sm sm:text-base">
                   Datos actualizados al {datos.mostrador.fechaActualizacion}
                 </p>
                 <button
-                  className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 transition-colors text-xs sm:text-sm"
+                  className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 transition-colors text-xs sm:text-sm w-full sm:w-auto"
                   onClick={() => setActualizacionManual(true)}
                 >
                   {errorActualizacion
@@ -506,29 +509,35 @@ const Estadisticas = ({ sedeActual, sedes }) => {
                       ? "Actualizando..."
                       : "Actualizar Datos"}
                 </button>
-                <div className="flex items-center gap-1 sm:gap-2 rounded-lg bg-slate-100 p-1 w-full sm:w-auto">
-                  <button
-                    className={`px-2 sm:px-3 py-2 rounded-md text-xs font-semibold transition-colors ${
-                      vistaActiva === "detalle"
-                        ? "bg-white text-orange-600 shadow-sm"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                    onClick={() => setVistaActiva("detalle")}
-                  >
-                    Detalle sede
-                  </button>
-                  <button
-                    className={`px-2 sm:px-3 py-2 rounded-md text-xs font-semibold transition-colors ${
-                      vistaActiva === "mesConMes"
-                        ? "bg-white text-orange-600 shadow-sm"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                    onClick={() => setVistaActiva("mesConMes")}
-                  >
-                    Mes con mes
-                  </button>
-                </div>
               </div>
+              {/* RedesSoft oculto en móvil, visible en desktop */}
+              <div className="hidden xl:block">
+                <RedesSoft></RedesSoft>
+              </div>
+            </div>
+
+            {/* Selector de vista */}
+            <div className="flex items-center gap-1 sm:gap-2 rounded-lg bg-slate-100 p-1 w-full sm:w-auto">
+              <button
+                className={`px-2 sm:px-3 py-2 rounded-md text-xs font-semibold transition-colors ${
+                  vistaActiva === "detalle"
+                    ? "bg-white text-orange-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+                onClick={() => setVistaActiva("detalle")}
+              >
+                Detalle sede
+              </button>
+              <button
+                className={`px-2 sm:px-3 py-2 rounded-md text-xs font-semibold transition-colors ${
+                  vistaActiva === "mesConMes"
+                    ? "bg-white text-orange-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+                onClick={() => setVistaActiva("mesConMes")}
+              >
+                Mes con mes
+              </button>
             </div>
 
             {/* Selector de periodo (mes/año) */}
@@ -605,8 +614,6 @@ const Estadisticas = ({ sedeActual, sedes }) => {
               datosEstadisticas={datosFiltrados}
               panelesVisibles={panelesVisibles}
               alternarPanel={alternarPanel}
-              mostrarDetalleBajas={mostrarDetalleBajas}
-              setMostrarDetalleBajas={setMostrarDetalleBajas}
             />
           )}
 
