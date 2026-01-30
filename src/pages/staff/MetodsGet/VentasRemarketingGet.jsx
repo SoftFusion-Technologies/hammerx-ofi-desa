@@ -40,6 +40,8 @@ import ContactoRapidoModal from "./Components/ContactoRapidoModal";
 import { set } from "date-fns";
 import useInsertClientePilates from "../../Pilates/ConsultaDb/Insertar_ModificarCliente";
 import ArrastradosModal from "./Components/ArrastradosModal";
+import {Eye} from 'lucide-react';
+import InstructivoModal from "./Components/InstructivoModal";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -527,6 +529,8 @@ const VentasRemarketingGet = ({ currentUser }) => {
   const [userLoading, setUserLoading] = useState(true);
 
   const [openComi, setOpenComi] = useState(false);
+
+  const [abrirModalVerInstructivo, setAbrirModalVerInstructivo] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -1926,6 +1930,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
               />
             </section>
 
+            <div className='flex gap-1 mb-1 ml-1'>
             <button
               onClick={() =>
                 exportProspectosExcel({
@@ -1940,10 +1945,21 @@ const VentasRemarketingGet = ({ currentUser }) => {
                   formatDate, // tu helper
                 })
               }
-              className="ml-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-500"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-emerald-600 font-semibold text-white shadow-md hover:bg-emerald-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          >
+            Exportar Excel
+          </button>  
+          <div>
+            <button
+              onClick={() => setAbrirModalVerInstructivo(true)}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
             >
-              Exportar Excel
+              <Eye />
+              Ver instructivo
             </button>
+          </div>
+          </div>
+
             <FilterToolbar
               search={search}
               setSearch={setSearch}
@@ -3405,6 +3421,12 @@ const VentasRemarketingGet = ({ currentUser }) => {
           prospecto={prospectoActual}
           open={true}
           onClose={() => setModalTipo(null)}
+        />
+      )}
+      {abrirModalVerInstructivo && (
+        <InstructivoModal
+          open={abrirModalVerInstructivo}
+          onClose={() => setAbrirModalVerInstructivo(false)}
         />
       )}
     </>
