@@ -7,13 +7,14 @@ const useDeleteClientePilates = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  const deleteCliente = async (clienteId) => {
+  const deleteCliente = async (clienteId, cuerpo) => {
     try {
       setLoading(true);
       setError(null);
       setSuccess(false);
 
-      await axios.delete(`http://localhost:8080/clientes-pilates/con-inscripciones/${clienteId}`);
+
+      await axios.delete(`http://localhost:8080/clientes-pilates/con-inscripciones/${clienteId}`, cuerpo ? { data: cuerpo } : {});
 
       setSuccess(true);
     } catch (err) {

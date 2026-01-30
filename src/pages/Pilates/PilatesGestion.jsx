@@ -26,6 +26,9 @@ import ModalDetalleAusentes from './Modal/ModalDetalleAusentes';
 import {Download} from 'lucide-react';
 import InstructivoPilates from "../../../public/Intructivo pilates.pdf"
 import {motion} from "framer-motion"
+import { IoIosStats } from "react-icons/io";
+import Estadisticas from './Components/Estadisticas';
+import BajasPilates from './Components/BajasPilates';
 
 const EyeIcon = ({ className }) => (
   <svg
@@ -145,6 +148,44 @@ const PilatesGestion = () => {
                       )}
                       Horarios Deshabilitados
                     </button>
+                    {/* Opción: BAJAS PILATES */}
+                    <button
+                      onClick={() =>
+                        functions.handleSectionChange('BAJAS_PILATES')
+                      }
+                      className={`
+                      flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200
+                      ${
+                        states.section === 'BAJAS_PILATES'
+                          ? 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]'
+                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                      }
+                    `}
+                    >
+                      {states.section === 'BAJAS_PILATES' && (
+                        <EyeIcon className="h-4 w-4" />
+                      )}
+                      Bajas Pilates
+                    </button>
+                    {/* Opción: Estadísticas */}
+                    <button
+                      onClick={() =>
+                        functions.handleSectionChange('ESTADISTICAS')
+                      }
+                      className={`
+                      flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200
+                      ${
+                        states.section === 'ESTADISTICAS'
+                          ? 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]'
+                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                      }
+                    `}
+                    >
+                      {states.section === 'ESTADISTICAS' && (
+                        <IoIosStats className="h-4 w-4" />
+                      )}
+                      Estadísticas
+                    </button>
                   </div>
                 </div>
               )}
@@ -178,7 +219,7 @@ const PilatesGestion = () => {
               ) : states.rol === 'GESTION' &&
                 states.section === 'HORARIOS_DESHABILITADOS' ? (
                 <HorariosDeshabilitados states={states} functions={functions} />
-              ) : (
+              ) : states.section === "GESTION" ? (
                 <>
                   {states.rol === 'GESTION' && (
                     <PanelesSuperiores
@@ -356,7 +397,11 @@ const PilatesGestion = () => {
                     />
                   )}
                 </>
-              )}
+              ) : states.section === "ESTADISTICAS" ? (
+                <Estadisticas sedeActual={states.sedeActualFiltro} sedes={states.sedesData} />
+              ) : states.section === "BAJAS_PILATES" ? (
+                <BajasPilates sedeActual={states.sedeActualFiltro} />
+              ) : null}
             </div>
           </div>
         </>

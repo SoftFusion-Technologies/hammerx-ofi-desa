@@ -265,6 +265,7 @@ const GrillaHorarios = ({
                   };
                   const students = cellData.alumnos || [];
                   const coach = cellData.coach || "";
+                  const porcentaje_asistencia_clases = cellData.porcentaje_asistencia_clases || 0;
                   const isDayEnabled =
                     rol === "GESTION" ? esGestionEditable : day === hoy;
 
@@ -314,25 +315,38 @@ const GrillaHorarios = ({
                           >
                             Instructor
                           </span>
-                          <span
-                            className={`text-sm font-bold truncate max-w-full px-2 ${
-                              isDayEnabled
-                                ? "text-white drop-shadow-sm"
-                                : "text-gray-400"
-                            }`}
-                          >
-                            {coach || (
+                          {coach ? (
+                            <div className="flex flex-col items-center w-full">
                               <span
-                                className={`italic font-medium text-xs ${
+                                className={`text-sm font-bold truncate max-w-full px-2 ${
                                   isDayEnabled
-                                    ? "text-orange-200/80"
-                                    : "opacity-60"
+                                    ? "text-white drop-shadow-sm"
+                                    : "text-gray-400"
                                 }`}
                               >
-                                Sin asignar
+                                {coach}
                               </span>
-                            )}
-                          </span>
+                              <span
+                                className={`text-xs font-semibold mt-0.5 ${
+                                  isDayEnabled
+                                    ? "text-orange-100/90 drop-shadow-sm"
+                                    : "text-gray-300"
+                                }`}
+                              >
+                                Asistencias: {porcentaje_asistencia_clases}%
+                              </span>
+                            </div>
+                          ) : (
+                            <span
+                              className={`italic font-medium text-xs ${
+                                isDayEnabled
+                                  ? "text-orange-200/80"
+                                  : "opacity-60"
+                              }`}
+                            >
+                              Sin asignar
+                            </span>
+                          )}
                         </div>
 
                         {/* LISTA DE ALUMNOS Y TARJETAS INFORMATIVAS (Solo visible si NO está minimizado) */}

@@ -159,6 +159,8 @@ const PilatesGestionLogica = () => {
         const normalizedKey = key.replace('MIERCOLES', 'MIÉRCOLES');
         normalizedData[normalizedKey] = {
           coach: horariosData[key].coach || '',
+          porcentaje_asistencia_clases: horariosData[key].porcentaje_asistencia_clases || 0,
+          cupo_maximo: horariosData[key].cupo_maximo || 0,
           horarioId: horariosData[key].horarioId || null,
           coachId: horariosData[key].coachId || null,
           alumnos: Array.isArray(horariosData[key].alumnos)
@@ -1166,6 +1168,8 @@ const PilatesGestionLogica = () => {
           title: `¿Seguro que deseas eliminar a ${studentData.student.name}?`,
           text: 'Se eliminará toda la información asociada a este cliente.',
           icon: 'warning',
+          input: 'text', 
+          inputPlaceholder: 'Motivo de la eliminación (opcional)', 
           showCancelButton: true,
           confirmButtonText: 'Sí, eliminar',
           cancelButtonText: 'Cancelar',
@@ -1174,9 +1178,8 @@ const PilatesGestionLogica = () => {
 
         if (!confirm.isConfirmed) return;
 
-        // Pasamos el nombre de la sede como segundo parámetro
-        await deleteCliente(studentData.student.id);
-
+        const motivoCausa = confirm.value; 
+        await deleteCliente(studentData.student.id, { motivoCausa, idUsuarioGestion: userId}); 
         await sweetalert2.fire({
           icon: 'success',
           title: 'Eliminado',
