@@ -102,7 +102,7 @@ const SeccionMetricas = ({ datosEstadisticas }) => {
           >
             <p className="text-sm text-gray-500 mb-1">Cantidad Actual de Alumnos</p>
             <p className="text-3xl font-bold text-orange-600">
-              {datosEstadisticas.ocupacion.alumnosInscritos}
+              {datosEstadisticas.ocupacion.alumnosInscriptosContratados}
             </p>
           </motion.div>
           <motion.div
@@ -152,7 +152,7 @@ const SeccionMetricas = ({ datosEstadisticas }) => {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>
-                  {datosEstadisticas.ocupacion.alumnosInscritos} /{" "}
+                  {datosEstadisticas.ocupacion.alumnosInscriptosContratados} /{" "}
                   {datosEstadisticas.ocupacion.turnosHabilitados} turnos
                 </span>
                 <span className="font-bold text-indigo-600">

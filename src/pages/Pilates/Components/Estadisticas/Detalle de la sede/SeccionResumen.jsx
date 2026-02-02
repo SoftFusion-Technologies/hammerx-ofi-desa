@@ -47,7 +47,7 @@ const SeccionResumen = ({
           />
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
           <CardMostrador
             titulo="Turnos Libres"
             valor={datosEstadisticas.mostrador.turnos_libres}
@@ -56,25 +56,6 @@ const SeccionResumen = ({
             visible={panelesVisibles.turnosLibres}
             onToggle={() => alternarPanel('turnosLibres')}
           />
-
-          <CardMostrador
-            titulo="Planes Contratados Vencidos"
-            valor={datosEstadisticas.mostrador.planes_vencidos}
-            icono={<Clock className="w-8 h-8" />}
-            color="bg-gradient-to-br from-red-500 to-red-600"
-            visible={panelesVisibles.planesVencidos}
-            onToggle={() => alternarPanel('planesVencidos')}
-          />
-
-          <CardMostrador
-            titulo="Lista de Espera"
-            valor={datosEstadisticas.mostrador.lista_espera}
-            icono={<Users className="w-8 h-8" />}
-            color="bg-gradient-to-br from-yellow-500 to-yellow-600"
-            visible={panelesVisibles.listaEspera}
-            onToggle={() => alternarPanel('listaEspera')}
-          />
-
           <CardMostrador
             titulo="Cantidad de ausentes"
             valor={datosEstadisticas.mostrador.resumen_ausentes_mes}
@@ -83,7 +64,6 @@ const SeccionResumen = ({
             visible={panelesVisibles.ausentes}
             onToggle={() => alternarPanel('ausentes')}
           />
-
           <CardMostrador
             titulo="Bajas del Mes"
             valor={datosEstadisticas.bajasMes}
@@ -92,7 +72,6 @@ const SeccionResumen = ({
             visible={panelesVisibles.bajas}
             onToggle={() => alternarPanel('bajas')}
           />
-
           <CardMostrador
             titulo="Altas del Mes"
             valor={datosEstadisticas.altasMes}
@@ -101,13 +80,34 @@ const SeccionResumen = ({
             visible={panelesVisibles.altas}
             onToggle={() => alternarPanel('altas')}
           />
-
-          
         </div>
 
-        {/* Tarjetas extra */}
-        <div className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Actualizaciones en vivo de la sede */}
+            <div className="mt-10">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <BarChart3 className="w-6 h-6 text-orange-500" />
+                Actualizaciones en vivo de la sede (actual)
+                <AyudaInfo
+                  texto="Estos datos son traídos actualmente de la sede, no tienen relación con el mes seleccionado. Son los datos en tiempo real de la sede."
+                />
+              </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <CardMostrador
+              titulo="Planes Contratados Vencidos"
+              valor={datosEstadisticas.mostrador.planes_vencidos}
+              icono={<Clock className="w-8 h-8" />}
+              color="bg-gradient-to-br from-red-500 to-red-600"
+              visible={panelesVisibles.planesVencidos}
+              onToggle={() => alternarPanel('planesVencidos')}
+            />
+            <CardMostrador
+              titulo="Lista de Espera"
+              valor={datosEstadisticas.mostrador.lista_espera}
+              icono={<Users className="w-8 h-8" />}
+              color="bg-gradient-to-br from-yellow-500 to-yellow-600"
+              visible={panelesVisibles.listaEspera}
+              onToggle={() => alternarPanel('listaEspera')}
+            />
             <CardMostrador
               titulo="Total de Cupos Habilitados"
               valor={datosEstadisticas.mostrador.cupos_habilitados}
@@ -120,15 +120,6 @@ const SeccionResumen = ({
               valor={datosEstadisticas.mostrador.cupos_deshabilitados}
               icono={<Users className="w-8 h-8" />}
               color="bg-gradient-to-br from-slate-600 to-slate-700"
-              visible
-            />
-            <CardMostrador
-              titulo="Retención del Mes"
-              valor={formatearPorcentaje(
-                datosEstadisticas.retencion?.porcentajeRetencion,
-              )}
-              icono={<TrendingUp className="w-8 h-8" />}
-              color="bg-gradient-to-br from-amber-500 to-amber-600"
               visible
             />
           </div>

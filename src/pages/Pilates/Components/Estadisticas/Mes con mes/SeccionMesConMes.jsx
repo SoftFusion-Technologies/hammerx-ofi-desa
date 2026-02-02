@@ -166,11 +166,11 @@ const configuracionSecciones = [
         label: "Promedio retención",
         format: "percent",
       },
-      {
+/*       {
         key: "instructores.promedio_asistencia",
         label: "Promedio asistencia clases",
         format: "percent",
-      },
+      }, */
       {
         key: "instructores.pruebas_asignadas_total",
         label: "Pruebas asignadas",
@@ -183,7 +183,7 @@ const configuracionSecciones = [
       },
       {
         key: "instructores.porcentaje_conversion_promedio",
-        label: "% Conversión",
+        label: "% Conversión (promedio)",
         format: "percent",
       },
     ],

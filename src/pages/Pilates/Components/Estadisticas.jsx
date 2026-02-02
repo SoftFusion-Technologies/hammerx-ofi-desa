@@ -8,10 +8,12 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, AnimateSharedLayout } from "framer-motion";
 import { BarChart3, Target, Award, Users } from "lucide-react";
 import axios from "axios";
-
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 // Componentes
 import SeccionResumen from "./Estadisticas/Detalle de la sede/SeccionResumen";
 import SeccionMetricas from "./Estadisticas/Detalle de la sede/SeccionMetricas";
@@ -19,6 +21,9 @@ import SeccionInstructores from "./Estadisticas/Detalle de la sede/SeccionInstru
 import SeccionPlanes from "./Estadisticas/Detalle de la sede/SeccionPlanes";
 import SeccionMesConMes from "./Estadisticas/Mes con mes/SeccionMesConMes";
 import RedesSoft from "./RedesSoft";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const obtenerAnioMesActual = () => {
   const ahora = new Date();
@@ -226,7 +231,7 @@ const Estadisticas = ({ sedeActual, sedes }) => {
   const obtenerDatos = async () => {
     setCargando(true);
     try {
-      const { anio, mes } = obtenerAnioMesActual();
+      const { anio, mes } = periodoSeleccionado || obtenerAnioMesActual();
       const { data } = await axios.get(
         "http://localhost:8080/pilates/estadisticas/completo",
         {
@@ -235,7 +240,7 @@ const Estadisticas = ({ sedeActual, sedes }) => {
       );
       const adaptado = adaptarRespuesta(data);
       setDatosEstadisticas(adaptado);
-      if (adaptado?.evolucionMensual?.length) {
+      if (adaptado?.evolucionMensual?.length && !periodoSeleccionado) {
         const ultimo = [...adaptado.evolucionMensual].sort(
           (a, b) => b.anio * 100 + b.mes - (a.anio * 100 + a.mes),
         )[0];
@@ -269,7 +274,7 @@ const Estadisticas = ({ sedeActual, sedes }) => {
   useEffect(() => {
     obtenerDatos();
     obtenerDatosMesConMes();
-  }, [sedeActual]);
+  }, [sedeActual, periodoSeleccionado]);
 
   useEffect(() => {
     const actualizarManulamente = async () => {
@@ -402,6 +407,7 @@ const Estadisticas = ({ sedeActual, sedes }) => {
         alumnosInscritos: datos.ocupacion.alumnosInscritos,
         turnosHabilitados: datos.ocupacion.turnosHabilitados,
         porcentajeOcupacion: datos.ocupacion.porcentajeOcupacion,
+        alumnosInscriptosContratados: datos.ocupacion.alumnosInscriptosContratados,
       }
     : datos.ocupacion;
 
@@ -497,7 +503,7 @@ const Estadisticas = ({ sedeActual, sedes }) => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-x-3">
                 <p className="text-gray-600 text-sm sm:text-base">
-                  Datos actualizados al {datos.mostrador.fechaActualizacion}
+                  Datos actualizados al {dayjs().format("D/M/YYYY")}
                 </p>
                 <button
                   className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 transition-colors text-xs sm:text-sm w-full sm:w-auto"
@@ -550,6 +556,7 @@ const Estadisticas = ({ sedeActual, sedes }) => {
                   value={valorPeriodoSelect}
                   onChange={(e) => {
                     const [anio, mes] = e.target.value.split("-").map(Number);
+                    console.log(anio, mes)
                     setPeriodoSeleccionado({ anio, mes });
                   }}
                   className="border rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-700 shadow-sm bg-white"
