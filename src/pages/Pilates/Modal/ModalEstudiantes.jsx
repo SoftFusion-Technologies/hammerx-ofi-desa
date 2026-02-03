@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { es } from "date-fns/locale";
-import { isBefore, parseISO, set } from "date-fns";
+import { isBefore, parseISO, set, format } from "date-fns";
 import { FaEye } from "react-icons/fa";
 import useConsultaDB from "../ConsultaDb/Consulta";
 import HistorialAlumno from "../Components/HistorialAlumno";
@@ -11,8 +11,10 @@ import {MdHistory} from "react-icons/md";
 import { TbReplace } from "react-icons/tb";
 import {Snowflake} from "lucide-react"
 import CongelarPlanAlumno from "../Components/CongelarPlanAlumno";
+import ReprogramacionVisita from "../Components/ReprogramacionVisita";
+import Swal from "sweetalert2";
 
-const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambioTurno }) => {
+const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambioTurno, onOpenReprogramarTurno, allSchedules, maxCapacity, horariosDeshabilitados, handleSaveCambioTurno }) => {
   /**
    * UTILITY FUNCTION: Obtiene la fecha actual en formato YYYY-MM-DD local
    * Si la fecha desde la API (fechaHoy) está disponible, se usa esa.
@@ -294,6 +296,12 @@ const { data: auditoriaData } = useConsultaDB(
       ) {
         setEsClienteParaRenovar(true);
         setHabilitarClasePrueba(false);
+      } else if (
+        student.status === "programado" &&
+        !student.scheduledDetails?.promisedDate
+      ) {
+        // Cliente programado sin fecha prometida: habilitar reprogramación
+        setHabilitarClasePrueba(false);
       }
       if (student.status === "plan" && student.planDetails) {
         // Calcular duración del plan usando la fecha de inicio y fin
@@ -506,7 +514,12 @@ const { data: auditoriaData } = useConsultaDB(
   const handleStatusChange = (e) => {
     const selectedValue = e.target.value;
 
-    if (selectedValue === "renovacion_directa") {
+    if (selectedValue === "reprogramacion") {
+      onOpenReprogramarTurno();
+      setStatus("reprogramacion");
+      setSeccion("REPROGRAMACION");
+    }
+    else if (selectedValue === "renovacion_directa") {
       // Lógica para ACTIVAR renovación directa
       const ultimoVencimiento = cellData?.student?.planDetails?.endDate;
       if (ultimoVencimiento) {
@@ -589,6 +602,38 @@ const { data: auditoriaData } = useConsultaDB(
     return "Actualizar";
   };
 
+
+//Funcion para confirmar la reprogramación del turno (Se usa en clientes de visita programada o clase de prueba)
+const confirmarReprogramacion = async (nuevaFecha, nuevaHora) => {
+    try{
+      const fechaObjeto = typeof nuevaFecha === 'string' ? parseISO(nuevaFecha) : nuevaFecha;
+      const nombreDia = format(fechaObjeto, 'eeee', { locale: es }).toUpperCase();
+
+      if (nombreDia === "SÁBADO" || nombreDia === "DOMINGO") {
+        Swal.fire({
+          icon: 'error',
+          title: 'Día no permitido',
+          text: 'No se pueden programar turnos los días sábados o domingos.',
+          confirmButtonColor: '#3085d6',
+        });
+        return;
+      }
+      const key = nombreDia + "-" + nuevaHora;
+      let alumno = cellData.student;
+      alumno = {...alumno, fecha_nueva: nuevaFecha}
+      await handleSaveCambioTurno(key, alumno, "cambiar_turno");
+      onClose();
+    }catch(error){
+      console.error("Error al confirmar reprogramación:", error);
+      setSeccion("PRINCIPAL");
+    }
+  };
+
+  //Función para cancelar la reprogramación
+  const cancelarReprogramacion = () => {
+    setSeccion("PRINCIPAL");
+    setStatus(statusAux || "programado");
+  };
 
   //Función para confirmar el congelamiento del plan
  const confirmarCongelamiento = (fechaVencimientoCongelada) => {
@@ -826,8 +871,23 @@ const { data: auditoriaData } = useConsultaDB(
                     )
                   },
                   {
+                    id: "reprogramacion",
+                    estaVisible: cellData?.student?.status === "programado" && !cellData?.student?.scheduledDetails?.promisedDate || cellData?.student?.status === "prueba",
+                    componente: (esActual, estaDesactivada) => (
+                      <option 
+                        key="reprogramacion" 
+                        value="reprogramacion"
+                        disabled={estaDesactivada}
+                        className={esActual ? "!text-gray-600 font-bold" : ""}
+                        style={esActual ? { color: '#ea580c', fontWeight: 'bold' } : {}}
+                      >
+                        {`Reprogramación de ${cellData?.student?.status === "prueba" ? "la clase de prueba" : "visita programada"}`}
+                      </option>
+                    )
+                  },
+                  {
                     id: "prueba",
-                    estaVisible: habilitarClasePrueba,
+                    estaVisible: habilitarClasePrueba && !(cellData?.student?.status === "programado" && !cellData?.student?.scheduledDetails?.promisedDate),
                     componente: (esActual, estaDesactivada) => (
                       <option 
                         key="prueba" 
@@ -1220,6 +1280,28 @@ const { data: auditoriaData } = useConsultaDB(
         <HistorialAlumno volver={() => setSeccion("PRINCIPAL")} cerrar={onClose} idCliente={cellData.student.id} nombreCliente={cellData.student.name}></HistorialAlumno>
       ) : seccion === "CONGELAR" ? (
         <CongelarPlanAlumno fechaVencimientoActual={planEndDateAux} idCliente={cellData.student.id} nombreCliente={cellData.student.name} volver={() => setSeccion("PRINCIPAL")} cerrar={onClose} confirmarCongelamiento={confirmarCongelamiento}></CongelarPlanAlumno>
+      ) : seccion === "REPROGRAMACION" ? (
+        <div className="bg-white rounded-lg p-8 w-full max-w-4xl shadow-2xl">
+          <h2 className="text-4xl font-bold mb-6 text-orange-600 font-bignoodle text-center">
+            Reprogramar Visita
+          </h2>
+          <ReprogramacionVisita
+            studentData={{
+              id: cellData.student.id,
+              name: cellData.student.name,
+              contact: cellData.student.contact,
+              currentDay: cellData.day,
+              currentHour: cellData.time,
+              status: cellData.student.status,
+            }}
+            allSchedules={allSchedules}
+            maxCapacity={maxCapacity}
+            horariosDeshabilitados={horariosDeshabilitados}
+            onConfirm={confirmarReprogramacion}
+            onCancel={cancelarReprogramacion}
+            fechaHoy={fechaHoy}
+          />
+        </div>
       ) : null}
     </div>
   );

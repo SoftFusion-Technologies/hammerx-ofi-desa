@@ -802,9 +802,9 @@ const PilatesGestionLogica = () => {
       const alumnoCambio = {
         id_estudiante: alumnoYHorarios.idEstudiante,
         id_horario_anterior: alumnoYHorarios.idHorarioAnterior,
-        id_horario_nuevo: alumnoYHorarios.idHorarioNuevo
+        id_horario_nuevo: alumnoYHorarios.idHorarioNuevo,
+        fecha_nueva_fin: studentData.fecha_nueva || null
       };
-
       // Realizar el cambio de turno a través de la API
       // Con reintentos en caso de problemas intermitentes
       const resultadoCambio = await guardarCambioDeTurno(null, alumnoCambio, 2); // 2 reintentos = 3 intentos totales
@@ -836,6 +836,7 @@ const PilatesGestionLogica = () => {
         timer: 3000,
         showConfirmButton: false
       });
+      throw error;
     }
   };
 
@@ -878,7 +879,6 @@ const PilatesGestionLogica = () => {
         timer: 1800,
         showConfirmButton: false
       });
-
       setIsModalCambioTurno(false);
     } catch (error) {
       console.error('Error al agregar a lista de espera:', error);
@@ -889,6 +889,7 @@ const PilatesGestionLogica = () => {
         timer: 2000,
         showConfirmButton: false
       });
+      throw error;
     } finally {
       refetchListaEspera();
     }
@@ -1836,6 +1837,12 @@ const PilatesGestionLogica = () => {
     setIsModalCambioTurno(true);
   };
 
+  const manejarReprogramarTurno = () => {
+    setHorariosCambioTurno(
+      generarHorariosConCupos(schedule, cupoMaximoPilates)
+    );
+  }
+
   const {
     horariosDeshabilitados, // Almacena los horarios que han sido ocultados
     detalleHorariosDeshabilitados, // Detalles adicionales sobre los horarios ocultos
@@ -1924,6 +1931,7 @@ const PilatesGestionLogica = () => {
       marcarEstadosAlumnoListaEspera,
       handleConfirmationComplete,
       handleAbrirCambioTurno,
+      manejarReprogramarTurno,
       generarHorariosConCupos,
       handleSaveCambioTurno,
       handleSaveWaitingListCambio,

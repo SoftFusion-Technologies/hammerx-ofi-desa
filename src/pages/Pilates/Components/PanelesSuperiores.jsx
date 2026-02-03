@@ -42,7 +42,6 @@ const PanelesSuperiores = ({
     setAllExpanded(!allExpanded);
   };
 
-  console.log(horariosDeshabilitados)
 
   // 1. Filtra los TURNOS LIBRES
   // Objetivo: Eliminar de la visualización los cupos libres que corresponden a horarios que el admin ocultó.

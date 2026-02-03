@@ -353,6 +353,11 @@ const PilatesGestion = () => {
                       cellData={states.currentCell}
                       fechaHoy={states.fechaHoy}
                       onOpenCambioTurno={functions.handleAbrirCambioTurno}
+                      onOpenReprogramarTurno={functions.manejarReprogramarTurno}
+                      maxCapacity={states.cupoMaximoPilates}
+                      horariosDeshabilitados={states.detalleHorariosDeshabilitados}
+                      allSchedules={states.horariosCambioTurno}
+                      handleSaveCambioTurno={functions.handleSaveCambioTurno}
                     />
                   )}
 
