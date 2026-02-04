@@ -246,26 +246,21 @@ export const obtenerAlumnosFiltrados = (
 ) => {
   const alumnosNormalizados = ausentesData.map((alumno) => {
     const totalContactos = Number(alumno?.total_contactos || 0);
-    const faltasUltimoContacto = Number(alumno?.contacto_realizado || 0);
     const rachaActual = Number(alumno?.racha_actual || 0);
+    const faltasDesdeUltimoPresente = Number(alumno?.faltas_desde_ultimo_presente || 0);
     const diasUltimoContacto = calcularDiasDesdeUltimoContacto(alumno);
-    const estaEsperando = alumno.esperando_respuesta === true || alumno.esperando_respuesta === 1;
+    
+    // *** IMPORTANTE: Respetamos el estado_visual que ya viene calculado del backend ***
+    // El backend ya implementa la lógica completa del semáforo:
+    // - Tolerancia de 2 faltas
+    // - ROJO si >= 3 faltas sin contacto o si después de contactar vuelve a faltar 3+ veces
+    // - VERDE si está dentro de tolerancia o después de contacto/asistencia
+    // - AMARILLO si está esperando respuesta (prioridad sobre ROJO)
+    const estadoVisual = alumno.estado_visual || "VERDE";
+    
+    const colorAlerta = estadoVisual;
 
-    const sinContacto = totalContactos === 0;
-    const superaDosFaltas =
-      faltasUltimoContacto > 0 && rachaActual >= faltasUltimoContacto + 2;
     const alertaRojaPorDias = diasUltimoContacto !== null && diasUltimoContacto > 15;
-
-    // --- PRIORIDADES VISUALES ---
-    // 1. Si está esperando respuesta -> AMARILLO
-    // 2. Si debe rojo -> ROJO
-    // 3. Sino -> VERDE
-    let estadoVisual = "VERDE";
-    if (sinContacto || superaDosFaltas) estadoVisual = "ROJO";
-    if (estaEsperando) estadoVisual = "AMARILLO"; 
-
-    // Color alerta (borde o fondo fuerte)
-    const colorAlerta = (estadoVisual === "ROJO" || (alertaRojaPorDias && estadoVisual !== "AMARILLO")) ? "ROJO" : estadoVisual;
 
     return {
       ...alumno,
@@ -273,8 +268,8 @@ export const obtenerAlumnosFiltrados = (
       color_alerta: colorAlerta, 
       dias_calculados: diasUltimoContacto,
       total_contactos_normalizado: totalContactos,
-      faltas_ultimo_contacto_normalizadas: faltasUltimoContacto,
-      supera_dos_faltas: superaDosFaltas,
+      racha_actual: rachaActual, // Preservamos racha_actual para el ordenamiento
+      faltas_desde_ultimo_presente: faltasDesdeUltimoPresente,
     };
   });
 
@@ -292,7 +287,6 @@ export const obtenerAlumnosFiltrados = (
 
     let coincideFiltroAvanzado = true;
 
-    console.log(alumno)
 
     switch (filtroAvanzado) {
       case "SIN_CONTACTO":
@@ -326,14 +320,59 @@ export const obtenerAlumnosFiltrados = (
     return coincideTexto && coincideEstado && coincideFiltroAvanzado;
   });
 
+  // Función auxiliar para obtener el estado del alumno
+  const obtenerEstadoAlumno = (alumno) => {
+    const faltas = alumno.faltas_desde_ultimo_presente || 0;
+    if (faltas >= 0 && faltas <= 2) {
+      return 'ALUMNO_PRESENTE';
+    } else if (faltas > 2) {
+      return 'GESTIONADO';
+    }
+    return 'OTRO';
+  };
+
+  // Función auxiliar para obtener prioridad del color
+  const obtenerPrioridadColor = (color) => {
+    switch (color) {
+      case 'ROJO':
+        return 3;
+      case 'AMARILLO':
+        return 2;
+      case 'VERDE':
+        return 1;
+      default:
+        return 0;
+    }
+  };
+
   if (ordenamiento === "MAS_FALTAS") {
     alumnosFiltrados = [...alumnosFiltrados].sort(
-      (a, b) => (b?.racha_actual || 0) - (a?.racha_actual || 0)
+      (a, b) => (b?.faltas_desde_ultimo_presente || 0) - (a?.faltas_desde_ultimo_presente || 0)
     );
   } else if (ordenamiento === "MENOS_FALTAS") {
     alumnosFiltrados = [...alumnosFiltrados].sort(
-      (a, b) => (a?.racha_actual || 0) - (b?.racha_actual || 0)
+      (a, b) => (a?.faltas_desde_ultimo_presente || 0) - (b?.faltas_desde_ultimo_presente || 0)
     );
+  } else {
+    // DEFECTO: Ordenar por prioridad de color, y dentro de VERDE, "Gestionado" antes que "Alumno presente"
+    alumnosFiltrados = [...alumnosFiltrados].sort((a, b) => {
+      const prioridadA = obtenerPrioridadColor(a.color_alerta);
+      const prioridadB = obtenerPrioridadColor(b.color_alerta);
+
+      if (prioridadA !== prioridadB) {
+        return prioridadB - prioridadA; // Mayor prioridad primero (ROJO > AMARILLO > VERDE)
+      }
+
+      // Si tienen el mismo color, ordenar por estado
+      const estadoA = obtenerEstadoAlumno(a);
+      const estadoB = obtenerEstadoAlumno(b);
+
+      // "GESTIONADO" (prioridad 1) antes que "ALUMNO_PRESENTE" (prioridad 0)
+      const prioridadEstadoA = estadoA === 'GESTIONADO' ? 1 : 0;
+      const prioridadEstadoB = estadoB === 'GESTIONADO' ? 1 : 0;
+
+      return prioridadEstadoB - prioridadEstadoA;
+    });
   }
 
   return alumnosFiltrados;

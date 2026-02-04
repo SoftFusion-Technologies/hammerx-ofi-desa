@@ -360,27 +360,16 @@ const ModalDetalleAusentes = ({
                       alumnosPaginados.map((alumno) => {
                         const diasUltimoContacto =
                           calcularDiasDesdeUltimoContacto(alumno);
-                        const totalContactos = Number(
-                          alumno?.total_contactos || 0
-                        );
-                        const faltasUltimoContacto = Number(
-                          alumno?.contacto_realizado || 0
-                        );
-                        const rachaActual = Number(alumno?.racha_actual || 0);
-                        const sinContacto = totalContactos === 0;
-                        const superaDosFaltas =
-                          faltasUltimoContacto > 0 &&
-                          rachaActual >= faltasUltimoContacto + 2;
 
+                        // Respetamos el estado_visual y color_alerta que ya vienen procesados
                         const esAmarillo = alumno.estado_visual === "AMARILLO";
                         const esRojo = alumno.color_alerta === "ROJO";
+                        const esVerde = alumno.estado_visual === "VERDE";
 
                         // Definir color de fondo de la fila
                         let bgClass = "!bg-green-100";
                         if (esRojo) bgClass = "!bg-red-100";
                         if (esAmarillo) bgClass = "!bg-yellow-50";
-
-                        const esNoContactado = sinContacto || superaDosFaltas;
 
                         return (
                           <tr
@@ -405,7 +394,7 @@ const ModalDetalleAusentes = ({
                             </td>
                             <td className="px-4 py-2 whitespace-nowrap text-center">
                               <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-white border border-gray-300 shadow-sm text-gray-700">
-                                {alumno.racha_actual} clases
+                                {alumno.faltas_desde_ultimo_presente} clases
                               </span>
                             </td>
                             <td className="px-4 py-2 whitespace-nowrap text-center">
@@ -413,13 +402,13 @@ const ModalDetalleAusentes = ({
                                 <span className="inline-flex px-2 py-0.5 text-[11px] font-bold leading-4 text-yellow-800 bg-yellow-200 rounded-full border border-yellow-300 shadow-sm">
                                   Esperando
                                 </span>
-                              ) : esNoContactado ? (
+                              ) : esRojo ? (
                                 <span className="inline-flex px-2 py-0.5 text-[11px] font-bold leading-4 text-red-800 bg-red-200 rounded-full border border-red-300 shadow-sm">
-                                  No contactados
+                                  Requiere contacto
                                 </span>
                               ) : (
                                 <span className="inline-flex px-2 py-0.5 text-[11px] font-bold leading-4 text-green-800 bg-green-200 rounded-full border border-green-300 shadow-sm">
-                                  Contactados
+                                  {(alumno.faltas_desde_ultimo_presente >= 0 && alumno.faltas_desde_ultimo_presente <= 2) ? 'Alumno presente' : 'Gestionado'}
                                 </span>
                               )}
                             </td>
@@ -527,9 +516,15 @@ const ModalDetalleAusentes = ({
                       </span>
                     </div>
                     <div className="flex justify-between border-b pb-2">
-                      <span className="text-gray-500">Faltas:</span>
+                      <span className="text-gray-500">Faltas en total:</span>
                       <span className="font-bold text-red-500">
                         {alumnoSeleccionado.racha_actual}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="text-gray-500">Faltas desde el último presente:</span>
+                      <span className="font-bold text-orange-600">
+                        {alumnoSeleccionado.faltas_desde_ultimo_presente}
                       </span>
                     </div>
                     <div className="flex justify-between border-b pb-2">
@@ -585,7 +580,6 @@ const ModalDetalleAusentes = ({
                         Historial de observaciones
                       </h4>
                       <ul className="space-y-3 ml-1">
-                        {console.log(historialSeleccionado)}
                         {historialSeleccionado.map((item) => (
                           <li
                             key={item.id}

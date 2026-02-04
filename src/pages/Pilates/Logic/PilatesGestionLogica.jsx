@@ -270,7 +270,6 @@ const PilatesGestionLogica = () => {
    */
   useEffect(() => {
     if (ausentesData && ausentesData.length > 0) {
-      /* console.log(ausentesData) */
       const fecha_actual = new Date();
       const lista_formateada = ausentesData.map((alumno) => {
         let dias_pasados = null;
@@ -280,32 +279,31 @@ const PilatesGestionLogica = () => {
           dias_pasados = differenceInDays(fecha_actual, fecha_contacto);
         }
 
-        const faltasUltimoContacto = Number(alumno?.contacto_realizado || 0);
-        const rachaActual = Number(alumno?.racha_actual || 0);
-        const esperandoRespuesta = alumno?.esperando_respuesta === true || alumno?.esperando_respuesta === 1;
-        const sinContacto = Number(alumno?.total_contactos || 0) === 0;
-        const superaDosFaltas =
-          faltasUltimoContacto > 0 && rachaActual >= faltasUltimoContacto + 2;
-        const alertaRojaPorDias = dias_pasados !== null && dias_pasados > 15;
-
-        let colorAlerta =
-          sinContacto || superaDosFaltas || alertaRojaPorDias ? 'ROJO' : 'VERDE';
-        colorAlerta = esperandoRespuesta ? 'AMARILLO' : colorAlerta;
+        const faltas_desde_ultimo_presente = Number(alumno?.faltas_desde_ultimo_presente || 0);
+        const total_contactos = Number(alumno?.total_contactos || 0);
+        
+        const colorAlerta = alumno.estado_visual || 'VERDE';
 
         return {
           id: alumno.id,
           name: alumno.nombre,
           cantidad: alumno.racha_actual,
-          total_contactos: alumno.total_contactos,
+          faltas_desde_ultimo_presente: faltas_desde_ultimo_presente,
+          total_contactos: total_contactos,
           contacto: alumno.telefono,
           dias_desde_ultimo_contacto: dias_pasados,
           color_alerta: colorAlerta,
-          faltas_ultimo_contacto_normalizadas: faltasUltimoContacto,
-          supera_dos_faltas: superaDosFaltas
+          estado_visual: colorAlerta 
         };
       });
 
-      setAusentesAlumnos(lista_formateada);
+      // Ordenar por prioridad: ROJO y AMARILLO primero, VERDE al final
+      const lista_ordenada = lista_formateada.sort((a, b) => {
+        const prioridad = { ROJO: 3, AMARILLO: 2, VERDE: 1 };
+        return (prioridad[b.color_alerta] || 0) - (prioridad[a.color_alerta] || 0);
+      });
+
+      setAusentesAlumnos(lista_ordenada);
     }
   }, [ausentesData]);
 

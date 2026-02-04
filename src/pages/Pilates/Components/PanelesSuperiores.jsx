@@ -438,16 +438,9 @@ const PanelesSuperiores = ({
                 <ul className="space-y-1.5">
                   {alumnosAusentes.map((alumno, idx) => {
                     const colorAlerta = alumno.color_alerta || 'VERDE';
-                    const sinContacto = (alumno.total_contactos ?? 0) === 0;
-                    const superaDosFaltas = alumno.supera_dos_faltas;
-                    const contactoVencido =
-                      typeof alumno.dias_desde_ultimo_contacto === 'number' &&
-                      alumno.dias_desde_ultimo_contacto > 15;
-                    const esAmarillo = alumno.color_alerta === 'AMARILLO';
-                    const esRojo =
-                      colorAlerta === 'ROJO'
-                        ? true
-                        : sinContacto || superaDosFaltas || contactoVencido;
+                    const esAmarillo = colorAlerta === 'AMARILLO';
+                    const esRojo = colorAlerta === 'ROJO';
+                    const esVerde = colorAlerta === 'VERDE';
 
                     return (
                       <motion.li
@@ -465,10 +458,10 @@ const PanelesSuperiores = ({
                         }`}
                         title={
                           esAmarillo
-                            ? "Sin contacto, +2 faltas desde el último contacto o último contacto hace más de 15 días"
+                            ? "Esperando respuesta del alumno"
                             : esRojo
-                            ? "Sin contacto, +2 faltas desde el último contacto o último contacto hace más de 15 días"
-                            : "Contactado reciente (sin superar +2 faltas y <= 15 días)"
+                            ? "Requiere contacto urgente: 3+ faltas sin gestión"
+                            : "Contactado recientemente o dentro de tolerancia"
                         }
                       >
                         <span className="text-sm font-medium truncate pr-2">
@@ -483,7 +476,7 @@ const PanelesSuperiores = ({
                               : "bg-green-200 text-green-900"
                           }`}
                         >
-                          {alumno.cantidad}
+                          {alumno.faltas_desde_ultimo_presente}
                         </span>
                       </motion.li>
                     );

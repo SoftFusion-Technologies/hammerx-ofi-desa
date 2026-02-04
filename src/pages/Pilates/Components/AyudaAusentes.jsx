@@ -62,13 +62,13 @@ const AyudaAusentes = ({ onCerrar }) => {
             </div>
             <div className="pl-10">
               <p className="text-gray-600 text-xs mb-2">
-                Usa los botones superiores para filtrar por color:
+                Los colores indican el estado del alumno:
               </p>
               <div className="space-y-2 bg-gray-50 p-2 rounded border border-gray-100">
                 <div className="flex items-center gap-2">
                   <span className="text-sm">🔴</span>
                   <span className="text-xs text-gray-700">
-                    <strong>Rojo (Urgente):</strong> Nunca se contactó, o volvió a faltar mucho.
+                    <strong>Rojo (Urgente):</strong> Sin contacto y +3 faltas, O contactado pero volvió a faltar 3+ veces.
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -80,7 +80,7 @@ const AyudaAusentes = ({ onCerrar }) => {
                 <div className="flex items-center gap-2">
                   <span className="text-sm">🟢</span>
                   <span className="text-xs text-gray-700">
-                    <strong>Verde (Ok):</strong> Ya fue contactado recientemente.
+                    <strong>Verde (Ok):</strong> Contactado recientemente y sin superar 3 faltas, O tiene 1-2 faltas (tolerancia).
                   </span>
                 </div>
               </div>
@@ -134,13 +134,13 @@ const AyudaAusentes = ({ onCerrar }) => {
               </p>
               <ul className="space-y-1 text-gray-600 text-xs">
                 <li>
-                  📌 <strong>Defecto:</strong> Prioridad a los Rojos.
+                  📌 <strong>Defecto:</strong> Orden por prioridad (Rojo primero, luego Amarillo, luego Verde).
                 </li>
                 <li>
-                  ⬇️ <strong>Más faltas:</strong> Los que más faltaron arriba.
+                  ⬇️ <strong>Más faltas:</strong> Los alumnos con más faltas desde último presente arriba.
                 </li>
                 <li>
-                  ⬆️ <strong>Menos faltas:</strong> Los que menos faltaron arriba.
+                  ⬆️ <strong>Menos faltas:</strong> Los alumnos con menos faltas desde último presente arriba.
                 </li>
               </ul>
             </div>
