@@ -212,6 +212,7 @@ import CuotasAnualC from './components/Pagos/Concepcion/PAnual/CuotasAnual.jsx';
 import ComentariosPage from './pages/ComentariosPage.jsx';
 import ComentariosPageConcep from './pages/ComentariosPageConcep.jsx';
 import QuejasVist from './pages/Quejas/QuejasVist.jsx';
+import QuejaMonitor from './components/QuejaMonitor.jsx';
 
 import RecaptacionGet from './pages/staff/MetodsGet/RecaptacionGet.jsx';
 import VentasProspectosGet from './pages/staff/MetodsGet/VentasProspectosGet.jsx';
@@ -274,7 +275,7 @@ const App = memo(() => {
             ) : (
               <>
                 <ScrollToTop />
-
+                <QuejaMonitor />
                 {/* Enrutamiento de las diferentes páginas */}
                 <Rutas>
                   <Ruta path="/" element={<HomePage />} />{' '}

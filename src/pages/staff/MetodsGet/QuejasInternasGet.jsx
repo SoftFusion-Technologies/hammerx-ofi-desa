@@ -100,7 +100,7 @@ const toast = (title, icon = 'success') =>
 
 // ===================== Componente =====================
 const QuejasInternasGet = () => {
-  const { userLevel, userName } = useAuth(); // userName = email
+  const { userLevel, userName, sedeName } = useAuth(); // userName = email
   const [userSede, setUserSede] = useState('');
   const [userLevelCanon, setUserLevelCanon] = useState(toCanonical(userLevel));
 
@@ -163,7 +163,7 @@ const QuejasInternasGet = () => {
     setError('');
     try {
       const response = await axios.get(URL, {
-        params: { userLevel, userName } // ✅ se envía por query
+        params: { userLevel, userName, sedeName } // ✅ se envía por query
       });
       setQuejas(response.data || []);
     } catch (err) {
