@@ -271,7 +271,13 @@ const PilatesGestionLogica = () => {
   useEffect(() => {
     if (ausentesData && ausentesData.length > 0) {
       const fecha_actual = new Date();
-      const lista_formateada = ausentesData.map((alumno) => {
+      // Filtrar alumnos presentes (faltas entre 0 y 2)
+      const ausentesFiltrados = ausentesData.filter((alumno) => {
+        const faltas = Number(alumno?.faltas_desde_ultimo_presente || 0);
+        return !(faltas >= 0 && faltas <= 2);
+      });
+
+      const lista_formateada = ausentesFiltrados.map((alumno) => {
         let dias_pasados = null;
 
         if (alumno.ultimo_contacto) {

@@ -277,6 +277,12 @@ export const obtenerAlumnosFiltrados = (
     const totalContactos = alumno.total_contactos_normalizado;
     const dias = alumno.dias_calculados;
 
+    // Ocultar alumnos presentes
+    const faltas = alumno.faltas_desde_ultimo_presente || 0;
+    if (faltas >= 0 && faltas <= 2) {
+      return false;
+    }
+
     const texto = (busqueda || "").toLowerCase();
     const coincideTexto =
       alumno?.nombre?.toLowerCase().includes(texto) ||
@@ -286,7 +292,6 @@ export const obtenerAlumnosFiltrados = (
       filtroEstado === "TODOS" || alumno?.estado_visual === filtroEstado;
 
     let coincideFiltroAvanzado = true;
-
 
     switch (filtroAvanzado) {
       case "SIN_CONTACTO":
