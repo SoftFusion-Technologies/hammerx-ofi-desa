@@ -163,6 +163,9 @@ const PilatesGestionLogica = () => {
           cupo_maximo: horariosData[key].cupo_maximo || 0,
           horarioId: horariosData[key].horarioId || null,
           coachId: horariosData[key].coachId || null,
+          cupos_descuento: horariosData[key].cupos_descuento || 0,
+          porcentaje_descuento: horariosData[key].porcentaje_descuento || 0,
+          fecha_vencimiento_descuento: horariosData[key].fecha_vencimiento_descuento || null,
           alumnos: Array.isArray(horariosData[key].alumnos)
             ? horariosData[key].alumnos
             : []
@@ -1545,7 +1548,7 @@ const PilatesGestionLogica = () => {
 
                 {/* Badge "Modificado" (solo si la duración no es estándar) */}
                 {duracion && ![29, 89, 179, 359].includes(Number(duracion)) && (
-                  <span className="not-italic font-bold bg-orange-200 text-orange-800 text-[10px] p-2 rounded-full">
+                  <span className="not-italic font-bold bg-orange-200 text-orange-800 text-[10px] p-2 rounded-full ">
                     <FaPencilAlt />
                   </span>
                 )}
@@ -1944,7 +1947,8 @@ const PilatesGestionLogica = () => {
       puedeDeshabilitarHorario,
       alternarMinimizacionHorario,
       manejarMinimizacionGlobal,
-      refetchAusentes
+      refetchAusentes,
+      refrescarHorarios: refetch,
     }
   };
 };

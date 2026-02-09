@@ -62,6 +62,20 @@ const GrillaHorarios = ({
       .replace(/[\u0300-\u036f]/g, "");
   };
 
+  const parseDescuento = (raw) => {
+    if (raw === null || raw === undefined || raw === "") return null;
+    const num = Number(String(raw).replace(",", "."));
+    if (Number.isNaN(num) || num <= 0) return null;
+    return num;
+  };
+
+  const formatDescuento = (num) => {
+    const formatted = Number.isInteger(num)
+      ? String(num)
+      : num.toFixed(2).replace(".", ",");
+    return `${formatted}%`;
+  };
+
   //  Función auxiliar para verificar si un grupo de días tiene alumnos en una hora específica
   const verificarOcupacionPorGrupo = (grupoDias, hora) => {
     return grupoDias.some(diaNombre => {
@@ -266,6 +280,14 @@ const GrillaHorarios = ({
                   const students = cellData.alumnos || [];
                   const coach = cellData.coach || "";
                   const porcentaje_asistencia_clases = cellData.porcentaje_asistencia_clases || 0;
+                  const cuposDescuento = Number(cellData.cupos_descuento) || 0;
+                  const porcentajeDescuentoNum = parseDescuento(cellData.porcentaje_descuento);
+                  const tieneDescuento = cuposDescuento > 0 && porcentajeDescuentoNum !== null;
+                  const etiquetaDescuento = tieneDescuento
+                    ? formatDescuento(porcentajeDescuentoNum)
+                    : null;
+                  const mostrarDescuentoEnSlot = (slotIndex) =>
+                    tieneDescuento && slotIndex < cuposDescuento;
                   const isDayEnabled =
                     rol === "GESTION" ? esGestionEditable : day === hoy;
 
@@ -366,6 +388,7 @@ const GrillaHorarios = ({
                                   {/* Renderizar alumnos normales y de plan primero */}
                                   {alumnosNormales.map((student, index) => {
                                     const { content, style } = getCellContentAndStyle(student);
+                                    const slotIndex = index;
                                     const removeAccents = (str) =>
                                       (str || "")
                                         .normalize("NFD")
@@ -417,11 +440,21 @@ const GrillaHorarios = ({
                                             <div className="flex-grow text-left truncate">
                                               {content}
                                             </div>
+                                            {mostrarDescuentoEnSlot(slotIndex) && (
+                                              <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                                                {etiquetaDescuento}
+                                              </span>
+                                            )}
                                           </div>
                                         ) : (
                                           <>
-                                            <div className="flex-grow text-left truncate font-medium">
-                                              {student.name}
+                                            <div className="flex-grow text-left truncate font-medium flex items-center">
+                                              <span className="truncate">{student.name}</span>
+                                              {mostrarDescuentoEnSlot(slotIndex) && (
+                                                <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                                                  {etiquetaDescuento}
+                                                </span>
+                                              )}
                                             </div>
                                             {isDayEnabled && estadoAsistencia && (
                                               <div className="flex-shrink-0 ml-2">
@@ -449,6 +482,7 @@ const GrillaHorarios = ({
                                   {/* Renderizar alumnos de prueba del día actual */}
                                   {alumnosPrueba.map((student, index) => {
                                     const { content, style } = getCellContentAndStyle(student);
+                                    const slotIndex = alumnosNormales.length + index;
                                     const removeAccents = (str) =>
                                       (str || "")
                                         .normalize("NFD")
@@ -500,11 +534,21 @@ const GrillaHorarios = ({
                                             <div className="flex-grow text-left truncate">
                                               {content}
                                             </div>
+                                            {mostrarDescuentoEnSlot(slotIndex) && (
+                                              <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                                                {etiquetaDescuento}
+                                              </span>
+                                            )}
                                           </div>
                                         ) : (
                                           <>
-                                            <div className="flex-grow text-left truncate font-medium">
-                                              {student.name}
+                                            <div className="flex-grow text-left truncate font-medium flex items-center">
+                                              <span className="truncate">{student.name}</span>
+                                              {mostrarDescuentoEnSlot(slotIndex) && (
+                                                <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                                                  {etiquetaDescuento}
+                                                </span>
+                                              )}
                                             </div>
                                             {isDayEnabled && estadoAsistencia && (
                                               <div className="flex-shrink-0 ml-2">
@@ -553,19 +597,28 @@ const GrillaHorarios = ({
                                   const ocupacionTotal = students.length + infoTrials.count;
                                   const espaciosLibres = Math.max(0, MAX_STUDENTS_PER_SLOT - ocupacionTotal);
                                   if (espaciosLibres > 0) {
-                                    return Array.from({ length: espaciosLibres }).map((_, index) => (
-                                      <div
-                                        key={`empty-${index}`}
-                                        className="flex-grow p-1 text-blue-600 text-xs flex items-center justify-center rounded-lg cursor-pointer transition-all duration-200 border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 hover:shadow-sm"
-                                        onClick={() => handleCellClick(day, hour, null, "normal")}
-                                      >
-                                        <span className="text-xs md:text-sm font-medium text-blue-600 hover:text-blue-800">
-                                          + Agregar alumno
-                                        </span>
-                                      </div>
-                                    ));
+                                    return Array.from({ length: espaciosLibres }).map((_, index) => {
+                                      const slotIndex = students.length + index;
+                                      return (
+                                        <div
+                                          key={`empty-${index}`}
+                                          className="flex-grow p-1 text-blue-600 text-xs flex items-center justify-center rounded-lg cursor-pointer transition-all duration-200 border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 hover:shadow-sm"
+                                          onClick={() => handleCellClick(day, hour, null, "normal")}
+                                        >
+                                          <span className="text-xs md:text-sm font-medium text-blue-600 hover:text-blue-800">
+                                            + Agregar alumno
+                                          </span>
+                                          {mostrarDescuentoEnSlot(slotIndex) && (
+                                            <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                                              {etiquetaDescuento}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    });
                                   }
                                   // Si no hay lugar, mostrar botón de cupo adicional
+                                  const slotIndex = students.length;
                                   return (
                                     <div
                                       className="flex-grow p-1 text-red-600 text-xs flex items-center justify-center rounded-lg cursor-pointer transition-all duration-200 border-2 border-dashed border-red-300 bg-red-50 hover:bg-red-100 hover:border-red-400 hover:shadow-sm mt-1"
@@ -575,6 +628,11 @@ const GrillaHorarios = ({
                                       <span className="text-xs md:text-sm font-medium text-red-600 hover:text-red-800 tracking-tight flex items-center gap-1">
                                         + Cupo emergencia
                                       </span>
+                                      {mostrarDescuentoEnSlot(slotIndex) && (
+                                        <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                                          {etiquetaDescuento}
+                                        </span>
+                                      )}
                                     </div>
                                   );
                                 })()}

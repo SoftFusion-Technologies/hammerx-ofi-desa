@@ -29,6 +29,7 @@ import {motion} from "framer-motion"
 import { IoIosStats } from "react-icons/io";
 import Estadisticas from './Components/Estadisticas';
 import BajasPilates from './Components/BajasPilates';
+import CuposDescuentos from './Components/Descuentos/CuposDescuentos';
 
 const EyeIcon = ({ className }) => (
   <svg
@@ -90,7 +91,7 @@ const PilatesGestion = () => {
                   </div>
 
                   {/* --- SELECTOR DE VISTAS --- */}
-                  <div className="flex flex-col sm:flex-row w-full xl:w-auto bg-slate-100 p-1.5 rounded-xl gap-1">
+                  <div className="flex flex-col xl:flex-row w-full xl:w-auto bg-slate-100 p-1.5 rounded-xl gap-1">
                     {/* Opción: GESTIÓN */}
                     <button
                       onClick={() => functions.handleSectionChange('GESTION')}
@@ -106,7 +107,7 @@ const PilatesGestion = () => {
                       {states.section === 'GESTION' && (
                         <EyeIcon className="h-4 w-4" />
                       )}
-                      Gestión
+                      GESTIÓN
                     </button>
 
                     {/* Opción: LISTA DE ESPERA */}
@@ -126,7 +127,7 @@ const PilatesGestion = () => {
                       {states.section === 'LISTA_ESPERA' && (
                         <EyeIcon className="h-4 w-4" />
                       )}
-                      Lista de Espera
+                      LISTA DE ESPERA
                     </button>
 
                     {/* Opción: HORARIOS DESHABILITADOS */}
@@ -146,7 +147,7 @@ const PilatesGestion = () => {
                       {states.section === 'HORARIOS_DESHABILITADOS' && (
                         <EyeIcon className="h-4 w-4" />
                       )}
-                      Horarios Deshabilitados
+                      HORARIOS DESHABILITADOS
                     </button>
                     {/* Opción: BAJAS PILATES */}
                     <button
@@ -165,7 +166,26 @@ const PilatesGestion = () => {
                       {states.section === 'BAJAS_PILATES' && (
                         <EyeIcon className="h-4 w-4" />
                       )}
-                      Bajas Pilates
+                      BAJAS
+                    </button>
+                    {/* Opción: Cupos descuentos */}
+                    <button
+                      onClick={() =>
+                        functions.handleSectionChange('CUPOS_DESCUENTOS')
+                      }
+                      className={`
+                      flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200
+                      ${
+                        states.section === 'CUPOS_DESCUENTOS'
+                          ? 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5 scale-[1.02]'
+                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                      }
+                    `}
+                    >
+                      {states.section === 'CUPOS_DESCUENTOS' && (
+                        <EyeIcon className="h-4 w-4" />
+                      )}
+                      DESCUENTOS
                     </button>
                     {/* Opción: Estadísticas */}
                     <button
@@ -184,7 +204,7 @@ const PilatesGestion = () => {
                       {states.section === 'ESTADISTICAS' && (
                         <IoIosStats className="h-4 w-4" />
                       )}
-                      Estadísticas
+                      ESTADÍSTICAS
                     </button>
                   </div>
                 </div>
@@ -406,6 +426,8 @@ const PilatesGestion = () => {
                 <Estadisticas sedeActual={states.sedeActualFiltro} sedes={states.sedesData} />
               ) : states.section === "BAJAS_PILATES" ? (
                 <BajasPilates sedeActual={states.sedeActualFiltro} />
+              ) : states.section === "CUPOS_DESCUENTOS" ? (
+                <CuposDescuentos horariosDeshabilitados={states.detalleHorariosDeshabilitados} maximaCapacidad={states.cupoMaximoPilates} sedeActualFiltro={states.sedeActualFiltro} refrescarHorarios={functions.refrescarHorarios} puedeEditarSede={states.puedeEditarSede} />
               ) : null}
             </div>
           </div>
