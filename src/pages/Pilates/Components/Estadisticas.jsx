@@ -400,7 +400,15 @@ const Estadisticas = ({ sedeActual, sedes }) => {
   }
 
   // Inyectar en retencionMes
-  const retencionMes = { ...datos.retencion, cantidadSiguenDiaUno };
+  const porcentajeRetencionMes = resumenMensual?.porcentaje_retencion_global;
+  const retencionMes = {
+    ...datos.retencion,
+    cantidadSiguenDiaUno,
+    porcentajeRetencion:
+      typeof porcentajeRetencionMes === "number"
+        ? porcentajeRetencionMes
+        : datos.retencion.porcentajeRetencion,
+  };
 
   const ocupacionMes = resumenMensual
     ? {
