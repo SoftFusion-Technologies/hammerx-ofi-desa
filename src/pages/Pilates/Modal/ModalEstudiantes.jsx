@@ -11,8 +11,9 @@ import {MdHistory} from "react-icons/md";
 import { TbReplace } from "react-icons/tb";
 import {Snowflake} from "lucide-react"
 import CongelarPlanAlumno from "../Components/CongelarPlanAlumno";
-import ReprogramacionVisita from "../Components/ReprogramacionVisita";
+import ReprogramacionVisita from "../Components/Reprogramacion/ReprogramacionVisita";
 import Swal from "sweetalert2";
+import ReprogramacionFechaVisita from "../Components/Reprogramacion/ReprogramacionFechaVisita";
 
 const StudentModal = ({ isOpen, onClose, onSave, cellData, fechaHoy, onOpenCambioTurno, onOpenReprogramarTurno, allSchedules, maxCapacity, horariosDeshabilitados, handleSaveCambioTurno }) => {
   /**
@@ -399,7 +400,7 @@ const { data: auditoriaData } = useConsultaDB(
    */
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = (fechaProgramado) => {
     if (!cellData) {
       alert("Error: No se pudo obtener información de la celda.");
       return;
@@ -472,9 +473,10 @@ const { data: auditoriaData } = useConsultaDB(
         studentData.trialDetails = { date: trialDate, type: planType };
         break;
       case "programado":
+        const fechaValida = typeof fechaProgramado === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fechaProgramado);
         studentData.scheduledDetails = {
           type: planType,
-          date: scheduledDate,
+          date: fechaValida ? fechaProgramado : scheduledDate,
           startDateAux: planStartDateAux,
           endDateAux: planEndDateAux,
           promisedDate:
@@ -492,6 +494,8 @@ const { data: auditoriaData } = useConsultaDB(
     onSave(cellData.key, studentData, accion, mensajeExtra);
     onClose();
   };
+
+
 
   /**
    * FUNCTION: Elimina el alumno del horario
@@ -518,6 +522,11 @@ const { data: auditoriaData } = useConsultaDB(
       onOpenReprogramarTurno();
       setStatus("reprogramacion");
       setSeccion("REPROGRAMACION");
+    }
+    if (selectedValue === "reprogramacion_fecha_prometida") {
+      onOpenReprogramarTurno();
+      setStatus("programado");
+      setSeccion("REPROGRAMACION_FECHA_PROMETIDA");
     }
     else if (selectedValue === "renovacion_directa") {
       // Lógica para ACTIVAR renovación directa
@@ -832,8 +841,9 @@ const confirmarReprogramacion = async (nuevaFecha, nuevaHora) => {
                         className={esActual ? "!text-gray-600 font-bold" : ""}
                         style={esActual ? { color: '#ea580c', fontWeight: 'bold' } : {}}
                       >
-                        {(cellData?.student?.status === "programado" && cellData?.student?.scheduledDetails?.promisedDate != null ) ? "Renovación de plan" : "Plan contratado"}
-                      </option>
+                      {(cellData?.student?.status === "programado" && cellData?.student?.scheduledDetails?.promisedDate != null ) ? "Renovación de plan" : "Plan contratado"}
+                      {esActual ? " (actual)" : ""}
+                    </option>
                     )
                   },
                   {
@@ -862,11 +872,12 @@ const confirmarReprogramacion = async (nuevaFecha, nuevaHora) => {
                         disabled={estaDesactivada}
                         className={esActual ? "!text-gray-600 font-bold" : ""}
                         style={esActual ? { color: '#ea580c', fontWeight: 'bold' } : {}}
-                      >
-                        {!cellData.student ? "Visita programada" : (
-                          isBefore(new Date(), planEndDateAux) ? "Visita o renovación programada" : "Renovación programada"
-                        )}
-                      </option>
+                       >
+                    {!cellData.student ? "Visita programada" : (
+                      isBefore(new Date(), planEndDateAux) ? "Visita o renovación programada" : "Renovación programada"
+                    )}
+                    {esActual ? " (actual)" : ""}
+                  </option>
                       )
                     )
                   },
@@ -886,6 +897,21 @@ const confirmarReprogramacion = async (nuevaFecha, nuevaHora) => {
                     )
                   },
                   {
+                    id: "reprogramacion_fecha_prometida",
+                    estaVisible: cellData?.student?.status === "programado" && cellData?.student?.scheduledDetails?.promisedDate,
+                    componente: (esActual, estaDesactivada) => (
+                      <option 
+                        key="reprogramacion_fecha_prometida" 
+                        value="reprogramacion_fecha_prometida"
+                        disabled={estaDesactivada}
+                        className={esActual ? "!text-gray-600 font-bold" : ""}
+                        style={esActual ? { color: '#ea580c', fontWeight: 'bold' } : {}}
+                      >
+                        {`Reprogramacion de la visita programada (fecha prometida: ${formatearFechaSimple(cellData.student.scheduledDetails.promisedDate)})`}
+                      </option>
+                    )
+                  },
+                  {
                     id: "prueba",
                     estaVisible: habilitarClasePrueba && !(cellData?.student?.status === "programado" && !cellData?.student?.scheduledDetails?.promisedDate),
                     componente: (esActual, estaDesactivada) => (
@@ -896,8 +922,9 @@ const confirmarReprogramacion = async (nuevaFecha, nuevaHora) => {
                         className={esActual ? "!text-gray-600 font-bold" : ""}
                         style={esActual ? { color: '#ea580c', fontWeight: 'bold' } : {}}
                       >
-                        Clase de Prueba
-                      </option>
+                    Clase de Prueba
+                    {esActual ? " (actual)" : ""}
+                  </option>
                     )
                   }
                 ];
@@ -1301,6 +1328,19 @@ const confirmarReprogramacion = async (nuevaFecha, nuevaHora) => {
             onCancel={cancelarReprogramacion}
             fechaHoy={fechaHoy}
           />
+        </div>
+      ) : seccion === "REPROGRAMACION_FECHA_PROMETIDA" ? (
+          <div className="bg-white rounded-lg p-8 w-full max-w-4xl shadow-2xl">
+            <h2 className="text-4xl font-bold mb-6 text-orange-600 font-bignoodle text-center">
+              Reprogramar Visita
+            </h2>
+            <ReprogramacionFechaVisita
+              studentData={cellData.student}
+              onCancel={() => {setSeccion("PRINCIPAL"); setStatus(statusAux);}}
+              onConfirm={(nuevaFecha) => {
+                handleSave(nuevaFecha);
+              }}
+        />
         </div>
       ) : null}
     </div>

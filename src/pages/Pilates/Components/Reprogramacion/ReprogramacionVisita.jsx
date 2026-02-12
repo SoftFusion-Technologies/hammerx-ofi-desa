@@ -18,6 +18,7 @@ const ReprogramacionVisita = ({
   onConfirm, // Callback al confirmar: (newDate, newPlan, newHour)
   onCancel, // Callback al cancelar
   fechaHoy, // Fecha actual desde el componente padre
+  tipo = "visita-prueba", // "visita" o "prueba"
 }) => {
   const [planSeleccionado, setPlanSeleccionado] = useState("L-M-V");
   const [horaSeleccionada, setHoraSeleccionada] = useState("");

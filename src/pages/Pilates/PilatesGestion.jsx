@@ -24,7 +24,7 @@ import { FaQuestionCircle } from 'react-icons/fa';
 import SelectorSedes from './Components/SelectorSedes';
 import ModalDetalleAusentes from './Modal/ModalDetalleAusentes';
 import {Download} from 'lucide-react';
-import InstructivoPilates from "../../../public/Intructivo pilates.pdf"
+import InstructivoPilates from "../../../public/insctructivo_pilates.pdf"
 import {motion} from "framer-motion"
 import { IoIosStats } from "react-icons/io";
 import Estadisticas from './Components/Estadisticas';
