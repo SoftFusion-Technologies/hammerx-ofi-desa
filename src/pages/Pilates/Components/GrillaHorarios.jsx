@@ -278,6 +278,81 @@ const GrillaHorarios = ({
                     alumnos: [],
                   };
                   const students = cellData.alumnos || [];
+                  const infoTrials = countTrialsInOtherDaysOfGroup(day, hour);
+                  const getTrialPriority = (alumno) => {
+                    const idNum = Number(alumno?.id);
+                    if (Number.isFinite(idNum)) return idNum;
+                    return Number.MAX_SAFE_INTEGER;
+                  };
+                  const renderItems = students.map((student) => ({
+                    type: "student",
+                    student,
+                  }));
+
+                  if (rol === "GESTION" && infoTrials.alumnos.length > 0) {
+                    const reflectionsOrdered = infoTrials.alumnos
+                      .map((alumno, idx) => {
+                        const diaOriginal = DAYS.find(
+                          (dia) =>
+                            normalizarTexto(dia) === normalizarTexto(alumno.diaInscrito)
+                        );
+                        const keyOriginal = `${diaOriginal || alumno.diaInscrito}-${hour}`;
+                        const listaOriginal = schedule[keyOriginal]?.alumnos || [];
+                        const posicionOriginal = listaOriginal.findIndex(
+                          (item) => String(item.id) === String(alumno.id)
+                        );
+
+                        return {
+                          alumno,
+                          ordenOriginal: idx,
+                          prioridad: getTrialPriority(alumno),
+                          insertIndex:
+                            posicionOriginal >= 0
+                              ? posicionOriginal
+                              : renderItems.length + idx,
+                        };
+                      })
+                      .sort((a, b) => {
+                        if (a.insertIndex !== b.insertIndex) {
+                          return a.insertIndex - b.insertIndex;
+                        }
+                        if (a.prioridad !== b.prioridad) {
+                          return a.prioridad - b.prioridad;
+                        }
+                        return a.ordenOriginal - b.ordenOriginal;
+                      });
+
+                    reflectionsOrdered.forEach((reflection, insertedCount) => {
+                      let targetIndex = Math.min(
+                        reflection.insertIndex + insertedCount,
+                        renderItems.length
+                      );
+
+                      while (targetIndex < renderItems.length) {
+                        const currentItem = renderItems[targetIndex];
+                        const currentTrial =
+                          currentItem.type === "reflection"
+                            ? currentItem.alumno
+                            : currentItem.student?.status === "prueba"
+                            ? currentItem.student
+                            : null;
+
+                        if (!currentTrial) break;
+
+                        const currentPriority = getTrialPriority(currentTrial);
+                        if (currentPriority <= reflection.prioridad) {
+                          targetIndex += 1;
+                          continue;
+                        }
+                        break;
+                      }
+
+                      renderItems.splice(targetIndex, 0, {
+                        type: "reflection",
+                        alumno: reflection.alumno,
+                      });
+                    });
+                  }
                   const coach = cellData.coach || "";
                   const porcentaje_asistencia_clases = cellData.porcentaje_asistencia_clases || 0;
                   const cuposDescuento = Number(cellData.cupos_descuento) || 0;
@@ -374,231 +449,123 @@ const GrillaHorarios = ({
                         {/* LISTA DE ALUMNOS Y TARJETAS INFORMATIVAS (Solo visible si NO está minimizado) */}
                         {!estaMinimizado && (
                           <>
-                            {(() => {
-                              // Obtener alumnos de prueba de otros días del grupo
-                              const infoTrials = countTrialsInOtherDaysOfGroup(day, hour);
-                              
-                              // Combinar alumnos actuales con tarjetas informativas
-                              // Primero van los alumnos normales y de plan, luego los de prueba con sus tarjetas
-                              const alumnosNormales = students.filter(s => s.status !== 'prueba');
-                              const alumnosPrueba = students.filter(s => s.status === 'prueba');
-                              
-                              return (
-                                <>
-                                  {/* Renderizar alumnos normales y de plan primero */}
-                                  {alumnosNormales.map((student, index) => {
-                                    const { content, style } = getCellContentAndStyle(student);
-                                    const slotIndex = index;
-                                    const removeAccents = (str) =>
-                                      (str || "")
-                                        .normalize("NFD")
-                                        .replace(/[\u0300-\u036f]/g, "")
-                                        .toLowerCase();
-                                    const isStudentHighlighted =
-                                      searchTerm &&
-                                      removeAccents(student.name).includes(
-                                        removeAccents(searchTerm)
-                                      );
-
-                                    const estadoAsistencia = asistenciasHoy[student.id];
-                                    const tieneAsistencia =
-                                      asistenciaRegistrada &&
-                                      asistenciaRegistrada[key] &&
-                                      asistenciaRegistrada[key].includes(student.id);
-
-                                    return (
-                                      <div
-                                        key={`${student.id}-${index}`}
-                                        className={`flex-grow p-2 text-xs md:text-sm flex items-center justify-between rounded-lg transition-all duration-200 text-black shadow-sm ${
-                                          isDayEnabled
-                                            ? `cursor-pointer transform hover:scale-[1.02] ${
-                                                style || "bg-gray-100"
-                                              }`
-                                            : "bg-gray-200 text-black"
-                                        } ${
-                                          isStudentHighlighted && isDayEnabled
-                                            ? "ring-3 ring-blue-500 ring-opacity-70 shadow-md !bg-violet-600 !text-white"
-                                            : ""
-                                        }`}
-                                        onClick={
-                                          isDayEnabled
-                                            ? rol === "GESTION"
-                                              ? () =>
-                                                  handleCellClick(day, hour, student, student.es_cupo_extra ? "cupo_adicional" : "normal")
-                                              : () =>
-                                                  guardarAsistencia(
-                                                    day,
-                                                    hour,
-                                                    student,
-                                                    estadoAsistencia
-                                                  )
-                                            : null
-                                        }
-                                      >
-                                        {rol === "GESTION" ? (
-                                          <div className="flex items-center w-full">
-                                            <div className="flex-grow text-left truncate">
-                                              {content}
-                                            </div>
-                                            {mostrarDescuentoEnSlot(slotIndex) && (
-                                              <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
-                                                {etiquetaDescuento}
-                                              </span>
-                                            )}
-                                          </div>
-                                        ) : (
-                                          <>
-                                            <div className="flex-grow text-left truncate font-medium flex items-center">
-                                              <span className="truncate">{student.name}</span>
-                                              {mostrarDescuentoEnSlot(slotIndex) && (
-                                                <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
-                                                  {etiquetaDescuento}
-                                                </span>
-                                              )}
-                                            </div>
-                                            {isDayEnabled && estadoAsistencia && (
-                                              <div className="flex-shrink-0 ml-2">
-                                                {estadoAsistencia === "presente" ? (
-                                                  <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2">
-                                                    <span className="text-white font-bold text-xs">
-                                                      P
-                                                    </span>
-                                                  </div>
-                                                ) : (
-                                                  <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2">
-                                                    <span className="text-white font-bold text-xs">
-                                                      A
-                                                    </span>
-                                                  </div>
-                                                )}
-                                              </div>
-                                            )}
-                                          </>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-
-                                  {/* Renderizar alumnos de prueba del día actual */}
-                                  {alumnosPrueba.map((student, index) => {
-                                    const { content, style } = getCellContentAndStyle(student);
-                                    const slotIndex = alumnosNormales.length + index;
-                                    const removeAccents = (str) =>
-                                      (str || "")
-                                        .normalize("NFD")
-                                        .replace(/[\u0300-\u036f]/g, "")
-                                        .toLowerCase();
-                                    const isStudentHighlighted =
-                                      searchTerm &&
-                                      removeAccents(student.name).includes(
-                                        removeAccents(searchTerm)
-                                      );
-
-                                    const estadoAsistencia = asistenciasHoy[student.id];
-                                    const tieneAsistencia =
-                                      asistenciaRegistrada &&
-                                      asistenciaRegistrada[key] &&
-                                      asistenciaRegistrada[key].includes(student.id);
-
-                                    return (
-                                      <div
-                                        key={`${student.id}-${index}`}
-                                        className={`flex-grow p-2 text-xs md:text-sm flex items-center justify-between rounded-lg transition-all duration-200 text-black shadow-sm ${
-                                          isDayEnabled
-                                            ? `cursor-pointer transform hover:scale-[1.02] ${
-                                                style || "bg-gray-100"
-                                              }`
-                                            : "bg-gray-200 text-black"
-                                        } ${
-                                          isStudentHighlighted && isDayEnabled
-                                            ? "ring-3 ring-blue-500 ring-opacity-70 shadow-md !bg-violet-600 !text-white"
-                                            : ""
-                                        }`}
-                                        onClick={
-                                          isDayEnabled
-                                            ? rol === "GESTION"
-                                              ? () =>
-                                                  handleCellClick(day, hour, student, student.es_cupo_extra ? "cupo_adicional" : "normal")
-                                              : () =>
-                                                  guardarAsistencia(
-                                                    day,
-                                                    hour,
-                                                    student,
-                                                    estadoAsistencia
-                                                  )
-                                            : null
-                                        }
-                                      >
-                                        {rol === "GESTION" ? (
-                                          <div className="flex items-center w-full">
-                                            <div className="flex-grow text-left truncate">
-                                              {content}
-                                            </div>
-                                            {mostrarDescuentoEnSlot(slotIndex) && (
-                                              <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
-                                                {etiquetaDescuento}
-                                              </span>
-                                            )}
-                                          </div>
-                                        ) : (
-                                          <>
-                                            <div className="flex-grow text-left truncate font-medium flex items-center">
-                                              <span className="truncate">{student.name}</span>
-                                              {mostrarDescuentoEnSlot(slotIndex) && (
-                                                <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
-                                                  {etiquetaDescuento}
-                                                </span>
-                                              )}
-                                            </div>
-                                            {isDayEnabled && estadoAsistencia && (
-                                              <div className="flex-shrink-0 ml-2">
-                                                {estadoAsistencia === "presente" ? (
-                                                  <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2">
-                                                    <span className="text-white font-bold text-xs">
-                                                      P
-                                                    </span>
-                                                  </div>
-                                                ) : (
-                                                  <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2">
-                                                    <span className="text-white font-bold text-xs">
-                                                      A
-                                                    </span>
-                                                  </div>
-                                                )}
-                                              </div>
-                                            )}
-                                          </>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-
-                                  {/* Renderizar tarjetas informativas de alumnos de prueba de otros días */}
-                                  {rol === "GESTION" && infoTrials.alumnos.map((alumno, index) => (
-                                    <div
-                                      key={`trial-info-${alumno.id}-${index}`}
-                                      className="flex-grow p-2 text-xs md:text-sm flex items-center justify-left rounded-lg border-2 border-dashed border-amber-400 bg-amber-50 shadow-sm cursor-default"
-                                      title={`${alumno.name} está probando este horario (inscrito en ${alumno.diaInscrito})`}
-                                    >
-                                      <span className="text-amber-700 font-medium text-[13px]">
-                                        <TriangleAlert className="inline-block mr-1" size={16} /> {alumno.name}
+                            {renderItems.map((item, slotIndex) => {
+                              if (item.type === "reflection") {
+                                return (
+                                  <div
+                                    key={`trial-info-${item.alumno.id}-${slotIndex}`}
+                                    className="flex-grow p-2 text-xs md:text-sm flex items-center justify-between rounded-lg border-2 border-dashed border-amber-400 bg-amber-50 shadow-sm cursor-default"
+                                    title={`${item.alumno.name} está probando este horario (inscrito en ${item.alumno.diaInscrito})`}
+                                  >
+                                    <span className="text-amber-700 font-medium text-[13px]">
+                                      <TriangleAlert className="inline-block mr-1" size={16} /> {item.alumno.name}
+                                    </span>
+                                    {mostrarDescuentoEnSlot(slotIndex) && (
+                                      <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                                        {etiquetaDescuento}
                                       </span>
+                                    )}
+                                  </div>
+                                );
+                              }
+
+                              const student = item.student;
+                              const { content, style } = getCellContentAndStyle(student);
+                              const removeAccents = (str) =>
+                                (str || "")
+                                  .normalize("NFD")
+                                  .replace(/[\u0300-\u036f]/g, "")
+                                  .toLowerCase();
+                              const isStudentHighlighted =
+                                searchTerm &&
+                                removeAccents(student.name).includes(
+                                  removeAccents(searchTerm)
+                                );
+
+                              const estadoAsistencia = asistenciasHoy[student.id];
+
+                              return (
+                                <div
+                                  key={`${student.id}-${slotIndex}`}
+                                  className={`flex-grow p-2 text-xs md:text-sm flex items-center justify-between rounded-lg transition-all duration-200 text-black shadow-sm ${
+                                    isDayEnabled
+                                      ? `cursor-pointer transform hover:scale-[1.02] ${
+                                          style || "bg-gray-100"
+                                        }`
+                                      : "bg-gray-200 text-black"
+                                  } ${
+                                    isStudentHighlighted && isDayEnabled
+                                      ? "ring-3 ring-blue-500 ring-opacity-70 shadow-md !bg-violet-600 !text-white"
+                                      : ""
+                                  }`}
+                                  onClick={
+                                    isDayEnabled
+                                      ? rol === "GESTION"
+                                        ? () =>
+                                            handleCellClick(day, hour, student, student.es_cupo_extra ? "cupo_adicional" : "normal")
+                                        : () =>
+                                            guardarAsistencia(
+                                              day,
+                                              hour,
+                                              student,
+                                              estadoAsistencia
+                                            )
+                                      : null
+                                  }
+                                >
+                                  {rol === "GESTION" ? (
+                                    <div className="flex items-center w-full">
+                                      <div className="flex-grow text-left truncate">
+                                        {content}
+                                      </div>
+                                      {mostrarDescuentoEnSlot(slotIndex) && (
+                                        <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                                          {etiquetaDescuento}
+                                        </span>
+                                      )}
                                     </div>
-                                  ))}
-                                </>
+                                  ) : (
+                                    <>
+                                      <div className="flex-grow text-left truncate font-medium flex items-center">
+                                        <span className="truncate">{student.name}</span>
+                                        {mostrarDescuentoEnSlot(slotIndex) && (
+                                          <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                                            {etiquetaDescuento}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {isDayEnabled && estadoAsistencia && (
+                                        <div className="flex-shrink-0 ml-2">
+                                          {estadoAsistencia === "presente" ? (
+                                            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2">
+                                              <span className="text-white font-bold text-xs">
+                                                P
+                                              </span>
+                                            </div>
+                                          ) : (
+                                            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2">
+                                              <span className="text-white font-bold text-xs">
+                                                A
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
                               );
-                            })()}
+                            })}
 
                             {/* Botón para agregar alumno o cupo adicional (solo Gestión y editable) */}
                             {rol === "GESTION" && esGestionEditable && (
                               <>
                                 {(() => {
-                                  const infoTrials = countTrialsInOtherDaysOfGroup(day, hour);
-                                  const ocupacionTotal = students.length + infoTrials.count;
+                                  const ocupacionTotal = renderItems.length;
                                   const espaciosLibres = Math.max(0, MAX_STUDENTS_PER_SLOT - ocupacionTotal);
                                   if (espaciosLibres > 0) {
                                     return Array.from({ length: espaciosLibres }).map((_, index) => {
-                                      const slotIndex = students.length + index;
+                                      const slotIndex = renderItems.length + index;
                                       return (
                                         <div
                                           key={`empty-${index}`}
@@ -618,7 +585,7 @@ const GrillaHorarios = ({
                                     });
                                   }
                                   // Si no hay lugar, mostrar botón de cupo adicional
-                                  const slotIndex = students.length;
+                                  const slotIndex = renderItems.length;
                                   return (
                                     <div
                                       className="flex-grow p-1 text-red-600 text-xs flex items-center justify-center rounded-lg cursor-pointer transition-all duration-200 border-2 border-dashed border-red-300 bg-red-50 hover:bg-red-100 hover:border-red-400 hover:shadow-sm mt-1"
