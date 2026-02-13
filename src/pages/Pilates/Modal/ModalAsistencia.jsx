@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { FaEdit, FaChevronLeft, FaPaperPlane } from 'react-icons/fa';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+import { FaEdit, FaChevronLeft, FaPaperPlane, FaCalendarAlt, FaCheck, FaTimes, FaComments } from 'react-icons/fa';
 
 const ModalAsistencia = ({ isOpen, onClose, cellData, cambiarAsistencia, cambiarObservaciones, agregarQuejas }) => {
     // 1. Estados
@@ -25,9 +30,26 @@ const ModalAsistencia = ({ isOpen, onClose, cellData, cambiarAsistencia, cambiar
         );
     }
 
+
+    // Devuelve true si la fecha del alumno es futura respecto a hoy en Argentina
+    const isFutureDate = (dateString) => {
+        if (!dateString) return false;
+        // Fecha del alumno (sin hora)
+        const fechaAlumno = dayjs.tz(dateString, 'America/Argentina/Buenos_Aires').startOf('day');
+        // Fecha actual en Argentina (sin hora)
+        const hoyArgentina = dayjs().tz('America/Argentina/Buenos_Aires').startOf('day');
+        // Si la fecha del alumno es mayor a hoy, retorna true
+        return fechaAlumno.isAfter(hoyArgentina);
+    };
+
+    const inicio_plan_alumno = cellData.student.planDetails?.startDate || cellData.student.trialDetails?.date;
+    const es_inicio_futuro = isFutureDate(inicio_plan_alumno);
+    const fecha_inicio_formateada = inicio_plan_alumno ? dayjs(inicio_plan_alumno).format('DD/MM/YYYY') : '';
+
     // 4. Renderizado principal con lógica ternaria para toda la estructura
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 font-messina">
+            {}
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100">
 
                 {/* ---------------------------------------------------------------------------------- */}
@@ -114,7 +136,7 @@ const ModalAsistencia = ({ isOpen, onClose, cellData, cambiarAsistencia, cambiar
                     /* ---------------------------------------------------------------------------------- */
                     <>
                         <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-t-xl">
-                            <h2 className="text-2xl font-bold">Registrar Asistencia</h2>
+                            <h2 className="text-2xl font-bold font-bignoodle">Registrar Asistencia</h2>
                             <p className="text-blue-100 mt-1">Confirmar presencia del alumno</p>
                         </div>
 
@@ -175,30 +197,42 @@ const ModalAsistencia = ({ isOpen, onClose, cellData, cambiarAsistencia, cambiar
                                     <h4 className="block text-gray-700 text-sm font-bold mb-3">Quejas / Comentarios</h4>
                                     <button
                                         onClick={() => setView('register_queja')}
-                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center justify-center"
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center justify-center"
                                     >
-                                        Registrar Queja / Comentario
+                                        <FaComments className="w-5 h-5 mr-2"/> Registrar Queja / Comentario
                                     </button>
                                 </div>
 
                                 {/* Botones de Asistencia */}
-                                <div className="flex flex-col gap-3 pt-4">
-                                    {cellData.estadoAsistencia === 'ausente' ? (
-                                        <button
-                                            onClick={() => cambiarAsistencia(cellData.student.id, true)}
-                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-[1.02] focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 flex items-center justify-center"
-                                        >
-                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                                            CONFIRMAR ASISTENCIA
-                                        </button>
+                                <div className="flex flex-col gap-3">
+                                    {es_inicio_futuro ? (
+                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex flex-col items-center text-center shadow-sm">
+                                            <div className="bg-amber-100 p-3 rounded-full mb-3 text-amber-600">
+                                                <FaCalendarAlt className='w-5 h-5' size={24} />
+                                            </div>
+                                            <h3 className="text-amber-800 font-bold text-lg mb-1">Inicio Programado</h3>
+                                            <p className="text-amber-700 text-sm leading-relaxed">
+                                                La asistencia se habilitará el <span className="font-bold">{fecha_inicio_formateada}</span>.
+                                            </p>
+                                        </div>
                                     ) : (
-                                        <button
-                                            onClick={() => cambiarAsistencia(cellData.student.id, false)}
-                                            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-[1.02] focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center"
-                                        >
-                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                            QUITAR ASISTENCIA
-                                        </button>
+                                        cellData.estadoAsistencia === 'ausente' ? (
+                                            <button
+                                                onClick={() => cambiarAsistencia(cellData.student.id, true)}
+                                                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-[1.02] focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 flex items-center justify-center"
+                                            >
+                                                <FaCheck className="w-5 h-5 mr-2" />
+                                                Confirmar asistencia
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => cambiarAsistencia(cellData.student.id, false)}
+                                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-[1.02] focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center"
+                                            >
+                                                <FaTimes className="w-5 h-5 mr-2" />
+                                                Quitar asistencia
+                                            </button>
+                                        )
                                     )}
                                 </div>
                             </div>

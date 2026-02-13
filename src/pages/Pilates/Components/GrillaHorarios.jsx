@@ -112,6 +112,8 @@ const GrillaHorarios = ({
     return hayCoincidencia;
   });
 
+
+
   return (
     <motion.div  initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -483,7 +485,7 @@ const GrillaHorarios = ({
                                 );
 
                               const estadoAsistencia = asistenciasHoy[student.id];
-
+                              const planTipo = student.trialDetails?.date ||student.planDetails?.startDate;
                               return (
                                 <div
                                   key={`${student.id}-${slotIndex}`}
@@ -524,34 +526,42 @@ const GrillaHorarios = ({
                                         </span>
                                       )}
                                     </div>
-                                  ) : (
+                                    ) : (
                                     <>
-                                      <div className="flex-grow text-left truncate font-medium flex items-center">
+                                      <div className="flex-grow text-left truncate font-medium flex items-center min-w-0">
                                         <span className="truncate">{student.name}</span>
                                         {mostrarDescuentoEnSlot(slotIndex) && (
-                                          <span className="ml-2 text-[10px] font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                                          <span className="ml-1 text-[9px] font-bold text-white bg-orange-500 px-1 py-0.5 rounded-full whitespace-nowrap leading-none flex-shrink-0">
                                             {etiquetaDescuento}
                                           </span>
                                         )}
                                       </div>
-                                      {isDayEnabled && estadoAsistencia && (
-                                        <div className="flex-shrink-0 ml-2">
+                                      {isDayEnabled && (
+                                        
+                                        <div className="flex-shrink-0 ml-1">
                                           {estadoAsistencia === "presente" ? (
                                             <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2">
                                               <span className="text-white font-bold text-xs">
                                                 P
                                               </span>
                                             </div>
-                                          ) : (
+                                          ) : estadoAsistencia === "ausente" ? (
                                             <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2">
                                               <span className="text-white font-bold text-xs">
                                                 A
                                               </span>
                                             </div>
+                                          ) : (
+
+                                            <div className="bg-orange-100 border border-orange-500 px-1.5 py-0.5 rounded flex items-center justify-center">
+                                              <span className="text-orange-700 font-bold text-[10px] whitespace-nowrap">
+                                                C: {planTipo.split('-').reverse().join('/')}
+                                              </span>
+                                            </div>
                                           )}
                                         </div>
                                       )}
-                                    </>
+                                   </>
                                   )}
                                 </div>
                               );
