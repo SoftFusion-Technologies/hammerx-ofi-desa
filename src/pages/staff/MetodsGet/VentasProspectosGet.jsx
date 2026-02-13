@@ -23,7 +23,7 @@ import ComisionesVigentesModal from '../Components/ComisionesVigentesModal';
 import useInsertClientePilates from '../../Pilates/ConsultaDb/Insertar_ModificarCliente';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import {Download} from 'lucide-react';
-import InstructivosVentas from "../../../../public/Instructivo Ventas.pdf"
+import InstructivosVentas from "../../../../public/instructivo_ventas_v2.pdf"
 
 const getBgClass = (p) => {
   if (p.comision_estado === 'en_revision') return 'bg-amber-400';
