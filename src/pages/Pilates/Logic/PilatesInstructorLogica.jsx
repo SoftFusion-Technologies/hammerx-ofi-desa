@@ -9,6 +9,7 @@ import useInsertar from "../ConsultaDb/Insertar";
 import useHistorialAlumnos from "./PilatesGestion/HistorialAlumnos";
 import useGrillaMinimizada from "./PilatesGestion/HorariosOcultos";
 
+
 const PilatesInstructorLogica = () => {
   const [isModalAsistencia, setIsModalAsistencia] = useState(false); // Estado que abre el modal que marca la asistencia
   const [currentCell, setCurrentCell] = useState(null); // Celda actual seleccionada (día, hora, alumno, estado de asistencia)
@@ -149,11 +150,8 @@ const PilatesInstructorLogica = () => {
     let isExpired = false;
     switch (student.status) {
       case "plan":
-        const startDate = new Date(student.planDetails.startDate + "T00:00:00");
-        const expiryDate = new Date(
-          startDate.getTime() + 29 * 24 * 60 * 60 * 1000
-        );
-        isExpired = expiryDate < today;
+         const endDate = new Date(student.planDetails.endDate + 'T00:00:00');
+        isExpired = endDate < today;
         style =
           student.planDetails?.type === "L-M-V" ? "bg-gray-100" : "bg-gray-300";
         content = (
@@ -162,7 +160,7 @@ const PilatesInstructorLogica = () => {
             <br />
             <span className="text-xs italic">
               {isExpired ? "Venció" : "Vence"} el{" "}
-              {expiryDate.toLocaleDateString("es-ES")}
+              {endDate.toLocaleDateString("es-ES")}
             </span>
           </span>
         );
@@ -185,8 +183,11 @@ const PilatesInstructorLogica = () => {
         );
         break;
       case "programado":
+        const fechaRelevante =
+            student.scheduledDetails?.promisedDate ||
+            student.scheduledDetails.date;
         const scheduledDate = new Date(
-          student.scheduledDetails.date + "T00:00:00"
+          fechaRelevante + "T00:00:00"
         );
         isExpired = scheduledDate < today;
         style = "bg-yellow-200";
