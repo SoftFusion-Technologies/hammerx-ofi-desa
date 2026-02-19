@@ -11,6 +11,10 @@ import { motion } from "framer-motion";
 import { Clock, Target, UserCheck } from "lucide-react";
 import AyudaInfo from "./AyudaInfo";
 const SeccionMetricas = ({ datosEstadisticas }) => {
+  const porcentajeRetencion = Math.min(
+    ((datosEstadisticas.retencion.cantidadSiguenDiaUno * 100) / datosEstadisticas.retencion.clientesIniciales),
+    100
+  ).toFixed(2);
   return (
     <motion.div
       key="metricas"
@@ -113,7 +117,7 @@ const SeccionMetricas = ({ datosEstadisticas }) => {
           >
             <p className="text-sm text-gray-500 mb-1">% Retención</p>
             <p className="text-5xl font-bold text-green-600">
-              {datosEstadisticas.retencion.porcentajeRetencion.toFixed(2)}%
+              {porcentajeRetencion}%
             </p>
           </motion.div>
         </div>
@@ -121,7 +125,7 @@ const SeccionMetricas = ({ datosEstadisticas }) => {
           <motion.div
             initial={{ width: 0 }}
             animate={{
-              width: `${datosEstadisticas.retencion.porcentajeRetencion}%`,
+              width: `${porcentajeRetencion}%`,
             }}
             transition={{ duration: 1, ease: "easeOut" }}
             className="bg-gradient-to-r from-green-500 to-green-600 h-full"

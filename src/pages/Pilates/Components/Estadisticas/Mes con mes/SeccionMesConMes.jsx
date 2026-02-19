@@ -26,6 +26,21 @@ const formateadorDecimal = new Intl.NumberFormat("es-AR", {
 const esNumeroValido = (valor) =>
   typeof valor === "number" && Number.isFinite(valor);
 
+const calcularRetencionGlobal = (periodo) => {
+  const clientesIniciales = periodo?.cantidad_inicio_mes;
+  const cantidadSiguenDiaUno = periodo?.alumnos_dia_uno_que_siguen;
+
+  if (
+    !esNumeroValido(clientesIniciales) ||
+    !esNumeroValido(cantidadSiguenDiaUno) ||
+    clientesIniciales <= 0
+  ) {
+    return null;
+  }
+
+  return Math.min((cantidadSiguenDiaUno * 100) / clientesIniciales, 100);
+};
+
 const formatearPeriodo = (periodo) => {
   if (!periodo) return "";
   const meses = [
@@ -92,18 +107,15 @@ const configuracionSecciones = [
         label: "Alumnos inicio mes",
         format: "number",
       },
+      { key: "alumnos_dia_uno_que_siguen", label: "Alumnos que siguen el día 1", format: "number" },
       { key: "cantidad_fin_mes", label: "Alumnos fin mes", format: "number" },
       { key: "altas_mes", label: "Altas del mes", format: "number" },
       { key: "bajas_mes", label: "Bajas del mes", format: "number" },
       {
-        key: "porcentaje_retencion_global",
+        key: "porcentaje_retencion_global_calculado",
         label: "% Retención global",
         format: "percent",
-      },
-      {
-        key: "alumnos_dia_uno_que_siguen",
-        label: "Alumnos día 1 que siguen",
-        format: "number",
+        getValue: calcularRetencionGlobal,
       },
     ],
   },
@@ -111,11 +123,6 @@ const configuracionSecciones = [
     titulo: "🏢 OCUPACIÓN",
     claseColor: "bg-emerald-50/80 text-emerald-900",
     rows: [
-      {
-        key: "cupos_habilitados",
-        label: "Cupos habilitados",
-        format: "number",
-      },
       { key: "cantidad_fin_mes", label: "Alumnos inscritos", format: "number" },
       {
         key: "porcentaje_ocupacion_total",
@@ -343,7 +350,9 @@ const SeccionMesConMes = ({ datosMesConMes, cargando }) => {
                       {fila.label}
                     </td>
                     {evolucionMensual.map((periodo, idxPeriodo) => {
-                      const valor = obtenerValorAnidado(periodo, fila.key);
+                      const valor = fila.getValue
+                        ? fila.getValue(periodo)
+                        : obtenerValorAnidado(periodo, fila.key);
                       const esVariacion = fila.destacar && valor !== 0;
 
                       const periodoAnterior =
@@ -351,7 +360,9 @@ const SeccionMesConMes = ({ datosMesConMes, cargando }) => {
                           ? evolucionMensual[idxPeriodo - 1]
                           : null;
                       const valorAnterior = periodoAnterior
-                        ? obtenerValorAnidado(periodoAnterior, fila.key)
+                        ? fila.getValue
+                          ? fila.getValue(periodoAnterior)
+                          : obtenerValorAnidado(periodoAnterior, fila.key)
                         : null;
 
                       const tipoComparacion = fila.comparar ?? "auto";
