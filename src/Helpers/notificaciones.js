@@ -14,7 +14,8 @@ export const mostrarNotificacion = (titulo, cuerpo, url) => {
   if (Notification.permission === "granted") {
     const n = new Notification(titulo, {
       body: cuerpo,
-      icon: "/images/logoicon.png" // Ruta al logo HX
+      icon: "/images/logoicon.png", // Ruta al logo HX
+      requireInteraction: true, // Mantiene la notificación hasta que el usuario interactúe
     });
 
     n.onclick = () => {
