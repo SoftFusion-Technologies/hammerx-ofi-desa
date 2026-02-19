@@ -107,7 +107,6 @@ const configuracionSecciones = [
         label: "Alumnos inicio mes",
         format: "number",
       },
-      { key: "alumnos_dia_uno_que_siguen", label: "Alumnos que siguen el día 1", format: "number" },
       { key: "cantidad_fin_mes", label: "Alumnos fin mes", format: "number" },
       { key: "altas_mes", label: "Altas del mes", format: "number" },
       { key: "bajas_mes", label: "Bajas del mes", format: "number" },
