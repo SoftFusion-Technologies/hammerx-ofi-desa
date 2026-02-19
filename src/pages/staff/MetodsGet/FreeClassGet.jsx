@@ -283,10 +283,17 @@ const FreeClassGet = () => {
             <h1 className="text-2xl font-semibold text-zinc-800">
               Listado de Personas
             </h1>
+            <div className='flex gap-2 justify-center'>
             <p className="text-sm text-zinc-500 mt-1">
               Cantidad de registros:{' '}
               <span className="font-bold">{results.length}</span>
             </p>
+            <p className="text-sm text-zinc-500 mt-1">
+              Pendientes a contactar:{' '}
+              <span className="font-bold">{Object.values(contactedTestClass).filter(v => !v).length}</span>
+            </p>
+
+            </div>
           </div>
 
           {/* Input de búsqueda */}
