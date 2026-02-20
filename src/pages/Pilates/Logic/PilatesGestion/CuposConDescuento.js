@@ -32,6 +32,7 @@ const useCuposConDescuento = ({
   const [idEdicion, setIdEdicion] = useState(null);
   const [planSeleccionado, setPlanSeleccionado] = useState("");
   const [horariosDisponibles, setHorariosDisponibles] = useState([]);
+  const [horariosSeleccionados, setHorariosSeleccionados] = useState([]);
 
   // Estado del formulario de descuento
   const [formulario, setFormulario] = useState({
@@ -48,7 +49,6 @@ const useCuposConDescuento = ({
   const descuentoSchema = useMemo(() => {
     return yup.object().shape({
       plan: yup.string().required("Selecciona un grupo de horarios"),
-      horario: yup.string().required("Selecciona un horario de la grilla"),
       cantidadCupos: yup
         .number()
         .transform((value, originalValue) =>
@@ -173,15 +173,16 @@ const useCuposConDescuento = ({
     // Si el horario seleccionado ya no es válido, lo limpia
     if (
       !modoEdicion &&
-      formulario.horario &&
-      !horasFiltradas.includes(formulario.horario)
+      horariosSeleccionados.length > 0
     ) {
-      setFormulario((prev) => ({ ...prev, horario: "" }));
+      setHorariosSeleccionados((prev) =>
+        prev.filter((hora) => horasFiltradas.includes(hora))
+      );
     }
   }, [
     planSeleccionado,
     horariosDeshabilitados,
-    formulario.horario,
+    horariosSeleccionados,
     modoEdicion,
   ]);
 
@@ -189,11 +190,23 @@ const useCuposConDescuento = ({
 
   const seleccionarPlan = (plan) => {
     setPlanSeleccionado(plan);
+    if (!modoEdicion) {
+      setHorariosSeleccionados([]);
+      setFormulario((prev) => ({ ...prev, horario: "" }));
+    }
     if (errores.plan) setErrores({ ...errores, plan: null });
   };
 
   const seleccionarHorario = (hora) => {
-    setFormulario({ ...formulario, horario: hora });
+    if (modoEdicion) {
+      setFormulario({ ...formulario, horario: hora });
+    } else {
+      setHorariosSeleccionados((prev) =>
+        prev.includes(hora)
+          ? prev.filter((item) => item !== hora)
+          : [...prev, hora]
+      );
+    }
     if (errores.horario) setErrores({ ...errores, horario: null });
   };
 
@@ -255,6 +268,7 @@ const useCuposConDescuento = ({
       fechaInicio: parseFecha(item.fechaInicio),
       fechaVencimiento: parseFecha(item.fechaVencimiento),
     });
+    setHorariosSeleccionados([item.horario]);
 
     // Lleva el scroll arriba al editar
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -270,6 +284,7 @@ const useCuposConDescuento = ({
       fechaInicio: new Date(),
       fechaVencimiento: null,
     });
+    setHorariosSeleccionados([]);
     setErrores({});
   };
 
@@ -284,12 +299,22 @@ const useCuposConDescuento = ({
 
     try {
       await descuentoSchema.validate(datosAValidar, { abortEarly: false });
+
+      if (modoEdicion && !formulario.horario) {
+        setErrores({ horario: "Selecciona un horario de la grilla" });
+        return;
+      }
+
+      if (!modoEdicion && horariosSeleccionados.length === 0) {
+        setErrores({ horario: "Selecciona al menos un horario de la grilla" });
+        return;
+      }
+
       setLoadingGuardar(true);
 
-      const payload = {
+      const payloadBase = {
         sede_id: sedeActualFiltro,
         creado_por: usuario_id,
-        hora: formulario.horario,
         grupo_dias: planSeleccionado,
         cantidad_cupos: formulario.cantidadCupos,
         valor_descuento: formulario.valorDescuento,
@@ -297,25 +322,66 @@ const useCuposConDescuento = ({
         fecha_fin: formulario.fechaVencimiento,
       };
 
-      let response;
-      if (modoEdicion) {
-        response = await axios.put(`${API_URL}/${idEdicion}`, payload);
-      } else {
-        response = await axios.post(API_URL, payload);
-      }
+      let operacionExitosa = false;
 
-      if (response.status === 200 || response.status === 201) {
-        Swal.fire({
-          icon: "success",
-          title: modoEdicion ? "¡Actualizado!" : "¡Guardado!",
-          text: modoEdicion
-            ? "El descuento ha sido modificado."
-            : "La regla de descuento se ha creado.",
-          timer: 1500,
-          showConfirmButton: false,
+      if (modoEdicion) {
+        const response = await axios.put(`${API_URL}/${idEdicion}`, {
+          ...payloadBase,
+          hora: formulario.horario,
         });
 
-        cargarDescuentos();
+        if (response.status === 200 || response.status === 201) {
+          operacionExitosa = true;
+          Swal.fire({
+            icon: "success",
+            title: "¡Actualizado!",
+            text: "El descuento ha sido modificado.",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        }
+      } else {
+        const resultados = await Promise.allSettled(
+          horariosSeleccionados.map((hora) =>
+            axios.post(API_URL, {
+              ...payloadBase,
+              hora,
+            })
+          )
+        );
+
+        const exitosos = resultados.filter(
+          (resultado) => resultado.status === "fulfilled"
+        ).length;
+        const fallidos = resultados.length - exitosos;
+
+        if (exitosos > 0 && fallidos === 0) {
+          operacionExitosa = true;
+          Swal.fire({
+            icon: "success",
+            title: "¡Guardado!",
+            text: `Se crearon ${exitosos} regla${exitosos > 1 ? "s" : ""} de descuento.`,
+            timer: 1700,
+            showConfirmButton: false,
+          });
+        } else if (exitosos > 0 && fallidos > 0) {
+          operacionExitosa = true;
+          Swal.fire({
+            icon: "warning",
+            title: "Guardado parcial",
+            text: `Se crearon ${exitosos} regla${exitosos > 1 ? "s" : ""} y ${fallidos} no pudieron guardarse.`,
+            confirmButtonColor: "#ea580c",
+          });
+        } else {
+          const primerError = resultados.find(
+            (resultado) => resultado.status === "rejected"
+          );
+          throw primerError?.reason;
+        }
+      }
+
+      if (operacionExitosa) {
+        await cargarDescuentos();
         cancelarEdicion();
       }
     } catch (err) {
@@ -413,6 +479,7 @@ const useCuposConDescuento = ({
     idEdicion,
     planSeleccionado,
     horariosDisponibles,
+    horariosSeleccionados,
     formulario,
     errores,
     listaDescuentos,

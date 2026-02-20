@@ -231,6 +231,7 @@ const CuposDescuentos = ({
     idEdicion,
     planSeleccionado,
     horariosDisponibles,
+    horariosSeleccionados,
     formulario,
     errores,
     listaDescuentos,
@@ -392,8 +393,15 @@ const CuposDescuentos = ({
                                   : "text-orange-500"
                             }
                           />{" "}
-                          SELECCIONAR HORARIO
+                          {modoEdicion
+                            ? "SELECCIONAR HORARIO"
+                            : "SELECCIONAR HORARIOS"}
                         </label>
+                        {!modoEdicion && (
+                          <p className="text-[11px] text-gray-500 mb-2">
+                            Seleccionados: {horariosSeleccionados.length}
+                          </p>
+                        )}
 
                         {horariosDisponibles.length > 0 ? (
                           <div className="grid grid-cols-4 gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100 max-h-40 overflow-y-auto custom-scrollbar">
@@ -404,7 +412,9 @@ const CuposDescuentos = ({
                                 onClick={() => seleccionarHorario(hora)}
                                 disabled={!puedeEditarSede}
                                 className={`py-1.5 px-1 rounded text-xs font-bold transition-all relative ${
-                                  formulario.horario === hora
+                                  (modoEdicion
+                                    ? formulario.horario === hora
+                                    : horariosSeleccionados.includes(hora))
                                     ? modoEdicion
                                       ? "bg-blue-600 text-white shadow-md transform scale-105"
                                       : "bg-orange-600 text-white shadow-md transform scale-105"
@@ -412,7 +422,9 @@ const CuposDescuentos = ({
                                 }`}
                               >
                                 {hora}
-                                {formulario.horario === hora && (
+                                {(modoEdicion
+                                  ? formulario.horario === hora
+                                  : horariosSeleccionados.includes(hora)) && (
                                   <div
                                     className={`absolute -top-1 -right-1 bg-white rounded-full ${modoEdicion ? "text-blue-600" : "text-orange-600"}`}
                                   >
@@ -552,7 +564,9 @@ const CuposDescuentos = ({
                       ? "Procesando..."
                       : modoEdicion
                         ? "Actualizar Regla"
-                        : "Guardar Regla"}
+                        : horariosSeleccionados.length > 1
+                          ? `Guardar ${horariosSeleccionados.length} reglas`
+                          : "Guardar Regla"}
                   </button>
                 </form>
               </fieldset>
