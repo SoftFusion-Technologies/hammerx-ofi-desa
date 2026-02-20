@@ -12,6 +12,8 @@ import useGrillaMinimizada from "./PilatesGestion/HorariosOcultos";
 
 const PilatesInstructorLogica = () => {
   const [isModalAsistencia, setIsModalAsistencia] = useState(false); // Estado que abre el modal que marca la asistencia
+  const [abrirModalQuejaInstructor, setAbrirModalQuejaInstructor] = useState(false); // Estado que abre el modal para cargar quejas desde el instructor
+  const [nombreSede, setNombreSede] = useState(""); // Nombre de la sede obtenida del contexto de autenticación del instructor
   const [currentCell, setCurrentCell] = useState(null); // Celda actual seleccionada (día, hora, alumno, estado de asistencia)
   const [searchTerm, setSearchTerm] = useState(""); // Término de búsqueda para filtrar alumnos en la tabla
   const [cupoMaximoPilates, setCupoMaximoPilates] = useState(0); // Cupo máximo de alumnos en Pilates (capacidad de la sede)
@@ -19,7 +21,7 @@ const PilatesInstructorLogica = () => {
   const [hoy, setHoy] = useState(""); // Día actual en formato de texto (LUNES, MARTES, etc.)
   const [fechaHoy, setFechaHoy] = useState(null); // Fecha actual obtenida de la API de internet
   const [asistenciasHoy, setAsistenciasHoy] = useState({}); // Asistencias registradas para la fecha actual
-  const { sedeId, instructorName } = useInstructorAuth(); // Obtener el ID de la sede del contexto de autenticación del instructor
+  const { sedeId, instructorName, nombre, telefono, apellido, instructorId} = useInstructorAuth(); // Obtener el ID de la sede del contexto de autenticación del instructor
   const { fecha } = ObtenerFechaInternet(); // Obtener la fecha actual de una API de internet
 
   const {
@@ -51,8 +53,10 @@ const PilatesInstructorLogica = () => {
   useEffect(() => {
     if (sedesData && Array.isArray(sedesData) && sedesData.length > 0) {
       const resultado = sedesData.filter((sede) => String(sede.id) === sedeId);
+      console.log(resultado)
       if (resultado.length > 0) {
         setCupoMaximoPilates(resultado[0].cupo_maximo_pilates);
+        setNombreSede(resultado[0].nombre);
       }
     }
   }, [sedesData, sedeId]);
@@ -261,6 +265,42 @@ const PilatesInstructorLogica = () => {
     }
   };
 
+  const agregarQuejaInstructor = async (motivo) => {
+      if (motivo.trim() !== "") {
+        const datos = {
+          cargado_por: instructorName,
+          nombre: nombre + " " + apellido,
+          motivo: motivo.toUpperCase().trim(),
+          sede: sedeId,
+          contacto: telefono,
+          tipo_usuario: "instructor",
+          resuelto: 0,
+        };
+
+           const respuesta = await insert(datos);
+           console.log(respuesta)
+    if (respuesta) {
+      await refetchHorarios();
+      setIsModalAsistencia(false);
+      Swal.fire({
+        icon: "success",
+        title: "¡Guardado!",
+        text: "Las quejas se han guardado correctamente.",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      }else{
+        Swal.fire({
+          icon: "error",
+          title: "¡Por favor complete todos los campos!",
+          text: "",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+  }
+}
+
   const agregarQuejas = async (student, newQuejas) => {
     if (newQuejas === "" || newQuejas === null) {
       Swal.fire({
@@ -323,12 +363,15 @@ const PilatesInstructorLogica = () => {
       cupoMaximoPilates,
       loadingAsistencias,
       horariosMinimizados,
+      abrirModalQuejaInstructor,
+      nombreSede,
     },
     setStates: {
       setIsModalAsistencia,
       setCurrentCell,
       setSearchTerm,
       setSchedule,
+      setAbrirModalQuejaInstructor,
     },
     functions: {
       handleCellAsistencia,
@@ -340,6 +383,7 @@ const PilatesInstructorLogica = () => {
       agregarQuejas,
       alternarMinimizacionHorario,
       manejarMinimizacionGlobal,
+      agregarQuejaInstructor
     },
   };
 };

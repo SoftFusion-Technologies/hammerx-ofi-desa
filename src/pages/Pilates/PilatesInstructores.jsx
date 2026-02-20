@@ -6,6 +6,7 @@ import Footer from "../../components/footer/Footer";
 import ModalAsistencia from "./Modal/ModalAsistencia";
 import PilatesInstructorLogica from "./Logic/PilatesInstructorLogica";
 import { DAYS, HOURS } from "./Constants/constanst";
+import ModalQuejaIntructor from "./Modal/ModalQuejaIntructor";
 
 const PilatesInstructores = () => {
   const { states, setStates, functions } = PilatesInstructorLogica();
@@ -70,6 +71,13 @@ const PilatesInstructores = () => {
                     </button>
                   )}
                 </div>
+                <button
+                  onClick={() => setStates.setAbrirModalQuejaInstructor(true)}
+                  className="flex-1 lg:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-white text-gray-700 border border-gray-300 font-semibold shadow-sm hover:bg-gray-50 transition-colors duration-200 w-full lg:w-auto"
+                  title="Ocultar alumnos para ver solo los turnos"
+                >
+                  <span>Quejas</span>
+                </button>
               </div>
             </header>
             {states.loadingAsistencias ? (
@@ -104,6 +112,14 @@ const PilatesInstructores = () => {
                 cambiarAsistencia={functions.cambiarAsistencia}
                 cambiarObservaciones={functions.cambiarObservaciones}
                 agregarQuejas={functions.agregarQuejas}
+              />
+            )}
+            {states.abrirModalQuejaInstructor && (
+              <ModalQuejaIntructor
+                estaAbierto={states.abrirModalQuejaInstructor}
+                alCerrar={() => setStates.setAbrirModalQuejaInstructor(false)}
+                alEnviar={functions.agregarQuejaInstructor}
+                nombreSede={states.nombreSede}
               />
             )}
           </>

@@ -49,12 +49,26 @@ const LoginProfesorPilates = () => {
         .post("http://localhost:8080/login_profesores", values)
         .then((res) => {
           if (res.data.message === "Success") {
+            let datosToken = {};
+
+            if (res.data.token) {
+              try {
+                const payloadBase64 = res.data.token.split(".")[1];
+                datosToken = JSON.parse(atob(payloadBase64));
+              } catch (error) {
+                datosToken = {};
+              }
+            }
+
             loginInstructor(
               res.data.token,
               values.email,
               res.data.level,
-              res.data.id,
-              res.data.sede_id
+              res.data.id || datosToken.id || null,
+              res.data.sede_id || datosToken.sede_id || null,
+              res.data.nombre || "",
+              res.data.apellido || "",
+              res.data.telefono || ""
             );
             navigate("/pilates/instructor");
           } else {

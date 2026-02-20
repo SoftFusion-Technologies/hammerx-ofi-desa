@@ -70,7 +70,7 @@ const normalizarSede = (sede = '') => {
   const s = (sede || '').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   
   // Normalizar variaciones
-  if (s.includes('BARRIO NORTE') || s === 'BARRIONORTE' || s === 'SANBUMIGUELBN') {
+  if (s.includes('BARRIO NORTE') || s === 'BARRIONORTE' || s === 'SANMIGUELBN') {
     return 'TUCUMÁN - BARRIO NORTE';
   }
   if (s.includes('BARRIO SUR') || s.includes('BARRIO') && s.includes('SUR') || s === 'SMT') {
@@ -127,7 +127,7 @@ const QuejasInternasGet = () => {
   const showSkeleton = loading && quejas?.length === 0;
 
   const getQuejaEndpoint = (tipoUsuario) => {
-    return (tipoUsuario || '').toLowerCase() === 'cliente pilates'
+    return (tipoUsuario || '').toLowerCase() === 'cliente pilates' || (tipoUsuario || '').toLowerCase() === 'instructor pilates'
       ? `${API_BASE}/quejas-pilates`
       : `${API_BASE}/quejas`;
   };
@@ -139,7 +139,7 @@ const QuejasInternasGet = () => {
 
     const loadUserMeta = async () => {
       try {
-        const { data: users } = await axios.get(`${API_BASE}/users`);
+        const { data: users } = await axios.get(`${API_BASE}/users`)
         const me = users?.find(
           (u) =>
             (u?.email || '').toLowerCase() === (userName || '').toLowerCase()

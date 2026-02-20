@@ -31,7 +31,7 @@ const nuevoQuejaSchema = Yup.object().shape({
     .required('El Nombre es obligatorio'),
   tipo_usuario: Yup.string()
     .oneOf(
-      ['socio', 'colaborador', 'cliente', 'cliente pilates'],
+      ['socio', 'colaborador', 'cliente', 'cliente pilates', 'instructor pilates'],
       'Tipo de usuario inválido'
     )
     .required('El Tipo de Usuario es obligatorio'),
@@ -72,8 +72,10 @@ const FormAltaQueja = ({
         return;
       }
 
-      const esClientePilates = valores.tipo_usuario === 'cliente pilates';
+      const esClientePilates = valores.tipo_usuario === 'cliente pilates'  || valores.tipo_usuario === 'instructor pilates';
       const baseEndpoint = esClientePilates ? 'quejas-pilates' : 'quejas';
+
+      console.log(valores)
 
         const url = queja
           ? `http://localhost:8080/${baseEndpoint}/${queja.id}` // PUT para ambos tipos
@@ -289,6 +291,7 @@ const FormAltaQueja = ({
                     <option value="colaborador">Colaborador</option>
                     <option value="cliente">Cliente</option>
                     <option value="cliente pilates">Cliente pilates</option>
+                    <option value="instructor pilates">Instructor pilates</option>
                   </Field>
                   {errors.tipo_usuario && touched.tipo_usuario && (
                     <Alerta>{errors.tipo_usuario}</Alerta>
