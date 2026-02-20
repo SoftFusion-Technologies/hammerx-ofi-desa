@@ -53,7 +53,6 @@ const PilatesInstructorLogica = () => {
   useEffect(() => {
     if (sedesData && Array.isArray(sedesData) && sedesData.length > 0) {
       const resultado = sedesData.filter((sede) => String(sede.id) === sedeId);
-      console.log(resultado)
       if (resultado.length > 0) {
         setCupoMaximoPilates(resultado[0].cupo_maximo_pilates);
         setNombreSede(resultado[0].nombre);
@@ -277,27 +276,26 @@ const PilatesInstructorLogica = () => {
           resuelto: 0,
         };
 
-           const respuesta = await insert(datos);
-           console.log(respuesta)
-    if (respuesta) {
-      await refetchHorarios();
-      setIsModalAsistencia(false);
-      Swal.fire({
-        icon: "success",
-        title: "¡Guardado!",
-        text: "Las quejas se han guardado correctamente.",
-        showConfirmButton: false,
-        timer: 1500,
-      });
-      }else{
-        Swal.fire({
-          icon: "error",
-          title: "¡Por favor complete todos los campos!",
-          text: "",
-          showConfirmButton: false,
-          timer: 1500,
-        });
-      }
+        const respuesta = await insert(datos);
+        if (respuesta) {
+          await refetchHorarios();
+          setIsModalAsistencia(false);
+          Swal.fire({
+            icon: "success",
+            title: "¡Guardado!",
+            text: "Las quejas se han guardado correctamente.",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          }else{
+            Swal.fire({
+              icon: "error",
+              title: "¡Por favor complete todos los campos!",
+              text: "",
+              showConfirmButton: false,
+              timer: 1500,
+            });
+          }
   }
 }
 

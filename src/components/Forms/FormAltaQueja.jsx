@@ -75,8 +75,7 @@ const FormAltaQueja = ({
       const esClientePilates = valores.tipo_usuario === 'cliente pilates'  || valores.tipo_usuario === 'instructor pilates';
       const baseEndpoint = esClientePilates ? 'quejas-pilates' : 'quejas';
 
-      console.log(valores)
-
+   
         const url = queja
           ? `http://localhost:8080/${baseEndpoint}/${queja.id}` // PUT para ambos tipos
           : `http://localhost:8080/${baseEndpoint}`; // POST para ambos tipos
