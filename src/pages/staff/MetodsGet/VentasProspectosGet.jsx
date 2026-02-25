@@ -470,12 +470,14 @@ const VentasProspectosGet = ({ currentUser }) => {
   const normalizeSede2 = (sede) => {
     if (!sede) return "";
     let normalized = sede.toLowerCase().replace(/\s/g, "");
-     if (normalized === "sanmiguelbn") {
-      normalized = "barrionorte";
+    if (normalized === "smt") {
+      normalized = "barrio sur";
+    } else if (normalized === "barrionorte" || normalized === "sanmiguelbn") {
+      normalized = "barrio norte";
     }
-    normalized = normalizeString(normalized);
     return normalized;
   };
+
 
   const sedes = [
     { key: 'monteros', label: 'Monteros' },
@@ -500,7 +502,7 @@ const VentasProspectosGet = ({ currentUser }) => {
         if (!response.ok)
           throw new Error('No se pudo obtener la info del usuario');
         const data = await response.json();
-        setUserSede(normalizeSede2(data.sede || ''));
+        setUserSede(normalizeString(data.sede || ''));
       } catch (error) {
         console.error('Error cargando sede del usuario:', error);
       }
