@@ -485,22 +485,8 @@ const VentasRemarketingGet = ({ currentUser }) => {
 
   const [sedeId, setSedeId] = useState(null);   
 
-  const [mes, setMes] = useState(() => {
-    // Intenta recuperar del localStorage
-    const saved = localStorage.getItem("remarketing_mes");
-    if (saved) return saved;
-
-    // Si no hay guardado, usa mes actual
-    const ahora = new Date();
-    return String(ahora.getMonth() + 1).padStart(2, "0");
-  });
-
-  const [anio, setAnio] = useState(() => {
-    const saved = localStorage.getItem("remarketing_anio");
-    if (saved) return saved;
-
-    return String(new Date().getFullYear());
-  });
+  const [mes, setMes] = useState('');
+  const [anio, setAnio] = useState('');
 
   const [openAgenda, setOpenAgenda] = useState(false);
 
