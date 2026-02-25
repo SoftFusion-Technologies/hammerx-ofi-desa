@@ -179,16 +179,17 @@ const SEDES = [
 
 const normalizeSede2 = (sede) => {
   if (!sede) return "";
-  let normalized = sede.toLowerCase().replace(/\s/g, "");
-  if (normalized === "barriosur" || normalized === "barrio sur") {
+  let normalized = sede.toLowerCase().replace(/\s/g, "").normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  if (normalized === "smt" || normalized === "barriosur" || normalized === "barrio sur") {
     normalized = "barrio sur";
-  } else if (normalized === "barrionorte") {
+  } else if (normalized === "barrionorte" || normalized === "sanmiguelbn" || normalized === "barrio norte") {
     normalized = "barrio norte";
   } else if (normalized === "concepción") {
     normalized = "concepcion";
-  }
-
-  return normalized;
+  } 
+  return normalized
 };
 
 function aplicarFiltros({
@@ -527,7 +528,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
         if (!response.ok)
           throw new Error("No se pudo obtener la info del usuario");
         const data = await response.json();
-        setUserSede(normalizeString(data.sede || ""));
+        setUserSede(normalizeSede2(data.sede || ""));
       } catch (error) {
         console.error("Error cargando sede del usuario:", error);
       }
@@ -567,10 +568,12 @@ const VentasRemarketingGet = ({ currentUser }) => {
   };
 
   const normalizeString = (str) => {
-    return (str || "").toLowerCase().trim();
+    return str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
   };
-
-  const sedes = [
+    const sedes = [
     { key: "monteros", label: "Monteros" },
     { key: "concepcion", label: "Concepción" },
     { key: "barrio sur", label: "Tucumán Barrio Sur" },

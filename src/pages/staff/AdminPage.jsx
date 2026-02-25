@@ -487,7 +487,7 @@ const AdminPage = () => {
               const showVentas = (isAdmin || isVendedor) && !isImagenes;
               const showLeads = isAdmin || isVendedor;
               const showRecaptacion = (isAdmin || isVendedor) && !isImagenes;
-              const showRemarketing = !isImagenes;
+              const showRemarketing = (isAdmin || isVendedor) && !isImagenes;
               const showContactos =
                 showVentas || showLeads || showRecaptacion || showRemarketing;
 

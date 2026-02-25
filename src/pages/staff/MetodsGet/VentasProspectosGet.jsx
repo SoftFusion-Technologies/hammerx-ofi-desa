@@ -470,11 +470,10 @@ const VentasProspectosGet = ({ currentUser }) => {
   const normalizeSede2 = (sede) => {
     if (!sede) return "";
     let normalized = sede.toLowerCase().replace(/\s/g, "");
-    if (normalized === "smt") {
-      normalized = "barrio sur";
-    } else if (normalized === "barrionorte") {
-      normalized = "barrio norte";
+     if (normalized === "sanmiguelbn") {
+      normalized = "barrionorte";
     }
+    normalized = normalizeString(normalized);
     return normalized;
   };
 
@@ -501,7 +500,7 @@ const VentasProspectosGet = ({ currentUser }) => {
         if (!response.ok)
           throw new Error('No se pudo obtener la info del usuario');
         const data = await response.json();
-        setUserSede(normalizeString(data.sede || ''));
+        setUserSede(normalizeSede2(data.sede || ''));
       } catch (error) {
         console.error('Error cargando sede del usuario:', error);
       }
@@ -772,7 +771,7 @@ const VentasProspectosGet = ({ currentUser }) => {
       const response = await axios.get(
         `http://localhost:8080/clientes-pilates/existe-prueba-por-nombre?nombre=${nombre}`
       );
-      console.log(response.data);
+      /* console.log(response.data); */
       return response.data;
     } catch (error) {
       return { existe: false };
@@ -780,7 +779,7 @@ const VentasProspectosGet = ({ currentUser }) => {
   };
 
   const insertarModificarClaseDePrueba = async (id, cambios, tipo) => {
-    console.log(cambios);
+    /* console.log(cambios); */
     try {
       const fechaInicio = new Date(cambios.fecha);
       // Clonar y sumar un día
@@ -821,9 +820,9 @@ const VentasProspectosGet = ({ currentUser }) => {
         const verificacion = await verificarClientePruebaPorNombre(
           cambios.nombre
         );
-        console.log(verificacion.id);
+       /*  console.log(verificacion.id);
 
-        console.log('verificacion', verificacion.existe);
+        console.log('verificacion', verificacion.existe); */
 
         // Si existe, eliminar antes de insertar
         if (verificacion.existe && verificacion.id) {

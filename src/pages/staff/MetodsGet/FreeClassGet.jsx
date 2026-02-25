@@ -181,7 +181,7 @@ const FreeClassGet = () => {
     }
   };
 
-  const contactarTestClass = (celular, id) => {
+  const contactarTestClass = (celular, id, contactado) => {
     // const link = `https://api.whatsapp.com/send/?phone=%2B549${celular}&text&type=phone_number&app_absent=0`;
     // const newWindow = window.open(link, "_blank");
 
@@ -193,7 +193,7 @@ const FreeClassGet = () => {
     //     }
     //   }, 1000); // Verificar cada segundo si la ventana se cerró
     // }
-    updateContactState(id, true);
+    updateContactState(id, !contactado);
   };
 
   const handleContact = (celular, id) => {
@@ -380,7 +380,8 @@ const FreeClassGet = () => {
                               onClick={() =>
                                 contactarTestClass(
                                   personClass.celular,
-                                  personClass.id
+                                  personClass.id,
+                                  contactedTestClass[personClass.id]
                                 )
                               }
                               className={`table-action-btn ${
