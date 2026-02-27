@@ -40,6 +40,7 @@ const PilatesGestionLogica = () => {
   const [isModalProfesorOpen, setIsModalProfesorOpen] = useState(false); // Controla la visibilidad del modal para asignar profesores.
   const [isModalDetalleAusentes, setIsModalDetalleAusentes] = useState(false); // Controla la visibilidad del modal que muestra los alumnos ausentes.
   const [isModalAyuda, setIsModalAyuda] = useState(false); // Controla la visibilidad del modal de ayuda.
+  const [isModalReglas, setIsModalReglas] = useState(false); // Controla la visibilidad del modal de reglas.
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // Controla la visibilidad del modal para confirmar e inscribir desde la lista de espera.
   const [visiblePanels, setVisiblePanels] = useState({
     // Controla qué paneles de resumen rápido son visibles.
@@ -1910,7 +1911,8 @@ const PilatesGestionLogica = () => {
       horariosMinimizados,
       ausentesData,
       errorAusentesData,
-      isLoadingAusentesData
+      isLoadingAusentesData,
+      isModalReglas
     },
     setters: {
       setSection,
@@ -1921,7 +1923,8 @@ const PilatesGestionLogica = () => {
       setIsModalCambioTurno,
       setIsModalDetalleAusentes,
       setIsModalAyuda,
-      setIsConfirmModalOpen
+      setIsConfirmModalOpen,
+      setIsModalReglas
     },
     functions: {
       handleSectionChange,
