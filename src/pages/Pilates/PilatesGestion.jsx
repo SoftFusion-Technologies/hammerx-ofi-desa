@@ -5,6 +5,7 @@
 */
 
 import NavbarStaff from '../staff/NavbarStaff';
+import { useEffect } from 'react';
 import { FaSearch, FaCompressAlt, FaExpandAlt } from 'react-icons/fa';
 import { VscDebugRestart } from 'react-icons/vsc';
 import GrillaHorarios from './Components/GrillaHorarios';
@@ -30,6 +31,9 @@ import { IoIosStats } from "react-icons/io";
 import Estadisticas from './Components/Estadisticas';
 import BajasPilates from './Components/BajasPilates';
 import CuposDescuentos from './Components/Descuentos/CuposDescuentos';
+import ModalinstructivoPilates from './Modal/ModalinstructivoPilates';
+import ModalReglas from './Modal/ModalReglas';
+const INSTRUCTIVO_DIARIO_STORAGE_KEY = 'pilates_reglas_visto_fecha';
 
 const EyeIcon = ({ className }) => (
   <svg
@@ -49,6 +53,30 @@ const EyeIcon = ({ className }) => (
 
 const PilatesGestion = () => {
   const { states, setters, functions } = PilatesGestionLogica();
+
+  //Sirva para mostrar el modal de reglas una vez al día a los usuarios de gestión que estén en la sección de gestión, usando localStorage para recordar si ya se mostró ese día. Esto se abre una vez al día para no ser molesto, pero sí asegurar que los usuarios vean las reglas regularmente.
+  useEffect(() => {
+    if (states.rol !== 'GESTION' || states.section !== 'GESTION') return;
+
+    try {
+      const hoy = new Date();
+      const fechaHoy = `${hoy.getFullYear()}-${String(
+        hoy.getMonth() + 1
+      ).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+
+      const fechaGuardada = localStorage.getItem(
+        INSTRUCTIVO_DIARIO_STORAGE_KEY
+      );
+
+      if (fechaGuardada !== fechaHoy) {
+        setters.setIsModalReglas(true);
+        localStorage.setItem(INSTRUCTIVO_DIARIO_STORAGE_KEY, fechaHoy);
+      }
+    } catch (error) {
+      console.error('No se pudo leer/escribir localStorage del instructivo', error);
+    }
+  }, [states.rol, states.section, setters]);
+
   return (
     <>
       <NavbarStaff />
@@ -268,9 +296,9 @@ const PilatesGestion = () => {
                         : 'Lista de Espera - Pilates'}
                     </h1>
 
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
                       {/* BARRA DE BÚSQUEDA */}
-                      <div className="relative w-full max-w-lg">
+                      <div className="relative w-full lg:max-w-lg">
                         <input
                           type="text"
                           placeholder="Buscar alumno por nombre..."
@@ -291,15 +319,15 @@ const PilatesGestion = () => {
                         </button>
                       </div>
 
-                      {/* --- AQUÍ AGREGAMOS EL BOTÓN COMPACTAR/EXPANDIR --- */}
-                      <div className="w-full sm:w-auto flex gap-2">
+                      {/* --- BOTÓN COMPACTAR/EXPANDIR --- */}
+                      <div className="w-full lg:w-auto grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2">
                         {/* Lógica: Si están todos minimizados, mostramos Expandir. Si no, Compactar. */}
                         {states.horariosMinimizados.length === HOURS.length ? (
                           <button
                             onClick={() =>
                               functions.manejarMinimizacionGlobal(HOURS, false)
                             } // false = no minimizar (expandir)
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-blue-600 font-semibold text-white shadow-md hover:bg-blue-700 transition-colors duration-200"
+                            className="w-full lg:w-auto flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-blue-600 font-semibold text-white shadow-md hover:bg-blue-700 transition-colors duration-200"
                             title="Ver todos los alumnos"
                           >
                             <FaExpandAlt />
@@ -310,7 +338,7 @@ const PilatesGestion = () => {
                             onClick={() =>
                               functions.manejarMinimizacionGlobal(HOURS, true)
                             } // true = minimizar todo
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-white text-gray-700 border border-gray-300 font-semibold shadow-sm hover:bg-gray-50 transition-colors duration-200"
+                            className="w-full lg:w-auto flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-white text-gray-700 border border-gray-300 font-semibold shadow-sm hover:bg-gray-50 transition-colors duration-200"
                             title="Ocultar alumnos para ver solo instructores"
                           >
                             <FaCompressAlt />
@@ -318,18 +346,25 @@ const PilatesGestion = () => {
                           </button>
                         )}
 
-                        {/* BOTÓN AYUDA (Ya existente) */}
+                        {/* BOTÓN AYUDA */}
                         <button
-                          className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                          className="w-full lg:w-auto flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
                           onClick={() => setters.setIsModalAyuda(true)}
                         >
                           <FaQuestionCircle />
                           Ayuda
                         </button>
-                        <div >
+                        <button
+                          className="w-full lg:w-auto flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                          onClick={() => setters.setIsModalReglas(true)}
+                        >
+                          <FaQuestionCircle />
+                          Reglas
+                        </button>
+                        <div className="w-full lg:w-auto sm:col-span-2 lg:col-auto">
                           <a
                             href={InstructivoPilates}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                            className="w-full lg:w-auto flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
                             download="Instructivo_pilates.pdf" 
                           >
                             <Download />
@@ -403,9 +438,15 @@ const PilatesGestion = () => {
                   )}
 
                   {states.isModalAyuda && (
-                    <ModalAyudaGrillaGestion
-                      isOpen={states.isModalAyuda}
-                      onClose={() => setters.setIsModalAyuda(false)}
+                    <ModalinstructivoPilates
+                      estaAbierto={states.isModalAyuda}
+                      alCerrar={() => setters.setIsModalAyuda(false)}
+                    />
+                  )}
+                  {states.isModalReglas && (
+                    <ModalReglas
+                      estaAbierto={states.isModalReglas}
+                      alCerrar={() => setters.setIsModalReglas(false)}
                     />
                   )}
 
