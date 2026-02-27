@@ -24,7 +24,7 @@ import { FaWhatsapp } from 'react-icons/fa';
 import SimpleModal from '../../../components/SimpleModal';
 import { motion } from 'framer-motion';
 const FreeClassGet = () => {
-  const { userLevel, userId } = useAuth();
+  const { userLevel, userId, sedeName} = useAuth();
 
   // Estado para almacenar la lista de personas
   const [personClass, setPersonClass] = useState([]);
@@ -251,6 +251,26 @@ const FreeClassGet = () => {
     SanMiguelBN: 'Barrio Norte',
     SanMiguel: 'Barrio sur'
   };
+
+  const normalizarTexto = (valor = '') =>
+    valor
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+
+  const sedeNormalizada =
+    sedeName.toLowerCase() === "smt" ? "SanMiguel" : sedeName; // Normalizar el nombre de la sede para compararlo correctamente
+  const esAdmin = // Definir qué niveles de usuario tienen acceso a ver todos los registros
+    userLevel.toLowerCase() === "admin" ||
+    userLevel.toLowerCase() === "administrador" ||
+    sedeName.toLowerCase() === "multisede";
+  const filtrarListaPorSede = !esAdmin
+    ? records?.filter(
+        (p) => normalizarTexto(p.sede) === normalizarTexto(sedeNormalizada),
+      )
+    : records;
   return (
     <>
       <NavbarStaff />
@@ -330,7 +350,7 @@ const FreeClassGet = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {records.map((personClass) => (
+                    {filtrarListaPorSede.map((personClass) => (
                       <tr
                         key={personClass.id}
                         className="transition-all duration-200"
