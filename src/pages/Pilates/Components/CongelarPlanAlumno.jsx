@@ -68,6 +68,21 @@ const CongelarPlanAlumno = ({
         </p>
       </div>
 
+      {/* Advertencia importante */}
+      <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-6">
+        <div className="flex gap-3">
+          <div className="text-yellow-600 font-bold text-xl flex-shrink-0">⚠️</div>
+          <div>
+            <p className="text-yellow-800 font-bold text-sm mb-2">
+              Recordá que el congelamiento del plan está autorizado únicamente durante los meses de enero, febrero y julio.
+            </p>
+            <p className="text-yellow-800 text-sm">
+              Si vas a realizar el congelamiento, verificá que se encuentre dentro de esos períodos o que cuente con autorización previa del coordinador o la administración.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Selector interactivo de días (7-14) */}
       <div className="mb-6">
         <div className="flex flex-col items-center gap-3">
