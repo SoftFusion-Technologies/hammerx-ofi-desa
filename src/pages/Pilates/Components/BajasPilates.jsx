@@ -22,8 +22,6 @@ const HEADERS = [
   "MESES ENTRENADOS",
   "ESTADO",
   "MOTIVO",
-  "REMARKETING",
-  "RECUPERADO",
   "USUARIO GESTIÓN",
 ];
 
@@ -427,28 +425,6 @@ const BajasPilates = ({ sedeActual }) => {
                     <td className="p-2 text-gray-600 italic text-center max-w-xs truncate text-sm">
                       {item.motivo || (
                         <span className="text-gray-400 italic">Sin motivo</span>
-                      )}
-                    </td>
-                    <td className="p-2 text-center text-sm">
-                      {item.contactado_remarketing ? (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-orange-100 text-orange-800">
-                          Sí
-                        </span>
-                      ) : (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-400">
-                          No
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-2 text-center text-sm">
-                      {item.recuperado ? (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 text-green-800">
-                          Sí
-                        </span>
-                      ) : (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-400">
-                          No
-                        </span>
                       )}
                     </td>
                     <td className="p-2 text-gray-600 italic text-center max-w-xs truncate text-sm">
