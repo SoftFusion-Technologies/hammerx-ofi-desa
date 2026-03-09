@@ -434,6 +434,7 @@ const PilatesGestion = () => {
                       refetchAusentesData={functions.refetchAusentes}
                       isLoadingAusentesData={states.isLoadingAusentesData}
                       errorAusentesData={states.errorAusentesData}
+                      sedeActual={states.sedeActualFiltro} 
                     ></ModalDetalleAusentes>
                   )}
 

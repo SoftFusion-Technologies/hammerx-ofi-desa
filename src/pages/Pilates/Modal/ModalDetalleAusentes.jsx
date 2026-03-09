@@ -26,7 +26,7 @@ import {
   obtenerAlumnosFiltrados,
   calcularDiasDesdeUltimoContacto,
 } from "../Logic/PilatesGestion/HistorialContactosAusentes";
-import { faLessThanEqual } from "@fortawesome/free-solid-svg-icons";
+import AsistenciasCalendario from "../Components/Ausentes-Asistencias/AsistenciasCalendario";
 
 const ModalDetalleAusentes = ({
   isOpen,
@@ -35,6 +35,7 @@ const ModalDetalleAusentes = ({
   refetchAusentesData,
   isLoadingAusentesData,
   errorAusentesData,
+  sedeActual,
 }) => {
   const { userId } = useAuth();
   // --- ESTADOS DE DATOS ---
@@ -49,6 +50,7 @@ const ModalDetalleAusentes = ({
   const [ordenamiento, setOrdenamiento] = useState("DEFECTO"); // Orden de resultados
   const [paginaActual, setPaginaActual] = useState(1);
   const [nuevaObservacion, setNuevaObservacion] = useState("");
+  const [mostrarCalendario, setMostrarCalendario] = useState(false);
   const textareaRef = useRef(null);
 
   // --- ESTADOS DE CARGA Y ERROR ---
@@ -147,6 +149,13 @@ const ModalDetalleAusentes = ({
             </p>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => setMostrarCalendario(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition shadow-sm bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200"
+            >
+              <FaClock className="text-blue-600" />
+              Ver Calendario
+            </button>
             <button
               onClick={() => setMostrarAyuda(!mostrarAyuda)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition shadow-sm ${
@@ -789,6 +798,11 @@ const ModalDetalleAusentes = ({
           </button>
         </div>
       </div>
+            <AsistenciasCalendario 
+            isOpen={mostrarCalendario} 
+            onClose={() => setMostrarCalendario(false)} 
+            idSede={sedeActual}
+          />
     </div>
   );
 };
