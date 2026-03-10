@@ -8,7 +8,7 @@ import Swal from "sweetalert2";
 import useInsertar from "../ConsultaDb/Insertar";
 import useHistorialAlumnos from "./PilatesGestion/HistorialAlumnos";
 import useGrillaMinimizada from "./PilatesGestion/HorariosOcultos";
-
+import {  differenceInCalendarDays } from 'date-fns';
 
 const PilatesInstructorLogica = () => {
   const [isModalAsistencia, setIsModalAsistencia] = useState(false); // Estado que abre el modal que marca la asistencia
@@ -132,6 +132,7 @@ const PilatesInstructorLogica = () => {
         normalizedData[normalizedKey] = {
           coach: horariosData[key].coach || "",
           coachId: horariosData[key].coachId || null,
+          porcentaje_asistencia_clases: horariosData[key].porcentaje_asistencia_clases || 0,
           alumnos: Array.isArray(horariosData[key].alumnos)
             ? horariosData[key].alumnos
             : [],
@@ -145,74 +146,142 @@ const PilatesInstructorLogica = () => {
 
   // Función para obtener el contenido y estilo de una celda según el estado del alumno
   const getCellContentAndStyle = useCallback((student) => {
-    if (!student) return { content: null, style: "bg-white hover:bg-gray-100" };
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    let content = <span className="font-semibold">{student.name}</span>;
-    let style = "bg-gray-100";
-    let isExpired = false;
-    switch (student.status) {
-      case "plan":
-         const endDate = new Date(student.planDetails.endDate + 'T00:00:00');
-        isExpired = endDate < today;
-        style =
-          student.planDetails?.type === "L-M-V" ? "bg-gray-100" : "bg-gray-300";
-        content = (
-          <span>
-            {student.name}
-            <br />
-            <span className="text-xs italic">
-              {isExpired ? "Venció" : "Vence"} el{" "}
-              {endDate.toLocaleDateString("es-ES")}
-            </span>
-          </span>
-        );
-        break;
-      case "prueba":
-        const trialDate = new Date(student.trialDetails.date + "T00:00:00");
-        isExpired = trialDate < today;
-        style = "bg-cyan-200";
-        content = (
-          <span>
-            {student.name}
-            <br />
-            <span className="text-xs italic">
-              Clase de prueba{" "}
-              {new Date(
-                student.trialDetails.date + "T00:00:00"
-              ).toLocaleDateString("es-ES")}
-            </span>
-          </span>
-        );
-        break;
-      case "programado":
-        const fechaRelevante =
-            student.scheduledDetails?.promisedDate ||
-            student.scheduledDetails.date;
-        const scheduledDate = new Date(
-          fechaRelevante + "T00:00:00"
-        );
-        isExpired = scheduledDate < today;
-        style = "bg-yellow-200";
-        content = (
-          <span>
-            {student.name}
-            <br />
-            <span className="text-xs italic">
-              Renueva el{" "}
-              {new Date(
-                student.scheduledDetails.date + "T00:00:00"
-              ).toLocaleDateString("es-ES")}
-            </span>
-          </span>
-        );
-        break;
-      default:
-        break;
-    }
-    if (isExpired) style = "bg-red-500 text-white";
-    return { content, style };
-  }, []);
+  // Si no hay estudiante, devolver celda vacía
+  if (!student) return { content: null, style: "bg-white hover:bg-gray-100" };
+
+  // Fecha de hoy sin horas
+  const hoy_fecha = new Date();
+  hoy_fecha.setHours(0, 0, 0, 0);
+
+  let style = "bg-gray-100";
+  let isExpired = false;
+
+  // Estado de asistencia del alumno hoy
+  const estadoAsistencia = asistenciasHoy[student.id];
+
+  // Fecha de inicio (plan o prueba)
+  const planTipo = student.trialDetails?.date || student.planDetails?.startDate;
+
+  // Convierte fecha tipo "DD/MM" a objeto Date
+  const parsearFechaUltima = (fechaStr) => {
+    if (!fechaStr) return null;
+    const partes = fechaStr.split("/");
+    if (partes.length !== 2) return null;
+
+    const dia = parseInt(partes[0], 10);
+    const mes = parseInt(partes[1], 10);
+
+    if (isNaN(dia) || isNaN(mes)) return null;
+
+    return new Date(hoy_fecha.getFullYear(), mes - 1, dia);
+  };
+
+  // Fecha de última asistencia
+  const fechaUltima = parsearFechaUltima(student.ultimo_dia_asistencia);
+
+  let badgeUltima = null;
+
+  // Badge que indica hace cuánto asistió por última vez
+  if (fechaUltima) {
+    const dias_transcurridos = differenceInCalendarDays(hoy_fecha, fechaUltima);
+
+    let clasesColor = "";
+
+    if (dias_transcurridos < 7)
+      clasesColor = "bg-green-100 text-green-800 border-green-200";
+    else if (dias_transcurridos < 15)
+      clasesColor = "bg-yellow-100 text-yellow-800 border-yellow-200";
+    else
+      clasesColor = "bg-red-100 text-red-800 border-red-200";
+
+    badgeUltima = (
+      <span
+        className={`px-[2px] py-[0.5px] rounded text-[10px] font-bold border shadow-sm whitespace-nowrap ${clasesColor}`}
+        title="Última asistencia"
+      >
+        últ. {student.ultimo_dia_asistencia}
+      </span>
+    );
+  }
+
+  let estadoBadge = null;
+
+  // Badge de asistencia del día
+  if (estadoAsistencia === "presente") {
+    estadoBadge = (
+      <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2">
+        <span className="text-white font-bold text-xs">P</span>
+      </div>
+    );
+  } else if (estadoAsistencia === "ausente") {
+    estadoBadge = (
+      <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2">
+        <span className="text-white font-bold text-xs">A</span>
+      </div>
+    );
+  } else {
+    // Badge con fecha de inicio si aún no tiene asistencia
+    estadoBadge = (
+      <div className="bg-orange-100 border border-orange-500 px-1.5 py-0.5 rounded">
+        <span className="text-orange-700 font-bold text-[10px] whitespace-nowrap">
+          I: {planTipo.split("-").reverse().join("/")}
+        </span>
+      </div>
+    );
+  }
+
+  // Contenido visual de la celda
+  const content = (
+    <div className="flex items-center justify-between w-full gap-2">
+      <span className="truncate font-medium">{student.name}</span>
+
+      <div className="flex flex-col items-center gap-1 flex-shrink-0">
+        {estadoBadge}
+        {badgeUltima}
+      </div>
+    </div>
+  );
+
+  // Lógica según tipo de alumno
+  switch (student.status) {
+    case "plan":
+      const endDate = new Date(student.planDetails.endDate + "T00:00:00");
+      isExpired = endDate < hoy_fecha;
+
+      // Diferenciar tipo de plan
+      style =
+        student.planDetails?.type === "L-M-V"
+          ? "bg-gray-100"
+          : "bg-gray-300";
+      break;
+
+    case "prueba":
+      const trialDate = new Date(student.trialDetails.date + "T00:00:00");
+      isExpired = trialDate < hoy_fecha;
+      style = "bg-cyan-200";
+      break;
+
+    case "programado":
+      const fechaRelevante =
+        student.scheduledDetails?.promisedDate ||
+        student.scheduledDetails.date;
+
+      const scheduledDate = new Date(fechaRelevante + "T00:00:00");
+
+      isExpired = scheduledDate < hoy_fecha;
+      style = "bg-yellow-200";
+      break;
+
+    default:
+      break;
+  }
+
+  // Si está vencido, pintar en rojo
+  if (isExpired) style = "bg-red-500 text-white";
+
+  return { content, style };
+
+}, [asistenciasHoy]);
 
   // Función para cambiar la asistencia de un alumno
   const cambiarAsistencia = async (studentId, newEstado) => {

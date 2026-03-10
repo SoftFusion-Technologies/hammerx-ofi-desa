@@ -16,8 +16,7 @@ import useHorariosDeshabilitados from './PilatesGestion/HorariosDeshabilitados';
 import useHistorialAlumnos from './PilatesGestion/HistorialAlumnos';
 import useGrillaMinimizada from './PilatesGestion/HorariosOcultos';
 import { IoAlertCircle } from 'react-icons/io5';
-import { differenceInDays, parseISO } from 'date-fns';
-
+import { differenceInDays, parseISO, differenceInCalendarDays } from 'date-fns';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 const PilatesGestionLogica = () => {
@@ -1493,16 +1492,14 @@ const PilatesGestionLogica = () => {
    * FUNCTION: Genera contenido HTML y estilos CSS para una celda de alumno
    * Renderiza información diferente según el estado (plan, prueba, programado).
    * Aplica estilos visuales para indicar si el plan está vencido, vigente, etc.
-   * @param {object} student - Datos del alumno
-   * @returns {object} { content: JSX, style: string } - Contenido y clases CSS
    */
-  const getCellContentAndStyle = useCallback(
+const getCellContentAndStyle = useCallback(
     (student) => {
       if (!student)
         return { content: null, style: 'bg-white hover:bg-gray-100' };
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const hoy_fecha = new Date();
+      hoy_fecha.setHours(0, 0, 0, 0);
 
       let content = (
         <span className="font-semibold">
@@ -1513,11 +1510,38 @@ const PilatesGestionLogica = () => {
       let style = 'bg-gray-100';
       let isExpired = false;
 
+      const parsearFechaUltima = (fechaStr) => {
+        if (!fechaStr) return null;
+        const partes = fechaStr.split("/");
+        if (partes.length !== 2) return null;
+        const dia = parseInt(partes[0], 10);
+        const mes = parseInt(partes[1], 10);
+        if (isNaN(dia) || isNaN(mes)) return null;
+        return new Date(hoy_fecha.getFullYear(), mes - 1, dia);
+      };
+
+      const fechaUltima = parsearFechaUltima(student.ultimo_dia_asistencia);
+      let componente_badge_asistencia = null;
+
+      if (fechaUltima) {
+        const dias_transcurridos = differenceInCalendarDays(hoy_fecha, fechaUltima);
+        let color_badge = "";
+        if (dias_transcurridos < 7) color_badge = "bg-green-100 text-green-800 border-green-200";
+        else if (dias_transcurridos < 15) color_badge = "bg-yellow-100 text-yellow-800 border-yellow-200";
+        else color_badge = "bg-red-100 text-red-800 border-red-200";
+
+        componente_badge_asistencia = (
+          <span className={`px-[1px] rounded text-[10px] font-bold border shadow-sm ${color_badge}`} title="Última asistencia">
+            últ. {student.ultimo_dia_asistencia}
+          </span>
+        );
+      }
+
       switch (student.status) {
         case 'plan':
           const endDate = new Date(student.planDetails.endDate + 'T00:00:00');
 
-          isExpired = endDate < today;
+          isExpired = endDate < hoy_fecha;
 
           style =
             student.planDetails?.type === 'L-M-V'
@@ -1532,13 +1556,17 @@ const PilatesGestionLogica = () => {
           );
           content = (
             <span>
-              <div className="flex">
-                {student.es_cupo_extra && (
-                  <span className="text-yellow-600 text-xl">
-                    <IoAlertCircle />
-                  </span>
-                )}{' '}
-                {student.name}
+              <div className="flex items-center justify-between min-w-0">
+                <div className="flex truncate">
+                  {student.es_cupo_extra && (
+                    <span className="text-yellow-600 text-xl">
+                      <IoAlertCircle />
+                    </span>
+                  )}{' '}
+                  {student.name}
+                </div>
+                {/*Inserción del badge de asistencia al lado del nombre */}
+                {componente_badge_asistencia}
               </div>
               {/* Contenedor para la segunda línea con Flexbox */}
               <div className="flex items-center justify-between mt-1 text-xs italic">
@@ -1560,20 +1588,23 @@ const PilatesGestionLogica = () => {
 
         case 'prueba':
           const trialDate = new Date(student.trialDetails.date + 'T00:00:00');
-          isExpired = trialDate < today;
+          isExpired = trialDate < hoy_fecha;
           style = 'bg-cyan-200';
 
           const asistio = asistenciaPruebasMap[student.id];
 
           content = (
             <span>
-              <div className="flex items-center">
-                {student.es_cupo_extra && (
-                  <span className="text-yellow-600 text-xl">
-                    <IoAlertCircle />
-                  </span>
-                )}
-                {student.name}
+              <div className="flex items-center justify-between min-w-0">
+                <div className="flex items-center truncate">
+                  {student.es_cupo_extra && (
+                    <span className="text-yellow-600 text-xl">
+                      <IoAlertCircle />
+                    </span>
+                  )}
+                  {student.name}
+                </div>
+                {componente_badge_asistencia}
               </div>
               <span className="text-xs italic">
                 Clase de prueba{' '}
@@ -1604,17 +1635,20 @@ const PilatesGestionLogica = () => {
             student.scheduledDetails?.promisedDate ||
             student.scheduledDetails.date;
           const scheduledDate = new Date(fechaRelevante + 'T00:00:00');
-          isExpired = scheduledDate < today;
+          isExpired = scheduledDate < hoy_fecha;
           style = 'bg-yellow-200';
           content = (
             <span>
-              <div className="flex items-center">
-                {student.es_cupo_extra && (
-                  <span className="text-yellow-600 text-xl">
-                    <IoAlertCircle />
-                  </span>
-                )}
-                {student.name}
+              <div className="flex items-center justify-between min-w-0">
+                <div className="flex items-center truncate">
+                  {student.es_cupo_extra && (
+                    <span className="text-yellow-600 text-xl">
+                      <IoAlertCircle />
+                    </span>
+                  )}
+                  {student.name}
+                </div>
+                {componente_badge_asistencia}
               </div>
               <span className="text-xs italic">
                 Renueva el{' '}
