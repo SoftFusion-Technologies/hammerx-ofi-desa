@@ -307,8 +307,8 @@ const ListaEspera = ({
                       )}{" "}
                       {person.hour}
                     </td>
-                    <td className="p-2 text-gray-600 italic text-center max-w-xs truncate text-sm">
-                      {person.nombre_usuario_cargado}
+                    <td className={`p-2 text-gray-600 italic text-center ${person.nombre_usuario_cargado === "REGISTRO WEB" ? "text-orange-500 font-bold" : ""}  max-w-xs truncate text-sm`}>
+                      {person.nombre_usuario_cargado || "REGISTRO WEB"}
                     </td>
                     <td className="p-2 text-center">
                       <motion.button

@@ -192,7 +192,7 @@ const PilatesGestionLogica = () => {
         name: item.nombre,
         type: item.tipo.toLowerCase().includes('cambio') ? 'cambio' : 'espera',
         contact: item.contacto,
-        nombre_usuario_cargado: item.nombre_usuario_cargado,
+        nombre_usuario_cargado: item.nombre_usuario_cargado.toUpperCase() || 'REGISTRO WEB',
         plan: item.plan_interes,
         hours: item.horarios_preferidos
           ? item.horarios_preferidos.split(',').map((h) => h.trim())

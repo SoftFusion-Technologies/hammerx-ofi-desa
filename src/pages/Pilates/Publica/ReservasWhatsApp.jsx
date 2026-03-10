@@ -16,6 +16,7 @@ import {
 import { FaWhatsapp, FaHandPointer } from "react-icons/fa";
 import { logo } from "../../../images/svg/index";
 import fondoPilates from "../img/reservas-pilates-fondo.jpeg";
+import ModalListaEsperaPublico from "./Modals/ModalListaEsperaReservas";
 
 // --- VARIANTS DE ANIMACIÓN ---
 const containerVariants = {
@@ -41,6 +42,8 @@ const ReservasWhatsApp = () => {
   const [sedesDisponibles, setSedesDisponibles] = useState([]);
   const [sedeSeleccionada, setSedeSeleccionada] = useState(null);
   const [listaHorarios, setListaHorarios] = useState([]);
+  const [modalListaEspera, setModalListaEspera] = useState(false);
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
 
   const [cargandoSedes, setCargandoSedes] = useState(true);
   const [cargandoHorarios, setCargandoHorarios] = useState(false);
@@ -447,18 +450,33 @@ const ReservasWhatsApp = () => {
                                     )}
                                   </div>
                                 </div>
-                                <motion.button
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => reservarTurno(item)}
-                                  disabled={lleno || isLoading}
-                                  className={`flex-shrink-0 h-10 px-3 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition-colors ${
-                                    lleno || isLoading
-                                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                      : "bg-orange-600 text-white hover:bg-orange-700 shadow-md"
-                                  }`}
-                                >
-                                  {lleno ? "Agotado" : "¡Reservar!"}
-                                </motion.button>
+                                <div className="flex flex-col gap-1 flex-shrink-0">
+                                  <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => reservarTurno(item)}
+                                    disabled={lleno || isLoading}
+                                    className={`h-10 px-3 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition-colors ${
+                                      lleno || isLoading
+                                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                        : "bg-orange-600 text-white hover:bg-orange-700 shadow-md"
+                                    }`}
+                                  >
+                                    {lleno ? "Agotado" : "¡Reservar!"}
+                                  </motion.button>
+                                  
+    
+                                  {lleno && (
+                                    <button 
+                                      onClick={() => setModalListaEspera(true)}
+                                      className="text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-1 flex items-center gap-1 shadow-sm active:bg-blue-100 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                      style={{ minHeight: 0, minWidth: 0, lineHeight: 1.1 }}
+                                      aria-label="Anotarme en lista de espera"
+                                    >
+                                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="inline-block text-blue-500"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
+                                      Anotarme en lista de espera
+                                    </button>
+                                  )}
+                                </div>
                               </div>
 
                               {/* --- DESKTOP LAYOUT --- */}
@@ -499,10 +517,29 @@ const ReservasWhatsApp = () => {
                               </div>
 
                               {/* Footer Desktop */}
-                              <div className="hidden sm:block mt-auto w-full">
-                                <motion.button whileTap={{ scale: 0.95 }} onClick={() => reservarTurno(item)} disabled={lleno || isLoading} className={`w-full py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors ${lleno || isLoading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-orange-600 text-white hover:bg-orange-700 shadow-md"}`}>
+                              <div className="hidden sm:flex flex-col gap-2 mt-auto w-full">
+                                <motion.button 
+                                  whileTap={{ scale: 0.95 }} 
+                                  onClick={() => reservarTurno(item)} 
+                                  disabled={lleno || isLoading} 
+                                  className={`w-full py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors ${lleno || isLoading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-orange-600 text-white hover:bg-orange-700 shadow-md"}`}
+                                >
                                   {lleno ? "Agotado" : (<>¡Quiero reservar! <FaWhatsapp size={16} /></>)}
                                 </motion.button>
+
+                                {/* Botón lista de espera en Desktop */}
+                                {lleno && (
+                                  <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => {setModalListaEspera(true); 
+                                                    setTurnoSeleccionado(item); 
+                                    }}
+                                    className="w-full py-2 rounded-xl font-bold text-xs border-2 border-blue-500 text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+                                  >
+                                    <Info size={14} /> Anotarme en lista de espera
+                                  </motion.button>
+                                )}
                               </div>
                             </motion.div>
                           );
@@ -516,6 +553,17 @@ const ReservasWhatsApp = () => {
           )}
         </AnimatePresence>
       </main>
+
+      {modalListaEspera && (
+        <ModalListaEsperaPublico 
+          isOpen={modalListaEspera} 
+          onClose={() => setModalListaEspera(false)} 
+          sedeDatos={sedeSeleccionada} 
+          filtroGrupo={filtroGrupo}
+          horarioFiltrados={listaHorarios}
+          turnoSeleccionado={turnoSeleccionado}
+        />
+      )}
       <FooterV2></FooterV2>
     </div>
   );
