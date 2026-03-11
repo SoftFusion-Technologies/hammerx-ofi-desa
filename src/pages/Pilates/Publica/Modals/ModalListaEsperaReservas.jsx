@@ -17,28 +17,45 @@ const ModalListaEsperaPublico = ({ isOpen, onClose, sedeDatos, horarioSugerido, 
   const [formulario, setFormulario] = useState({
     nombre: "",
     celular: "",
-    plan: "L-M-V", // Plan por defecto
-    horarios: horarioSugerido ? [horarioSugerido] : [], // Si llega un horario sugerido se preselecciona
+    plan: "L-M-V",
+    horarios: [],
     notas: "",
   });
 
   // Estado que controla si se está enviando la solicitud
   const [cargando, setCargando] = useState(false);
 
-  // Cuando el modal se abre con un turno seleccionado
-  // ajusta automáticamente el plan y agrega el horario sugerido
+  // Cada vez que se abre el modal, resetea el formulario y marca el horario sugerido o el del turno seleccionado
   useEffect(() => {
-    if (isOpen && turnoSeleccionado) {
-      const nuevoPlan = turnoSeleccionado.grp === "LMV" ? "L-M-V" : "M-J";
-      setFormulario(prev => ({
-        ...prev,
-        plan: nuevoPlan,
-        horarios: prev.horarios.includes(turnoSeleccionado.hhmm) 
-          ? prev.horarios 
-          : [...prev.horarios, turnoSeleccionado.hhmm]
-      }));
+    if (isOpen) {
+      if (turnoSeleccionado) {
+        const nuevoPlan = turnoSeleccionado.grp === "LMV" ? "L-M-V" : "M-J";
+        setFormulario({
+          nombre: "",
+          celular: "",
+          plan: nuevoPlan,
+          horarios: [turnoSeleccionado.hhmm],
+          notas: "",
+        });
+      } else if (horarioSugerido) {
+        setFormulario({
+          nombre: "",
+          celular: "",
+          plan: "L-M-V",
+          horarios: [horarioSugerido],
+          notas: "",
+        });
+      } else {
+        setFormulario({
+          nombre: "",
+          celular: "",
+          plan: "L-M-V",
+          horarios: [],
+          notas: "",
+        });
+      }
     }
-  }, [isOpen, turnoSeleccionado]);
+  }, [isOpen, turnoSeleccionado, horarioSugerido]);
 
   // Maneja cambios de inputs del formulario (nombre, celular, notas)
   const manejarCambio = (e) => {
@@ -207,7 +224,7 @@ const ModalListaEsperaPublico = ({ isOpen, onClose, sedeDatos, horarioSugerido, 
     <AnimatePresence>
 
       {/* Fondo oscuro con blur */}
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 font-messina">
 
         {/* Overlay oscuro que también permite cerrar el modal */}
         <motion.div
@@ -228,11 +245,11 @@ const ModalListaEsperaPublico = ({ isOpen, onClose, sedeDatos, horarioSugerido, 
         >
 
           {/* Encabezado del modal */}
-          <div className="bg-orange-600 p-5 sm:p-6 text-white flex justify-between items-center shrink-0">
+          <div className="bg-orange-600 p-3 sm:p-6 text-white flex justify-between items-center shrink-0">
 
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bignoodle tracking-wide uppercase leading-tight">
-                Lista de Espera
+              <h2 className="text-xl sm:text-3xl font-bignoodle tracking-wide uppercase leading-tight">
+                ¡ Anotate a lista de Espera !
               </h2>
 
               {/* Nombre de la sede */}
@@ -242,50 +259,48 @@ const ModalListaEsperaPublico = ({ isOpen, onClose, sedeDatos, horarioSugerido, 
             </div>
 
             {/* Botón para cerrar el modal */}
-            <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
-              <X size={28} />
+            <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-full transition-colors">
+              <X size={22} />
             </button>
           </div>
 
           {/* Contenido scrolleable */}
-          <div className="flex-1 overflow-y-auto p-5 sm:p-8 space-y-8 pb-40 sm:pb-8">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-8 space-y-4 sm:space-y-8 pb-24 sm:pb-8">
             
             {/* Sección datos personales */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-orange-600 mb-2">
-                <User size={22} />
-                <span className="font-bold uppercase text-sm tracking-widest">Tus Datos</span>
+            <div className="space-y-2 sm:space-y-4">
+              <div className="flex items-center gap-2 text-orange-600 mb-1 sm:mb-2">
+                <User size={18} className="sm:w-[22px] sm:h-[22px]" />
+                <span className="font-bold uppercase text-xs sm:text-sm tracking-widest">Tus Datos</span>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1 sm:gap-5">
 
                 {/* Nombre */}
                 <div className="space-y-1">
                   <label className="text-xs font-black text-gray-400 ml-1 uppercase">
-                    Nombre y Apellido
+                    Nombre y Apellido (Obligatorio)
                   </label>
                   <input
                     type="text"
                     name="nombre"
                     value={formulario.nombre}
-                    onChange={manejarCambio}
-                    placeholder="Escribe tu nombre"
-                    className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-orange-500 focus:bg-white transition-all outline-none text-lg font-semibold"
+                    onChange={manejarCambio}                 
+                    className="w-full p-2.5 sm:p-4 bg-gray-50 border-2 border-gray-100 rounded-xl sm:rounded-2xl focus:border-orange-500 focus:bg-white transition-all outline-none text-sm sm:text-lg font-semibold"
                   />
                 </div>
 
                 {/* Celular */}
                 <div className="space-y-1">
                   <label className="text-xs font-black text-gray-400 ml-1 uppercase">
-                    Tu Celular
+                    Tu Celular (Obligatorio)
                   </label>
                   <input
                     type="tel"
                     name="celular"
                     value={formulario.celular}
                     onChange={manejarCambio}
-                    placeholder="Ej: 3815123456"
-                    className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-orange-500 focus:bg-white transition-all outline-none text-lg font-semibold"
+                    className="w-full p-2.5 sm:p-4 bg-gray-50 border-2 border-gray-100 rounded-xl sm:rounded-2xl focus:border-orange-500 focus:bg-white transition-all outline-none text-sm sm:text-lg font-semibold"
                   />
                 </div>
 
@@ -293,25 +308,25 @@ const ModalListaEsperaPublico = ({ isOpen, onClose, sedeDatos, horarioSugerido, 
             </div>
 
             {/* Selección de días */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-orange-600 mb-2">
-                <Calendar size={22} />
-                <span className="font-bold uppercase text-sm tracking-widest">
+            <div className="space-y-2 sm:space-y-4">
+              <div className="flex items-center gap-2 text-orange-600 mb-1 sm:mb-2">
+                <Calendar size={18} className="sm:w-[22px] sm:h-[22px]" />
+                <span className="font-bold uppercase text-xs sm:text-sm tracking-widest">
                   Días que prefieres
                 </span>
               </div>
 
               {/* Botones de selección de plan */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {[
-                  { id: "L-M-V", label: "Lun / Mié / Vie" },
-                  { id: "M-J", label: "Mar / Jue" },
+                  { id: "L-M-V", label: "Lun-Mié-Vie" },
+                  { id: "M-J", label: "Mar-Jue" },
                   { id: "Cualquier dia", label: "Cualquier día" }
                 ].map((p) => (
                   <button
                     key={p.id}
                     onClick={() => setFormulario({ ...formulario, plan: p.id, horarios: [] })}
-                    className={`p-4 rounded-2xl border-2 font-bold text-base transition-all ${
+                    className={`p-2 sm:p-4 rounded-xl sm:rounded-2xl border-2 font-bold text-xs sm:text-base transition-all ${
                       formulario.plan === p.id 
                       ? "border-orange-600 bg-orange-600 text-white shadow-lg scale-[1.02]" 
                       : "border-gray-200 bg-white text-gray-500 hover:border-orange-200"
@@ -324,33 +339,42 @@ const ModalListaEsperaPublico = ({ isOpen, onClose, sedeDatos, horarioSugerido, 
             </div>
 
             {/* Selección de horarios */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-orange-600 mb-2">
-                <Clock size={22} />
-                <span className="font-bold uppercase text-sm tracking-widest">
+            <div className="space-y-2 sm:space-y-4">
+              <div className="flex items-center gap-2 text-orange-600 mb-1 sm:mb-2">
+                <Clock size={18} className="sm:w-[22px] sm:h-[22px]" />
+                <span className="font-bold uppercase text-xs sm:text-sm tracking-widest">
                   Horarios de interés
                 </span>
               </div>
 
               {/* Grid de horarios disponibles */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 sm:grid-cols-4 gap-1.5 sm:gap-2">
                 {horariosFinales.length > 0 ? (
-                  horariosFinales.map((item) => (
-                    <button
-                      key={item.hhmm}
-                      onClick={() => toggleHorario(item.hhmm)}
-                      className={`py-3 rounded-xl border-2 font-bold text-base transition-all ${
-                        formulario.horarios.includes(item.hhmm)
-                        ? "border-orange-600 bg-orange-600 text-white shadow-md"
-                        : "border-gray-100 bg-gray-50 text-gray-600"
-                      }`}
-                    >
-                      {item.hhmm}
-                    </button>
-                  ))
+                  horariosFinales.map((item) => {
+                    const seleccionado = formulario.horarios.includes(item.hhmm);
+                    return (
+                      <button
+                        key={item.hhmm}
+                        onClick={() => toggleHorario(item.hhmm)}
+                        className={`relative py-2 sm:py-3 rounded-lg sm:rounded-xl border-2 font-bold text-sm sm:text-base transition-all ${
+                          seleccionado
+                          ? "border-orange-600 bg-orange-600 text-white shadow-md"
+                          : "border-gray-100 bg-gray-50 text-gray-600"
+                        }`}
+                        type="button"
+                      >
+                        {item.hhmm}
+                        {seleccionado && (
+                          <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5">
+                            <X size={14} className="text-white bg-orange-500 rounded-full p-[1px] shadow" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })
                 ) : (
-                  <div className="col-span-full p-4 bg-gray-50 rounded-2xl text-center border-2 border-dashed border-gray-200">
-                    <p className="text-gray-500 italic text-sm">
+                  <div className="col-span-full p-3 sm:p-4 bg-gray-50 rounded-xl sm:rounded-2xl text-center border-2 border-dashed border-gray-200">
+                    <p className="text-gray-500 italic text-xs sm:text-sm">
                       No hay horarios disponibles para esta selección.
                     </p>
                   </div>
@@ -359,10 +383,10 @@ const ModalListaEsperaPublico = ({ isOpen, onClose, sedeDatos, horarioSugerido, 
             </div>
 
             {/* Campo opcional de observaciones */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-orange-600 mb-2">
-                <MessageSquare size={22} />
-                <span className="font-bold uppercase text-sm tracking-widest">
+            <div className="space-y-2 sm:space-y-4">
+              <div className="flex items-center gap-2 text-orange-600 mb-1 sm:mb-2">
+                <MessageSquare size={18} className="sm:w-[22px] sm:h-[22px]" />
+                <span className="font-bold uppercase text-xs sm:text-sm tracking-widest">
                   ¿Algo más? (Opcional)
                 </span>
               </div>
@@ -372,25 +396,25 @@ const ModalListaEsperaPublico = ({ isOpen, onClose, sedeDatos, horarioSugerido, 
                 value={formulario.notas}
                 onChange={manejarCambio}
                 rows="2"
-                placeholder="Escribe aquí si tienes alguna duda..."
-                className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-orange-500 outline-none resize-none text-lg"
+                placeholder="¿Querés contarnos algo más sobre vos para nuestros profes?"
+                className="w-full p-2.5 sm:p-4 bg-gray-50 border-2 border-gray-100 rounded-xl sm:rounded-2xl focus:border-orange-500 outline-none resize-none text-sm sm:text-lg"
               />
             </div>
 
           </div>
 
           {/* Footer con botón de envío */}
-          <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white to-transparent sm:relative border-t border-gray-50 sm:border-none">
+          <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5 bg-gradient-to-t from-white via-white to-transparent sm:relative border-t border-gray-50 sm:border-none">
             <button
               onClick={enviarSolicitud}
               disabled={cargando || !formulario.nombre || !formulario.celular}
-              className={`w-full py-5 rounded-2xl font-bold text-xl flex items-center justify-center gap-3 shadow-2xl transition-all active:scale-[0.98] ${
+              className={`w-full py-3 sm:py-5 rounded-xl sm:rounded-2xl font-bold text-base sm:text-xl flex items-center justify-center gap-2 sm:gap-3 shadow-2xl transition-all active:scale-[0.98] ${
                 cargando || !formulario.nombre || !formulario.celular
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
                 : "bg-orange-600 text-white hover:bg-orange-700"
               }`}
             >
-              <Send size={24} /> 
+              <Send size={20} className="sm:w-6 sm:h-6" /> 
               {cargando ? "ENVIANDO..." : "ANOTARME AHORA"}
             </button>
           </div>

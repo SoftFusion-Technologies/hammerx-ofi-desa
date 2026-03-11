@@ -33,6 +33,30 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 60 } },
 };
 
+const pulseVariants = {
+  animate: {
+    scale: [1, 1.05, 1],
+    opacity: [1, 0.8, 1],
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      ease: "easeInOut",
+    },
+  },
+};
+
+const handClickVariants = {
+  animate: {
+    y: [0, -3, 0],
+    scale: [1, 0.9, 1],
+    transition: {
+      duration: 1.5,
+      repeat: Infinity,
+      ease: "easeInOut",
+    },
+  },
+};
+
 const ReservasWhatsApp = () => {
   const reduceMotion = useReducedMotion();
   const motionInitialVariant = reduceMotion ? false : "hidden";
@@ -421,7 +445,7 @@ const ReservasWhatsApp = () => {
                             >
                               {/* --- MOBILE LAYOUT --- */}
                               {/* --- VISTA MOBILE (Layout Compacto) --- */}
-                              <div className="sm:hidden flex items-center gap-2 justify-between w-full">
+                              <div className="sm:hidden flex items-center gap-2 justify-between w-full font-bold ">
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
                                   <div className={`p-2 rounded-lg flex-shrink-0 ${lleno ? "bg-gray-200" : "bg-orange-50 text-orange-600"}`}>
                                     <Clock size={16} />
@@ -437,12 +461,12 @@ const ReservasWhatsApp = () => {
                                     {/* PROMO MOBILE: Urgencia visual y Plurales Correctos */}
                                     {cuposPromo > 0 && !lleno && (
                                       <div className="mt-1.5 flex flex-col items-start gap-0.5 animate-pulse-slow">
-                                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-bold shadow-sm">
+                                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] shadow-sm">
                                           <Flame size={10} className="fill-white text-white" />
                                           <span>¡{textoQueda} {cuposPromo} {textoCupos} al {formatearPorcentaje(item.descuento?.porcentaje)}% OFF!</span>
                                         </div>
                                         {fechaPromo && (
-                                          <span className="text-[9px] text-red-600 font-bold ml-0.5">
+                                          <span className="text-[9px] text-red-600  ml-0.5">
                                             Expira el {fechaPromo}
                                           </span>
                                         )}
@@ -455,7 +479,7 @@ const ReservasWhatsApp = () => {
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => reservarTurno(item)}
                                     disabled={lleno || isLoading}
-                                    className={`h-10 px-3 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition-colors ${
+                                    className={`h-10 px-3 rounded-lg text-[11px] flex items-center justify-center gap-1 transition-colors ${
                                       lleno || isLoading
                                         ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                         : "bg-orange-600 text-white hover:bg-orange-700 shadow-md"
@@ -466,16 +490,62 @@ const ReservasWhatsApp = () => {
                                   
     
                                   {lleno && (
-                                    <button 
-                                      onClick={() => setModalListaEspera(true)}
-                                      className="text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-1 flex items-center gap-1 shadow-sm active:bg-blue-100 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300"
-                                      style={{ minHeight: 0, minWidth: 0, lineHeight: 1.1 }}
+                                  <div className="relative group">
+                                    {/* Pulso de fondo suave y difuminado */}
+                                    <motion.div
+                                      animate={{
+                                        scale: [1, 1.2, 1],
+                                        opacity: [0.3, 0, 0.3],
+                                      }}
+                                      transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                      }}
+                                      className="absolute inset-0 bg-blue-400 rounded-full blur-md"
+                                    />
+
+                                    <motion.button 
+                                      onClick={() => {
+                                        setModalListaEspera(true);
+                                        setTurnoSeleccionado(item);
+                                      }}
+                                      whileTap={{ scale: 0.95 }}
+                                      className="relative overflow-hidden text-[10px] tracking-tighter text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full px-4 py-2 flex items-center gap-2 shadow-[0_4px_15px_rgba(37,99,235,0.4)] active:shadow-inner transition-all"
                                       aria-label="Anotarme en lista de espera"
                                     >
-                                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="inline-block text-blue-500"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
-                                      Anotarme en lista de espera
-                                    </button>
-                                  )}
+                                      {/* Efecto Shimmer*/}
+                                      <motion.div
+                                        animate={{
+                                          x: ['-100%', '200%'],
+                                        }}
+                                        transition={{
+                                          duration: 2.5,
+                                          repeat: Infinity,
+                                          ease: "easeInOut",
+                                          repeatDelay: 1
+                                        }}
+                                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12"
+                                      />
+
+                                      {/* Icono de la manito con animación de "touch" */}
+                                      <motion.div
+                                        animate={{
+                                          scale: [1, 0.8, 1.2, 1],
+                                        }}
+                                        transition={{
+                                          duration: 1.5,
+                                          repeat: Infinity,
+                                          times: [0, 0.2, 0.5, 1],
+                                        }}
+                                        className="relative z-10"
+                                      >
+                                        <FaHandPointer size={12} className="drop-shadow-md text-white" />
+                                      </motion.div>
+
+                                      <span className="relative z-10">Lista de Espera</span>
+                                    </motion.button>
+                                  </div>
+                                )}
                                 </div>
                               </div>
 
@@ -517,28 +587,78 @@ const ReservasWhatsApp = () => {
                               </div>
 
                               {/* Footer Desktop */}
-                              <div className="hidden sm:flex flex-col gap-2 mt-auto w-full">
+                              <div className="hidden sm:flex flex-col gap-2 mt-auto w-full font-bold font-messina">
                                 <motion.button 
                                   whileTap={{ scale: 0.95 }} 
                                   onClick={() => reservarTurno(item)} 
                                   disabled={lleno || isLoading} 
-                                  className={`w-full py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors ${lleno || isLoading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-orange-600 text-white hover:bg-orange-700 shadow-md"}`}
+                                  className={`w-full py-2 sm:py-3 rounded-xl  text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors ${lleno || isLoading ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-orange-600 text-white hover:bg-orange-700 shadow-md"}`}
                                 >
                                   {lleno ? "Agotado" : (<>¡Quiero reservar! <FaWhatsapp size={16} /></>)}
                                 </motion.button>
 
-                                {/* Botón lista de espera en Desktop */}
+                                {/* Botón lista de espera en Desktop*/}
                                 {lleno && (
-                                  <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => {setModalListaEspera(true); 
-                                                    setTurnoSeleccionado(item); 
-                                    }}
-                                    className="w-full py-2 rounded-xl font-bold text-xs border-2 border-blue-500 text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
-                                  >
-                                    <Info size={14} /> Anotarme en lista de espera
-                                  </motion.button>
+                                  <div className="relative mt-auto pt-2">
+                                    {/* Aura de pulso (Glow externo) */}
+                                    <motion.div
+                                      animate={{
+                                        scale: [1, 1.1, 1],
+                                        opacity: [0.4, 0.1, 0.4],
+                                      }}
+                                      transition={{
+                                        duration: 3,
+                                        repeat: Infinity,
+                                        ease: "easeInOut",
+                                      }}
+                                      className="absolute inset-0 bg-blue-500/30 rounded-xl blur-xl"
+                                    />
+
+                                    <motion.button
+                                      whileHover={{ 
+                                        scale: 1.03,
+                                        shadow: "0 10px 25px rgba(37, 99, 235, 0.5)" 
+                                      }}
+                                      whileTap={{ scale: 0.97 }}
+                                      onClick={() => {
+                                        setModalListaEspera(true);
+                                        setTurnoSeleccionado(item);
+                                      }}
+                                      className="relative z-10 w-full py-3 overflow-hidden rounded-xl text-xs sm:text-sm text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 shadow-[0_4px_20px_rgba(37,99,235,0.3)] flex items-center justify-center gap-3 transition-all"
+                                    >
+                                      {/* Efecto Shimmer (Brillo láser que recorre el botón) */}
+                                      <motion.div
+                                        animate={{
+                                          x: ['-150%', '300%'],
+                                        }}
+                                        transition={{
+                                          duration: 3,
+                                          repeat: Infinity,
+                                          ease: "linear",
+                                          repeatDelay: 1.5
+                                        }}
+                                        className=" absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-20"
+                                      />
+
+                                      {/* Contenido del botón */}
+                                      <div className="relative z-10 flex items-center justify-center gap-2 px-1">
+                                        <motion.div
+                                          animate={{
+                                            scale: [1, 0.85, 1.2, 1],
+                                            rotate: [0, -10, 10, 0]
+                                          }}
+                                          transition={{
+                                            duration: 2,
+                                            repeat: Infinity,
+                                            times: [0, 0.2, 0.5, 1],
+                                          }}
+                                        >
+                                          <FaHandPointer size={16} className= "drop-shadow-lg" />
+                                        </motion.div>
+                                          <span>Lista de espera</span>
+                                      </div>
+                                    </motion.button>
+                                  </div>
                                 )}
                               </div>
                             </motion.div>
