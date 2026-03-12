@@ -1511,14 +1511,15 @@ const getCellContentAndStyle = useCallback(
       let isExpired = false;
 
       const parsearFechaUltima = (fechaStr) => {
-        if (!fechaStr) return null;
-        const partes = fechaStr.split("/");
-        if (partes.length !== 2) return null;
-        const dia = parseInt(partes[0], 10);
-        const mes = parseInt(partes[1], 10);
-        if (isNaN(dia) || isNaN(mes)) return null;
-        return new Date(hoy_fecha.getFullYear(), mes - 1, dia);
-      };
+      if (!fechaStr) return null;
+      const partes = fechaStr.split("/");
+      if (partes.length !== 3) return null;
+      const dia = parseInt(partes[0], 10);
+      const mes = parseInt(partes[1], 10);
+      const anio = parseInt(partes[2], 10);
+      if (isNaN(dia) || isNaN(mes) || isNaN(anio)) return null;
+      return new Date(anio, mes - 1, dia);
+    };
 
       const fechaUltima = parsearFechaUltima(student.ultimo_dia_asistencia);
       let componente_badge_asistencia = null;
@@ -1532,7 +1533,7 @@ const getCellContentAndStyle = useCallback(
 
         componente_badge_asistencia = (
           <span className={`px-[1px] rounded text-[10px] font-bold border shadow-sm ${color_badge}`} title="Última asistencia">
-            últ. {student.ultimo_dia_asistencia}
+            últ. {student.ultimo_dia_asistencia?.split('/').slice(0,2).join('/')}
           </span>
         );
       }

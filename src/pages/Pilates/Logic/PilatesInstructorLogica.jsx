@@ -166,14 +166,12 @@ const PilatesInstructorLogica = () => {
   const parsearFechaUltima = (fechaStr) => {
     if (!fechaStr) return null;
     const partes = fechaStr.split("/");
-    if (partes.length !== 2) return null;
-
+    if (partes.length !== 3) return null;
     const dia = parseInt(partes[0], 10);
     const mes = parseInt(partes[1], 10);
-
-    if (isNaN(dia) || isNaN(mes)) return null;
-
-    return new Date(hoy_fecha.getFullYear(), mes - 1, dia);
+    const anio = parseInt(partes[2], 10);
+    if (isNaN(dia) || isNaN(mes) || isNaN(anio)) return null;
+    return new Date(anio, mes - 1, dia);
   };
 
   // Fecha de última asistencia
@@ -199,7 +197,7 @@ const PilatesInstructorLogica = () => {
         className={`px-[2px] py-[0.5px] rounded text-[10px] font-bold border shadow-sm whitespace-nowrap ${clasesColor}`}
         title="Última asistencia"
       >
-        últ. {student.ultimo_dia_asistencia}
+        últ. {student.ultimo_dia_asistencia?.split('/').slice(0,2).join('/')}
       </span>
     );
   }
