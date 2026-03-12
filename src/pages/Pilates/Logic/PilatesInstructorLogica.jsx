@@ -290,6 +290,7 @@ const PilatesInstructorLogica = () => {
     };
     await update(null, datos);
     await refetchAsistencias();
+    await refetchHorarios();
     setIsModalAsistencia(false);
   };
 
