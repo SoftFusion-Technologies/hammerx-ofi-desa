@@ -907,7 +907,7 @@ const confirmarReprogramacion = async (nuevaFecha, nuevaHora) => {
                         className={esActual ? "!text-gray-600 font-bold" : ""}
                         style={esActual ? { color: '#ea580c', fontWeight: 'bold' } : {}}
                       >
-                        {`Reprogramacion de la visita programada (fecha prometida: ${formatearFechaSimple(cellData.student.scheduledDetails.promisedDate)})`}
+                        {`Reprogramacion de la renovación (fecha prometida: ${formatearFechaSimple(cellData.student.scheduledDetails.promisedDate)})`}
                       </option>
                     )
                   },
