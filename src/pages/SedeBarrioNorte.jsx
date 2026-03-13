@@ -1,23 +1,24 @@
-﻿import React, { useState } from "react";
-import { motion } from "framer-motion";
+﻿import React, { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Footer from "../components/footer/Footer";
 import { logo } from "../images/svg/index";
 import SillaPilates from "../images/sedes/SedeBarrioNorte2.png";
 // --- Imágenes de la galería (Comentadas para futura implementación) ---
 // import Box from "../images/sedes/Barrio Norte/Box.webp";
 // import Cardio from "../images/sedes/Barrio Norte/Cardio.webp";
-import Cardio_1 from "../images/sedes/Barrio Norte/Cardio1.webp";
+import Balanza_IA from "../images/sedes/Barrio Norte/BalanzaIA.jpeg";
+import Cardio_1 from "../images/sedes/Barrio Norte/Cardio.jpg";
+import Clase_grupales from "../images/sedes/Barrio Norte/Clase_grupales.jpg"; //No está
+import Musculacion from "../images/sedes/Barrio Norte/Musculacion.jpeg";
+import Musculacion_2 from "../images/sedes/Barrio Norte/Musculacion_2.jpg";
+import PlantaB_Sala_Pesos_Libres from "../images/sedes/Barrio Norte/PlantaB_Sala_Pesos_Libres.jpeg";
+import Sala_Pilates from "../images/sedes/Barrio Norte/Sala_pilates.jpg";
+import Silla_Masajes from "../images/sedes/Barrio Norte/Silla_Masajes.jpeg";
+import Terraza from "../images/sedes/Barrio Norte/Terraza.jpg";
 // import Fachada from "../images/sedes/Barrio Norte/Fachada.webp";
 // import Sala_Principal from "../images/sedes/Barrio Norte/Sala principal.webp";
 // import Sala_Principal_1 from "../images/sedes/Barrio Norte/Sala principal 2.webp";
-import Clase_grupales from "../images/sedes/Barrio Norte/Clase_grupales.webp";
-import PlantaB_Sala_Pesos_Libres from "../images/sedes/Barrio Norte/PlantaB_Sala_Pesos_Libres.webp";
-import Musculacion from "../images/sedes/Barrio Norte/Musculacion.webp";
-import Balanza_IA from "../images/sedes/Barrio Norte/BalanzaIA.webp";
-import Sala_Pilates from "../images/sedes/Barrio Norte/Sala_pilates.webp";
-import Silla_Masajes from "../images/sedes/Barrio Norte/Silla_Masajes.webp";
 import BalanzaIA from "../images/sedes/SedeBarrioNorte1.png";
-import Terraza from "../images/sedes/Barrio Norte/Terraza.webp";
 import "../styles/clients/newsede.css";
 import ModalContactoSede from "../components/ModalContactoSede";
 import FormTestClass from "../components/Forms/FormTestClass";
@@ -33,12 +34,202 @@ import {
   FaWhatsapp,
   FaWeight,
   FaChair,
+  FaChevronRight,
   FaHammer,
   FaWeightHanging,
 } from "react-icons/fa";
 
 import { FiSun, FiWind } from "react-icons/fi";
 import { MdSelfImprovement } from "react-icons/md";
+
+const barrioNorteImagesByPath = import.meta.glob(
+  "../images/sedes/Barrio Norte/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}",
+  { eager: true, import: "default" }
+);
+
+const barrioNortePathByUrl = Object.entries(barrioNorteImagesByPath).reduce(
+  (acc, [path, url]) => {
+    acc[url] = path;
+    return acc;
+  },
+  {}
+);
+
+const imageExtensions = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".JPG",
+  ".JPEG",
+  ".PNG",
+  ".WEBP",
+];
+
+const findSecondaryImageByName = (imageUrl) => {
+  if (!imageUrl) return null;
+
+  const sourcePath = barrioNortePathByUrl[imageUrl];
+  if (!sourcePath) return null;
+
+  const extensionMatch = sourcePath.match(/(\.[^./]+)$/);
+  if (!extensionMatch) return null;
+
+  const currentExtension = extensionMatch[1];
+  const basePath = sourcePath
+    .slice(0, -currentExtension.length)
+    .replace(/_2$/i, "");
+
+  const orderedExtensions = [
+    currentExtension,
+    ...imageExtensions.filter((ext) => ext !== currentExtension),
+  ];
+
+  for (const extension of orderedExtensions) {
+    const pairedPath = `${basePath}_2${extension}`;
+    const pairedImage = barrioNorteImagesByPath[pairedPath];
+    if (pairedImage && pairedImage !== imageUrl) return pairedImage;
+  }
+
+  return null;
+};
+
+const FeatureImageCarousel = ({
+  feature,
+  emptyIconClassName = "text-9xl md:text-[10rem] text-[#fc4b08]",
+}) => {
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const images = useMemo(() => {
+    if (!feature.image) return [];
+
+    const pairedImage =
+      feature.alternateImage || findSecondaryImageByName(feature.image);
+
+    if (pairedImage && pairedImage !== feature.image) {
+      return [feature.image, pairedImage];
+    }
+
+    return [feature.image];
+  }, [feature.image, feature.alternateImage]);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+    setDirection(0);
+  }, [feature.image, feature.alternateImage]);
+
+  if (!feature.image) {
+    return (
+      <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg">
+        <div className="w-full min-h-[200px] md:min-h-[250px] flex items-center justify-center overflow-hidden">
+          <feature.icon className={emptyIconClassName} />
+        </div>
+      </div>
+    );
+  }
+
+  const hasMultipleImages = images.length > 1;
+
+  const paginate = (newDirection) => {
+    if (!hasMultipleImages) return;
+
+    setDirection(newDirection);
+    setActiveImageIndex((prev) => {
+      const nextIndex = prev + newDirection;
+
+      if (nextIndex < 0) return images.length - 1;
+      if (nextIndex >= images.length) return 0;
+      return nextIndex;
+    });
+  };
+
+  const goNext = () => {
+    paginate(1);
+  };
+
+  const goPrev = () => {
+    paginate(-1);
+  };
+
+  const handleDragEnd = (_event, info) => {
+    if (!hasMultipleImages) return;
+
+    if (info.offset.x < -50 || info.velocity.x < -300) {
+      goNext();
+      return;
+    }
+
+    if (info.offset.x > 50 || info.velocity.x > 300) {
+      goPrev();
+    }
+  };
+
+  return (
+    <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg">
+      <div className="relative w-full h-full min-h-[200px] md:min-h-[250px] overflow-hidden rounded-lg">
+        <AnimatePresence custom={direction} initial={false} mode="wait">
+          <motion.img
+            key={`${feature.title}-${activeImageIndex}`}
+            src={images[activeImageIndex]}
+            alt={
+              activeImageIndex === 0
+                ? feature.title
+                : `${feature.title} vista ${activeImageIndex + 1}`
+            }
+            className={`${
+              feature.className ? feature.className : ""
+            } absolute inset-0 w-full h-full object-cover min-h-[200px] md:min-h-[250px]`}
+            custom={direction}
+            variants={{
+              enter: (dir) => ({
+                x: dir > 0 ? "14%" : "-14%",
+                opacity: 0.65,
+                scale: 0.985,
+              }),
+              center: {
+                x: "0%",
+                opacity: 1,
+                scale: 1,
+              },
+              exit: (dir) => ({
+                x: dir > 0 ? "-14%" : "14%",
+                opacity: 0.65,
+                scale: 0.985,
+              }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { duration: 0.05, ease: [0.22, 1, 0.36, 1] },
+              opacity: { duration: 0.05, ease: "easeOut" },
+              scale: { duration: 0.05, ease: "easeOut" },
+            }}
+            drag={hasMultipleImages ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.18}
+            onDragEnd={handleDragEnd}
+          />
+        </AnimatePresence>
+
+        {hasMultipleImages && (
+          <>
+
+            <motion.div
+              className="absolute bottom-2 right-2 z-10 rounded-full bg-black/55 px-2 py-1 text-[10px] md:text-xs text-white flex items-center gap-1 select-none backdrop-blur-sm"
+              animate={{ x: [0, 6, 0] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <span>Arrastra</span>
+              <FaChevronRight className="text-xs" />
+            </motion.div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const SedeBarrioNorte = () => {
   const [modalContacto, setModalContacto] = useState(false);
@@ -71,6 +262,7 @@ const SedeBarrioNorte = () => {
       title: "Sala de Musculación",
       description: "+70 equipos importados de última generación.",
       image: Musculacion,
+      alternateImage: Musculacion_2,
       isFullWidth: true,
       className: classNameImg,
     },
@@ -304,34 +496,7 @@ const SedeBarrioNorte = () => {
                         )}
                       </p>
                     </div>
-                    <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg">
-                      {feature.image ? (
-                        <>
-                          <img
-                            src={feature.image}
-                            alt={feature.title}
-                            className={`${
-                              feature.className ? feature.className : ""
-                            } w-full h-full object-cover min-h-[200px] md:min-h-[250px]`}
-                            // Aplicar opacidad si no está en la lista de exclusión
-                            style={
-                              excludeHammerEffect.includes(feature.image)
-                                ? {}
-                                : { filter: "brightness(60%)" }
-                            }
-                          />
-                          {!excludeHammerEffect.includes(feature.image) && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <FaHammer className="text-6xl text-white opacity-80" />
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="w-full min-h-[200px] md:min-h-[250px] flex items-center justify-center overflow-hidden">
-                          <feature.icon className="text-9xl md:text-[10rem] text-[#fc4b08]" />
-                        </div>
-                      )}
-                    </div>
+                    <FeatureImageCarousel feature={feature} />
                   </div>
                 </div>
               ))}
@@ -384,33 +549,10 @@ const SedeBarrioNorte = () => {
                         )}
                       </p>
                     </div>
-                    <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg">
-                      {feature.image ? (
-                        <>
-                          <img
-                            src={feature.image}
-                            alt={feature.title}
-                            className={`${
-                              feature.className ? feature.className : ""
-                            } w-full h-full object-cover min-h-[200px] md:min-h-[250px]`}
-                            style={
-                              excludeHammerEffect.includes(feature.image)
-                                ? {}
-                                : { filter: "brightness(60%)" }
-                            }
-                          />
-                          {!excludeHammerEffect.includes(feature.image) && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <FaHammer className="text-6xl text-white opacity-80" />
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="w-full min-h-[200px] md:min-h-[250px] flex items-center justify-center overflow-hidden">
-                          <feature.icon className="text-9xl md:text-[10rem] text-[#fc4b08] opacity-80" />
-                        </div>
-                      )}
-                    </div>
+                    <FeatureImageCarousel
+                      feature={feature}
+                      emptyIconClassName="text-9xl md:text-[10rem] text-[#fc4b08] opacity-80"
+                    />
                   </div>
                 </div>
               ))}
@@ -449,33 +591,10 @@ const SedeBarrioNorte = () => {
                       </p>
                     </div>
 
-                    <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg">
-                      {feature.image ? (
-                        <>
-                          <img
-                            src={feature.image}
-                            alt={feature.title}
-                            className={`${
-                              feature.className ? feature.className : ""
-                            } w-full h-full object-cover min-h-[200px] md:min-h-[250px]`}
-                            style={
-                              excludeHammerEffect.includes(feature.image)
-                                ? {}
-                                : { filter: "brightness(60%)" }
-                            }
-                          />
-                          {!excludeHammerEffect.includes(feature.image) && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <FaHammer className="text-6xl text-white opacity-80" />
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="w-full min-h-[200px] md:min-h-[250px] flex items-center justify-center overflow-hidden">
-                          <feature.icon className="text-9xl md:text-[10rem] text-[#fc4b08] opacity-80" />
-                        </div>
-                      )}
-                    </div>
+                    <FeatureImageCarousel
+                      feature={feature}
+                      emptyIconClassName="text-9xl md:text-[10rem] text-[#fc4b08] opacity-80"
+                    />
                   </div>
                 </div>
               ))}
