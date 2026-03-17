@@ -869,7 +869,8 @@ const PlanillaEntrenador = () => {
   const prospectoLabels = {
     nuevo: 'N',
     prospecto: 'P',
-    socio: 'S'
+    socio: 'S',
+    nma: 'NMA',
   };
 
   //funcion para obtener un alumno a editar por su id y cargar el estado - Benjamin Orellana  - 12/11/2024
@@ -986,7 +987,7 @@ const PlanillaEntrenador = () => {
         '#',
         'P',
         'APELLIDO Y NOMBRE',
-        'N/A/P',
+        'N/A/P/NMA',
         'C',
         'CELULAR',
         'PUNTO D',
@@ -1834,7 +1835,7 @@ const PlanillaEntrenador = () => {
               <th className="border border-gray-400 px-2">P</th>
               <th className="border border-gray-400 px-2">APELLIDO Y NOMBRE</th>
               {/* Nueva columna para Prospecto */}
-              <th className="border border-gray-400 px-2">N/A/P</th>{' '}
+              <th className="border border-gray-400 px-2">N/A/P/NMA</th>{' '}
               {/* Nueva columna para C */}
               <th className="border border-gray-400 px-2">C</th>{' '}
               <th className="border border-gray-400 px-2">CELULAR</th>{' '}
