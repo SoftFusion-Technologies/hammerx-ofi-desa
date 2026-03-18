@@ -1558,7 +1558,7 @@ const PlanillaEntrenador = () => {
           </h2>
         </div>
         {/* Formulario de búsqueda */}
-        <form className="flex justify-center items-center pb-5 space-x-2">
+        <form className="flex justify-center items-center pb-5 space-x-2" onSubmit={e => e.preventDefault()}>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
