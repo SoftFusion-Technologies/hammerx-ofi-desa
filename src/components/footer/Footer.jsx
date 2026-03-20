@@ -6,7 +6,8 @@ import { useAuth } from '../../AuthContext';
 import DashboardImagesManager from './DashboardImagesManager';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { LinkIcon, Star } from 'lucide-react'; 
+import { LinkIcon, Star } from 'lucide-react';
+import ModalPreviewInstructivo from './ModalPreviewInstructivo';
 
 const Footer = () => {
   const location = useLocation();
@@ -21,12 +22,18 @@ const Footer = () => {
   const { userLevel } = useAuth();
   const API_BASE = 'http://localhost:8080/';
 
+  const convertirPathPublico = (path) =>
+    String(path || '').replace(/^uploads\//, 'public/');
+
+  const construirUrlArchivo = (path) =>
+    `${API_BASE}${convertirPathPublico(path)}`;
+
     // Helper para descargar instructivos (fetch -> blob -> descarga cliente)
   const descargarArchivo = async (instructivoPath) => {
     if (!instructivoPath) return;
     try {
-      const filePath = String(instructivoPath).replace(/^uploads\//, 'public/');
-      const fullUrl = `${API_BASE}${filePath}`;
+      const filePath = convertirPathPublico(instructivoPath);
+      const fullUrl = construirUrlArchivo(instructivoPath);
       const resp = await fetch(fullUrl);
       if (!resp.ok) throw new Error('Error de red');
       const blob = await resp.blob();
@@ -47,6 +54,30 @@ const Footer = () => {
 
   const [imagenes, setImagenes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [instructivoModal, setInstructivoModal] = useState({
+    isOpen: false,
+    path: '',
+    fileName: '',
+  });
+
+  const abrirModalInstructivo = (instructivoPath) => {
+    if (!instructivoPath) return;
+    const filePath = convertirPathPublico(instructivoPath);
+
+    setInstructivoModal({
+      isOpen: true,
+      path: instructivoPath,
+      fileName: (filePath.split('/').pop() || 'instructivo').replace(/\?.*$/, ''),
+    });
+  };
+
+  const cerrarModalInstructivo = () => {
+    setInstructivoModal({
+      isOpen: false,
+      path: '',
+      fileName: '',
+    });
+  };
 
   // Sólo traer imágenes si estoy en /dashboard (home)
   useEffect(() => {
@@ -159,7 +190,7 @@ const Footer = () => {
                                 {tarjeta.instructivo_url ? (
                                   <button
                                     type="button"
-                                    onClick={() => descargarArchivo(tarjeta.instructivo_url)}
+                                    onClick={() => abrirModalInstructivo(tarjeta.instructivo_url)}
                                     className={`w-full py-1.5 rounded-md text-xs font-bold transition-colors flex items-center justify-center gap-2 ${
                                       esDestacado 
                                       ? "bg-amber-100 text-amber-700 hover:bg-amber-200" 
@@ -190,6 +221,16 @@ const Footer = () => {
           )}
         </div>
       )}
+
+      <ModalPreviewInstructivo
+        isOpen={instructivoModal.isOpen}
+        onClose={cerrarModalInstructivo}
+        previewUrl={
+          instructivoModal.path ? construirUrlArchivo(instructivoModal.path) : ''
+        }
+        fileName={instructivoModal.fileName}
+        onDownload={() => descargarArchivo(instructivoModal.path)}
+      />
 
       {/* ====== FOOTER GLOBAL (LIGHT PREMIUM 2026) ====== */}
       <footer className="relative isolate  overflow-hidden">

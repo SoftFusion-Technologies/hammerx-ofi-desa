@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ModalAñadirInstructivo from "./ModalAñadirInstructivo";
 import ModalAñadirTarjeta from "./ModalAñadirTarjeta";
+import ModalPreviewInstructivo from "./ModalPreviewInstructivo";
 import axios from "axios";
 import {
   Trash2,
@@ -12,6 +13,10 @@ import {
 const API = "http://localhost:8080/";
 
 export default function DashboardImagesManager() {
+  const normalizarPathPublico = (path) =>
+    String(path || "").replace(/^uploads\//, "public/");
+  const construirUrlArchivo = (path) => `${API}${normalizarPathPublico(path)}`;
+
   const [elementos, setElementos] = useState([]);
   const [file, setFile] = useState(null);
   const [titulo, setTitulo] = useState("");
@@ -27,6 +32,11 @@ export default function DashboardImagesManager() {
   const [modalInstructivo, setModalInstructivo] = useState({
     isOpen: false,
     tarjeta_id: null,
+  });
+  const [modalPreviewInstructivo, setModalPreviewInstructivo] = useState({
+    isOpen: false,
+    path: "",
+    fileName: "",
   });
 
   // Traer imágenes activas al montar
@@ -165,8 +175,8 @@ export default function DashboardImagesManager() {
   const descargarArchivo = async (instructivoPath) => {
     if (!instructivoPath) return alert('No hay instructivo disponible');
     try {
-      const filePath = instructivoPath.replace(/^uploads\//, 'public/');
-      const fullUrl = `${API}${filePath}`;
+      const filePath = normalizarPathPublico(instructivoPath);
+      const fullUrl = construirUrlArchivo(instructivoPath);
       const resp = await fetch(fullUrl);
       if (!resp.ok) throw new Error('Error de red');
       const blob = await resp.blob();
@@ -183,6 +193,25 @@ export default function DashboardImagesManager() {
       console.error('Error descargando instructivo', e);
       alert('No se pudo descargar el instructivo');
     }
+  };
+
+  const abrirModalPreviewInstructivo = (instructivoPath) => {
+    if (!instructivoPath) return;
+
+    const filePath = normalizarPathPublico(instructivoPath);
+    setModalPreviewInstructivo({
+      isOpen: true,
+      path: instructivoPath,
+      fileName: (filePath.split('/').pop() || 'instructivo').replace(/\?.*$/, ''),
+    });
+  };
+
+  const cerrarModalPreviewInstructivo = () => {
+    setModalPreviewInstructivo({
+      isOpen: false,
+      path: "",
+      fileName: "",
+    });
   };
 
   return (
@@ -341,7 +370,9 @@ export default function DashboardImagesManager() {
                         {tarjeta.instructivo_url ? (
                           <button
                             type="button"
-                            onClick={() => descargarArchivo(tarjeta.instructivo_url)}
+                            onClick={() =>
+                              abrirModalPreviewInstructivo(tarjeta.instructivo_url)
+                            }
                             className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
                           >
                             <LinkIcon size={12} /> Ver Instructivo
@@ -410,6 +441,18 @@ export default function DashboardImagesManager() {
           tarjeta_id={modalInstructivo.tarjeta_id}
         />
       )}
+
+      <ModalPreviewInstructivo
+        isOpen={modalPreviewInstructivo.isOpen}
+        onClose={cerrarModalPreviewInstructivo}
+        previewUrl={
+          modalPreviewInstructivo.path
+            ? construirUrlArchivo(modalPreviewInstructivo.path)
+            : ""
+        }
+        fileName={modalPreviewInstructivo.fileName}
+        onDownload={() => descargarArchivo(modalPreviewInstructivo.path)}
+      />
     </div>
   );
 }
