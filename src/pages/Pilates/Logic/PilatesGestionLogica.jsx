@@ -1685,7 +1685,6 @@ const getCellContentAndStyle = useCallback(
   const { freeSlots, expiredStudents, waitingListMatches } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     // --- 1. Cálculo de Cupos Libres ---
     // Itera sobre las horas y días para encontrar los cupos disponibles en cada grupo.
     const lmvSlots = [];
@@ -1765,7 +1764,7 @@ const getCellContentAndStyle = useCallback(
           type = 'Clase de prueba caducada';
           break;
         case 'programado':
-          expiryDate = new Date(student.scheduledDetails.date + 'T00:00:00');
+          expiryDate = new Date((student.scheduledDetails.promisedDate || student.scheduledDetails.date) + 'T00:00:00');
           type = 'Renovación pendiente';
           break;
         default:
