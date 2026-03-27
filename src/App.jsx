@@ -127,6 +127,7 @@ const AltaTaskForm = lazy(() => import('./components/Forms/FormAltaTask'));
 const AltaFreAskForm = lazy(() => import('./components/Forms/FormAltaFrecAsk'));
 
 const SedeBarrioNorte = lazy(() => import('./pages/SedeBarrioNorte'));
+const SedeYerbaBuena = lazy(() => import('./pages/Preventa/SedeYerbaBuena.jsx'));
 // Renderizado de pagina del STAFF, para los metodos Get, y listado
 
 // Renderizado de los nuevos COMPONENTES / PAGOS - INICIO - Benjamin Orellana - 27 Jul 24
@@ -316,6 +317,10 @@ const App = memo(() => {
                   <Ruta
                     path="/nueva_sede_hammerx_barrio_norte"
                     element={<SedeBarrioNorte />}
+                  />{' '}
+                  <Ruta
+                    path="/nueva_sede_hammerx_yerba_buena"
+                    element={<SedeYerbaBuena />}
                   />{' '}
                   {/* Página de la sede de Concepción */}
                   <Ruta
