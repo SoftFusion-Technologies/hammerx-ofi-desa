@@ -31,7 +31,8 @@ import {
   Activity,
   HelpCircle,
   Dumbbell,
-  Target
+  Target,
+  CreditCard
 } from 'lucide-react';
 
 // ---------- Tile genérico ----------
@@ -271,8 +272,8 @@ const AdminPage = () => {
       const regs = Array.isArray(data?.registros)
         ? data.registros
         : Array.isArray(data)
-        ? data
-        : [];
+          ? data
+          : [];
       setConveniosPendientes(regs);
     } catch (e) {
       console.error('Error loadConveniosPendientes:', e);
@@ -481,6 +482,7 @@ const AdminPage = () => {
               const showConvenios = isAdmin || isVendedor;
               const showQuejas = !isImagenes;
               const showPilates = (isAdmin || isVendedor) && !isImagenes;
+              const showDebitosAutomaticos = isAdmin || isVendedor; // Benjamin Orellana 11-03-2026 - Se adiciona Nueva opción de menú
               const showGestion =
                 showForo || showConvenios || showQuejas || showPilates;
 
@@ -510,8 +512,8 @@ const AdminPage = () => {
                 visibleCols === 3
                   ? 'lg:grid-cols-3'
                   : visibleCols === 2
-                  ? 'lg:grid-cols-2'
-                  : 'lg:grid-cols-1';
+                    ? 'lg:grid-cols-2'
+                    : 'lg:grid-cols-1';
 
               return (
                 <div
@@ -573,6 +575,16 @@ const AdminPage = () => {
                           to="/dashboard/pilates/gestion"
                           icon={Dumbbell}
                           delay={0.16}
+                        />
+                      )}
+                      {/* Benjamin Orellana - 10-03-2026 - Se adiciona nueva opción de Menú */}
+                      {showDebitosAutomaticos && (
+                        <DashboardTile
+                          title="Débitos automáticos"
+                          description="Administración débitos automáticos."
+                          to="/dashboard/debitos-automaticos"
+                          icon={CreditCard}
+                          delay={0.18}
                         />
                       )}
                     </div>

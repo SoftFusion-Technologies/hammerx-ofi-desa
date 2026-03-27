@@ -231,6 +231,16 @@ import PreguntasIA from './pages/staff/PreguntasIA.jsx';
 import ProximamenteSede from './pages/ProximamenteSede.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
 import SoftFusionIntro from './pages/Innovation/SoftFusionIntro.jsx';
+
+// Benjamin Orellana -  Nuevo Modulo Debitos Automaticos -  12-03-2026 INICIO
+import AdminPageDebitosAutomaticos from './pages/DebitosAutomaticos/AdminPageDebitosAutomaticos';
+import BancosPage from './pages/DebitosAutomaticos/Configuracion/BancosPage.jsx';
+import PlanesPage from './pages/DebitosAutomaticos/Configuracion/PlanesPage.jsx';
+import TerminosPage from './pages/DebitosAutomaticos/Configuracion/TerminosPage.jsx';
+import DebitosAutomaticosPublicPage from './pages/DebitosAutomaticos/DebitosAutomaticosPublicPage.jsx';
+import SolicitudesPage from './pages/DebitosAutomaticos/Adhesiones/SolicitudesPage.jsx';
+// Benjamin Orellana -  Nuevo Modulo Debitos Automaticos -  12-03-2026 FIN
+
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
 /**
  * Componente principal de la aplicación.
@@ -309,10 +319,7 @@ const App = memo(() => {
                     path="/Sedes/Concepcion"
                     element={<Sedeconcepcion />}
                   />{' '}
-                  <Ruta
-                    path="/Sedes/BarrioSur"
-                    element={<NewSede />}
-                  />
+                  <Ruta path="/Sedes/BarrioSur" element={<NewSede />} />
                   <Ruta
                     path="/nueva_sede_hammerx_barrio_norte"
                     element={<SedeBarrioNorte />}
@@ -538,6 +545,50 @@ const App = memo(() => {
                       </ProtectedRoute>
                     }
                   />
+                  {/* Benjamin Orellana - Nuevo Modulo Debitos Automaticos -
+                  12-03-2026 INICIO */}
+                  <Ruta
+                    path="/dashboard/debitos-automaticos"
+                    element={
+                      <ProtectedRoute>
+                        <AdminPageDebitosAutomaticos />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Ruta
+                    path="/dashboard/debitos-automaticos/bancos"
+                    element={
+                      <ProtectedRoute>
+                        <BancosPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Ruta
+                    path="/dashboard/debitos-automaticos/planes"
+                    element={
+                      <ProtectedRoute>
+                        <PlanesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Ruta
+                    path="/dashboard/debitos-automaticos/terminos"
+                    element={
+                      <ProtectedRoute>
+                        <TerminosPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Ruta
+                    path="/dashboard/debitos-automaticos/solicitudes"
+                    element={
+                      <ProtectedRoute>
+                        <SolicitudesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  {/* Benjamin Orellana - Nuevo Modulo Debitos Automaticos -
+                  12-03-2026 FINAL */}
                   {/* Rutas de prueba para testear funcionamiento */}
                   {/* <Ruta path="/dashboard/integrantes" element={<ProtectedRoute>  <IntegranteConveGet /> </ProtectedRoute> } /> Rutas de prueba para testear funcionamiento */}
                   <Ruta
@@ -822,6 +873,10 @@ const App = memo(() => {
                   <Ruta path="/nueva_sede_hammerx" element={<NewSede />} />
                   <Ruta path="/productos" element={<ProductosPrincipal />} />
                   <Ruta
+                    path="/debitos_automaticos"
+                    element={<DebitosAutomaticosPublicPage />}
+                  />
+                  <Ruta
                     path="/dashboard/recaptacion"
                     element={
                       <ProtectedRoute>
@@ -890,7 +945,13 @@ const App = memo(() => {
             )}
           </Suspense>
           <HideOnPaths
-            paths={['/innovation', '/login', '/reservas-pilates', '/dashboard']}
+            paths={[
+              '/innovation',
+              '/login',
+              '/reservas-pilates',
+              '/dashboard',
+              '/debitos_automaticos'
+            ]}
           >
             <Marcas_v2 />
           </HideOnPaths>{' '}

@@ -16,6 +16,7 @@
     "aos": "^2.3.4",
     "axios": "^1.6.8",
     "bootstrap": "^5.3.3",
+    "credit-card-type": "^10.1.2",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "formik": "^2.4.5",
