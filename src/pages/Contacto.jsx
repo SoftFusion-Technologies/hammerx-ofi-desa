@@ -35,7 +35,8 @@ const Contacto = () => {
     { nombre: 'Monteros', numero: '3863564651' },
     { nombre: 'Concepción', numero: '3865855100' },
     { nombre: 'Barrio Sur', numero: '3813988383' },
-    { nombre: 'Barrio norte', numero: '3815584172' }
+    { nombre: 'Barrio norte', numero: '3815584172' },
+    { nombre: 'ATENCION GRAL. ', numero: '3812008604' }
   ];
 
   const blocks = [
@@ -372,7 +373,7 @@ const Contacto = () => {
                     ))}
                   </div>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                  {/* <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
                     <span className="inline-flex items-center gap-2 rounded-full border border-zinc-200/70 bg-white/70 px-3 py-1.5 ring-1 ring-zinc-900/5">
                       Abre WhatsApp en nueva pestaña
                     </span>
@@ -386,7 +387,7 @@ const Contacto = () => {
                     >
                       Tip: escribí tu nombre y sede
                     </span>
-                  </div>
+                  </div> */}
                 </SectionCard>
 
                 {/* Social row: 3 cards en desktop */}
