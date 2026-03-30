@@ -1,177 +1,86 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Footer from "../../components/footer/Footer";
 import { logo } from "../../images/svg/index";
-import SillaPilates from "../../images/sedes/SedeBarrioNorte2.png";
-// --- Imágenes de la galería (Comentadas para futura implementación) ---
-// import Box from "../images/sedes/Barrio Norte/Box.webp";
-// import Cardio from "../images/sedes/Barrio Norte/Cardio.webp";
-import Balanza_IA from "../../images/sedes/Barrio Norte/BalanzaIA.jpeg";
-import Cardio_1 from "../../images/sedes/Barrio Norte/Cardio.jpg";
-import Clase_grupales from "../../images/sedes/Barrio Norte/Clase_grupales.jpg"; //No está
-import Musculacion from "../../images/sedes/Barrio Norte/Musculacion.jpeg";
-import Musculacion_2 from "../../images/sedes/Barrio Norte/Musculacion_2.jpg";
+
+// --- Imágenes para la galería modal y fondos ---
+import Box from "../../images/sedes/Barrio Norte/Box.webp";
+import Cardio from "../../images/sedes/Barrio Norte/Cardio.webp";
+import Fachada from "../../images/sedes/Barrio Norte/Fachada.webp";
+import Sala_Principal from "../../images/sedes/Barrio Norte/Sala principal.webp";
+import Sala_Principal_1 from "../../images/sedes/Barrio Norte/Sala principal 2.webp";
+
 import PlantaB_Sala_Pesos_Libres from "../../images/sedes/Barrio Norte/PlantaB_Sala_Pesos_Libres.jpeg";
 import Sala_Pilates from "../../images/sedes/Barrio Norte/Sala_pilates.jpg";
 import Silla_Masajes from "../../images/sedes/Barrio Norte/Silla_Masajes.jpeg";
 import Terraza from "../../images/sedes/Barrio Norte/Terraza.jpg";
-// import Fachada from "../images/sedes/Barrio Norte/Fachada.webp";
-// import Sala_Principal from "../images/sedes/Barrio Norte/Sala principal.webp";
-// import Sala_Principal_1 from "../images/sedes/Barrio Norte/Sala principal 2.webp";
-import BalanzaIA from "../../images/sedes/SedeBarrioNorte1.png";
-import "../../styles/clients/newsede.css";
-import ModalContactoSede from "../../components/ModalContactoSede";
-import FormTestClass from "../../components/Forms/FormTestClass";
-import PlanesPromocionalesCarousel from "../../components/Preventa/PlanesPromocionalesCarousel";
+import Musculacion from "../../images/sedes/Barrio Norte/Musculacion.jpeg";
+import Cardio_1 from "../../images/sedes/Barrio Norte/Cardio.jpg";
 
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
+import "../../styles/clients/newsede.css";
+
+import PlanesPromocionalesCarousel from "../../components/Preventa/PlanesPromocionalesCarousel";
+import ModalGaleria from "../../components/Preventa/ModalGaleria";
 
 // --- Iconos para las secciones ---
 import {
   FaMapMarkerAlt,
-  FaRegBuilding,
   FaDumbbell,
   FaHeartbeat,
   FaShower,
   FaUsers,
-  FaWhatsapp,
-  FaWeight,
   FaChair,
   FaChevronRight,
-  FaHammer,
   FaWeightHanging,
+  FaLaptop,
 } from "react-icons/fa";
+import { MdSelfImprovement, MdSportsTennis } from "react-icons/md";
 
-import { FiSun, FiWind } from "react-icons/fi";
-import { MdSelfImprovement } from "react-icons/md";
-
-const barrioNorteImagesByPath = import.meta.glob(
-  "../images/sedes/Barrio Norte/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}",
-  { eager: true, import: "default" },
-);
-
-const barrioNortePathByUrl = Object.entries(barrioNorteImagesByPath).reduce(
-  (acc, [path, url]) => {
-    acc[url] = path;
-    return acc;
-  },
-  {},
-);
-
-const imageExtensions = [
-  ".jpg",
-  ".jpeg",
-  ".png",
-  ".webp",
-  ".JPG",
-  ".JPEG",
-  ".PNG",
-  ".WEBP",
-];
-
-const findSecondaryImageByName = (imageUrl) => {
-  if (!imageUrl) return null;
-
-  const sourcePath = barrioNortePathByUrl[imageUrl];
-  if (!sourcePath) return null;
-
-  const extensionMatch = sourcePath.match(/(\.[^./]+)$/);
-  if (!extensionMatch) return null;
-
-  const currentExtension = extensionMatch[1];
-  const basePath = sourcePath
-    .slice(0, -currentExtension.length)
-    .replace(/_2$/i, "");
-
-  const orderedExtensions = [
-    currentExtension,
-    ...imageExtensions.filter((ext) => ext !== currentExtension),
-  ];
-
-  for (const extension of orderedExtensions) {
-    const pairedPath = `${basePath}_2${extension}`;
-    const pairedImage = barrioNorteImagesByPath[pairedPath];
-    if (pairedImage && pairedImage !== imageUrl) return pairedImage;
-  }
-
-  return null;
+// --- Configuraciones de Animación (Framer Motion) ---
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
 
-const CarruselImagenes = ({
-  feature,
-  emptyIconClassName = "text-9xl md:text-[10rem] text-[#fc4b08]",
-}) => {
-  const images = useMemo(() => {
-    if (!feature.image) return [];
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+    },
+  },
+};
 
-    const pairedImage =
-      feature.alternateImage || findSecondaryImageByName(feature.image);
-
-    if (pairedImage && pairedImage !== feature.image) {
-      return [feature.image, pairedImage];
-    }
-
-    return [feature.image];
-  }, [feature.image, feature.alternateImage]);
-
-  if (!feature.image) {
-    return (
-      <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg">
-        <div className="w-full min-h-[200px] md:min-h-[250px] flex items-center justify-center overflow-hidden">
-          <feature.icon className={emptyIconClassName} />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-4 flex-grow flex items-center justify-center relative overflow-hidden rounded-lg h-full min-h-[200px] md:min-h-[250px]">
-      <Swiper
-        modules={[Navigation, Pagination]}
-        navigation={images.length > 1}
-        pagination={images.length > 1 ? { clickable: true } : false}
-        loop={images.length > 1}
-        className="w-full h-full"
-      >
-        {images.map((imgUrl, index) => (
-          <SwiperSlide key={index} className="w-full h-full">
-            <img
-              src={imgUrl}
-              alt={`${feature.title} vista ${index + 1}`}
-              className={`${
-                feature.className ? feature.className : ""
-              } w-full h-full object-cover min-h-[200px] md:min-h-[250px]`}
-            />
-          </SwiperSlide>
-        ))}
-      </Swiper>
-    </div>
-  );
+const scaleUp = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5, type: "spring", stiffness: 100 },
+  },
 };
 
 const SedeYerbaBuena = () => {
-  const [modalContacto, setModalContacto] = useState(false);
-  const [modalTestClass, setModalTestClass] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
 
-  const abrirModalContacto = () => setModalContacto(true);
-  const cerrarModalContacto = () => setModalContacto(false);
-  const abrirModalTestClass = () => setModalTestClass(true);
-  const cerrarModalTestClass = () => setModalTestClass(false);
+  const abrirGaleria = () => setGalleryOpen(true);
+  const cerrarGaleria = () => setGalleryOpen(false);
 
-  const scrollToInstalaciones = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    const id = "instalaciones-por-piso";
-    const el = document.getElementById(id);
-    if (!el) return;
-    const headerOffset = window.innerWidth < 768 ? 72 : 120;
-    const elementPosition = el.getBoundingClientRect().top + window.pageYOffset;
-    const offsetPosition = elementPosition - headerOffset;
-    window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-  };
+  const dynamicGalleryImages = useMemo(
+    () => [
+      { src: Fachada, alt: "Fachada Sede Barrio Norte" },
+      { src: Sala_Principal, alt: "Sala Principal" },
+      { src: Sala_Principal_1, alt: "Sala Principal vista alternativa" },
+      { src: Musculacion, alt: "Sala de Musculación" },
+      { src: PlantaB_Sala_Pesos_Libres, alt: "Sala de Pesos Libres" },
+      { src: Box, alt: "Sector Box funcional" },
+      { src: Cardio, alt: "Sector Cardio" },
+      { src: Sala_Pilates, alt: "Sala de Pilates Climatizada" },
+      { src: Terraza, alt: "Terraza al aire libre" },
+    ],
+    [],
+  );
 
   const scrollToPreventaCarousel = () => {
     const id = "preventa-carousel";
@@ -183,369 +92,360 @@ const SedeYerbaBuena = () => {
     window.scrollTo({ top: offsetPosition, behavior: "smooth" });
   };
 
-  // --- Datos para las instalaciones de la Planta Baja ---
-  const classNameImg = "rounded-2xl";
-
-  const groundFloorFeatures = [
+  // --- DATOS UNIFICADOS ---
+  const allFacilities = [
     {
       id: 1,
       icon: FaDumbbell,
       title: "Sala de Musculación",
-      description: "+70 equipos importados de última generación.",
-      image: Musculacion,
-      alternateImage: Musculacion_2,
-      isFullWidth: true,
-      className: classNameImg,
+      description: (
+        <>
+          <span className="font-bold text-gray-200">
+            Ubicada en planta baja
+          </span>
+          <br />
+          +100 equipos importados de última generación
+          <br />
+          <span className="text-white font-bold drop-shadow-sm">
+            Bonus: Glute Zone exclusiva
+          </span>
+        </>
+      ),
     },
     {
       id: 2,
       icon: FaWeightHanging,
-      title: "Sala de pesos libres",
-      description: "Para que entrenes sin espera.",
-      image: PlantaB_Sala_Pesos_Libres,
-      isFullWidth: true,
-      className: classNameImg,
+      title: "Sala de Pesos Libres",
+      description: (
+        <>
+          <span className="font-bold text-gray-200">
+            Ubicada en primer piso
+          </span>
+          <br />
+          Espacio amplio para entrenar sin esperas
+        </>
+      ),
     },
     {
       id: 3,
-      icon: FaWeight,
-      title: "Balanza con IA",
-      description:
-        "¡Única en la provincia! Tecnología avanzada para un seguimiento preciso de tu progreso, composición corporal, postura, entre muchos otros datos.",
-      image: Balanza_IA,
-      isFullWidth: true,
-    },
-  ];
-
-  // --- Datos para las instalaciones del Primer Piso ---
-  const firstFloorFeatures = [
-    {
-      id: 1,
-      icon: FaHeartbeat,
-      title: "Sector Cardio",
-      description:
-        "+10 cintas inteligentes, bicis elípticas y otros equipos para tu entrenamiento cardiovascular.",
-      image: Cardio_1,
-      isFullWidth: true,
-      className: classNameImg,
-    },
-    {
-      id: 2,
-      icon: MdSelfImprovement,
-      title: "Sala de Pilates",
-      description: "La sala de pilates climatizada más grande de Tucumán.",
-      image: Sala_Pilates,
-      isFullWidth: true,
-      className: classNameImg,
-    },
-    {
-      id: 3,
-      icon: FaShower,
-      title: "Baños y vestuarios",
-      description:
-        "Duchas y vestuarios con lockers individuales para tu comodidad después de cada entrenamiento.",
-    },
-  ];
-
-  // --- NUEVO: Datos para las instalaciones del Segundo Piso ---
-  const secondFloorFeatures = [
-    {
       icon: FaUsers,
       title: "Sala de Clases Grupales",
-      description:
-        "Funcional, HIIT, Fullbody y otras clases para que elijas la que mejor se adapte a tu objetivo y ritmo, todas incluidas en tu mismo plan.",
-      image: Clase_grupales,
-      isFullWidth: true,
-      className: classNameImg,
+      description: (
+        <>
+          <span className="font-bold text-gray-200">Ubicada en subsuelo</span>
+          <br />
+          Clases de funcional, HIIT, full body y más
+        </>
+      ),
     },
     {
-      icon: FiSun,
-      title: "Solarium",
-      description: "Cabina de bronceado para adelantarse al verano.",
+      id: 4,
+      icon: MdSelfImprovement,
+      title: "Sala de Pilates",
+      description: (
+        <>
+          <span className="font-bold text-gray-200">
+            Ubicada en primer piso
+          </span>
+          <br />
+          Clases de pilates reformer con cupos reducidos (hasta 10 personas)
+        </>
+      ),
     },
     {
+      id: 5,
+      icon: FaHeartbeat,
+      title: "Sala de Cardio",
+      description: (
+        <>
+          <span className="font-bold text-gray-200">
+            Ubicada en segundo piso
+          </span>
+          <br />
+          +10 cintas y equipos touch de última tecnología
+        </>
+      ),
+    },
+    {
+      id: 6,
+      icon: FaLaptop,
+      title: "Espacio de Coworking",
+      description: "Trabajá, estudiá o gestioná tu día sin salir del gym",
+    },
+    {
+      id: 7,
       icon: FaChair,
-      title: "Sector de relax con sillas para masajes",
-      description:
-        "Relaja tus músculos después de cada entrenamiento con nuestras modernas sillas de masaje, ¡un verdadero lujo!",
-      image: Silla_Masajes,
-      isFullWidth: true,
+      title: "Sala de Relax y Recuperación",
+      description: (
+        <>
+          Sillones de masajes
+          <br />
+          Baños de inmersión
+          <br />
+          Recuperación post entrenamiento de nivel profesional
+        </>
+      ),
     },
     {
-      icon: FiWind,
-      title: "Terraza al aire libre",
+      id: 8,
+      icon: FaShower,
+      title: "Duchas y Vestuarios",
       description:
-        "Espacio al aire libre para complementar tus entrenamientos, estirar o simplemente descansar.",
-      image: Terraza,
-      isFullWidth: true,
+        "Entrená antes o después de tus actividades con total comodidad",
+    },
+    {
+      id: 9,
+      icon: MdSportsTennis,
+      title: "Cancha de Pádel",
+      description: "Entrenamiento y deporte en un mismo lugar",
     },
   ];
-
-  // --- Imágenes para la mini-galería (Comentadas para futura implementación) ---
-  /*
-  const galleryImages = [
-    { src: Fachada, alt: "Fachada Sede Barrio Norte" },
-    { src: Sala_Principal, alt: "Sala Principal" },
-    { src: Sala_Principal_1, alt: "Sala Principal 2" },
-    { src: PlantaB_Sala_Pesos_Libres, alt: "Sala Pesos Libres" },
-    { src: Box, alt: "Sector Box" },
-    { src: Cardio, alt: "Sector Cardio" },
-  ];
-  */
-
-  const excludeHammerEffect = [BalanzaIA, SillaPilates];
 
   return (
-    <>
+    <motion.div initial="hidden" animate="visible" exit={{ opacity: 0 }}>
+      {/* HEADER PRINCIPAL */}
       <div className="relative text-center overflow-hidden bg-gradient-to-r from-[#fc4b08] to-[#ff8c00] pb-0 md:pb-12">
         <div className="absolute inset-0 flex items-center justify-center gap-x-24 lg:gap-x-[32rem] mr-0 lg:mr-36 z-0 pointer-events-none">
-          <span className="font-bignoodle text-8xl md:text-9xl lg:text-[18rem] leading-none opacity-70 text-transparent [-webkit-text-stroke:2px_white] lg:[-webkit-text-stroke:3px_white] whitespace-nowrap">
-            ¡NUEVA
-          </span>
-          <span className="font-bignoodle text-8xl md:text-9xl lg:text-[18rem] leading-none opacity-70 text-transparent [-webkit-text-stroke:2px_white] lg:[-webkit-text-stroke:3px_white] whitespace-nowrap">
-            SEDE!
-          </span>
-        </div>
-        <div className="relative z-10 flex items-center justify-center py-0 md:py-16">
-          <motion.div
-            className="w-full md:w-auto"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+          <motion.span
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 0.7 }}
+            transition={{ duration: 1 }}
+            className="font-bignoodle text-8xl md:text-9xl lg:text-[18rem] leading-none text-transparent [-webkit-text-stroke:2px_white] lg:[-webkit-text-stroke:3px_white] whitespace-nowrap"
           >
+            ¡NUEVA
+          </motion.span>
+          <motion.span
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 0.7 }}
+            transition={{ duration: 1 }}
+            className="font-bignoodle text-8xl md:text-9xl lg:text-[18rem] leading-none text-transparent [-webkit-text-stroke:2px_white] lg:[-webkit-text-stroke:3px_white] whitespace-nowrap"
+          >
+            SEDE!
+          </motion.span>
+        </div>
+
+        <div className="relative z-10 flex items-center justify-center py-0 md:py-16">
+          <motion.div className="w-full md:w-auto" variants={scaleUp}>
             <div className="bg-gradient-to-b from-[#ff8c00] via-[#5f1212] to-black rounded-sm md:rounded-xl shadow-2xl px-6 py-5 md:px-10 md:py-5 text-center w-full">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={scrollToPreventaCarousel}
-                className="group relative inline-flex items-center justify-center font-montserrat text-lg sm:text-2xl md:text-5xl text-white mb-3 px-5 md:px-8 py-3 md:py-4 font-extrabold uppercase tracking-[0.08em] rounded-xl border border-white/50 bg-gradient-to-r from-[#fc4b08] via-[#ff7a18] to-[#ff9f43] shadow-[0_12px_28px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_18px_40px_rgba(252,75,8,0.55)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/40 animate-[bounce_2s_infinite] [animation-duration:2s] transform-gpu"
+                className="group relative inline-flex items-center justify-center font-montserrat text-lg sm:text-2xl md:text-5xl text-white mb-3 px-5 md:px-8 py-3 md:py-4 font-extrabold uppercase tracking-[0.08em] rounded-xl border border-white/50 bg-gradient-to-r from-[#fc4b08] via-[#ff7a18] to-[#ff9f43] shadow-[0_12px_28px_rgba(0,0,0,0.35)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/40 animate-[bounce_2s_infinite] [animation-duration:2s]"
                 style={{ animationName: "bounceSutil" }}
-                aria-label="Ir al carrusel de preventa"
               >
                 ¡COMIENZA NUESTRA PREVENTA ONLINE!
-              </button>
+              </motion.button>
               <style>{`
                 @keyframes bounceSutil {
-                  0%, 100% {
-                    transform: translateY(-10%);
-                    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-                  }
-                  50% {
-                    transform: translateY(0);
-                    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-                  }
+                  0%, 100% { transform: translateY(-10%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+                  50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
                 }
               `}</style>
-              <img
+
+              <motion.img
+                initial={{ rotate: -10, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
                 src={logo}
                 alt="logo"
                 className="my-0 md:my-5 max-w-xs lg:max-w-md mx-auto"
               />
-              <p className="font-bignoodle uppercase text-2xl md:text-6xl text-gray-200">
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="font-bignoodle uppercase text-2xl md:text-6xl text-gray-200"
+              >
                 YERBA BUENA - Aconquija
-              </p>
+              </motion.p>
             </div>
           </motion.div>
         </div>
       </div>
 
-      <section className="py-2 md:py-12 bg-gray-100">
+      <section className="py-2 md:py-12 bg-gray-100 overflow-hidden">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-12 flex flex-col md:flex-row items-center justify-between gap-6 border">
-            <div className="flex-1 space-y-4 text-left">
+          {/* UBICACIÓN Y BOTÓN GALERÍA */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={fadeInUp}
+            className="bg-white rounded-lg shadow-xl p-6 md:p-8 flex flex-col md:flex-row items-stretch justify-between gap-6 border border-gray-200"
+          >
+            <div className="flex-1 space-y-4 text-left flex flex-col justify-center">
               <h2 className="text-2xl md:text-3xl font-bignoodle uppercase text-[#fc4b08]">
                 UBICACIÓN
               </h2>
               <div className="flex items-center gap-3">
-                <FaMapMarkerAlt className="text-4xl text-[#fc4b08]" />
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <FaMapMarkerAlt className="text-4xl text-[#fc4b08]" />
+                </motion.div>
                 <div>
-                  <p className="text-gray-700 font-semibold ">
+                  <p className="text-gray-700 font-semibold text-lg">
                     Aconquija, Yerba Buena, Tucumán
                   </p>
                 </div>
               </div>
             </div>
-            <div className="relative overflow-hidden text-white p-6 rounded-lg text-center w-full md:w-1/2 bg-black bg-opacity-70 group cursor-pointer transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-black opacity-80 z-0"></div>
-              <div className="relative z-10 flex flex-col items-center justify-center">
-                <p className="text-2xl md:text-4xl font-bignoodle uppercase mb-4 tracking-wider">
+
+            {/* BOTÓN GALERÍA PREMIUM */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              onClick={abrirGaleria}
+              className="relative overflow-hidden rounded-xl text-center w-full md:w-1/2 group cursor-pointer shadow-lg"
+              style={{
+                backgroundImage: `url(${Sala_Principal})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            >
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px] transition-all duration-300 group-hover:bg-black/40 group-hover:backdrop-blur-none z-0"></div>
+
+              <div className="relative z-10 flex flex-col items-center justify-center p-8 h-full">
+                <p className="text-2xl md:text-4xl font-bignoodle uppercase mb-5 tracking-wider text-white drop-shadow-md">
                   3000mt2 que van a cambiar tu forma de entrenar para siempre
                 </p>
-                <button className="bg-transparent border-2 border-white text-white font-montserrat px-6 py-2 rounded-md text-lg transition-transform hover:scale-105 uppercase flex items-center gap-2">
-                  Ver galería <FaChevronRight />
-                </button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-[#fc4b08] border-none text-white font-montserrat px-8 py-3 rounded-md text-lg font-bold uppercase flex items-center gap-2 shadow-lg hover:bg-[#ff5c1e] transition-colors"
+                >
+                  Ver galería{" "}
+                  <motion.span
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <FaChevronRight />
+                  </motion.span>
+                </motion.button>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          <div className="flex justify-center items-center relative py-8 overflow-hidden">
+          {/* LÍNEA DIVISORIA FINITA ANIMADA */}
+          <motion.div
+            initial={{ scaleX: 0, opacity: 0 }}
+            whileInView={{ scaleX: 1, opacity: 1 }}
+            viewport={{ once: true, amount: 0.8 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="w-full h-[2px] bg-gradient-to-r from-transparent via-[#fc4b08]/50 to-transparent my-10 md:my-16"
+          />
+
+          {/* TÍTULO INSTALACIONES */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="flex justify-center items-center relative overflow-hidden mb-8"
+          >
             <p className="absolute left-0 w-1/3 text-4xl font-bignoodle uppercase text-gray-300 opacity-60 text-right pr-4 hidden lg:block">
-              Instalaciones por Piso
+              ¡Conocé nuestras instalaciones!
             </p>
             <p className="absolute right-0 w-1/3 text-4xl font-bignoodle uppercase text-gray-300 opacity-60 text-left pl-4 hidden lg:block">
-              Instalaciones por Piso
+              ¡Conocé nuestras instalaciones!
             </p>
             <h2
               id="instalaciones-por-piso"
-              className="text-3xl md:text-4xl font-bignoodle text-center uppercase tracking-widest z-10 text-[#fc4b08]"
+              className="text-4xl md:text-5xl font-bignoodle text-center uppercase tracking-widest z-10 text-[#fc4b08]"
             >
-              Instalaciones por Piso
+              ¡Conocé nuestras instalaciones!
             </h2>
-          </div>
-          {/* --- BLOQUE PLANTA BAJA --- */}
-          {/* VISTA CARRUSEL (Ahora visible en PC y Mobile) */}
-          <div className="bg-white rounded-lg shadow-lg border-t-4 border-[#fc4b08] mb-12">
-            <div className="p-6">
-              {" "}
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-white rounded-full h-8 w-8 flex items-center justify-center font-bold bg-[#fc4b08]">
-                  PB
-                </span>
-                <h3 className="text-xl md:text-2xl font-bignoodle uppercase text-[#fc4b08]">
-                  Planta Baja - Fuerza y Tecnología
-                </h3>
-              </div>
-            </div>
-            {/* Contenedor del carrusel*/}
-            <div className="flex overflow-x-auto gap-4 pb-4 px-6 ">
-              {groundFloorFeatures.map((feature, index) => (
-                <div key={index} className="shrink-0 w-64 md:w-80 ">
-                  <div
-                    className={`group p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-gray-700 to-orange-400`}
+          </motion.div>
+
+          {/* CARRUSEL INSTALACIONES (Alineación corregida al tope) */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+            variants={staggerContainer}
+            className="bg-white rounded-lg shadow-lg border-t-4 border-[#fc4b08] mb-12 py-8 overflow-hidden"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="flex items-center justify-center gap-2 mb-1 text-orange-500 text-sm font-semibold animate-pulse"
+            >
+              <span>&larr;</span>
+              <span>Desliza para ver más</span>
+              <span>&rarr;</span>
+            </motion.div>
+            <div className="flex overflow-x-auto gap-5 pb-6 px-6 hide-scrollbar items-stretch">
+              {allFacilities.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  variants={fadeInUp}
+                  className="shrink-0 w-72 md:w-[350px]"
+                >
+                  {/* Tarjeta con flex-col (el justify-center se ha quitado para alinear todo arriba) */}
+                  <motion.div
+                    whileHover={{
+                      y: -8,
+                      boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.4)",
+                    }}
+                    className="group p-6 border border-gray-200 rounded-2xl h-full flex flex-col bg-gradient-to-b from-gray-700 to-orange-400 shadow-lg transition-all duration-300"
                   >
-                    <div>
-                      <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08] animate-float" />
-                      <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08] ">
-                        {feature.title}
-                      </h4>
-                      <p className="text-white text-sm md:text-base">
-                        {feature.description}
-                        {feature.id === 2 && (
-                          <>
-                            <br />
-                            <br />
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    <CarruselImagenes feature={feature} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* --- BLOQUE PRIMER PISO --- */}
-          {/* VISTA CARRUSEL (Ahora visible en PC y Mobile) */}
-          <div className="bg-white rounded-lg shadow-lg border-t-4 border-[#fc4b08] mb-12">
-            <div className="p-6">
-              {" "}
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-white rounded-full h-8 w-8 flex items-center justify-center font-bold bg-[#fc4b08]">
-                  1
-                </span>
-                <h3 className="text-xl md:text-2xl font-bignoodle uppercase text-[#fc4b08]">
-                  Primer Piso - Resistencia y Control
-                </h3>
-              </div>
-            </div>
-            {/* Contenedor del carrusel*/}
-            <div className="flex overflow-x-auto gap-4 pb-4 px-6">
-              {" "}
-              {firstFloorFeatures.map((feature, index) => (
-                <div key={index} className="shrink-0 w-64 md:w-80">
-                  <div
-                    className={`group p-4 border border-gray-200 rounded-lg h-full min-h-[500px] md:min-h-[580px] flex flex-col ${
-                      feature.title === "Sala de Pilates"
-                        ? "bg-gradient-to-b from-gray-100 to-orange-300"
-                        : "bg-gradient-to-b from-gray-500 via-gray-700 to-orange-500"
-                    }`}
-                  >
-                    <div>
-                      <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08] animate-float" />
-                      <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08]">
-                        {feature.title}
-                      </h4>
-                      <p
-                        className={`text-sm md:text-base ${
-                          feature.title === "Sala de Pilates"
-                            ? "text-gray-600 "
-                            : "text-white"
-                        }`}
+                    {/* Header de la tarjeta con min-h fijo para alinear textos consistentemente */}
+                    <div className="flex items-center gap-4 mb-4 min-h-[4rem]">
+                      <motion.div
+                        animate={{ rotate: [0, -10, 10, 0] }}
+                        transition={{
+                          duration: 2.5,
+                          repeat: Infinity,
+                          repeatDelay: Math.random() * 2,
+                        }}
                       >
-                        {feature.description}
-                        {feature.id === 2 && (
-                          <>
-                            <br />
-                            <br />
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    <CarruselImagenes
-                      feature={feature}
-                      emptyIconClassName="text-9xl md:text-[10rem] text-[#fc4b08] opacity-80"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* --- BLOQUE SEGUNDO PISO --- */}
-          <div className="bg-white rounded-lg shadow-lg border-t-4 border-[#fc4b08] mb-12">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-white rounded-full h-8 w-8 flex items-center justify-center font-bold bg-[#fc4b08]">
-                  2
-                </span>
-                <h3 className="text-xl md:text-2xl font-bignoodle uppercase text-[#fc4b08]">
-                  Segundo Piso - Movimiento, energía y bienestar
-                </h3>
-              </div>
-            </div>
-
-            <div className="flex overflow-x-auto gap-4 pb-4 px-6">
-              {secondFloorFeatures.map((feature, index) => (
-                <div key={index} className="shrink-0 w-64 md:w-80">
-                  <div className="group p-4 border border-gray-200 rounded-lg h-full flex flex-col bg-gradient-to-b from-gray-700  via-orange-300 to-orange-500 ">
-                    <div>
-                      <feature.icon className="text-4xl md:text-5xl mb-3 text-[#fc4b08] animate-float" />
-                      <h4 className="font-bignoodle uppercase text-lg md:text-xl mb-1 text-[#fc4b08]">
+                        <feature.icon className="text-4xl md:text-5xl text-[#fc4b08] drop-shadow-md shrink-0" />
+                      </motion.div>
+                      <h4 className="font-bignoodle uppercase text-xl md:text-3xl text-[#fc4b08] leading-none m-0 drop-shadow-sm">
                         {feature.title}
                       </h4>
-                      <p className="text-white text-sm md:text-base ">
-                        {feature.description}
-                        {index >= 2 && (
-                          <>
-                            <br />
-                            <br />
-                          </>
-                        )}
-                      </p>
                     </div>
 
-                    <CarruselImagenes
-                      feature={feature}
-                      emptyIconClassName="text-9xl md:text-[10rem] text-[#fc4b08] opacity-80"
-                    />
-                  </div>
-                </div>
+                    {/* flex-grow empuja este contenido y respeta el margen superior */}
+                    <p className="text-white text-sm md:text-base leading-relaxed mt-2 flex-grow">
+                      {feature.description}
+                    </p>
+                  </motion.div>
+                </motion.div>
               ))}
             </div>
-          </div>
+            <style>{`.hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
+          </motion.div>
 
           <div id="preventa-carousel" className="scroll-mt-28">
             <PlanesPromocionalesCarousel />
           </div>
-        </div>{" "}
+        </div>
       </section>
-      <h2
+
+      {/* FOOTER CALL TO ACTION */}
+      <motion.h2
+        initial={{ opacity: 0, scale: 0.9 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
         style={{ background: "#fc4b08" }}
-        className="text-3xl md:text-6xl font-bold text-white font-bignoodle text-center"
+        className="text-3xl md:text-6xl font-bold text-white font-bignoodle text-center py-4 m-0"
       >
         CONOCE NUESTRA UBICACIÓN
-      </h2>
+      </motion.h2>
 
-      <div id="ubicacion" className="w-full">
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 1 }}
+        viewport={{ once: true }}
+        id="ubicacion"
+        className="w-full"
+      >
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4223.568095001174!2d-65.20257459999999!3d-26.8210825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94225c22aac40d25%3A0xd5e93c92c00674bc!2s25%20de%20Mayo%20720%2C%20T4000%20San%20Miguel%20de%20Tucum%C3%A1n%2C%20Tucum%C3%A1n!5e1!3m2!1ses!2sar!4v1761148495178!5m2!1ses!2sar"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3560.867728529701!2d-65.30011689999999!3d-26.81234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x942242d98496ebcb%3A0x4bf0281152701fe4!2sAv.%20Aconquija%202044%2C%20T4107%20CEU%2C%20Tucum%C3%A1n!5e0!3m2!1ses!2sar!4v1774631817691!5m2!1ses!2sar"
           width="100%"
           height="450"
           style={{ border: "0" }}
@@ -553,37 +453,16 @@ const SedeYerbaBuena = () => {
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
         ></iframe>
-      </div>
+      </motion.div>
 
-      <div className="p-4">
-        <div
-          style={{ background: "#fc4b08" }}
-          className="flex flex-col items-center justify-center p-6 rounded-lg shadow-lg text-white text-center"
-        >
-          <h2 className="mb-5 text-3xl md:text-4xl font-bold text-white font-bignoodle text-center">
-            ¡Quiero aprovechar la preventa!
-          </h2>
-          <p className="text-sm">
-            Inscríbete para nuestras clases de prueba y asegura tu lugar en
-            Yerba Buena.
-          </p>
-          <button
-            onClick={abrirModalTestClass}
-            className="uppercase mt-4 px-6 py-2 bg-white text-orange-500 font-semibold rounded-lg shadow hover:bg-gray-100"
-          >
-            Inscribirme
-          </button>
-        </div>
+      <ModalGaleria
+        isOpen={galleryOpen}
+        onClose={cerrarGaleria}
+        images={dynamicGalleryImages}
+      />
 
-        <ModalContactoSede
-          showModal={modalContacto}
-          closeModal={cerrarModalContacto}
-          sede="Yerba Buena"
-        />
-        <FormTestClass isOpen={modalTestClass} onClose={cerrarModalTestClass} />
-      </div>
       <Footer />
-    </>
+    </motion.div>
   );
 };
 
