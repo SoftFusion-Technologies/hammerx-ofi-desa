@@ -32,7 +32,8 @@ import {
   HelpCircle,
   Dumbbell,
   Target,
-  CreditCard
+  CreditCard,
+  User as UserIcon
 } from 'lucide-react';
 
 // ---------- Tile genérico ----------
@@ -490,8 +491,9 @@ const AdminPage = () => {
               const showLeads = isAdmin || isVendedor;
               const showRecaptacion = (isAdmin || isVendedor) && !isImagenes;
               const showRemarketing = (isAdmin || isVendedor) && !isImagenes;
+              const showPreventas = (isAdmin || isVendedor) && !isImagenes;
               const showContactos =
-                showVentas || showLeads || showRecaptacion || showRemarketing;
+                showVentas || showLeads || showRecaptacion || showRemarketing || showPreventas;
 
               const showPreguntale = true;
               const showInstructores = isAdmin || isInstructor;
@@ -506,7 +508,8 @@ const AdminPage = () => {
               const visibleCols = [
                 showGestion,
                 showContactos,
-                showOtros
+                showOtros,
+
               ].filter(Boolean).length;
               const lgColsClass =
                 visibleCols === 3
@@ -644,6 +647,22 @@ const AdminPage = () => {
                           title="Remarketing"
                           description="Accedé al módulo de remarketing para gestionar campañas y seguimientos."
                           to="/dashboard/ventas-remarketing"
+                          icon={ShoppingBag}
+                          delay={0.24}
+                          badgeSlot={
+                            <BadgeAgendaVentasRemarketing
+                              userId={userId}
+                              userLevel={userLevel}
+                              size="sm"
+                            />
+                          }
+                        />
+                      )}
+                      {showPreventas && (
+                        <DashboardTile
+                          title="Preventas"
+                          description="Accedé al módulo de preventas para gestionar los seguimientos de clientes interesados."
+                          to="/dashboard/preventas"
                           icon={ShoppingBag}
                           delay={0.24}
                           badgeSlot={

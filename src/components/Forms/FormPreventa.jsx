@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  FiArrowLeft,
   FiCheck,
   FiUploadCloud,
   FiFileText,
@@ -8,7 +9,6 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 import axios from "axios";
-import { set } from "date-fns";
 
 // ==========================================
 // Sub-componente: Stepper de Progreso
@@ -139,9 +139,13 @@ const SelectorTurnos = ({
           {turnoSeleccionado ? (
             <FiCheck className="text-sm shrink-0" />
           ) : esPaseFull ? (
-            "2. "
+            <span className="inline-grid h-5 w-5 shrink-0 place-items-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-bold leading-[1] text-gray-600">
+              2
+            </span>
           ) : (
-            "1. "
+            <span className="inline-grid h-5 w-5 shrink-0 place-items-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-bold leading-[1] text-gray-600">
+              1
+            </span>
           )}
           Seleccioná tu horario
         </p>
@@ -210,6 +214,7 @@ const SelectorTurnos = ({
                         type="button"
                         disabled={!hayCupo}
                         onClick={() => {
+                          console.log(horario)
                           alSeleccionarTurno(horario);
                           setMenuAbierto(false);
                         }}
@@ -335,14 +340,20 @@ const DatosBancarios = ({
 
   // Separo el número y el texto real del título
   const textoLimpio = stepLabel?.replace(/^\d+\.\s*/, "");
-  const numero = stepLabel?.match(/^\d+\.\s*/)?.[0] || "";
+  const numero = stepLabel?.match(/^\d+/)?.[0] || "";
 
   return (
     <div className="flex flex-col gap-2 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
       <p
         className={`text-[10px] md:text-xs uppercase tracking-wider mb-1 flex items-center gap-1 ${completado ? "text-orange-600 font-semibold" : "text-gray-500 font-bold"}`}
       >
-        {completado ? <FiCheck className="text-sm shrink-0" /> : numero}
+        {completado ? (
+          <FiCheck className="text-sm shrink-0" />
+        ) : numero ? (
+          <span className="inline-grid h-5 w-5 shrink-0 place-items-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-bold leading-[1] text-gray-600">
+            {numero}
+          </span>
+        ) : null}
         {textoLimpio || "Descargá el comprobante para adjuntarlo aquí abajo"}
       </p>
 
@@ -450,16 +461,31 @@ const DatosBancarios = ({
 // ==========================================
 // Sub-componente: Formulario de Datos Personales
 // ==========================================
-const FormularioDatos = ({ datos, manejarCambio, stepLabel, completado }) => {
+const FormularioDatos = ({
+  datos,
+  manejarCambio,
+  stepLabel,
+  completado,
+  textoObservacion,
+  manejarCambioObservacion,
+  errorObservacion,
+  observacionesRef,
+}) => {
   const textoLimpio = stepLabel?.replace(/^\d+\.\s*/, "");
-  const numero = stepLabel?.match(/^\d+\.\s*/)?.[0] || "";
+  const numero = stepLabel?.match(/^\d+/)?.[0] || "";
 
   return (
     <div className="flex flex-col gap-3 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
       <p
         className={`text-[10px] md:text-xs uppercase tracking-wider mb-1 flex items-center gap-1 ${completado ? "text-orange-600 font-semibold" : "text-gray-500 font-bold"}`}
       >
-        {completado ? <FiCheck className="text-sm shrink-0" /> : numero}
+        {completado ? (
+          <FiCheck className="text-sm shrink-0" />
+        ) : numero ? (
+          <span className="inline-grid h-5 w-5 shrink-0 place-items-center rounded-full border border-gray-300 bg-gray-100 text-[10px] font-bold leading-[1] text-gray-600">
+            {numero}
+          </span>
+        ) : null}
         {textoLimpio || "Carga tus datos personales"}
       </p>
 
@@ -554,6 +580,32 @@ const FormularioDatos = ({ datos, manejarCambio, stepLabel, completado }) => {
             className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm text-gray-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder-gray-400"
           />
         </div>
+
+        <div>
+          <label
+            className={`block text-[10px] font-bold uppercase mb-1 ml-0.5 ${
+              errorObservacion ? "text-red-600" : "text-gray-600"
+            }`}
+          >
+            Observaciones
+          </label>
+          <textarea
+            ref={observacionesRef}
+            value={textoObservacion}
+            onChange={manejarCambioObservacion}
+            placeholder='Ej: "Abono en efectivo en recepción", "Transferencia demorada", etc.'
+            className={`w-full h-24 bg-gray-50 border rounded-xl p-3 text-sm text-gray-900 resize-none outline-none transition-all placeholder-gray-400 ${
+              errorObservacion
+                ? "border-red-400 ring-1 ring-red-400 bg-red-50/50"
+                : "border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            }`}
+          />
+          {errorObservacion && (
+            <span className="text-red-500 text-[10px] font-bold uppercase mt-1 ml-1 block">
+              * Completa observaciones para continuar sin comprobante.
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -565,6 +617,7 @@ const FormularioDatos = ({ datos, manejarCambio, stepLabel, completado }) => {
 const FormPreventa = ({
   estaAbierto,
   alCerrar,
+  alVolver,
   planSeleccionado,
   modalidadPago,
   metodoInscripcion,
@@ -581,6 +634,7 @@ const FormPreventa = ({
   const [archivoComprobante, setArchivoComprobante] = useState(null);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
   const [estadoEnvio, setEstadoEnvio] = useState("inactivo");
+  const [nombreCliente, setNombreCliente] = useState("");
   const [datosHorarios, setDatosHorarios] = useState([]);
   const [cargandoHorarios, setCargandoHorarios] = useState(true);
 
@@ -590,9 +644,9 @@ const FormPreventa = ({
   // ESTADOS PARA ALERTA DE COMPROBANTE
   const [mostrarAlertaComprobante, setMostrarAlertaComprobante] =
     useState(false);
-  const [faseObservacion, setFaseObservacion] = useState(false);
   const [textoObservacion, setTextoObservacion] = useState("");
   const [errorObservacion, setErrorObservacion] = useState(false);
+  const [observacionRequerida, setObservacionRequerida] = useState(false);
 
   // Referencias
   const paso1Ref = useRef(null);
@@ -600,6 +654,8 @@ const FormPreventa = ({
   const paso3Ref = useRef(null);
   const scrollContainerRef = useRef(null);
   const botonFinalizarRef = useRef(null);
+  const observacionesRef = useRef(null);
+  const cierreExitoTimeoutRef = useRef(null);
 
   const esMostrador = metodoInscripcion === "mostrador";
   const requiereTurno =
@@ -635,6 +691,53 @@ const FormPreventa = ({
       obtenerHorariosSede();
     }
   }, [estaAbierto, planSeleccionado, metodoInscripcion]);
+
+  useEffect(() => {
+    return () => {
+      if (cierreExitoTimeoutRef.current) {
+        clearTimeout(cierreExitoTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const resetearFormulario = () => {
+    if (cierreExitoTimeoutRef.current) {
+      clearTimeout(cierreExitoTimeoutRef.current);
+      cierreExitoTimeoutRef.current = null;
+    }
+
+    setEstadoEnvio("inactivo");
+    setNombreCliente("");
+    setDatosFormulario({
+      nombreApellido: "",
+      dni: "",
+      fechaNacimiento: "",
+      correo: "",
+      domicilio: "",
+      celular: "",
+    });
+    setTurnoSeleccionado(null);
+    setArchivoComprobante(null);
+    setPasoActivo("paso-1");
+    setMostrarAlertaComprobante(false);
+    setErrorObservacion(false);
+    setObservacionRequerida(false);
+    setTextoObservacion("");
+  };
+
+  const manejarCerrarFormulario = () => {
+    resetearFormulario();
+    alCerrar();
+  };
+
+  const manejarVolverFormulario = () => {
+    resetearFormulario();
+    if (alVolver) {
+      alVolver();
+      return;
+    }
+    alCerrar();
+  };
 
   const manejarScroll = () => {
     if (!estaAbierto || esMostrador || !scrollContainerRef.current) return;
@@ -697,7 +800,7 @@ const FormPreventa = ({
         return;
       }
       const respuesta = await axios.get(
-        "http://localhost:8080/clientes-pilates/horarios-disponibles/ventas?sedeId=13",
+        "http://localhost:8080/clientes-pilates/horarios-disponibles/ventas?sedeId=16",
       );
       setDatosHorarios(respuesta.data);
     } catch (error) {
@@ -706,6 +809,10 @@ const FormPreventa = ({
       setCargandoHorarios(false);
     }
   };
+
+  const insertarTurnoPilates = (horario) => {
+    console.log(horario)
+  }
 
   if (!estaAbierto || !planSeleccionado) return null;
 
@@ -717,6 +824,8 @@ const FormPreventa = ({
   const manejarArchivo = (e) => {
     if (e.target.files && e.target.files[0]) {
       setArchivoComprobante(e.target.files[0]);
+      setErrorObservacion(false);
+      setObservacionRequerida(false);
 
       // Scroll hacia el elemento que falta completar o hacia el botón de finalizar
       setTimeout(() => {
@@ -755,42 +864,67 @@ const FormPreventa = ({
     }
   };
 
+  const llevarAObservaciones = () => {
+    setTimeout(() => {
+      observacionesRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      observacionesRef.current?.focus();
+    }, 120);
+  };
+
+  const manejarCambioObservacion = (e) => {
+    setTextoObservacion(e.target.value);
+    if (e.target.value.trim() !== "") {
+      setErrorObservacion(false);
+    }
+  };
+
   // Función intermedia para interceptar el envío si falta el comprobante
   const intentarEnviar = (e) => {
     e.preventDefault();
 
     if (!esMostrador && !archivoComprobante) {
+      if (observacionRequerida && textoObservacion.trim() !== "") {
+        setErrorObservacion(false);
+        procesarEnvioBackend(textoObservacion.trim());
+        return;
+      }
+
       setMostrarAlertaComprobante(true);
       return;
     }
 
-    // Si todo está bien, se envía normalmente (sin observación obligatoria)
-    return;
-    procesarEnvioBackend("");
+    procesarEnvioBackend(textoObservacion.trim());
   };
 
-  //  Función para confirmar envío con observación desde el modal
-  const confirmarEnvioConObservacion = () => {
+  // Si confirma continuar sin comprobante, observaciones se vuelve obligatorio
+  const confirmarContinuarSinComprobante = () => {
+    setObservacionRequerida(true);
+
     if (textoObservacion.trim() === "") {
+      setMostrarAlertaComprobante(false);
       setErrorObservacion(true);
+      llevarAObservaciones();
       return;
     }
-    setErrorObservacion(false);
 
-    return;
+    setErrorObservacion(false);
+    setMostrarAlertaComprobante(false);
     procesarEnvioBackend(textoObservacion);
   };
 
   // Lógica real de envío a la API (refactorizada)
   const procesarEnvioBackend = async (observacionExtra = "") => {
     setMostrarAlertaComprobante(false);
-    setFaseObservacion(false);
     setEstadoEnvio("enviando");
 
     try {
       const turnoSeleccionadoPilates = turnoSeleccionado
         ? `${turnoSeleccionado.grp} - ${turnoSeleccionado.hhmm}`
         : null;
+      const turnoCompletoPilates = turnoSeleccionado || null;
 
       const formData = new FormData();
 
@@ -827,6 +961,10 @@ const FormPreventa = ({
         formData.append("comprobante", archivoComprobante);
       }
 
+      if(turnoCompletoPilates) {
+        formData.append("horario_id", JSON.stringify(turnoCompletoPilates.horario_id));
+      }
+
       const respuestaEnviarFormulario = await axios.post(
         "http://localhost:8080/preventas",
         formData,
@@ -839,6 +977,7 @@ const FormPreventa = ({
 
       if (respuestaEnviarFormulario.status === 201) {
         setEstadoEnvio("exito");
+        setNombreCliente(datosFormulario.nombreApellido.toUpperCase());
 
         setDatosFormulario({
           nombreApellido: "",
@@ -851,11 +990,13 @@ const FormPreventa = ({
         setTurnoSeleccionado(null);
         setArchivoComprobante(null);
         setTextoObservacion("");
+        setErrorObservacion(false);
+        setObservacionRequerida(false);
         setPasoActivo("paso-1");
 
-        setTimeout(() => {
-          alCerrar();
-        }, 2000);
+        cierreExitoTimeoutRef.current = setTimeout(() => {
+          manejarCerrarFormulario();
+        }, 5000);
       }
     } catch (error) {
       console.error("Error al enviar formulario", error);
@@ -871,6 +1012,10 @@ const FormPreventa = ({
           manejarCambio={manejarCambioInput}
           stepLabel="Completa tus datos personales"
           completado={datosCompletos}
+          textoObservacion={textoObservacion}
+          manejarCambioObservacion={manejarCambioObservacion}
+          errorObservacion={errorObservacion}
+          observacionesRef={observacionesRef}
         />
       );
     }
@@ -922,6 +1067,10 @@ const FormPreventa = ({
               manejarCambio={manejarCambioInput}
               stepLabel="2. Completa tus datos"
               completado={datosCompletos}
+              textoObservacion={textoObservacion}
+              manejarCambioObservacion={manejarCambioObservacion}
+              errorObservacion={errorObservacion}
+              observacionesRef={observacionesRef}
             />
           )}
         </div>
@@ -934,6 +1083,10 @@ const FormPreventa = ({
               manejarCambio={manejarCambioInput}
               stepLabel="3. Completa tus datos"
               completado={datosCompletos}
+              textoObservacion={textoObservacion}
+              manejarCambioObservacion={manejarCambioObservacion}
+              errorObservacion={errorObservacion}
+              observacionesRef={observacionesRef}
             />
           </div>
         )}
@@ -963,36 +1116,32 @@ const FormPreventa = ({
             <div className="flex justify-between items-center px-4 md:px-6 py-4 md:py-5 border-b border-gray-300 bg-white  z-20 shrink-0 shadow-sm">
               <div className="flex flex-col">
                 <span className="text-[10px] text-orange-600 font-bold uppercase tracking-[0.1em] mb-0.5 max-w-[280px] md:max-w-full leading-tight">
-                  {esMostrador
-                    ? "Deja tus datos y sé el primero en enterarte cuando esté disponible"
-                    : "Preventa Exclusiva"}
+                  Preventa Exclusiva
                 </span>
                 <h3 className="text-gray-900 font-bignoodle text-xl md:text-2xl uppercase leading-none tracking-wider mt-1">
                   {planSeleccionado.title}
                 </h3>
               </div>
-              <button
-                onClick={() => {
-                  setEstadoEnvio("inactivo");
-                  setDatosFormulario({
-                    nombreApellido: "",
-                    dni: "",
-                    fechaNacimiento: "",
-                    correo: "",
-                    domicilio: "",
-                    celular: "",
-                  });
-                  setTurnoSeleccionado(null);
-                  setArchivoComprobante(null);
-                  setPasoActivo("paso-1");
-                  setMostrarAlertaComprobante(false);
-                  setTextoObservacion("");
-                  alCerrar();
-                }}
-                className="text-gray-400 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-all self-start md:self-center -mt-2 md:mt-0"
-              >
-                <span className="text-lg">✕</span>
-              </button>
+              <div className="flex items-center gap-2 self-start md:self-center -mt-2 md:mt-0">
+                {alVolver && (
+                  <button
+                    type="button"
+                    onClick={manejarVolverFormulario}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-orange-700 transition-colors hover:bg-orange-100 hover:border-orange-300"
+                  >
+                    <FiArrowLeft className="text-sm" />
+                    Volver
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={manejarCerrarFormulario}
+                  className="text-gray-400 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-all"
+                >
+                  <span className="text-lg">✕</span>
+                </button>
+              </div>
             </div>
 
             <form
@@ -1028,7 +1177,7 @@ const FormPreventa = ({
                     <p className="text-gray-600 text-sm px-4">
                       {esMostrador
                         ? "Pronto nos pondremos en contacto contigo."
-                        : "Se abrirá WhatsApp para finalizar el proceso."}
+                        : `${nombreCliente}, tu pre-inscripción ha sido recibida correctamente. Si tienes alguna consulta, no dudes en contactarnos. ¡Gracias por elegirnos!`}
                     </p>
                   </motion.div>
                 ) : (
@@ -1041,7 +1190,8 @@ const FormPreventa = ({
                       type="submit"
                       disabled={
                         estadoEnvio === "enviando" ||
-                        (requiereTurno && !esMostrador && !turnoSeleccionado)
+                        (requiereTurno && !esMostrador && !turnoSeleccionado) ||
+                        (observacionRequerida && textoObservacion.trim() === "")
                       }
                       className="w-full mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bignoodle text-xl md:text-2xl py-3.5 rounded-xl uppercase tracking-wider shadow-[0_5px_15px_rgba(234,88,12,0.3)] hover:shadow-[0_5px_15px_rgba(234,88,12,0.5)] disabled:opacity-50 disabled:shadow-none disabled:hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shrink-0"
                     >
@@ -1080,96 +1230,39 @@ const FormPreventa = ({
                       }}
                       className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md flex flex-col"
                     >
-                      {!faseObservacion ? (
-                        // FASE 1: Advertencia de falta de comprobante
-                        <div className="flex flex-col items-center text-center">
-                          <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-100">
-                            <FiAlertCircle className="text-3xl" />
-                          </div>
-                          <h3 className="text-xl md:text-2xl font-bignoodle uppercase text-gray-900 tracking-wide mb-2">
-                            Falta el comprobante
-                          </h3>
-                          <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                            No has cargado el comprobante de transferencia. Para
-                            agilizar tu inscripción, te recomendamos adjuntarlo.{" "}
-                            <br />
-                            <br /> ¿Quieres enviar tu inscripción de todas
-                            formas?
-                          </p>
-
-                          <div className="flex flex-col sm:flex-row gap-3 w-full">
-                            <button
-                              type="button"
-                              onClick={() => setMostrarAlertaComprobante(false)}
-                              className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition-colors"
-                            >
-                              Volver y cargar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFaseObservacion(true)}
-                              className="flex-1 py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-[0_4px_12px_rgba(234,88,12,0.3)]"
-                            >
-                              Sí, continuar sin archivo
-                            </button>
-                          </div>
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-100">
+                          <FiAlertCircle className="text-3xl" />
                         </div>
-                      ) : (
-                        // FASE 2: Input de observación obligatoria
-                        <div className="flex flex-col text-left">
-                          <h3 className="text-xl md:text-2xl font-bignoodle uppercase text-gray-900 tracking-wide mb-2 flex items-center gap-2">
-                            <FiFileText className="text-orange-600" /> Añadir
-                            Observación
-                          </h3>
-                          <p className="text-gray-600 text-xs mb-4">
-                            Por favor, indícanos por qué envías la inscripción
-                            sin el comprobante (Ej: "Abono en efectivo en
-                            recepción", "Transferencia demorada", etc.).
-                          </p>
+                        <h3 className="text-xl md:text-2xl font-bignoodle uppercase text-gray-900 tracking-wide mb-2">
+                          Falta el comprobante
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                          No has cargado el comprobante de transferencia. Si
+                          continúas sin archivo, debes completar el campo
+                          observaciones para finalizar.
+                          <br />
+                          <br />
+                          ¿Quieres continuar?
+                        </p>
 
-                          <textarea
-                            value={textoObservacion}
-                            onChange={(e) => {
-                              setTextoObservacion(e.target.value);
-                              if (e.target.value.trim() !== "")
-                                setErrorObservacion(false);
-                            }}
-                            placeholder="Escribe tu observación aquí..."
-                            className={`w-full h-24 bg-gray-50 border rounded-xl p-3 text-sm text-gray-900 resize-none outline-none transition-all placeholder-gray-400 ${
-                              errorObservacion
-                                ? "border-red-400 ring-1 ring-red-400 bg-red-50/50"
-                                : "border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                            }`}
-                          />
-                          {errorObservacion && (
-                            <span className="text-red-500 text-[10px] font-bold uppercase mt-1 ml-1">
-                              * Este campo es obligatorio para continuar.
-                            </span>
-                          )}
-
-                          <div className="flex flex-col sm:flex-row gap-3 w-full mt-6">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setMostrarAlertaComprobante(false);
-                                setFaseObservacion(false);
-                                setTextoObservacion("");
-                                setErrorObservacion(false);
-                              }}
-                              className="flex-1 py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold rounded-xl text-sm transition-colors"
-                            >
-                              Cancelar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={confirmarEnvioConObservacion}
-                              className="flex-1 py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-[0_4px_12px_rgba(234,88,12,0.3)]"
-                            >
-                              Enviar inscripción
-                            </button>
-                          </div>
+                        <div className="flex flex-col sm:flex-row gap-3 w-full">
+                          <button
+                            type="button"
+                            onClick={() => setMostrarAlertaComprobante(false)}
+                            className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition-colors"
+                          >
+                            Volver y cargar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={confirmarContinuarSinComprobante}
+                            className="flex-1 py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-[0_4px_12px_rgba(234,88,12,0.3)]"
+                          >
+                            Sí, continuar
+                          </button>
                         </div>
-                      )}
+                      </div>
                     </motion.div>
                   </motion.div>
                 )}

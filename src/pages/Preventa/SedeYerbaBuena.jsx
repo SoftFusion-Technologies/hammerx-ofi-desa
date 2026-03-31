@@ -33,6 +33,8 @@ import {
   FaChevronRight,
   FaWeightHanging,
   FaLaptop,
+  FaWhatsapp,
+  FaLockOpen,
 } from "react-icons/fa";
 import { MdSelfImprovement, MdSportsTennis } from "react-icons/md";
 
@@ -91,6 +93,9 @@ const SedeYerbaBuena = () => {
     const offsetPosition = elementPosition - headerOffset;
     window.scrollTo({ top: offsetPosition, behavior: "smooth" });
   };
+
+  const whatsappUrl =
+    "https://wa.me/5493868381?text=Hola%20Hammer%2C%20quiero%20mas%20info%20de%20la%20preventa.";
 
   // --- DATOS UNIFICADOS ---
   const allFacilities = [
@@ -231,7 +236,7 @@ const SedeYerbaBuena = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={scrollToPreventaCarousel}
-                className="group relative inline-flex items-center justify-center font-montserrat text-lg sm:text-2xl md:text-5xl text-white mb-3 px-5 md:px-8 py-3 md:py-4 font-extrabold uppercase tracking-[0.08em] rounded-xl border border-white/50 bg-gradient-to-r from-[#fc4b08] via-[#ff7a18] to-[#ff9f43] shadow-[0_12px_28px_rgba(0,0,0,0.35)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/40 animate-[bounce_2s_infinite] [animation-duration:2s]"
+                className="group relative inline-flex items-center justify-center font-montserrat text-sm sm:text-xl md:text-2xl text-white mb-2 px-2 md:px-3 py-2 md:py-3 font-extrabold uppercase tracking-[0.08em] rounded-xl border border-white/50 bg-gradient-to-r from-[#fc4b08] via-[#ff7a18] to-[#ff9f43] shadow-[0_12px_28px_rgba(0,0,0,0.35)] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/40 animate-[bounce_2s_infinite] [animation-duration:2s]"
                 style={{ animationName: "bounceSutil" }}
               >
                 ¡COMIENZA NUESTRA PREVENTA ONLINE!
@@ -249,7 +254,7 @@ const SedeYerbaBuena = () => {
                 transition={{ duration: 0.8, delay: 0.3 }}
                 src={logo}
                 alt="logo"
-                className="my-0 md:my-5 max-w-xs lg:max-w-md mx-auto"
+                className="my-0 md:my-5 max-w-sm lg:max-w-xl mx-auto"
               />
               <motion.p
                 initial={{ y: 20, opacity: 0 }}
@@ -275,6 +280,19 @@ const SedeYerbaBuena = () => {
             className="bg-white rounded-lg shadow-xl p-6 md:p-8 flex flex-col md:flex-row items-stretch justify-between gap-6 border border-gray-200"
           >
             <div className="flex-1 space-y-4 text-left flex flex-col justify-center">
+              <div className="w-full rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 via-white to-orange-50 px-4 py-2.5 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[12px] md:text-xs font-extrabold uppercase tracking-[0.18em] text-orange-700">
+                    APERTURA
+                  </span>
+                  <span className="inline-flex items-center gap-2 text-orange-700">
+                    <FaLockOpen className="text-base md:text-lg" />
+                    <span className="font-bignoodle text-2xl md:text-3xl uppercase tracking-wide leading-none text-[#fc4b08]">
+                      Mayo
+                    </span>
+                  </span>
+                </div>
+              </div>
               <h2 className="text-2xl md:text-3xl font-bignoodle uppercase text-[#fc4b08]">
                 UBICACIÓN
               </h2>
@@ -286,8 +304,8 @@ const SedeYerbaBuena = () => {
                   <FaMapMarkerAlt className="text-4xl text-[#fc4b08]" />
                 </motion.div>
                 <div>
-                  <p className="text-gray-700 font-semibold text-lg">
-                    Aconquija, Yerba Buena, Tucumán
+                  <p className="text-gray-700 font-semibold text-sm lg:text-lg">
+                    Aconquija 2044, Yerba Buena, Tucumán
                   </p>
                 </div>
               </div>
@@ -307,13 +325,14 @@ const SedeYerbaBuena = () => {
               <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px] transition-all duration-300 group-hover:bg-black/40 group-hover:backdrop-blur-none z-0"></div>
 
               <div className="relative z-10 flex flex-col items-center justify-center p-8 h-full">
-                <p className="text-2xl md:text-4xl font-bignoodle uppercase mb-5 tracking-wider text-white drop-shadow-md">
-                  3000mt2 que van a cambiar tu forma de entrenar para siempre
+                <p className="text-xl md:text-3xl font-bignoodle uppercase mb-5 tracking-wider text-white drop-shadow-md">
+                  3000mt<sup>2</sup> que van a cambiar tu forma de entrenar para
+                  siempre
                 </p>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-[#fc4b08] border-none text-white font-montserrat px-8 py-3 rounded-md text-lg font-bold uppercase flex items-center gap-2 shadow-lg hover:bg-[#ff5c1e] transition-colors"
+                  className="bg-[#fc4b08] border-none text-white font-montserrat px-8 py-3 rounded-md text-sm lg:text-lg font-bold uppercase flex items-center gap-2 shadow-lg hover:bg-[#ff5c1e] transition-colors"
                 >
                   Ver galería{" "}
                   <motion.span
@@ -389,10 +408,10 @@ const SedeYerbaBuena = () => {
                       y: -8,
                       boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.4)",
                     }}
-                    className="group p-6 border border-gray-200 rounded-2xl h-full flex flex-col bg-gradient-to-b from-gray-700 to-orange-400 shadow-lg transition-all duration-300"
+                    className="group p-6 border-t-[5px] border-t-[#fc4b08] rounded-2xl h-full flex flex-col bg-gradient-to-b from-[#2c2a2b] via-[#573525] to-[#f48a51] shadow-lg transition-all duration-300"
                   >
                     {/* Header de la tarjeta con min-h fijo para alinear textos consistentemente */}
-                    <div className="flex items-center gap-4 mb-4 min-h-[4rem]">
+                    <div className="flex items-center gap-4 mb-0 min-h-[4rem]">
                       <motion.div
                         animate={{ rotate: [0, -10, 10, 0] }}
                         transition={{
@@ -403,7 +422,7 @@ const SedeYerbaBuena = () => {
                       >
                         <feature.icon className="text-4xl md:text-5xl text-[#fc4b08] drop-shadow-md shrink-0" />
                       </motion.div>
-                      <h4 className="font-bignoodle uppercase text-xl md:text-3xl text-[#fc4b08] leading-none m-0 drop-shadow-sm">
+                      <h4 className="font-bignoodle uppercase text-2xl md:text-3xl text-white leading-none m-0 drop-shadow-sm">
                         {feature.title}
                       </h4>
                     </div>
@@ -454,6 +473,21 @@ const SedeYerbaBuena = () => {
           referrerPolicy="no-referrer-when-downgrade"
         ></iframe>
       </motion.div>
+
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Escribinos por WhatsApp"
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[200] group"
+      >
+        <span className="hidden md:block pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-black/70 px-3 py-1 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          Escribinos por WhatsApp
+        </span>
+        <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-full bg-[#25D366]/90 text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-[#25D366] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/40">
+          <FaWhatsapp className="text-2xl md:text-3xl" />
+        </span>
+      </a>
 
       <ModalGaleria
         isOpen={galleryOpen}
