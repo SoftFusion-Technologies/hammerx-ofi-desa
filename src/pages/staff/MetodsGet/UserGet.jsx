@@ -205,7 +205,8 @@ const UserGet = () => {
   const sede2Barrio = {
     SanMiguelBN: 'Tucumán - Barrio Norte',
     smt: 'Tucumán - Barrio sur',
-    SMT: 'Tucumán - Barrio sur'
+    SMT: 'Tucumán - Barrio sur',
+    YBAconquija: 'Yerba Buena - Aconquija'
   };
 return (
   <>
@@ -328,6 +329,9 @@ return (
                         <option value="SMT">TUCUMÁN - BARRIO SUR</option>
                         <option value="SanMiguelBN">
                           TUCUMÁN - BARRIO NORTE
+                        </option>
+                        <option value="YBAconquija">
+                          YERBA BUENA - ACONQUIJA
                         </option>
                       </select>
                       <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">

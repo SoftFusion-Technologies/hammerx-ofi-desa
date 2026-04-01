@@ -935,7 +935,7 @@ const FormPreventa = ({
       formData.append("domicilio", datosFormulario.domicilio);
       formData.append("celular", datosFormulario.celular);
       formData.append("monto_pactado", monto);
-      formData.append("id_sede", 54);
+      formData.append("id_sede", 16);
       formData.append(
         "plan_seleccionado",
         planSeleccionado.title.toUpperCase(),

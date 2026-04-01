@@ -125,7 +125,7 @@ const AdminPage = () => {
   const [autoOpenedConveniosInbox, setAutoOpenedConveniosInbox] =
     useState(false);
 
-  const { userId, userLevel, userName, nomyape } = useAuth();
+  const { userId, userLevel, userName, nomyape, sedeName } = useAuth();
   const navigate = useNavigate();
 
   const now = new Date();
@@ -491,7 +491,7 @@ const AdminPage = () => {
               const showLeads = isAdmin || isVendedor;
               const showRecaptacion = (isAdmin || isVendedor) && !isImagenes;
               const showRemarketing = (isAdmin || isVendedor) && !isImagenes;
-              const showPreventas = (isAdmin || isVendedor) && !isImagenes;
+              const showPreventas = (isAdmin || (isVendedor && sedeName.toLowerCase() === 'ybaconquija' || sedeName.toLowerCase() === 'multisede')) && !isImagenes;
               const showContactos =
                 showVentas || showLeads || showRecaptacion || showRemarketing || showPreventas;
 

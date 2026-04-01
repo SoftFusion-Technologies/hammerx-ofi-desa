@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { motion, useInView } from "framer-motion"; 
 import Footer from "../../components/footer/Footer";
 import { logo } from "../../images/svg/index";
 
@@ -34,8 +34,10 @@ import {
   FaWeightHanging,
   FaLaptop,
   FaWhatsapp,
-  FaLockOpen,
+  FaLockOpen, 
+  FaCar,
 } from "react-icons/fa";
+import { FaChildren } from "react-icons/fa6";
 import { MdSelfImprovement, MdSportsTennis } from "react-icons/md";
 
 // --- Configuraciones de Animación (Framer Motion) ---
@@ -65,7 +67,6 @@ const scaleUp = {
 
 const SedeYerbaBuena = () => {
   const [galleryOpen, setGalleryOpen] = useState(false);
-
   const abrirGaleria = () => setGalleryOpen(true);
   const cerrarGaleria = () => setGalleryOpen(false);
 
@@ -204,7 +205,77 @@ const SedeYerbaBuena = () => {
       title: "Cancha de Pádel",
       description: "Entrenamiento y deporte en un mismo lugar",
     },
+    {
+      id: 10,
+      icon: FaChildren,
+      title: "Sala de niños",
+      description: "Entrená con tranquilidad, también cuando venís con ell@s.",
+    },
+    {
+      id: 11,
+      icon: FaCar,
+      title: "Estacionamiento exclusivo",
+      description: "Un plus de comodidad para que tu experiencia empiece desde que llegás.",
+    },
   ];
+
+  // --- LÓGICA DE AUTO-SCROLL ---
+  const carouselRef = useRef(null);
+  const isPausedRef = useRef(false);
+  
+  // Si el carrusel entra en pantalla (once: true para que no se reinicie si suben y bajan)
+  const isInView = useInView(carouselRef, { once: true, amount: 0.1 });
+
+  useEffect(() => {
+    // Si todavía no estamos en esa parte de la página, no hacemos nada
+    if (!isInView) return;
+
+    const container = carouselRef.current;
+    if (!container) return;
+
+    let animationFrameId;
+    let waitTimeoutId;
+    let returnTimeoutId;
+
+    const scroll = () => {
+      // Solo anima si no está pausado por el usuario
+      if (!isPausedRef.current) {
+        // Velocidad de la animación
+        container.scrollLeft += 1; 
+
+        // Verificamos si llegó al final del scroll
+        if (Math.ceil(container.scrollLeft + container.clientWidth) >= container.scrollWidth) {
+          isPausedRef.current = true; // Pausar momentáneamente la animación automática
+
+          // 1. Espera 2 segundos al llegar al final (2000 ms)
+          waitTimeoutId = setTimeout(() => {
+            // 2. Vuelve al principio rápidamente pero fluido
+            container.scrollTo({ left: 0, behavior: "smooth" });
+
+            // 3. Espera un poco a que termine el viaje de vuelta para reanudar la animación
+            returnTimeoutId = setTimeout(() => {
+              isPausedRef.current = false;
+              animationFrameId = requestAnimationFrame(scroll); // Volver a arrancar
+            }, 1000); 
+
+          }, 2000); 
+          return; // Detenemos este frame para que no siga sumando
+        }
+      }
+      // Llamar al siguiente frame
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+
+    // Iniciar la animación
+    animationFrameId = requestAnimationFrame(scroll);
+
+    // Limpieza cuando el componente se desmonta o cuando cambia isInView
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      clearTimeout(waitTimeoutId);
+      clearTimeout(returnTimeoutId);
+    };
+  }, [isInView]); 
 
   return (
     <motion.div initial="hidden" animate="visible" exit={{ opacity: 0 }}>
@@ -301,12 +372,13 @@ const SedeYerbaBuena = () => {
                   animate={{ y: [0, -5, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <FaMapMarkerAlt className="text-4xl text-[#fc4b08]" />
+                  <FaMapMarkerAlt className="text-3xl text-[#fc4b08]" />
                 </motion.div>
                 <div>
                   <p className="text-gray-700 font-semibold text-sm lg:text-lg">
                     Aconquija 2044, Yerba Buena, Tucumán
                   </p>
+                   <p className="text-gray-600 text-sm lg:text-[15px]">Con estacionamiento exclusivo</p>
                 </div>
               </div>
             </div>
@@ -391,18 +463,25 @@ const SedeYerbaBuena = () => {
               transition={{ duration: 0.5, delay: 0.6 }}
               className="flex items-center justify-center gap-2 mb-1 text-orange-500 text-sm font-semibold animate-pulse"
             >
-              <span>&larr;</span>
+              <span>←</span>
               <span>Desliza para ver más</span>
-              <span>&rarr;</span>
+              <span>→</span>
             </motion.div>
-            <div className="flex overflow-x-auto gap-5 pb-6 px-6 hide-scrollbar items-stretch">
+            <div 
+              ref={carouselRef}
+              onMouseEnter={() => { isPausedRef.current = true; }}
+              onMouseLeave={() => { isPausedRef.current = false; }}
+              onTouchStart={() => { isPausedRef.current = true; }}
+              onTouchEnd={() => { isPausedRef.current = false; }}
+              className="flex overflow-x-auto gap-5 pb-6 px-6 hide-scrollbar items-stretch"
+            >
               {allFacilities.map((feature, index) => (
                 <motion.div
                   key={index}
                   variants={fadeInUp}
                   className="shrink-0 w-72 md:w-[350px]"
                 >
-                  {/* Tarjeta con flex-col (el justify-center se ha quitado para alinear todo arriba) */}
+                  {/* Tarjeta con flex-col */}
                   <motion.div
                     whileHover={{
                       y: -8,
@@ -410,7 +489,7 @@ const SedeYerbaBuena = () => {
                     }}
                     className="group p-6 border-t-[5px] border-t-[#fc4b08] rounded-2xl h-full flex flex-col bg-gradient-to-b from-[#2c2a2b] via-[#573525] to-[#f48a51] shadow-lg transition-all duration-300"
                   >
-                    {/* Header de la tarjeta con min-h fijo para alinear textos consistentemente */}
+                    {/* Header de la tarjeta */}
                     <div className="flex items-center gap-4 mb-0 min-h-[4rem]">
                       <motion.div
                         animate={{ rotate: [0, -10, 10, 0] }}
@@ -427,7 +506,6 @@ const SedeYerbaBuena = () => {
                       </h4>
                     </div>
 
-                    {/* flex-grow empuja este contenido y respeta el margen superior */}
                     <p className="text-white text-sm md:text-base leading-relaxed mt-2 flex-grow">
                       {feature.description}
                     </p>

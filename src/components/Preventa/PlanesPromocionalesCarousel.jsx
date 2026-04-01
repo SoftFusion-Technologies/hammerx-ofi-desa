@@ -64,7 +64,11 @@ const plans = [
   },
 ];
 
-const PLANES_ACTIVACION_APERTURA = new Set(["pilates-mj", "pilates-lmv", "full"]);
+const PLANES_ACTIVACION_APERTURA = new Set([
+  "pilates-mj",
+  "pilates-lmv",
+  "full",
+]);
 
 const seActivaEnApertura = (plan) => PLANES_ACTIVACION_APERTURA.has(plan?.id);
 
@@ -204,8 +208,7 @@ const PlanesPromocionalesCarousel = () => {
             className="mt-3 text-lg md:text-4xl font-bignoodle uppercase tracking-wide text-gray-900 leading-none"
           >
             ¡QUIERO APROVECHAR LOS PRIMEROS
-            <span className="ml-2 text-orange-600">100 CUPOS</span>
-            !
+            <span className="ml-2 text-orange-600">100 CUPOS</span>!
           </motion.h3>
         </div>
 
@@ -275,10 +278,10 @@ const PlanesPromocionalesCarousel = () => {
                   </p>
 
                   {seActivaEnApertura(plan) && (
-                    <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2">
-                      <p className="flex items-start gap-2 text-[11px] md:text-xs font-semibold text-orange-700 leading-relaxed">
-                        <FiCalendar className="mt-0.5 shrink-0 text-[5px] lg:text-sm" />
-                        Este plan se activará desde la fecha de apertura.
+                    <div className="rounded-xl border border-orange-200 bg-orange-50 px-2 py-2">
+                      <p className="flex items-start gap-2 text-[11px] lg:text-sm font-semibold text-orange-700 leading-relaxed">
+                        <FiCalendar className="mt-0.5 shrink-0 text-sm" />
+                          Este plan se activará desde la fecha de apertura.
                       </p>
                     </div>
                   )}
@@ -310,7 +313,6 @@ const PlanesPromocionalesCarousel = () => {
             ))}
           </Swiper>
         </motion.div>
-
       </motion.section>
 
       <AnimatePresence>
@@ -366,7 +368,9 @@ const PlanesPromocionalesCarousel = () => {
                   </p>
                   <h4 className="text-center text-2xl md:text-3xl font-bignoodle uppercase text-gray-900 leading-none">
                     Elegí tu modalidad para{" "}
-                    <span className="text-orange-600">{planSeleccionado.title}</span>
+                    <span className="text-orange-600">
+                      {planSeleccionado.title}
+                    </span>
                   </h4>
                 </div>
 
@@ -386,7 +390,9 @@ const PlanesPromocionalesCarousel = () => {
                     <h5 className="font-bignoodle text-2xl md:text-3xl uppercase tracking-wider mb-1 text-gray-900">
                       Plan Semestral
                     </h5>
-                    <p className="text-orange-600 font-bold mb-4 text-sm">40% de descuento</p>
+                    <p className="text-orange-600 font-bold mb-4 text-sm">
+                      40% de descuento
+                    </p>
                     <p className="text-4xl md:text-5xl font-extrabold mt-auto text-gray-900 tracking-tight">
                       ${planSeleccionado.precios.semestral}
                     </p>
@@ -410,7 +416,9 @@ const PlanesPromocionalesCarousel = () => {
                     <h5 className="font-bignoodle text-2xl md:text-3xl uppercase tracking-wider mb-1 text-gray-900">
                       Plan Anual
                     </h5>
-                    <p className="text-orange-600 font-bold mb-4 text-sm">50% de descuento</p>
+                    <p className="text-orange-600 font-bold mb-4 text-sm">
+                      50% de descuento
+                    </p>
                     <p className="text-4xl md:text-5xl font-extrabold mt-auto text-gray-900 tracking-tight">
                       ${planSeleccionado.precios.anual}
                     </p>
