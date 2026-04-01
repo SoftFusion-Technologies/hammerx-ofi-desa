@@ -41,12 +41,7 @@ const getBgClass = (p) => {
 const esConvertido = (v) => v === true || v === 1 || v === '1';
 const esComision = (v) => v === true || v === 1 || v === '1';
 
-const SEDES = [
-  { value: 'monteros', label: 'Monteros' },
-  { value: 'concepcion', label: 'Concepción' },
-  { value: 'barrio sur', label: 'Barrio Sur' },
-  { value: 'barrio norte', label: 'Barrio Norte' }
-];
+
 
 const normalizeSede = (sede) => {
   if (!sede) return '';
@@ -385,6 +380,7 @@ const VentasProspectosGet = ({ currentUser }) => {
       if (sedeABuscar === 'barrionorte' || sedeABuscar === 'sanmiguelbn')
         sedeABuscar = 'barrio norte';
       if (sedeABuscar === 'smt') sedeABuscar = 'barrio sur';
+      if (sedeABuscar === 'yerbabuena-aconquija') sedeABuscar = 'yerba buena - aconquija';
 
       const sedeEncontrada = sedesEsCiudad.find(
         (s) => normalize(s.nombre) === sedeABuscar
@@ -474,17 +470,12 @@ const VentasProspectosGet = ({ currentUser }) => {
       normalized = "barrio sur";
     } else if (normalized === "barrionorte" || normalized === "sanmiguelbn") {
       normalized = "barrio norte";
+    }else if (normalized === "yerbabuena-aconquija"){
+      normalized = "yerba buena - aconquija"
     }
     return normalized;
   };
 
-
-  const sedes = [
-    { key: 'monteros', label: 'Monteros' },
-    { key: 'concepcion', label: 'Concepción' },
-    { key: 'smt', label: 'Tucumán Barrio Sur' },
-    { key: 'barrio norte', label: 'Tucumán Barrio Norte' }
-  ];
 
   const URL = 'http://localhost:8080/ventas_prospectos';
   useEffect(() => {
@@ -1599,6 +1590,42 @@ const VentasProspectosGet = ({ currentUser }) => {
     setVendedoresAllowed(list);
     return list;
   };
+
+  const normalizarKey = (str) => {
+    let nombre = str;
+    let key = str;
+    if (str.toLowerCase() === "barrio sur") {
+      nombre = "Tuc. Barrio Sur";
+      key = "smt";
+    } else if (str.toLowerCase() === "barrio norte") {
+      nombre = "Tuc. Barrio Norte";
+      key = "barrio norte";
+    } else if (str.toLowerCase() === "yerba buena - aconquija") {
+      nombre = "Yerba Buena Aconquija";
+      key = "yerba buena - aconquija";
+    } else if (str.toLowerCase() === "concepción") {
+      nombre = "Concepción";
+      key = "concepcion";
+    }
+    return { nombre, key };
+  };
+
+  let SEDES = [];
+  let sedes = [];
+  if (sedesEsCiudad) {
+    SEDES = sedesEsCiudad.map((s) => ({
+      value:
+        s.nombre.toLowerCase() === 'yerba buena - aconquija'
+          ? 'yerba buena - aconquija'
+          : s.nombre.toLowerCase(),
+      label: s.nombre.toLowerCase() === "yerba buena - aconquija" ? "Yerba Buena" : s.nombre
+    }));
+
+    sedes = sedesEsCiudad.map((s) => ({
+      key: normalizarKey(s.nombre).key,
+      label: normalizarKey(s.nombre).nombre
+    }));
+  }
   return (
     <>
       <NavbarStaff />
@@ -1764,7 +1791,7 @@ const VentasProspectosGet = ({ currentUser }) => {
           {/* Botones de sedes con control de acceso */}
           <div className="w-full flex justify-center mb-10 px-2">
             <div
-              className="flex gap-2 md:gap-4 flex-wrap md:flex-nowrap overflow-x-auto scrollbar-hide py-2"
+              className="flex gap-2 md:gap-4 flex-wrap lg:flex-nowrap overflow-x-auto scrollbar-hide py-2"
               style={{ WebkitOverflowScrolling: 'touch', maxWidth: '100vw' }}
             >
               {sedes.map(({ key, label }) => {
