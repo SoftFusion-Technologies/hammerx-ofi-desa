@@ -703,6 +703,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
         const normalizedData = data.map((p) => {
           const normalized = {
             ...p,
+            sede: (p.sede || "").normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
             contactado: !!(
               p.contactado === 1 ||
               p.contactado === "1" ||
@@ -749,7 +750,6 @@ const VentasRemarketingGet = ({ currentUser }) => {
               p.agendado === true
             ),
           };
-
           if (p.id === data[0]?.id) {
           }
 
@@ -1901,15 +1901,15 @@ const VentasRemarketingGet = ({ currentUser }) => {
   let SEDES = [];
   // Si la sede es ciudad, mostrar solo esa sede
   if (sedesEsCiudad) {
-    sedes = sedesEsCiudad.map((s) => ({
+    sedes = sedesEsCiudad.filter((s) => s.nombre.toLowerCase() != "multisede").map((s) => ({
       key: normalizarKey(s.nombre).key,
       label: normalizarKey(s.nombre).nombre
     }));
-    SEDES = sedesEsCiudad.map((s) => ({
+    SEDES = sedesEsCiudad.filter((s) => s.nombre.toLowerCase() != "multisede").map((s) => ({
       value:
         s.nombre.toLowerCase() === 'yerba buena - aconquija'
           ? 'yerba buena - aconquija'
-          : s.nombre.toLowerCase(),
+          : s.nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
       label: s.nombre.toLowerCase() === "yerba buena - aconquija" ? "Yerba Buena" : s.nombre
     }));
   }

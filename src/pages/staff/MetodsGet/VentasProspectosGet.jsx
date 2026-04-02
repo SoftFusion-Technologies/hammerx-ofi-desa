@@ -1613,15 +1613,16 @@ const VentasProspectosGet = ({ currentUser }) => {
   let SEDES = [];
   let sedes = [];
   if (sedesEsCiudad) {
-    SEDES = sedesEsCiudad.map((s) => ({
+    SEDES = sedesEsCiudad.filter((s) => s.nombre.toLowerCase() != "multisede").map((s) => ({
       value:
         s.nombre.toLowerCase() === 'yerba buena - aconquija'
           ? 'yerba buena - aconquija'
-          : s.nombre.toLowerCase(),
+          : s.nombre.toLowerCase().normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, ""),
       label: s.nombre.toLowerCase() === "yerba buena - aconquija" ? "Yerba Buena" : s.nombre
     }));
 
-    sedes = sedesEsCiudad.map((s) => ({
+    sedes = sedesEsCiudad.filter((s) => s.nombre.toLowerCase() != "multisede").map((s) => ({
       key: normalizarKey(s.nombre).key,
       label: normalizarKey(s.nombre).nombre
     }));
