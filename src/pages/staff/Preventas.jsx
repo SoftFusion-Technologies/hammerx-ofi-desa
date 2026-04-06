@@ -518,6 +518,26 @@ const Preventas = () => {
   const paginaSiguiente = () =>
     paginaActual < totalPaginas && setPaginaActual((p) => p + 1);
 
+
+  const formatearPesosArgentinos = (valor, decimales = 2) => {
+    try {
+      if (valor === null || valor === undefined || valor === '') return '';
+      
+      const numero = Number(valor);
+      if (isNaN(numero)) return String(valor);
+
+      const fmtArg = new Intl.NumberFormat('es-AR', {
+        style: 'decimal',
+        minimumFractionDigits: decimales,
+        maximumFractionDigits: decimales
+      });
+
+      return fmtArg.format(numero);
+    } catch {
+      return String(valor);
+    }
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -782,7 +802,7 @@ const Preventas = () => {
                             </div>
                           </td>
                           <td className="px-3 py-3 text-center text-zinc-700 font-medium">
-                            ${preventa.monto_pactado}
+                            ${formatearPesosArgentinos(preventa.monto_pactado)}
                           </td>
                           <td className="px-3 py-3 text-center">
                             {(preventa.estado_contacto || "").toLowerCase() ===

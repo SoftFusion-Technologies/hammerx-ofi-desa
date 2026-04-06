@@ -124,10 +124,6 @@ const SedeYerbaBuena = () => {
       title: "Sala de Pesos Libres",
       description: (
         <>
-          <span className="font-bold text-gray-200">
-            Ubicada en primer piso
-          </span>
-          <br />
           Espacio amplio para entrenar sin esperas
         </>
       ),
@@ -140,7 +136,7 @@ const SedeYerbaBuena = () => {
         <>
           <span className="font-bold text-gray-200">Ubicada en subsuelo</span>
           <br />
-          Clases de funcional, HIIT, full body y más
+          Clases de funcional, HIIT, calistenia, full body y más
         </>
       ),
     },
@@ -150,10 +146,6 @@ const SedeYerbaBuena = () => {
       title: "Sala de Pilates",
       description: (
         <>
-          <span className="font-bold text-gray-200">
-            Ubicada en primer piso
-          </span>
-          <br />
           Clases de pilates reformer con cupos reducidos (hasta 10 personas)
         </>
       ),
@@ -164,10 +156,6 @@ const SedeYerbaBuena = () => {
       title: "Sala de Cardio",
       description: (
         <>
-          <span className="font-bold text-gray-200">
-            Ubicada en segundo piso
-          </span>
-          <br />
           +10 cintas y equipos touch de última tecnología
         </>
       ),
@@ -185,8 +173,6 @@ const SedeYerbaBuena = () => {
       description: (
         <>
           Sillones de masajes
-          <br />
-          Baños de inmersión
           <br />
           Recuperación post entrenamiento de nivel profesional
         </>

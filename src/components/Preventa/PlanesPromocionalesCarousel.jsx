@@ -13,6 +13,16 @@ import "swiper/css";
 import "swiper/css/pagination";
 import FormPreventa from "../Forms/FormPreventa";
 
+const precioMensualPlanBase = 85000;
+const precioMensualPilatesX2 = 57000;
+const precioMensualPilatesX3 = 85000;
+const precioMensualPaseFull = 127500;
+
+const calcularPrecioConDescuento = (precioMensual, meses, descuento) => {
+  const precioBase = precioMensual * meses;
+  return precioBase - precioBase * (descuento / 100);
+};
+
 const plans = [
   {
     id: "base",
@@ -22,32 +32,32 @@ const plans = [
       Asesoramiento por instructores calificados.`,
     highlight: false,
     precios: {
-      semestral: "270.000",
-      anual: "450.000",
+      semestral: calcularPrecioConDescuento(precioMensualPlanBase, 6, 40),
+      anual: calcularPrecioConDescuento(precioMensualPlanBase, 12, 50),
     },
   },
   {
     id: "pilates-mj",
-    title: "Plan Pilates",
+    title: "Plan Pilates X2",
     subtitle: "Martes y Jueves",
     description:
       "Incluye acceso a nuestras clases de pilates reformer los dias martes y jueves.",
     highlight: false,
     precios: {
-      semestral: "189.000",
-      anual: "315.000",
+      semestral: calcularPrecioConDescuento(precioMensualPilatesX2, 6, 40),
+      anual: calcularPrecioConDescuento(precioMensualPilatesX2, 12, 50),
     },
   },
   {
     id: "pilates-lmv",
-    title: "Plan Pilates",
+    title: "Plan Pilates X3",
     subtitle: "Lunes, Miercoles y Viernes",
     description:
       "Incluye acceso a nuestras clases de pilates reformer los dias lunes, miercoles y viernes.",
     highlight: false,
     precios: {
-      semestral: "270.000",
-      anual: "450.000",
+      semestral: calcularPrecioConDescuento(precioMensualPilatesX3, 6, 40),
+      anual: calcularPrecioConDescuento(precioMensualPilatesX3, 12, 50),
     },
   },
   {
@@ -58,8 +68,8 @@ const plans = [
       "Combina todas las actividades. Podes realizar pilates dos o tres veces por semana segun tu preferencia.",
     highlight: true,
     precios: {
-      semestral: "405.000",
-      anual: "675.000",
+      semestral: calcularPrecioConDescuento(precioMensualPaseFull, 6, 40),
+      anual: calcularPrecioConDescuento(precioMensualPaseFull, 12, 50),
     },
   },
 ];
@@ -207,8 +217,8 @@ const PlanesPromocionalesCarousel = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-3 text-lg md:text-4xl font-bignoodle uppercase tracking-wide text-gray-900 leading-none"
           >
-            ¡QUIERO APROVECHAR LOS PRIMEROS
-            <span className="ml-2 text-orange-600">100 CUPOS</span>!
+            <span className="text-orange-600">¡100 CUPOS</span>
+            DISPONIBLES
           </motion.h3>
         </div>
 
@@ -279,9 +289,18 @@ const PlanesPromocionalesCarousel = () => {
 
                   {seActivaEnApertura(plan) && (
                     <div className="rounded-xl border border-orange-200 bg-orange-50 px-2 py-2">
-                      <p className="flex items-start gap-2 text-[11px] lg:text-sm font-semibold text-orange-700 leading-relaxed">
+                      <p className="flex items-center gap-2 text-[11px] lg:text-sm font-semibold text-orange-700 leading-relaxed">
                         <FiCalendar className="mt-0.5 shrink-0 text-sm" />
-                          Este plan se activará desde la fecha de apertura.
+                        Se activa desde la fecha de apertura
+                      </p>
+                    </div>
+                  )}
+
+                  {plan.id === "base" && (
+                    <div className="rounded-xl border border-orange-200 bg-orange-50 px-2 py-2">
+                      <p className="flex items-center gap-2 text-[11px] lg:text-sm font-semibold text-orange-700 leading-relaxed">
+                        <FiCalendar className="mt-0.5 shrink-0 text-sm" />
+                        Se activa con tu primera asistencia. Máx. 90 días desde la apertura
                       </p>
                     </div>
                   )}
@@ -336,9 +355,6 @@ const PlanesPromocionalesCarousel = () => {
 
               <div className="flex justify-between items-center px-4 md:px-6 py-4 md:py-5 border-b border-gray-300 bg-white z-20 shrink-0 shadow-sm">
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-orange-600 font-bold uppercase tracking-[0.1em] mb-0.5 leading-tight">
-                    Preventa Exclusiva
-                  </span>
                   <h3 className="text-gray-900 font-bignoodle text-xl md:text-2xl uppercase leading-none tracking-wider mt-1">
                     {planSeleccionado.title}
                   </h3>
@@ -348,6 +364,14 @@ const PlanesPromocionalesCarousel = () => {
                       Se activa desde la fecha de apertura
                     </p>
                   )}
+                  {
+                    planSeleccionado.id === "base" && (
+                      <p className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.1em] text-orange-700">
+                        <FiCalendar className="text-[11px]" />
+                        Se activa con tu primera asistencia. Máx. 90 días desde la apertura
+                      </p>
+                    )
+                  }
                 </div>
                 <button
                   type="button"
@@ -394,7 +418,11 @@ const PlanesPromocionalesCarousel = () => {
                       40% de descuento
                     </p>
                     <p className="text-4xl md:text-5xl font-extrabold mt-auto text-gray-900 tracking-tight">
-                      ${planSeleccionado.precios.semestral}
+                      $
+                      {planSeleccionado.precios.semestral.toLocaleString(
+                        "es-AR",
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                      )}
                     </p>
                   </motion.button>
 
@@ -420,7 +448,11 @@ const PlanesPromocionalesCarousel = () => {
                       50% de descuento
                     </p>
                     <p className="text-4xl md:text-5xl font-extrabold mt-auto text-gray-900 tracking-tight">
-                      ${planSeleccionado.precios.anual}
+                      $
+                      {planSeleccionado.precios.anual.toLocaleString("es-AR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </p>
                   </motion.button>
                 </div>
@@ -486,7 +518,8 @@ const PlanesPromocionalesCarousel = () => {
                                 En mostrador
                               </p>
                               <p className="text-[11px] sm:text-sm text-gray-500 mt-0.5">
-                                Próximamente disponible
+                                Próximamente disponible, completa tus datos y te
+                                notificamos
                               </p>
                             </div>
 

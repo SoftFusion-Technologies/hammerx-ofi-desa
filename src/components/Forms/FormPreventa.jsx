@@ -27,11 +27,10 @@ const StepperProgreso = ({ pasoActivo, requiereTurno }) => {
 
   return (
     <div className="sticky top-0 z-10 bg-white pt-4 pb-2 px-4 md:px-6 border-b border-gray-300 flex items-start md:items-center justify-center w-full shadow-sm">
-      <div className="flex items-center justify-between w-full max-w-[300px]  relative">
-        {/* Línea de fondo */}
+      <div className="flex items-center justify-between w-full max-w-[300px] relative">
         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -z-10 -translate-y-1/2 rounded-full"></div>
 
-        {pasos.map((paso, index) => {
+        {pasos.map((paso) => {
           const isActive = pasoActivo === paso.id;
           const isPast = parseInt(pasoActivo.split("-")[1]) > paso.num;
 
@@ -74,24 +73,51 @@ const StepperProgreso = ({ pasoActivo, requiereTurno }) => {
 // Sub-componente: Selector de Turnos
 // ==========================================
 const SelectorTurnos = ({
-  horarios,
+  horarios = [],
   turnoSeleccionado,
   planSeleccionado,
   alSeleccionarTurno,
 }) => {
-  const esPaseFull = planSeleccionado?.title?.toLowerCase().includes("full");
-  const planId = planSeleccionado?.id?.toLowerCase();
+  const tituloPlan = planSeleccionado?.title?.toLowerCase?.() || "";
+  const planId = planSeleccionado?.id?.toLowerCase?.() || "";
+
+  const esPaseFull = tituloPlan.includes("full");
+
+  const esPilatesLMV = planId.includes("pilates") && planId.includes("lmv");
+
+  const esPilatesMJ = planId.includes("pilates") && planId.includes("mj");
 
   const [grupoFullSeleccionado, setGrupoFullSeleccionado] = useState("LMV");
   const [menuAbierto, setMenuAbierto] = useState(false);
+
+  const horariosFiltrados = horarios.filter((horario) => {
+    const grupoHorario = horario?.grp?.toUpperCase?.() || "";
+
+    if (esPaseFull) {
+      return grupoHorario === grupoFullSeleccionado;
+    }
+
+    if (esPilatesLMV) {
+      return grupoHorario === "LMV";
+    }
+
+    if (esPilatesMJ) {
+      return grupoHorario === "MJ";
+    }
+
+    return true;
+  });
 
   return (
     <div className="flex flex-col gap-4">
       {esPaseFull && (
         <div className="flex flex-col gap-2">
-          {/* Aquí aplicamos la lógica de completado para el título 1 (Siempre completado si hay un grupo por defecto) */}
           <p
-            className={`text-[10px] md:text-xs uppercase tracking-wider mb-0.5 flex items-center gap-1 ${grupoFullSeleccionado ? "text-orange-600 font-semibold" : "text-gray-500 font-bold"}`}
+            className={`text-[10px] md:text-xs uppercase tracking-wider mb-0.5 flex items-center gap-1 ${
+              grupoFullSeleccionado
+                ? "text-orange-600 font-semibold"
+                : "text-gray-500 font-bold"
+            }`}
           >
             <FiCheck className="text-sm shrink-0" />
             Elegí tus días
@@ -132,9 +158,12 @@ const SelectorTurnos = ({
       )}
 
       <div className="flex flex-col gap-1.5">
-        {/* Lógica de color y tilde para el paso de horario */}
         <p
-          className={`text-[10px] md:text-xs uppercase tracking-wider mb-0.5 flex items-center gap-1 ${turnoSeleccionado ? "text-orange-600 font-semibold" : "text-gray-500 font-bold"}`}
+          className={`text-[10px] md:text-xs uppercase tracking-wider mb-0.5 flex items-center gap-1 ${
+            turnoSeleccionado
+              ? "text-orange-600 font-semibold"
+              : "text-gray-500 font-bold"
+          }`}
         >
           {turnoSeleccionado ? (
             <FiCheck className="text-sm shrink-0" />
@@ -150,7 +179,6 @@ const SelectorTurnos = ({
           Seleccioná tu horario
         </p>
 
-        {/* Botón del desplegable */}
         <div className="relative">
           <button
             type="button"
@@ -171,12 +199,14 @@ const SelectorTurnos = ({
                   ? "Horario seleccionado:"
                   : "Selecciona tu horario..."}
               </span>
+
               {turnoSeleccionado && (
                 <span className="text-xs text-orange-600 font-bold mt-0.5 tracking-wide">
                   {turnoSeleccionado.hhmm} hs | {turnoSeleccionado.grupo_label}
                 </span>
               )}
             </div>
+
             <FiChevronDown
               className={`text-gray-400 text-xl transition-transform duration-300 ${
                 menuAbierto ? "rotate-180 text-orange-500" : ""
@@ -184,7 +214,6 @@ const SelectorTurnos = ({
             />
           </button>
 
-          {/* Lista de horarios animada */}
           <AnimatePresence>
             {menuAbierto && (
               <motion.div
@@ -192,62 +221,100 @@ const SelectorTurnos = ({
                 animate={{ height: "auto", opacity: 1, y: 0 }}
                 exit={{ height: 0, opacity: 0, y: -10 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="overflow-hidden absolute w-full z-20 mt-1 shadow-[0_10px_40px_rgba(0,0,0,0.1)] bg-white rounded-xl border border-gray-200"
+                className="overflow-hidden relative w-full z-20 mt-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] bg-white rounded-xl border border-gray-200 min-h-[120px]"
               >
-                <div className="flex flex-col gap-1 p-2 max-h-[50vh] overflow-y-auto custom-scrollbar">
-                  {/* ... (horariosFiltrados se usaría aquí. Omitido el map para no alargar innecesariamente, tu map es idéntico) */}
-                  {horarios.map((horario) => {
-                    const cuposDisponibles =
-                      horario.cupo_por_clase - horario.total_inscriptos - 2;
-                    const hayCupo = cuposDisponibles > 0;
-                    const esElegido =
-                      turnoSeleccionado?.hhmm === horario.hhmm &&
-                      turnoSeleccionado?.grp === horario.grp;
-                    const quedanPocos =
-                      hayCupo && Number(cuposDisponibles) <= 4;
-                    const quedanUltimos =
-                      hayCupo && Number(cuposDisponibles) <= 2;
+                <div className="flex flex-col gap-1 p-2 max-h-[40vh] overflow-y-auto custom-scrollbar">
+                  {horariosFiltrados.length === 0 ? (
+                    <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                      No hay horarios disponibles para este grupo.
+                    </div>
+                  ) : (
+                    horariosFiltrados.map((horario) => {
+                      const cuposDisponibles =
+                        horario.cupo_por_clase - horario.total_inscriptos;
 
-                    return (
-                      <button
-                        key={horario.hhmm + horario.grp}
-                        type="button"
-                        disabled={!hayCupo}
-                        onClick={() => {
-                          console.log(horario)
-                          alSeleccionarTurno(horario);
-                          setMenuAbierto(false);
-                        }}
-                        className={`px-3 py-2.5 rounded-lg border-b border-transparent last:border-b-0 text-left transition-all flex items-center justify-between gap-3 ${
-                          !hayCupo
-                            ? "opacity-50 cursor-not-allowed bg-gray-50"
-                            : esElegido
-                              ? "bg-orange-600 text-white shadow-md"
-                              : "bg-white text-gray-700 hover:bg-orange-50 hover:border-orange-100"
-                        }`}
-                      >
-                        <div className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-base font-bold ${
-                                esElegido ? "text-white" : "text-gray-900"
-                              }`}
-                            >
-                              {horario.hhmm} hs
-                            </span>
-                            {!esPaseFull && (
+                      const hayCupo = cuposDisponibles > 0;
+
+                      const esElegido =
+                        turnoSeleccionado?.hhmm === horario.hhmm &&
+                        turnoSeleccionado?.grp === horario.grp;
+
+                      const quedanPocos =
+                        hayCupo && Number(cuposDisponibles) <= 4;
+
+                      const quedanUltimos =
+                        hayCupo && Number(cuposDisponibles) <= 2;
+
+                      return (
+                        <button
+                          key={`${horario.hhmm}-${horario.grp}`}
+                          type="button"
+                          disabled={!hayCupo}
+                          onClick={() => {
+                            alSeleccionarTurno(horario);
+                            setMenuAbierto(false);
+                          }}
+                          className={`px-3 py-2.5 rounded-lg border-b border-transparent last:border-b-0 text-left transition-all flex items-center justify-between gap-3 ${
+                            !hayCupo
+                              ? "opacity-50 cursor-not-allowed bg-gray-50"
+                              : esElegido
+                                ? "bg-orange-600 text-white shadow-md"
+                                : "bg-white text-gray-700 hover:bg-orange-50 hover:border-orange-100"
+                          }`}
+                        >
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-2">
                               <span
-                                className={`text-xs ${
-                                  esElegido
-                                    ? "text-orange-100 font-medium"
-                                    : "text-gray-500"
+                                className={`text-base font-bold ${
+                                  esElegido ? "text-white" : "text-gray-900"
                                 }`}
                               >
-                                | {horario.grupo_label}
+                                {horario.hhmm} hs
                               </span>
-                            )}
+
+                              {!esPaseFull && (
+                                <span
+                                  className={`text-xs ${
+                                    esElegido
+                                      ? "text-orange-100 font-medium"
+                                      : "text-gray-500"
+                                  }`}
+                                >
+                                  | {horario.grupo_label}
+                                </span>
+                              )}
+
+                              <span
+                                className={`${
+                                  esPaseFull ? "block" : "hidden"
+                                } text-[10px] uppercase font-extrabold tracking-wide ${
+                                  !hayCupo
+                                    ? "text-gray-400"
+                                    : esElegido
+                                      ? "text-white"
+                                      : quedanUltimos
+                                        ? "text-red-600"
+                                        : quedanPocos
+                                          ? "text-blue-500"
+                                          : "text-green-600"
+                                }`}
+                              >
+                                {!hayCupo
+                                  ? "Lleno"
+                                  : Number(cuposDisponibles) === 1
+                                    ? "Último cupo"
+                                    : Number(cuposDisponibles) === 2
+                                      ? "Últimos 2 cupos"
+                                      : Number(cuposDisponibles) <= 4
+                                        ? `Quedan ${cuposDisponibles} lugares`
+                                        : "Disponible"}
+                              </span>
+                            </div>
+
                             <span
-                              className={`${esPaseFull ? "block" : "hidden"} text-[10px] uppercase font-extrabold tracking-wide ${
+                              className={`${
+                                !esPaseFull ? "block" : "hidden"
+                              } text-[10px] uppercase font-extrabold tracking-wide ${
                                 !hayCupo
                                   ? "text-gray-400"
                                   : esElegido
@@ -270,39 +337,16 @@ const SelectorTurnos = ({
                                       : "Disponible"}
                             </span>
                           </div>
-                          <span
-                            className={`${!esPaseFull ? "block" : "hidden"} text-[10px] uppercase font-extrabold tracking-wide ${
-                              !hayCupo
-                                ? "text-gray-400"
-                                : esElegido
-                                  ? "text-white"
-                                  : quedanUltimos
-                                    ? "text-red-600"
-                                    : quedanPocos
-                                      ? "text-blue-500"
-                                      : "text-green-600"
-                            }`}
-                          >
-                            {!hayCupo
-                              ? "Lleno"
-                              : Number(cuposDisponibles) === 1
-                                ? "Último cupo"
-                                : Number(cuposDisponibles) === 2
-                                  ? "Últimos 2 cupos"
-                                  : Number(cuposDisponibles) <= 4
-                                    ? `Quedan ${cuposDisponibles} lugares`
-                                    : "Disponible"}
-                          </span>
-                        </div>
 
-                        {esElegido && (
-                          <div className="flex items-center justify-center h-6 w-6 rounded-full bg-white/20 text-white">
-                            <FiCheck className="text-sm font-bold" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                          {esElegido && (
+                            <div className="flex items-center justify-center h-6 w-6 rounded-full bg-white/20 text-white">
+                              <FiCheck className="text-sm font-bold" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </motion.div>
             )}
@@ -338,7 +382,6 @@ const DatosBancarios = ({
     manejarArchivo(e);
   };
 
-  // Separo el número y el texto real del título
   const textoLimpio = stepLabel?.replace(/^\d+\.\s*/, "");
   const numero = stepLabel?.match(/^\d+/)?.[0] || "";
 
@@ -361,7 +404,11 @@ const DatosBancarios = ({
         <div className="flex flex-row items-center gap-x-2">
           <p className="text-gray-500 text-xs">Monto a transferir:</p>
           <p className="text-3xl font-bignoodle text-orange-600 tracking-widest leading-none">
-            ${monto}
+            $
+            {monto.toLocaleString("es-AR", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </p>
         </div>
       </div>
@@ -593,7 +640,6 @@ const FormularioDatos = ({
             ref={observacionesRef}
             value={textoObservacion}
             onChange={manejarCambioObservacion}
-            placeholder='Ej: "Abono en efectivo en recepción", "Transferencia demorada", etc.'
             className={`w-full h-24 bg-gray-50 border rounded-xl p-3 text-sm text-gray-900 resize-none outline-none transition-all placeholder-gray-400 ${
               errorObservacion
                 ? "border-red-400 ring-1 ring-red-400 bg-red-50/50"
@@ -638,20 +684,20 @@ const FormPreventa = ({
   const [datosHorarios, setDatosHorarios] = useState([]);
   const [cargandoHorarios, setCargandoHorarios] = useState(true);
 
-  // Estados para el Stepper y validaciones
   const [pasoActivo, setPasoActivo] = useState("paso-1");
 
-  // ESTADOS PARA ALERTA DE COMPROBANTE
   const [mostrarAlertaComprobante, setMostrarAlertaComprobante] =
     useState(false);
+  const [mostrarAlertaPasoTurno, setMostrarAlertaPasoTurno] = useState(false);
+  const [
+    mostrarAlertaAvanceSinComprobante,
+    setMostrarAlertaAvanceSinComprobante,
+  ] = useState(false);
+
   const [textoObservacion, setTextoObservacion] = useState("");
   const [errorObservacion, setErrorObservacion] = useState(false);
   const [observacionRequerida, setObservacionRequerida] = useState(false);
 
-  // Referencias
-  const paso1Ref = useRef(null);
-  const paso2Ref = useRef(null);
-  const paso3Ref = useRef(null);
   const scrollContainerRef = useRef(null);
   const botonFinalizarRef = useRef(null);
   const observacionesRef = useRef(null);
@@ -661,12 +707,12 @@ const FormPreventa = ({
   const requiereTurno =
     planSeleccionado?.title.toLowerCase().includes("pilates") ||
     planSeleccionado?.title.toLowerCase().includes("full");
+
   const monto =
     modalidadPago && planSeleccionado
       ? planSeleccionado.precios[modalidadPago]
       : "";
 
-  // Auxiliar para saber si los datos están completos (para el color verde y el scroll)
   const datosCompletos = !!(
     datosFormulario.nombreApellido &&
     datosFormulario.dni &&
@@ -684,7 +730,7 @@ const FormPreventa = ({
         }
       }, 10);
     }
-  }, [estaAbierto, planSeleccionado]);
+  }, [estaAbierto, planSeleccionado, pasoActivo]);
 
   useEffect(() => {
     if (estaAbierto && !esMostrador && requiereTurno) {
@@ -720,6 +766,8 @@ const FormPreventa = ({
     setArchivoComprobante(null);
     setPasoActivo("paso-1");
     setMostrarAlertaComprobante(false);
+    setMostrarAlertaPasoTurno(false);
+    setMostrarAlertaAvanceSinComprobante(false);
     setErrorObservacion(false);
     setObservacionRequerida(false);
     setTextoObservacion("");
@@ -739,66 +787,18 @@ const FormPreventa = ({
     alCerrar();
   };
 
-  const manejarScroll = () => {
-    if (!estaAbierto || esMostrador || !scrollContainerRef.current) return;
-
-    const container = scrollContainerRef.current;
-    const scrollTop = container.scrollTop;
-
-    if (scrollTop < 50) {
-      setPasoActivo("paso-1");
-      return;
-    }
-
-    const estaEnElFondo =
-      Math.abs(
-        container.scrollHeight - container.scrollTop - container.clientHeight,
-      ) < 15;
-    if (estaEnElFondo) {
-      setPasoActivo(requiereTurno ? "paso-3" : "paso-2");
-      return;
-    }
-
-    const getPosicion = (ref) => {
-      if (!ref.current) return Infinity;
-      return (
-        ref.current.getBoundingClientRect().top -
-        container.getBoundingClientRect().top
-      );
-    };
-
-    const top2 = getPosicion(paso2Ref);
-    const top3 = requiereTurno ? getPosicion(paso3Ref) : Infinity;
-
-    const margenActivo = 180;
-
-    if (requiereTurno) {
-      if (top3 <= margenActivo) {
-        setPasoActivo("paso-3");
-      } else if (top2 <= margenActivo) {
-        setPasoActivo("paso-2");
-      } else {
-        setPasoActivo("paso-1");
-      }
-    } else {
-      if (top2 <= margenActivo) {
-        setPasoActivo("paso-2");
-      } else {
-        setPasoActivo("paso-1");
-      }
-    }
-  };
-
   const obtenerHorariosSede = async () => {
     try {
       setCargandoHorarios(true);
       const esPilates =
         planSeleccionado?.title.toLowerCase().includes("pilates") ||
         planSeleccionado?.title.toLowerCase().includes("full");
+
       if (!esPilates) {
         setDatosHorarios([]);
         return;
       }
+
       const respuesta = await axios.get(
         "http://localhost:8080/clientes-pilates/horarios-disponibles/ventas?sedeId=16",
       );
@@ -809,10 +809,6 @@ const FormPreventa = ({
       setCargandoHorarios(false);
     }
   };
-
-  const insertarTurnoPilates = (horario) => {
-    console.log(horario)
-  }
 
   if (!estaAbierto || !planSeleccionado) return null;
 
@@ -826,40 +822,13 @@ const FormPreventa = ({
       setArchivoComprobante(e.target.files[0]);
       setErrorObservacion(false);
       setObservacionRequerida(false);
+      setMostrarAlertaAvanceSinComprobante(false);
 
-      // Scroll hacia el elemento que falta completar o hacia el botón de finalizar
       setTimeout(() => {
-        if (requiereTurno) {
-          if (!turnoSeleccionado && !esMostrador) {
-            paso1Ref.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          } else if (!datosCompletos) {
-            paso3Ref.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          } else {
-            botonFinalizarRef.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-          }
-        } else {
-          // Si son 2 pasos (sin turno)
-          if (!datosCompletos) {
-            paso2Ref.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          } else {
-            botonFinalizarRef.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-          }
-        }
+        botonFinalizarRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       }, 150);
     }
   };
@@ -881,7 +850,39 @@ const FormPreventa = ({
     }
   };
 
-  // Función intermedia para interceptar el envío si falta el comprobante
+  const irAlPaso = (paso) => {
+    setPasoActivo(paso);
+    setTimeout(() => {
+      scrollContainerRef.current?.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }, 50);
+  };
+
+  const avanzarDesdePaso1 = () => {
+    if (requiereTurno && !turnoSeleccionado) {
+      setMostrarAlertaPasoTurno(true);
+      return;
+    }
+
+    irAlPaso("paso-2");
+  };
+
+  const avanzarDesdePaso2 = () => {
+    if (!archivoComprobante) {
+      setMostrarAlertaAvanceSinComprobante(true);
+      return;
+    }
+
+    irAlPaso(requiereTurno ? "paso-3" : "paso-2");
+  };
+
+  const avanzarDesdeTransferenciaSinComprobante = () => {
+    setMostrarAlertaAvanceSinComprobante(false);
+    irAlPaso(requiereTurno ? "paso-3" : "paso-2");
+  };
+
   const intentarEnviar = (e) => {
     e.preventDefault();
 
@@ -899,7 +900,6 @@ const FormPreventa = ({
     procesarEnvioBackend(textoObservacion.trim());
   };
 
-  // Si confirma continuar sin comprobante, observaciones se vuelve obligatorio
   const confirmarContinuarSinComprobante = () => {
     setObservacionRequerida(true);
 
@@ -915,7 +915,6 @@ const FormPreventa = ({
     procesarEnvioBackend(textoObservacion);
   };
 
-  // Lógica real de envío a la API (refactorizada)
   const procesarEnvioBackend = async (observacionExtra = "") => {
     setMostrarAlertaComprobante(false);
     setEstadoEnvio("enviando");
@@ -924,6 +923,7 @@ const FormPreventa = ({
       const turnoSeleccionadoPilates = turnoSeleccionado
         ? `${turnoSeleccionado.grp} - ${turnoSeleccionado.hhmm}`
         : null;
+
       const turnoCompletoPilates = turnoSeleccionado || null;
 
       const formData = new FormData();
@@ -948,7 +948,6 @@ const FormPreventa = ({
       formData.append("metodo_inscripcion", "WEB");
       formData.append("estado_contacto", "PENDIENTE");
 
-      // Agregamos la observación generada en el Custom Modal
       if (observacionExtra) {
         formData.append("observaciones", observacionExtra);
       }
@@ -961,8 +960,11 @@ const FormPreventa = ({
         formData.append("comprobante", archivoComprobante);
       }
 
-      if(turnoCompletoPilates) {
-        formData.append("horario_id", JSON.stringify(turnoCompletoPilates.horario_id));
+      if (turnoCompletoPilates) {
+        formData.append(
+          "horario_id",
+          JSON.stringify(turnoCompletoPilates.horario_id),
+        );
       }
 
       const respuestaEnviarFormulario = await axios.post(
@@ -1004,7 +1006,142 @@ const FormPreventa = ({
     }
   };
 
-  const renderizarPasosApilados = () => {
+  const renderBotonesPaso = () => {
+    if (esMostrador) {
+      return (
+        <button
+          ref={botonFinalizarRef}
+          type="submit"
+          disabled={
+            estadoEnvio === "enviando" ||
+            (observacionRequerida && textoObservacion.trim() === "")
+          }
+          className="w-full mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bignoodle text-xl md:text-2xl py-3.5 rounded-xl uppercase tracking-wider shadow-[0_5px_15px_rgba(234,88,12,0.3)] hover:shadow-[0_5px_15px_rgba(234,88,12,0.5)] disabled:opacity-50 disabled:shadow-none disabled:hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shrink-0"
+        >
+          {estadoEnvio === "enviando" ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white/80 border-t-transparent rounded-full animate-spin"></div>
+              Enviando...
+            </>
+          ) : (
+            "FINALIZAR INSCRIPCIÓN"
+          )}
+        </button>
+      );
+    }
+
+    if (requiereTurno) {
+      if (pasoActivo === "paso-1") {
+        return (
+          <button
+            type="button"
+            onClick={avanzarDesdePaso1}
+            className="w-full mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bignoodle text-xl md:text-2xl py-3.5 rounded-xl uppercase tracking-wider shadow-[0_5px_15px_rgba(234,88,12,0.3)] hover:shadow-[0_5px_15px_rgba(234,88,12,0.5)] transition-all flex items-center justify-center gap-3 shrink-0"
+          >
+            IR AL PASO 2
+          </button>
+        );
+      }
+
+      if (pasoActivo === "paso-2") {
+        return (
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <button
+              type="button"
+              onClick={() => irAlPaso("paso-1")}
+              className="w-full bg-white border border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-700 font-bignoodle text-lg md:text-xl py-3.5 rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+            >
+              VOLVER AL PASO 1
+            </button>
+
+            <button
+              type="button"
+              onClick={avanzarDesdePaso2}
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bignoodle text-lg md:text-xl py-3.5 rounded-xl uppercase tracking-wider shadow-[0_5px_15px_rgba(234,88,12,0.3)] hover:shadow-[0_5px_15px_rgba(234,88,12,0.5)] transition-all flex items-center justify-center gap-2"
+            >
+              IR AL PASO 3
+            </button>
+          </div>
+        );
+      }
+
+      return (
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <button
+            type="button"
+            onClick={() => irAlPaso("paso-2")}
+            className="w-full bg-white border border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-700 font-bignoodle text-lg md:text-xl py-3.5 rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+          >
+            VOLVER AL PASO 2
+          </button>
+
+          <button
+            ref={botonFinalizarRef}
+            type="submit"
+            disabled={
+              estadoEnvio === "enviando" ||
+              (observacionRequerida && textoObservacion.trim() === "")
+            }
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bignoodle text-lg md:text-xl py-3.5 rounded-xl uppercase tracking-wider shadow-[0_5px_15px_rgba(234,88,12,0.3)] hover:shadow-[0_5px_15px_rgba(234,88,12,0.5)] disabled:opacity-50 disabled:shadow-none disabled:hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shrink-0"
+          >
+            {estadoEnvio === "enviando" ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/80 border-t-transparent rounded-full animate-spin"></div>
+                Enviando...
+              </>
+            ) : (
+              "FINALIZAR INSCRIPCIÓN"
+            )}
+          </button>
+        </div>
+      );
+    }
+
+    if (pasoActivo === "paso-1") {
+      return (
+        <button
+          type="button"
+          onClick={avanzarDesdePaso2}
+          className="w-full mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bignoodle text-xl md:text-2xl py-3.5 rounded-xl uppercase tracking-wider shadow-[0_5px_15px_rgba(234,88,12,0.3)] hover:shadow-[0_5px_15px_rgba(234,88,12,0.5)] transition-all flex items-center justify-center gap-3 shrink-0"
+        >
+          IR AL PASO 2
+        </button>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-2 gap-3 mt-4">
+        <button
+          type="button"
+          onClick={() => irAlPaso("paso-1")}
+          className="w-full bg-white border border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-700 font-bignoodle text-lg md:text-xl py-3.5 rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+        >
+          VOLVER AL PASO 1
+        </button>
+
+        <button
+          ref={botonFinalizarRef}
+          type="submit"
+          disabled={
+            estadoEnvio === "enviando" ||
+            (observacionRequerida && textoObservacion.trim() === "")
+          }
+          className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bignoodle text-lg md:text-xl py-3.5 rounded-xl uppercase tracking-wider shadow-[0_5px_15px_rgba(234,88,12,0.3)] hover:shadow-[0_5px_15px_rgba(234,88,12,0.5)] disabled:opacity-50 disabled:shadow-none disabled:hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shrink-0"
+        >
+          {estadoEnvio === "enviando" ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white/80 border-t-transparent rounded-full animate-spin"></div>
+              Enviando...
+            </>
+          ) : (
+            "FINALIZAR INSCRIPCIÓN"
+          )}
+        </button>
+      </div>
+    );
+  };
+
+  const renderizarPasoActual = () => {
     if (esMostrador) {
       return (
         <FormularioDatos
@@ -1020,77 +1157,74 @@ const FormPreventa = ({
       );
     }
 
-    return (
-      <div className="flex flex-col gap-2 pt-2">
-        {/* Paso 1: Turno (si requiere) o Transferencia (si no requiere turno) */}
-        <div id="paso-1" ref={paso1Ref} className="scroll-mt-[120px]">
-          {requiereTurno ? (
-            cargandoHorarios ? (
-              <div className="flex flex-col items-center justify-center p-8 bg-white rounded-xl border border-gray-200 shadow-sm gap-3">
-                <div className="w-8 h-8 border-3 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-gray-500 font-bold uppercase text-[10px] tracking-widest">
-                  Actualizando cupos...
-                </p>
-              </div>
-            ) : (
-              <SelectorTurnos
-                horarios={datosHorarios}
-                turnoSeleccionado={turnoSeleccionado}
-                planSeleccionado={planSeleccionado}
-                alSeleccionarTurno={setTurnoSeleccionado}
-              />
-            )
-          ) : (
-            <DatosBancarios
-              monto={monto}
-              stepLabel="1. Descargá el comprobante para adjuntarlo aquí abajo"
-              requiereComprobante={true}
-              manejarArchivo={manejarArchivo}
-              completado={!!archivoComprobante}
-            />
-          )}
-        </div>
-
-        {/* Paso 2: Transferencia (si requiere turno) o Datos (si no requiere turno) */}
-        <div id="paso-2" ref={paso2Ref} className="scroll-mt-[120px]">
-          {requiereTurno ? (
-            <DatosBancarios
-              monto={monto}
-              stepLabel="2. Descargá el comprobante para adjuntarlo aquí abajo"
-              requiereComprobante={true}
-              manejarArchivo={manejarArchivo}
-              completado={!!archivoComprobante}
-            />
-          ) : (
-            <FormularioDatos
-              datos={datosFormulario}
-              manejarCambio={manejarCambioInput}
-              stepLabel="2. Completa tus datos"
-              completado={datosCompletos}
-              textoObservacion={textoObservacion}
-              manejarCambioObservacion={manejarCambioObservacion}
-              errorObservacion={errorObservacion}
-              observacionesRef={observacionesRef}
-            />
-          )}
-        </div>
-
-        {/* Paso 3: Datos (Solo si requiere turno) */}
-        {requiereTurno && (
-          <div id="paso-3" ref={paso3Ref} className="scroll-mt-[120px]">
-            <FormularioDatos
-              datos={datosFormulario}
-              manejarCambio={manejarCambioInput}
-              stepLabel="3. Completa tus datos"
-              completado={datosCompletos}
-              textoObservacion={textoObservacion}
-              manejarCambioObservacion={manejarCambioObservacion}
-              errorObservacion={errorObservacion}
-              observacionesRef={observacionesRef}
-            />
+    if (requiereTurno) {
+      if (pasoActivo === "paso-1") {
+        return cargandoHorarios ? (
+          <div className="flex flex-col items-center justify-center p-8 bg-white rounded-xl border border-gray-200 shadow-sm gap-3">
+            <div className="w-8 h-8 border-3 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-500 font-bold uppercase text-[10px] tracking-widest">
+              Actualizando cupos...
+            </p>
           </div>
-        )}
-      </div>
+        ) : (
+          <SelectorTurnos
+            horarios={datosHorarios}
+            turnoSeleccionado={turnoSeleccionado}
+            planSeleccionado={planSeleccionado}
+            alSeleccionarTurno={setTurnoSeleccionado}
+          />
+        );
+      }
+
+      if (pasoActivo === "paso-2") {
+        return (
+          <DatosBancarios
+            monto={monto}
+            stepLabel="2. Realiza la transferencia y descarga el comprobante para adjuntarlo aquí abajo"
+            requiereComprobante={true}
+            manejarArchivo={manejarArchivo}
+            completado={!!archivoComprobante}
+          />
+        );
+      }
+
+      return (
+        <FormularioDatos
+          datos={datosFormulario}
+          manejarCambio={manejarCambioInput}
+          stepLabel="3. Completa tus datos"
+          completado={datosCompletos}
+          textoObservacion={textoObservacion}
+          manejarCambioObservacion={manejarCambioObservacion}
+          errorObservacion={errorObservacion}
+          observacionesRef={observacionesRef}
+        />
+      );
+    }
+
+    if (pasoActivo === "paso-1") {
+      return (
+        <DatosBancarios
+          monto={monto}
+          stepLabel="1. Realiza la transferencia y descarga el comprobante para adjuntarlo aquí abajo"
+          requiereComprobante={true}
+          manejarArchivo={manejarArchivo}
+          completado={!!archivoComprobante}
+        />
+      );
+    }
+
+    return (
+      <FormularioDatos
+        datos={datosFormulario}
+        manejarCambio={manejarCambioInput}
+        stepLabel="2. Completa tus datos"
+        completado={datosCompletos}
+        textoObservacion={textoObservacion}
+        manejarCambioObservacion={manejarCambioObservacion}
+        errorObservacion={errorObservacion}
+        observacionesRef={observacionesRef}
+      />
     );
   };
 
@@ -1112,8 +1246,7 @@ const FormPreventa = ({
           >
             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 bg-gray-300 rounded-full md:hidden z-20" />
 
-            {/* Header */}
-            <div className="flex justify-between items-center px-4 md:px-6 py-4 md:py-5 border-b border-gray-300 bg-white  z-20 shrink-0 shadow-sm">
+            <div className="flex justify-between items-center px-4 md:px-6 py-4 md:py-5 border-b border-gray-300 bg-white z-20 shrink-0 shadow-sm">
               <div className="flex flex-col">
                 <span className="text-[10px] text-orange-600 font-bold uppercase tracking-[0.1em] mb-0.5 max-w-[280px] md:max-w-full leading-tight">
                   Preventa Exclusiva
@@ -1130,7 +1263,7 @@ const FormPreventa = ({
                     className="inline-flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-orange-700 transition-colors hover:bg-orange-100 hover:border-orange-300"
                   >
                     <FiArrowLeft className="text-sm" />
-                    Volver
+                    Planes
                   </button>
                 )}
 
@@ -1145,10 +1278,9 @@ const FormPreventa = ({
             </div>
 
             <form
-              onSubmit={intentarEnviar} // NUEVO: Llamamos a la validación en lugar de enviar directo
+              onSubmit={intentarEnviar}
               className="overflow-hidden flex flex-col flex-1 relative min-h-0"
             >
-              {/* Stepper */}
               {!esMostrador && estadoEnvio !== "exito" && (
                 <StepperProgreso
                   pasoActivo={pasoActivo}
@@ -1156,10 +1288,8 @@ const FormPreventa = ({
                 />
               )}
 
-              {/* Contenedor scrolleable principal */}
               <div
                 ref={scrollContainerRef}
-                onScroll={manejarScroll}
                 className="overflow-y-auto flex-1 p-4 md:p-6 pb-10 custom-scrollbar relative"
               >
                 {estadoEnvio === "exito" ? (
@@ -1182,35 +1312,12 @@ const FormPreventa = ({
                   </motion.div>
                 ) : (
                   <>
-                    {renderizarPasosApilados()}
-
-                    {/* Botón de envío final */}
-                    <button
-                      ref={botonFinalizarRef}
-                      type="submit"
-                      disabled={
-                        estadoEnvio === "enviando" ||
-                        (requiereTurno && !esMostrador && !turnoSeleccionado) ||
-                        (observacionRequerida && textoObservacion.trim() === "")
-                      }
-                      className="w-full mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bignoodle text-xl md:text-2xl py-3.5 rounded-xl uppercase tracking-wider shadow-[0_5px_15px_rgba(234,88,12,0.3)] hover:shadow-[0_5px_15px_rgba(234,88,12,0.5)] disabled:opacity-50 disabled:shadow-none disabled:hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shrink-0"
-                    >
-                      {estadoEnvio === "enviando" ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white/80 border-t-transparent rounded-full animate-spin"></div>
-                          Enviando...
-                        </>
-                      ) : (
-                        "FINALIZAR INSCRIPCIÓN"
-                      )}
-                    </button>
+                    <div className="pt-2">{renderizarPasoActual()}</div>
+                    {renderBotonesPaso()}
                   </>
                 )}
               </div>
 
-              {/* ======================================================== */}
-              {/* ALERTA INTERNA CUSTOMIZADA (SIN WINDOW.CONFIRM) */}
-              {/* ======================================================== */}
               <AnimatePresence>
                 {mostrarAlertaComprobante && (
                   <motion.div
@@ -1260,6 +1367,104 @@ const FormPreventa = ({
                             className="flex-1 py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-[0_4px_12px_rgba(234,88,12,0.3)]"
                           >
                             Sí, continuar
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {mostrarAlertaPasoTurno && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4"
+                  >
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                      animate={{ scale: 1, y: 0, opacity: 1 }}
+                      exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 25,
+                      }}
+                      className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md flex flex-col"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-100">
+                          <FiAlertCircle className="text-3xl" />
+                        </div>
+                        <h3 className="text-xl md:text-2xl font-bignoodle uppercase text-gray-900 tracking-wide mb-2">
+                          Falta un paso
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                          por favor selecciona tu horario
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => setMostrarAlertaPasoTurno(false)}
+                          className="w-full py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-[0_4px_12px_rgba(234,88,12,0.3)]"
+                        >
+                          Entendido
+                        </button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {mostrarAlertaAvanceSinComprobante && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4"
+                  >
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                      animate={{ scale: 1, y: 0, opacity: 1 }}
+                      exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 25,
+                      }}
+                      className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md flex flex-col"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mb-4 border border-orange-100">
+                          <FiAlertCircle className="text-3xl" />
+                        </div>
+                        <h3 className="text-xl md:text-2xl font-bignoodle uppercase text-gray-900 tracking-wide mb-2">
+                          Aviso
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                          Para poder realizar la inscripcion, debes adjuntar tu
+                          comprobante de pago o transferencia
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-3 w-full">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setMostrarAlertaAvanceSinComprobante(false)
+                            }
+                            className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition-colors"
+                          >
+                            Subir comprobante
+                          </button>
+                          <button
+                            type="button"
+                            onClick={avanzarDesdeTransferenciaSinComprobante}
+                            className="flex-1 py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-[0_4px_12px_rgba(234,88,12,0.3)]"
+                          >
+                            Avanzar igual
                           </button>
                         </div>
                       </div>
