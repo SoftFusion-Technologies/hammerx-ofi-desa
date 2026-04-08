@@ -4,19 +4,7 @@ import Footer from "../../components/footer/Footer";
 import { logo } from "../../images/svg/index";
 
 // --- Imágenes para la galería modal y fondos ---
-import Box from "../../images/sedes/Barrio Norte/Box.webp";
-import Cardio from "../../images/sedes/Barrio Norte/Cardio.webp";
-import Fachada from "../../images/sedes/Barrio Norte/Fachada.webp";
-import Sala_Principal from "../../images/sedes/Barrio Norte/Sala principal.webp";
-import Sala_Principal_1 from "../../images/sedes/Barrio Norte/Sala principal 2.webp";
-
-import PlantaB_Sala_Pesos_Libres from "../../images/sedes/Barrio Norte/PlantaB_Sala_Pesos_Libres.jpeg";
-import Sala_Pilates from "../../images/sedes/Barrio Norte/Sala_pilates.jpg";
-import Silla_Masajes from "../../images/sedes/Barrio Norte/Silla_Masajes.jpeg";
-import Terraza from "../../images/sedes/Barrio Norte/Terraza.jpg";
-import Musculacion from "../../images/sedes/Barrio Norte/Musculacion.jpeg";
-import Cardio_1 from "../../images/sedes/Barrio Norte/Cardio.jpg";
-
+import img_SedeFrente from "../../images/sedes/YerbaBuenaAconquija/ChatGPT Image 8 abr 2026, 10_05_20.webp";
 import "../../styles/clients/newsede.css";
 
 import PlanesPromocionalesCarousel from "../../components/Preventa/PlanesPromocionalesCarousel";
@@ -39,6 +27,7 @@ import {
 } from "react-icons/fa";
 import { FaChildren } from "react-icons/fa6";
 import { MdSelfImprovement, MdSportsTennis } from "react-icons/md";
+const imagesContext = import.meta.glob("../../images/sedes/YerbaBuenaAconquija/*.{webp,jpg,jpeg,png}", { eager: true });
 
 // --- Configuraciones de Animación (Framer Motion) ---
 const fadeInUp = {
@@ -70,20 +59,12 @@ const SedeYerbaBuena = () => {
   const abrirGaleria = () => setGalleryOpen(true);
   const cerrarGaleria = () => setGalleryOpen(false);
 
-  const dynamicGalleryImages = useMemo(
-    () => [
-      { src: Fachada, alt: "Fachada Sede Barrio Norte" },
-      { src: Sala_Principal, alt: "Sala Principal" },
-      { src: Sala_Principal_1, alt: "Sala Principal vista alternativa" },
-      { src: Musculacion, alt: "Sala de Musculación" },
-      { src: PlantaB_Sala_Pesos_Libres, alt: "Sala de Pesos Libres" },
-      { src: Box, alt: "Sector Box funcional" },
-      { src: Cardio, alt: "Sector Cardio" },
-      { src: Sala_Pilates, alt: "Sala de Pilates Climatizada" },
-      { src: Terraza, alt: "Terraza al aire libre" },
-    ],
-    [],
-  );
+  const galleryImages = useMemo(() => {
+    return Object.entries(imagesContext).map(([path, module]) => ({
+      src: module.default,
+      alt: path.split('/').pop().split('.')[0].replace(/_/g, " ")
+    }));
+  }, []);
 
   const scrollToPreventaCarousel = () => {
     const id = "preventa-carousel";
@@ -375,12 +356,12 @@ const SedeYerbaBuena = () => {
               onClick={abrirGaleria}
               className="relative overflow-hidden rounded-xl text-center w-full md:w-1/2 group cursor-pointer shadow-lg"
               style={{
-                backgroundImage: `url(${Sala_Principal})`,
+                backgroundImage: `url(${img_SedeFrente})`,
                 backgroundSize: "cover",
-                backgroundPosition: "center",
+                backgroundPosition: "cover",
               }}
             >
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px] transition-all duration-300 group-hover:bg-black/40 group-hover:backdrop-blur-none z-0"></div>
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] transition-all duration-300 group-hover:bg-black/40 group-hover:backdrop-blur-none z-0"></div>
 
               <div className="relative z-10 flex flex-col items-center justify-center p-8 h-full">
                 <p className="text-xl md:text-3xl font-bignoodle uppercase mb-5 tracking-wider text-white drop-shadow-md">
@@ -556,7 +537,7 @@ const SedeYerbaBuena = () => {
       <ModalGaleria
         isOpen={galleryOpen}
         onClose={cerrarGaleria}
-        images={dynamicGalleryImages}
+        images={galleryImages}
       />
 
       <Footer />

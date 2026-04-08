@@ -547,7 +547,6 @@ const FormularioDatos = ({
             value={datos.nombreApellido}
             onChange={manejarCambio}
             placeholder="Ej: Juan Perez"
-            required
             className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm text-gray-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder-gray-400"
           />
         </div>
@@ -1279,6 +1278,7 @@ const FormPreventa = ({
 
             <form
               onSubmit={intentarEnviar}
+              noValidate
               className="overflow-hidden flex flex-col flex-1 relative min-h-0"
             >
               {!esMostrador && estadoEnvio !== "exito" && (
