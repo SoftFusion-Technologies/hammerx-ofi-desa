@@ -22,6 +22,7 @@ import FormAltaUser from '../../../components/Forms/FormAltaUser';
 import UserDetails from './UserGetId';
 import { useAuth } from '../../../AuthContext';
 import UserGetPilates from './UserGetPilates';
+import FormAltaEmpleadoRRHH from '../../../components/Forms/FormAltaEmpleadoRRHH';
 import {
   Users,
   Dumbbell,
@@ -43,6 +44,7 @@ const UserGet = () => {
   const [filterSede, setFilterSede] = useState(''); // Estado para el filtro de sede
   const [filterLevel, setFilterLevel] = useState(''); // Estado para el filtro de level (ROL)
   const { userLevel } = useAuth();
+  const [modalAltaRRHH, setModalAltaRRHH] = useState(false);
 
   const abrirModal = () => {
     setModalNewUser(true);
@@ -406,9 +408,12 @@ return (
                               <th className="px-4 py-3 font-semibold">Sede</th>
                               {(userLevel === 'admin' ||
                                 userLevel === 'administrador') && (
-                                <th className="px-4 py-3 font-semibold text-right">
-                                  Acciones
-                                </th>
+                                  <>
+                                    <th className="px-4 py-3 font-semibold">Vinculado RRHH</th>
+                                    <th className="px-4 py-3 font-semibold text-right">
+                                      Acciones
+                                    </th>
+                                  </>
                               )}
                             </tr>
                           </thead>
@@ -456,24 +461,40 @@ return (
 
                                   {(userLevel === 'admin' ||
                                     userLevel === 'administrador') && (
-                                    <td className="px-4 py-2.5 text-right space-x-2 whitespace-nowrap">
+                                    <>
+                                    <td
+                                      className="px-4 py-2.5 text-slate-700 capitalize cursor-pointer flex items-center justify-center"
+                                    >
                                       <button
-                                        type="button"
-                                        onClick={() => handleEditarUser(user)}
-                                        className="inline-flex items-center gap-1 rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-yellow-300 transition"
-                                      >
-                                        Editar
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleEliminarUser(user.id)
-                                        }
-                                        className="inline-flex items-center gap-1 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-400 transition"
-                                      >
-                                        Eliminar
-                                      </button>
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedUser(user);
+                                            setModalAltaRRHH(true);
+                                          }}
+                                          className={`inline-flex items-center gap-1 rounded-lg  px-3 py-1.5 text-xs font-semibold text-slate-900 transition ${user.activada ? 'bg-green-400 hover:bg-green-200' : 'bg-red-400 hover:bg-red-200'}`}
+                                        >
+                                          {user.activada ? 'Sí' : 'No'}
+                                        </button>
                                     </td>
+                                      <td className="px-4 py-2.5 text-right space-x-2 whitespace-nowrap">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleEditarUser(user)}
+                                          className="inline-flex items-center gap-1 rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-yellow-300 transition"
+                                        >
+                                          Editar
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleEliminarUser(user.id)
+                                          }
+                                          className="inline-flex items-center gap-1 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-400 transition"
+                                        >
+                                          Eliminar
+                                        </button>
+                                      </td>
+                                      </>
                                   )}
                                 </tr>
                               ))}
@@ -539,6 +560,10 @@ return (
                 setSelectedUser={setSelectedUser}
               />
             </section>
+
+            {modalAltaRRHH && (
+              <FormAltaEmpleadoRRHH cerrarModal={() => setModalAltaRRHH(false)} datosUsuario={selectedUser} obtenerUsuarios={obtenerUsers} />
+            )}
 
             {/* Detalle lateral / modal */}
             {selectedUser && (

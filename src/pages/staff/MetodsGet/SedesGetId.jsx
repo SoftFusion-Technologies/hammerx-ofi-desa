@@ -30,6 +30,16 @@ const SedesDetails = ({ Sedes, isOpen, onClose, setSelectedSedes }) => {
           <span className="font-semibold">Nombre:</span> {Sedes.nombre}
         </p>
         <p>
+          <span className="font-semibold">Latitud:</span> {Sedes.latitud ?? '—'}
+        </p>
+        <p>
+          <span className="font-semibold">Longitud:</span> {Sedes.longitud ?? '—'}
+        </p>
+        <p>
+          <span className="font-semibold">Radio permitido:</span>{' '}
+          {Sedes.radio_permitido_metros ?? '—'}
+        </p>
+        <p>
           <span className="font-semibold">Estado:</span> {Sedes.estado}
         </p>
         <p>

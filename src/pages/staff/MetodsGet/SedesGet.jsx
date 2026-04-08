@@ -392,6 +392,15 @@ const SedesGet = () => {
                             Capacidad
                           </th>
                           <th className="text-left px-4 py-3 font-extrabold">
+                            Latitud
+                          </th>
+                          <th className="text-left px-4 py-3 font-extrabold">
+                            Longitud
+                          </th>
+                          <th className="text-left px-4 py-3 font-extrabold">
+                            Radio permitido 
+                          </th>
+                          <th className="text-left px-4 py-3 font-extrabold">
                             Creado
                           </th>
                           <th className="text-left px-4 py-3 font-extrabold">
@@ -478,6 +487,10 @@ const SedesGet = () => {
                                     {capacidadTexto}
                                   </span>
                                 </td>
+
+                                <td className='text-black/70 font-semibold'>{s.latitud ? s.latitud : "-"}</td>
+                                <td className='text-black/70 font-semibold'>{s.longitud ? s.longitud : "-"}</td>
+                                <td className='text-black/70 font-semibold'>{s.radio_permitido_metros ? s.radio_permitido_metros : "-"}</td>
 
                                 <td
                                   className="px-4 py-3"
@@ -617,14 +630,16 @@ const SedesGet = () => {
             </>
           )}
           {/* Modal para abrir formulario de clase gratis */}
-          <FormAltaSedes
-            isOpen={modalNewSedes}
-            onClose={cerarModal}
-            Sedes={selectedSedes}
-            setSelectedSedes={setSelectedSedes}
-            obtenerSedess={obtenerSedess}
-            SedesMaxInscriptoCiudad={SedesMaxInscriptoCiudad}
-          />
+          {modalNewSedes && (
+            <FormAltaSedes
+              isOpen={modalNewSedes}
+              onClose={cerarModal}
+              Sedes={selectedSedes}
+              setSelectedSedes={setSelectedSedes}
+              obtenerSedess={obtenerSedess}
+              SedesMaxInscriptoCiudad={SedesMaxInscriptoCiudad}
+            />
+          )}
         </div>
       </div>
       <Footer />

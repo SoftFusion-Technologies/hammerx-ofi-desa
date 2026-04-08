@@ -126,6 +126,7 @@ const AdminPage = () => {
     useState(false);
 
   const { userId, userLevel, userName, nomyape, sedeName } = useAuth();
+
   const navigate = useNavigate();
 
   const now = new Date();
@@ -499,11 +500,13 @@ const AdminPage = () => {
               const showInstructores = isAdmin || isInstructor;
               const showEstadisticas = isAdmin || isInstructor;
               const showImagenesTile = isImagenes;
+              const showPortalRRHH = true;
               const showOtros =
                 showPreguntale ||
                 showInstructores ||
                 showEstadisticas ||
-                showImagenesTile;
+                showImagenesTile ||
+                showPortalRRHH;
 
               const visibleCols = [
                 showGestion,
@@ -724,6 +727,15 @@ const AdminPage = () => {
                           to="/dashboard/imagenes"
                           icon={ImageIcon}
                           delay={0.32}
+                        />
+                      )}
+                      {showPortalRRHH && (
+                        <DashboardTile
+                          title="Portal RRHH"
+                          description="Accedé al portal de recursos humanos."
+                          to="/dashboard-rrhh"
+                          icon={UserIcon}
+                          delay={0.34}
                         />
                       )}
                     </div>
