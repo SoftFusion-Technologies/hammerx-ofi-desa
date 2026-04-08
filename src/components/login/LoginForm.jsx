@@ -73,6 +73,8 @@ const LoginForm = () => {
           setLoading(false);
 
           if (res.data.message === 'Success') {
+            const vinculadaRRHH = res.data.activada ?? res.data.vinculada ?? false;
+
             // Guardar datos en contexto EXACTO como antes
             login(
               res.data.token,
@@ -80,11 +82,13 @@ const LoginForm = () => {
               res.data.level,
               res.data.id,
               res.data.sede,
-              res.data.name
+              res.data.name,
+              vinculadaRRHH,
+              res.data.level_admin
             );
 
             // Ruta posterior (podés customizar si querés según level)
-            const route = '/dashboard';
+            const route = '/selector-acceso';
             setPostLoginRoute(route);
 
             // Mostrar intro antes de navegar
