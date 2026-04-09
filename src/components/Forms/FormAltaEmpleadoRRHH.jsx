@@ -7,6 +7,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import Swal from "sweetalert2";
 import { FaBuilding, FaPlus, FaTrash, FaLaptopHouse } from "react-icons/fa";
+import { useAuth } from "../../AuthContext";
 
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.95, y: 20 },
@@ -106,6 +107,16 @@ const FormAltaEmpleadoRRHH = ({
   const [cargandoInicial, setCargandoInicial] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [esRemoto, setEsRemoto] = useState(false);
+  const {
+    authToken,
+    userName: ctxUserName,
+    userLevel: ctxUserLevel,
+    userLevelAdmin: ctxUserLevelAdmin,
+    userId: currentUserId,
+    sedeName: ctxSedeName,
+    name: ctxFullName,
+    login,
+  } = useAuth();
 
   const sedesSeleccionadas = useMemo(
     () => sedes.filter((sede) => selectedSedes.includes(sede.id)),
@@ -387,6 +398,28 @@ const guardarCambios = async (e) => {
         confirmButtonColor: "#fc4b08",
       });
 
+      // Si el usuario editado es el mismo que está logueado, aseguramos que
+      // la bandera `vinculadarrhh` se actualice en localStorage y en el contexto.
+      if (Number(datosUsuario.id) === Number(currentUserId)) {
+        try {
+          localStorage.setItem("vinculadarrhh", "true");
+          if (login) {
+            login(
+              authToken,
+              ctxUserName,
+              ctxUserLevel,
+              currentUserId,
+              ctxSedeName,
+              ctxFullName,
+              true,
+              ctxUserLevelAdmin,
+            );
+          }
+        } catch (e) {
+          console.warn("No se pudo actualizar vinculadarrhh en contexto:", e);
+        }
+      }
+
       obtenerUsuarios();
       cerrarModal();
     } catch (err) {
@@ -401,6 +434,71 @@ const guardarCambios = async (e) => {
     }
   }
 };
+
+  const handleDesvincular = async () => {
+    if (!datosUsuario?.id) {
+      Swal.fire({ title: "Error", text: "No se pudo identificar al colaborador.", icon: "error" });
+      return;
+    }
+
+    const resultado = await Swal.fire({
+      title: "¿Desvincular RRHH?",
+      text: "Confirmá que querés desvincular a este usuario de RRHH.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Sí, desvincular",
+    });
+
+    if (!resultado.isConfirmed) return;
+
+    try {
+      setGuardando(true);
+      const body = { activada : 0 };
+      const config = {};
+      if (authToken) config.headers = { Authorization: `Bearer ${authToken}` };
+      await axios.put(`${URL_BASE}/users/${datosUsuario.id}`, body, config);
+
+      await Swal.fire({
+        title: "¡Desvinculado!",
+        text: "El usuario fue desvinculado de RRHH correctamente.",
+        icon: "success",
+        confirmButtonColor: "#fc4b08",
+      });
+
+      if (Number(datosUsuario.id) === Number(currentUserId)) {
+        try {
+          localStorage.setItem("vinculadarrhh", "false");
+          if (login) {
+            login(
+              authToken,
+              ctxUserName,
+              ctxUserLevel,
+              currentUserId,
+              ctxSedeName,
+              ctxFullName,
+              false,
+              ctxUserLevelAdmin,
+            );
+          }
+        } catch (e) {
+          console.warn("No se pudo actualizar vinculadarrhh en contexto:", e);
+        }
+      }
+
+      obtenerUsuarios();
+      cerrarModal();
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        title: "Error",
+        text: err?.response?.data?.mensajeError || "Error al procesar la solicitud",
+        icon: "error",
+      });
+    } finally {
+      setGuardando(false);
+    }
+  };
 
   return (
     <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
@@ -424,13 +522,32 @@ const guardarCambios = async (e) => {
         </div>
 
         <div className="p-8 max-h-[80vh] overflow-y-auto">
-          <div className="bg-slate-50 p-4 rounded-2xl mb-6 border border-slate-100">
-            <p className="text-xs font-bold text-slate-400 uppercase">
-              Colaborador
-            </p>
-            <p className="font-bold text-slate-800 italic">
-              {datosUsuario?.name}
-            </p>
+          <div className="bg-slate-50 p-4 rounded-2xl mb-6 border border-slate-100 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase">
+                Colaborador
+              </p>
+              <p className="font-bold text-slate-800 italic">
+                {datosUsuario?.name}
+              </p>
+            </div>
+            <div>
+              {datosUsuario?.activada === true && (
+              <button
+                type="button"
+                onClick={handleDesvincular}
+                disabled={guardando || cargandoInicial}
+                className={`ml-4 px-3 py-1.5 rounded-md font-semibold text-white text-sm transition-all ${
+                  guardando || cargandoInicial
+                    ? "bg-slate-300"
+                    : "bg-red-600 hover:bg-red-700 active:scale-95"
+                }`}
+              >
+                Desvincular
+              </button>
+              )
+              }
+            </div>
           </div>
           <div className="mb-6">
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">

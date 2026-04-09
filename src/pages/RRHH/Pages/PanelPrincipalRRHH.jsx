@@ -321,7 +321,7 @@ const PanelPrincipalRRHH = () => {
 
         if (usuarioAuth.userLevelAdmin === 1) {
           setMostrarPanelConfiguracionInicial(false);
-        } else if (!tieneCuenta || !tieneCredenciales) {
+        } else if (!usuarioAuth?.vinculadarrhh || !tieneCuenta || !tieneCredenciales) {
           setNoTieneCuenta(!tieneCuenta);
           setNoTieneCredencialesFaciales(!tieneCredenciales);
           setMostrarPanelConfiguracionInicial(true);
