@@ -4,7 +4,9 @@ import Footer from "../../components/footer/Footer";
 import { logo } from "../../images/svg/index";
 
 // --- Imágenes para la galería modal y fondos ---
-import img_SedeFrente from "../../images/sedes/YerbaBuenaAconquija/ChatGPT Image 8 abr 2026, 10_05_20.webp";
+import img_SedeFrente from "../../images/sedes/YerbaBuenaAconquija/IMG_6141.webp";
+import aperturaVideo from "../../Video/APERTURA YB.mp4";
+import VideoModal from "../../components/VideoModal";
 import "../../styles/clients/newsede.css";
 
 import PlanesPromocionalesCarousel from "../../components/Preventa/PlanesPromocionalesCarousel";
@@ -22,6 +24,7 @@ import {
   FaWeightHanging,
   FaLaptop,
   FaWhatsapp,
+  FaPlay,
   FaLockOpen, 
   FaCar,
 } from "react-icons/fa";
@@ -56,6 +59,7 @@ const scaleUp = {
 
 const SedeYerbaBuena = () => {
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(true);
   const abrirGaleria = () => setGalleryOpen(true);
   const cerrarGaleria = () => setGalleryOpen(false);
 
@@ -519,27 +523,42 @@ const SedeYerbaBuena = () => {
         ></iframe>
       </motion.div>
 
-      <a
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Escribinos por WhatsApp"
-        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[200] group"
-      >
-        <span className="hidden md:block pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-black/70 px-3 py-1 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          Escribinos por WhatsApp
-        </span>
-        <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-full bg-[#25D366]/90 text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-[#25D366] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/40">
-          <FaWhatsapp className="text-2xl md:text-3xl" />
-        </span>
-      </a>
+      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[50] flex items-center gap-2 md:gap-3">
+        <button
+          onClick={() => setVideoOpen(true)}
+          aria-label="Ver video"
+          className="group flex h-12 md:h-14 items-center gap-2 md:gap-3 rounded-full border border-orange-300/60 bg-gradient-to-r from-[#f97316] via-[#fb923c] to-[#fdba74] px-2 md:px-5 text-white shadow-[0_12px_30px_rgba(249,115,22,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(249,115,22,0.5)] focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/50"
+        >
+          <span className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full bg-white/20 ring-1 ring-white/35 backdrop-blur-sm">
+            <FaPlay className="text-sm md:text-base" />
+          </span>
+          <span className="hidden md:inline font-extrabold uppercase tracking-wide text-[11px] md:text-sm">Ver video</span>
+        </button>
+
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Escribinos por WhatsApp"
+          className="group relative"
+        >
+          <span className="hidden md:block pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-black/70 px-3 py-1 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            Escribinos por WhatsApp
+          </span>
+          <span className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-full border border-white/20 bg-[#25D366] text-white shadow-[0_12px_30px_rgba(0,0,0,0.28)] ring-2 ring-[#25D366]/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(37,211,102,0.35)] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/45">
+            <FaWhatsapp className="text-2xl md:text-3xl" />
+          </span>
+        </a>
+      </div>
+
+      <VideoModal isOpen={videoOpen} onClose={() => setVideoOpen(false)} src={aperturaVideo} poster={img_SedeFrente} />
 
       <ModalGaleria
         isOpen={galleryOpen}
         onClose={cerrarGaleria}
         images={galleryImages}
       />
-
+a
       <Footer />
     </motion.div>
   );
