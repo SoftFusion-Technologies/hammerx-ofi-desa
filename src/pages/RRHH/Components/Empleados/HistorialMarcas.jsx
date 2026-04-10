@@ -26,6 +26,7 @@ import {
   FaArrowLeft,
   FaCheckCircle,
 } from "react-icons/fa";
+import { quitarSegundos } from "../../Utils/formatTime";
 import { IoMdAdd } from "react-icons/io";
 import useObtenerDatos from "../../hooks/obtenerDatos";
 import { useAuth } from "../../../../AuthContext";
@@ -313,7 +314,8 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
             ${colorEstadoCumplimiento(turno.minutos_tarde ? Number(turno.minutos_tarde) && "tarde" : turno.estado, true)}
           `}
                     >
-                      {turno.entrada} - {turno.salida}
+                      {quitarSegundos(turno.entrada) || "—"} -{" "}
+                      {quitarSegundos(turno.salida) || "—"}
                     </div>
                   ))}
 
@@ -438,156 +440,149 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
             No hay registros de asistencia para este día.
           </p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             {registro.turnos.map((turno, i) => {
-              // Calculamos las constantes aquí arriba para que el JSX quede limpio
               const minutosExtras = Number(turno.minutos_extra_pendientes) > 0;
               const minutosAutorizados =
                 Number(turno.minutos_extra_autorizados) > 0;
-              const minutosDescuento = obtenerMinutosPositivos(turno.minutos_descuento);
+              const minutosDescuento = obtenerMinutosPositivos(
+                turno.minutos_descuento,
+              );
 
               return (
                 <div
                   key={i}
-                  className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-2xl border ${
+                  className={`relative rounded-xl border px-3 py-2.5 shadow-sm transition-all ${
                     turno.estado_aprobacion === "aprobada"
-                      ? "bg-white border-gray-100"
+                      ? "bg-white border-gray-200"
                       : turno.estado_aprobacion === "pendiente"
-                        ? "bg-orange-50/50 border-orange-100"
-                        : "bg-red-50/50 border-red-100"
-                  } gap-4 shadow-sm transition-all hover:shadow-md`}
+                        ? "bg-orange-50/60 border-orange-200"
+                        : "bg-red-50/60 border-red-200"
+                  }`}
                 >
-                  {/* SECCIÓN IZQUIERDA: Info del Turno */}
-                  <div className="flex flex-col flex-1 w-full gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        Turno {i + 1}
-                      </span>
-                      <div className="flex gap-3 text-sm font-bold text-gray-700">
-                        <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
-                          {turno.entrada}
+                  {/* Numeración discreta */}
+                  <span className="absolute top-2 right-2 text-[10px] font-bold text-gray-400 bg-gray-100 border border-gray-200 rounded-full px-1.5 py-0.5 leading-none">
+                    #{i + 1}
+                  </span>
+
+                  <div className="flex flex-col gap-2">
+                    {/* FILA PRINCIPAL */}
+                    <div className="pr-10">
+                      <div className="flex flex-wrap items-center gap-1.5 text-[13px] sm:text-sm font-bold text-gray-700">
+                        <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-md px-2 py-1">
+                          Entrada: {quitarSegundos(turno.entrada) || "—"}
                         </span>
+
                         <span className="text-gray-300">—</span>
-                        <span className="flex items-center gap-1 text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-100">
-                          {turno.salida}
+
+                        <span className="inline-flex items-center gap-1 text-rose-700 bg-rose-50 border border-rose-100 rounded-md px-2 py-1">
+                          Salida: {quitarSegundos(turno.salida) || "—"}
                         </span>
                       </div>
+
+                      {turno.horario_hora_entrada &&
+                        turno.horario_hora_salida && (
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500">
+                            <span className="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-2 py-0.5">
+                              <FaClock className="text-[10px]" />
+                              Habitual
+                            </span>
+
+                            <span className="text-gray-600">
+                              {quitarSegundos(turno.horario_hora_entrada) ||
+                                "—"}{" "}
+                              —{" "}
+                              {quitarSegundos(turno.horario_hora_salida) || "—"}
+                            </span>
+                          </div>
+                        )}
                     </div>
 
-                    {/* Badges de Información Extra */}
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {turno.estado === "normal" || turno.estado === "justificado" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 text-[11px] font-semibold border border-gray-200">
-                          <FaClock className="text-[10px]" />
+                    {/* BADGES */}
+                    
+                    <div className="flex flex-wrap gap-1.5">
+                      {(esAdminAutorizadoRRHHH && turno.estado === "normal" ||
+                        turno.estado === "justificado") && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[10px] font-semibold border border-gray-200">
+                          <FaClock className="text-[9px]" />
                           {formatearHorario(turno.horas_turno)}
                         </span>
-                      ) : null }
+                      )}
 
-                      {/* Lógica de Extras Pendientes/Realizadas */}
                       {minutosExtras && (
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-700 text-[11px] font-bold border border-amber-200  ${minutosAutorizados ? "" : "animate-pulse"}`}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                            minutosAutorizados
+                              ? "bg-amber-100 text-amber-700 border-amber-200"
+                              : "bg-amber-100 text-amber-700 border-amber-200"
+                          }`}
                         >
-                          <FaCheckCircle className="text-[10px]" />
+                          <FaCheckCircle className="text-[9px]" />
                           {formatearDuracion(
                             turno.minutos_extra_pendientes,
                           )}{" "}
-                          {minutosAutorizados
-                            ? "extras realizadas"
-                            : "extras pendientes"}
+                          {minutosAutorizados ? "realizadas" : "pendientes"}
+                        </span>
+                      )}
+
+                      {minutosAutorizados && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                          <FaCheckCircle className="text-[9px]" />
+                          {formatearDuracion(
+                            turno.minutos_extra_autorizados,
+                          )}{" "}
+                          autorizadas
                         </span>
                       )}
 
                       {minutosDescuento > 0 && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-100 text-red-700 text-[11px] font-bold border border-red-200">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[10px] font-bold border border-red-200">
                           Descuento: {formatearDuracion(minutosDescuento)}
-                        </span>
-                      )}
-                      {minutosAutorizados && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-[11px] font-bold border border-emerald-200">
-                          <FaCheckCircle className="text-[10px]" />
-                          {formatearDuracion(
-                            turno.minutos_extra_autorizados,
-                          )}{" "}
-                          extras autorizadas
                         </span>
                       )}
 
                       {obtenerMinutosPositivos(turno.minutos_tarde) > 0 && (
-                        <span className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 text-[11px] font-semibold border border-red-200">
-                          Llegó {turno.minutos_tarde}m tarde
+                        <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-semibold border border-red-200">
+                          {formatearDuracion (turno.minutos_tarde)} tarde
                         </span>
                       )}
+
                       {obtenerMinutosPositivos(
                         turno.minutos_salida_anticipada,
                       ) > 0 && (
-                        <span className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 text-[11px] font-semibold border border-red-200">
-                          Se fué {turno.minutos_salida_anticipada}m antes
+                        <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-semibold border border-red-200">
+                          {formatearDuracion(turno.minutos_salida_anticipada)} antes
                         </span>
                       )}
                     </div>
 
-                    {/* Notas y Origen */}
-                    {(turno.comentarios || turno.origen) && (
-                      <div className="flex flex-col gap-0.5 mt-1">
-                        {turno.comentarios && (
-                          <p className="text-[11px] text-gray-500 italic bg-gray-50 p-2 rounded-lg border border-dashed border-gray-200">
-                            "{turno.comentarios}"
-                          </p>
-                        )}
-                        {turno.origen && (
-                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
-                            Registro vía {turno.origen}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                    {/* NOTAS / ORIGEN */}
+                    {esAdminAutorizadoRRHHH &&
+                      (turno.comentarios || turno.origen) && (
+                        <div className="flex flex-col gap-1.5 text-[10px]">
+                          {turno.comentarios && (
+                            <p className="text-gray-500 italic bg-gray-50 border border-dashed border-gray-200 rounded-md px-2 py-1 leading-snug">
+                              "{turno.comentarios}"
+                            </p>
+                          )}
 
-                  {/* SECCIÓN DERECHA: Acciones */}
-                  <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center w-full sm:w-auto gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        className={`text-[10px] font-bold px-3 py-1.5 rounded-xl border transition-all ${colorHorario(turno.estado_aprobacion)} hover:scale-105 active:scale-95`}
-                        onClick={() => {
-                          if (!esAdminAutorizadoRRHHH) return;
-                          const fechaFormateada = new Date(
-                            diaSeleccionado,
-                          ).toLocaleDateString("en-US");
-                          setHorarioSeleccionado({
-                            ...turno,
-                            fecha_registro: fechaFormateada,
-                          });
-                          setAbrirModalAprobacion(true);
-                        }}
-                      >
-                        {turno.estado_aprobacion.toUpperCase()}
-                      </button>
+                          {turno.origen && (
+                            <span className="text-gray-400 font-semibold uppercase tracking-tight">
+                              Vía {turno.origen}
+                            </span>
+                          )}
+                        </div>
+                      )}
 
-                      <button
-                        className={`text-[10px] font-bold px-3 py-1.5 rounded-xl border transition-all ${colorEstadoCumplimiento(turno.estado)} hover:scale-105 active:scale-95`}
-                        onClick={() => {
-                          if (!esAdminAutorizadoRRHHH) return; // Solo admins pueden cambiar estado de cumplimiento
-                          if (turno.estado.toLowerCase() === "extra") return; // No se puede cambiar estado de asistencia para turnos extra, ya que no representan una asistencia real sino un tiempo extra trabajado
-                          const fechaFormateada = new Date(
-                            diaSeleccionado,
-                          ).toLocaleDateString("en-US");
-                          setHorarioSeleccionado({
-                            ...turno,
-                            fecha_registro: fechaFormateada,
-                          });
-                          setAbrirModalEstadoAsistencia(true);
-                        }}
-                      >
-                        {turno.estado.toUpperCase()}
-                      </button>
-                    </div>
-
-                    {esAdminAutorizadoRRHHH && (
-                      <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200">
+                    {/* ACCIONES */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100">
+                      <div className="flex flex-wrap gap-1.5">
                         <button
-                          className="p-1.5 text-blue-500 hover:bg-white hover:shadow-sm rounded-lg transition-all"
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all ${colorHorario(
+                            turno.estado_aprobacion,
+                          )}`}
                           onClick={() => {
+                            if (!esAdminAutorizadoRRHHH) return;
                             const fechaFormateada = new Date(
                               diaSeleccionado,
                             ).toLocaleDateString("en-US");
@@ -595,55 +590,99 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
                               ...turno,
                               fecha_registro: fechaFormateada,
                             });
-                            setAbrirModalEditar(true);
+                            setAbrirModalAprobacion(true);
                           }}
                         >
-                          <MdOutlineEdit size={16} />
+                          {turno.estado_aprobacion.toUpperCase()}
                         </button>
-                        <button
-                          className="p-1.5 text-red-500 hover:bg-white hover:shadow-sm rounded-lg transition-all"
-                          onClick={async () => {
-                            const resultado = await Swal.fire({
-                              title: "¿Eliminar marcación?",
-                              icon: "warning",
-                              showCancelButton: true,
-                              confirmButtonColor: "#d33",
-                              confirmButtonText: "Sí, eliminar",
-                              cancelButtonText: "Cancelar",
-                            });
 
-                            if (resultado.isConfirmed) {
-                              try {
-                                await eliminar(`/rrhh/marcaciones/${turno.id}`);
-                                realizarPeticion();
-                                Swal.fire(
-                                  "Eliminado",
-                                  "La marcación fue eliminada.",
-                                  "success",
-                                );
-                              } catch (e) {
-                                Swal.fire(
-                                  "Error",
-                                  "No se pudo eliminar.",
-                                  "error",
-                                );
-                              }
-                            }
+                        <button
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all ${colorEstadoCumplimiento(
+                            turno.estado,
+                          )}`}
+                          onClick={() => {
+                            if (!esAdminAutorizadoRRHHH) return;
+                            if (turno.estado.toLowerCase() === "extra") return;
+
+                            const fechaFormateada = new Date(
+                              diaSeleccionado,
+                            ).toLocaleDateString("en-US");
+                            setHorarioSeleccionado({
+                              ...turno,
+                              fecha_registro: fechaFormateada,
+                            });
+                            setAbrirModalEstadoAsistencia(true);
                           }}
                         >
-                          <MdDelete size={16} />
+                          {turno.estado.toUpperCase()}
                         </button>
                       </div>
-                    )}
+
+                      {esAdminAutorizadoRRHHH && (
+                        <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200 shrink-0">
+                          <button
+                            className="p-1.5 text-blue-500 hover:bg-white hover:shadow-sm rounded-md transition-all"
+                            onClick={() => {
+                              const fechaFormateada = new Date(
+                                diaSeleccionado,
+                              ).toLocaleDateString("en-US");
+                              setHorarioSeleccionado({
+                                ...turno,
+                                fecha_registro: fechaFormateada,
+                              });
+                              setAbrirModalEditar(true);
+                            }}
+                          >
+                            <MdOutlineEdit size={15} />
+                          </button>
+
+                          <button
+                            className="p-1.5 text-red-500 hover:bg-white hover:shadow-sm rounded-md transition-all"
+                            onClick={async () => {
+                              const resultado = await Swal.fire({
+                                title: "¿Eliminar marcación?",
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonColor: "#d33",
+                                confirmButtonText: "Sí, eliminar",
+                                cancelButtonText: "Cancelar",
+                              });
+
+                              if (resultado.isConfirmed) {
+                                try {
+                                  await eliminar(
+                                    `/rrhh/marcaciones/${turno.id}`,
+                                  );
+                                  realizarPeticion();
+                                  Swal.fire(
+                                    "Eliminado",
+                                    "La marcación fue eliminada.",
+                                    "success",
+                                  );
+                                } catch (e) {
+                                  Swal.fire(
+                                    "Error",
+                                    "No se pudo eliminar.",
+                                    "error",
+                                  );
+                                }
+                              }
+                            }}
+                          >
+                            <MdDelete size={15} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
 
             {/* TOTAL DEL DÍA */}
-            <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end items-center gap-2">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Total horas del día:
+            <div className="mt-3 pt-2 border-t border-gray-200 flex justify-end items-center gap-2">
+              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                Total:
               </span>
               <span className="bg-orange-600 text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm">
                 {formatearHorario(registro.horasTotales)}
@@ -698,7 +737,7 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
 
         <div className="mx-2 my-2 flex flex-wrap justify-center gap-2 sm:mx-3 md:mx-5 md:justify-end">
           {/* Horas aprobadas */}
-{/*           <div className="flex min-w-0 flex-1 basis-[104px] items-center justify-center gap-2 rounded-xl bg-orange-600 px-2 py-2 text-white shadow-sm max-[360px]:basis-[96px] max-[360px]:px-1.5 max-[360px]:py-1.5 sm:basis-[120px] sm:gap-2.5 sm:px-2.5 sm:py-2 md:flex-none md:px-4 md:py-3 md:rounded-2xl md:shadow-md">
+          {/*           <div className="flex min-w-0 flex-1 basis-[104px] items-center justify-center gap-2 rounded-xl bg-orange-600 px-2 py-2 text-white shadow-sm max-[360px]:basis-[96px] max-[360px]:px-1.5 max-[360px]:py-1.5 sm:basis-[120px] sm:gap-2.5 sm:px-2.5 sm:py-2 md:flex-none md:px-4 md:py-3 md:rounded-2xl md:shadow-md">
             <div className="shrink-0 rounded-full bg-white/20 p-1.5 max-[360px]:p-1 sm:p-1.5 md:p-2">
               <FaClock className="text-[12px] sm:text-sm md:text-base" />
             </div>
@@ -714,7 +753,7 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
           </div> */}
 
           {/* Horas pendientes */}
-{/*           <div className="flex min-w-0 flex-1 basis-[104px] items-center justify-center gap-2 rounded-xl bg-yellow-500 px-2 py-2 text-white shadow-sm max-[360px]:basis-[96px] max-[360px]:px-1.5 max-[360px]:py-1.5 sm:basis-[120px] sm:gap-2.5 sm:px-2.5 sm:py-2 md:flex-none md:px-4 md:py-3 md:rounded-2xl md:shadow-md">
+          {/*           <div className="flex min-w-0 flex-1 basis-[104px] items-center justify-center gap-2 rounded-xl bg-yellow-500 px-2 py-2 text-white shadow-sm max-[360px]:basis-[96px] max-[360px]:px-1.5 max-[360px]:py-1.5 sm:basis-[120px] sm:gap-2.5 sm:px-2.5 sm:py-2 md:flex-none md:px-4 md:py-3 md:rounded-2xl md:shadow-md">
             <div className="shrink-0 rounded-full bg-white/20 p-1.5 max-[360px]:p-1 sm:p-1.5 md:p-2">
               <FaClock className="text-[12px] sm:text-sm md:text-base" />
             </div>

@@ -189,13 +189,13 @@ const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
     <AnimatePresence>
       {abierto && (
         <motion.div
-          className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-start md:items-center justify-center p-4 overflow-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100 font-messina"
+            className="relative w-full max-w-2xl bg-white  shadow-2xl border border-gray-100 font-messina max-h-[90vh]"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -219,7 +219,7 @@ const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
               </p>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-5 overflow-y-auto max-h-[72vh]">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="flex flex-col gap-1">
                   <span className="text-[11px] font-bold text-gray-500 uppercase">Hora de entrada</span>

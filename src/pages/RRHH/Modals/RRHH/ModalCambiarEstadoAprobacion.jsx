@@ -134,13 +134,13 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-start md:items-center justify-center p-4 overflow-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
         <motion.div
-          className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden font-messina"
+          className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden font-messina max-h-[90vh]"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
@@ -164,7 +164,7 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
             </p>
           </div>
 
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-5 overflow-y-auto max-h-[72vh]">
             {/* Selección de Estado */}
             <label className="flex flex-col gap-1">
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Estado del Registro</span>
