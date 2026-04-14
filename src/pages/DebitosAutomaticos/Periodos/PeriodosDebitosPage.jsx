@@ -177,6 +177,27 @@ const sortOptions = [
   { value: 'alta|asc', label: 'Alta más antigua' }
 ];
 
+/* Benjamin Orellana - 2026/04/14 - Traduce el sort visual del frontend al formato paginado soportado por backend. */
+const resolveBackendSort = (value) => {
+  const [sortByRaw, sortDirRaw] = String(value || 'titular_nombre|asc').split(
+    '|'
+  );
+
+  const order_direction =
+    String(sortDirRaw || 'asc').toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+  switch (sortByRaw) {
+    case 'titular_nombre':
+      return { order_by: 'titular_nombre', order_direction };
+    case 'monto':
+      return { order_by: 'monto', order_direction };
+    case 'alta':
+      return { order_by: 'alta', order_direction };
+    default:
+      return { order_by: 'created_at', order_direction: 'DESC' };
+  }
+};
+
 const pageSizeOptions = [10, 15, 20, 30];
 
 const api = axios.create({
@@ -276,6 +297,8 @@ const PeriodosDebitosPage = () => {
   const [sortValue, setSortValue] = useState('titular_nombre|asc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
+  /* Benjamin Orellana - 2026/04/14 - Guarda el total real devuelto por backend para paginación server-side. */
+  const [totalRows, setTotalRows] = useState(0);
 
   const [selectedPeriodo, setSelectedPeriodo] = useState(null);
   const [featureNotice, setFeatureNotice] = useState('');
@@ -317,96 +340,141 @@ const PeriodosDebitosPage = () => {
     return { headers };
   }, [authUserId, authUserEmail]);
   /* Benjamin Orellana - 2026/04/13 - Carga principal de períodos y clientes enviando contexto autenticado para resolver tarjeta completa cuando corresponda. */
-  const fetchData = useCallback(
+
+  /* Benjamin Orellana - 2026/04/14 - Se separan catálogos estáticos de la grilla paginada para evitar parpadeos y recargas innecesarias. */
+  const fetchCatalogos = useCallback(async () => {
+    try {
+      const requests = await Promise.allSettled([
+        api.get('/debitos-automaticos-clientes', {
+          params: { page: 1, limit: 100000 },
+          ...authRequestConfig
+        }),
+        api.get('/sedes?es_ciudad=true'),
+        api.get('/debitos-automaticos-bancos?activo=1'),
+        api.get('/debitos-automaticos-planes'),
+        api.get('/debitos-automaticos-terminos')
+      ]);
+
+      const clientesRes = requests[0];
+      const sedesRes = requests[1];
+      const bancosRes = requests[2];
+      const planesRes = requests[3];
+      const terminosRes = requests[4];
+
+      const clientesData =
+        clientesRes.status === 'fulfilled'
+          ? normalizeArray(clientesRes.value.data)
+          : [];
+      const sedesData =
+        sedesRes.status === 'fulfilled'
+          ? normalizeArray(sedesRes.value.data)
+          : [];
+      const bancosData =
+        bancosRes.status === 'fulfilled'
+          ? normalizeArray(bancosRes.value.data)
+          : [];
+      const planesData =
+        planesRes.status === 'fulfilled'
+          ? normalizeArray(planesRes.value.data)
+          : [];
+      const terminosData =
+        terminosRes.status === 'fulfilled'
+          ? normalizeArray(terminosRes.value.data)
+          : [];
+
+      setClientes(clientesData);
+      setSedes(sedesData);
+      setBancos(bancosData);
+      setPlanes(planesData);
+      setTerminos(terminosData);
+    } catch (_) {
+      // Se preserva el estado actual si algún catálogo falla.
+    }
+  }, [authRequestConfig]);
+
+  /* Benjamin Orellana - 2026/04/14 - La grilla de períodos se obtiene ya filtrada, ordenada y paginada desde backend. */
+  const fetchPeriodos = useCallback(
     async ({ silent = false } = {}) => {
       try {
         const { periodo_anio, periodo_mes } =
           parsePeriodInput(periodoSeleccionado);
 
+        const { order_by, order_direction } = resolveBackendSort(sortValue);
+
         setError('');
         if (!silent) setLoading(true);
         if (silent) setRefreshing(true);
 
-        const requests = await Promise.allSettled([
-          api.get('/debitos-automaticos-periodos', {
-            params: {
-              periodo_anio,
-              periodo_mes
-            },
-            ...authRequestConfig
-          }),
-          api.get('/debitos-automaticos-clientes', authRequestConfig),
-          api.get('/sedes?es_ciudad=true'),
-          api.get('/debitos-automaticos-bancos?activo=1'),
-          api.get('/debitos-automaticos-planes'),
-          api.get('/debitos-automaticos-terminos')
-        ]);
+        const response = await api.get('/debitos-automaticos-periodos', {
+          params: {
+            periodo_anio,
+            periodo_mes,
+            page,
+            limit: pageSize,
+            q: filters.q || undefined,
+            banco_id: filters.banco_id || undefined,
+            plan_id: filters.plan_id || undefined,
+            estado_cobro: filters.estado_cobro || undefined,
+            estado_envio: filters.estado_envio || undefined,
+            accion_requerida: filters.accion_requerida || undefined,
+            cliente_id: filters.cliente_id || undefined,
+            sede_id: sedeActiva !== 'TODAS' ? sedeActiva : undefined,
+            order_by,
+            order_direction
+          },
+          ...authRequestConfig
+        });
 
-        const periodosRes = requests[0];
-        const clientesRes = requests[1];
-        const sedesRes = requests[2];
-        const bancosRes = requests[3];
-        const planesRes = requests[4];
-        const terminosRes = requests[5];
-
-        const periodosData =
-          periodosRes.status === 'fulfilled'
-            ? normalizeArray(periodosRes.value.data)
-            : [];
-        const clientesData =
-          clientesRes.status === 'fulfilled'
-            ? normalizeArray(clientesRes.value.data)
-            : [];
-        const sedesData =
-          sedesRes.status === 'fulfilled'
-            ? normalizeArray(sedesRes.value.data)
-            : [];
-        const bancosData =
-          bancosRes.status === 'fulfilled'
-            ? normalizeArray(bancosRes.value.data)
-            : [];
-        const planesData =
-          planesRes.status === 'fulfilled'
-            ? normalizeArray(planesRes.value.data)
-            : [];
-        const terminosData =
-          terminosRes.status === 'fulfilled'
-            ? normalizeArray(terminosRes.value.data)
-            : [];
-
-        setPeriodos(periodosData);
-        setClientes(clientesData);
-        setSedes(sedesData);
-        setBancos(bancosData);
-        setPlanes(planesData);
-        setTerminos(terminosData);
-
-        if (periodosRes.status === 'rejected') {
-          setError(
-            periodosRes.reason?.response?.data?.mensajeError ||
-              'No se pudieron cargar los períodos.'
-          );
-        }
+        setPeriodos(normalizeArray(response.data));
+        setTotalRows(Number(response?.data?.total || 0));
       } catch (err) {
+        setPeriodos([]);
+        setTotalRows(0);
         setError(
           err?.response?.data?.mensajeError ||
-            'Ocurrió un error al cargar la pantalla de períodos.'
+            'Ocurrió un error al cargar los períodos.'
         );
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [periodoSeleccionado, authRequestConfig]
+    [
+      periodoSeleccionado,
+      sortValue,
+      page,
+      pageSize,
+      filters,
+      sedeActiva,
+      authRequestConfig
+    ]
   );
 
+  /* Benjamin Orellana - 2026/04/14 - Los catálogos se cargan una sola vez por montaje o cambio de contexto autenticado. */
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchCatalogos();
+  }, [fetchCatalogos]);
+
+  /* Benjamin Orellana - 2026/04/14 - Los períodos se refrescan cada vez que cambia la consulta visible de la grilla. */
+  /* Benjamin Orellana - 2026/04/14 - Evita doble request: si cambió un filtro y la página actual no es 1, primero resetea paginación y recién luego consulta. */
+  useEffect(() => {
+    if (page !== 1) return;
+    fetchPeriodos();
+  }, [fetchPeriodos, page]);
 
   useEffect(() => {
-    setPage(1);
+    if (page !== 1) {
+      setPage(1);
+    }
   }, [filters, sedeActiva, sortValue, pageSize, periodoSeleccionado]);
+
+  /* Benjamin Orellana - 2026/04/14 - Reacomoda la página actual cuando el total filtrado disminuye. */
+  useEffect(() => {
+    const nextTotalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+    if (page > nextTotalPages) {
+      setPage(nextTotalPages);
+    }
+  }, [page, pageSize, totalRows]);
 
   const sedesOptions = useMemo(() => {
     return (Array.isArray(sedes) ? sedes : [])
@@ -708,122 +776,15 @@ const PeriodosDebitosPage = () => {
       .sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
   }, [planes]);
 
+  /* Benjamin Orellana - 2026/04/14 - La colección visible ya viene filtrada y ordenada desde backend. */
   const filteredAndSorted = useMemo(() => {
-    const { periodo_anio, periodo_mes } = parsePeriodInput(periodoSeleccionado);
-    const [sortBy, sortDir] = String(sortValue).split('|');
+    return Array.isArray(periodos) ? periodos : [];
+  }, [periodos]);
 
-    const filtered = periodos.filter((periodo) => {
-      const searchBlob = [
-        resolveTitularNombre(periodo),
-        resolveTitularDni(periodo),
-        resolveBancoNombre(periodo),
-        resolvePlanNombre(periodo),
-        resolveTarjeta(periodo),
-        resolveMotivo(periodo),
-        resolveMontoInicialClienteAplicado(periodo),
-        resolveDescuentoClientePctAplicado(periodo),
-        resolveMontoBruto(periodo),
-        resolveMontoNetoEstimado(periodo)
-      ]
-        .join(' ')
-        .toLowerCase();
-
-      const q = toLower(filters.q);
-      const matchesSearch = !q || searchBlob.includes(q);
-
-      const cliente = resolveCliente(periodo);
-      const bancoId = String(cliente?.banco_id ?? periodo?.banco_id ?? '');
-      const planId = String(
-        cliente?.titular_plan_id ?? periodo?.titular_plan_id ?? ''
-      );
-      const estadoCobro = String(periodo?.estado_cobro || '');
-      const estadoEnvio = String(periodo?.estado_envio || '');
-      const accion = String(periodo?.accion_requerida || '');
-      const sedeId = String(resolveSedeId(periodo) || '');
-      const clienteId = String(getClienteIdFromPeriodo(periodo) || '');
-
-      const matchesCliente =
-        !filters.cliente_id || clienteId === String(filters.cliente_id);
-      const matchesBanco =
-        !filters.banco_id || bancoId === String(filters.banco_id);
-      const matchesPlan =
-        !filters.plan_id || planId === String(filters.plan_id);
-      const matchesEstadoCobro =
-        !filters.estado_cobro || estadoCobro === String(filters.estado_cobro);
-      const matchesEstadoEnvio =
-        !filters.estado_envio || estadoEnvio === String(filters.estado_envio);
-      const matchesAccion =
-        !filters.accion_requerida ||
-        accion === String(filters.accion_requerida);
-      const matchesSede =
-        sedeActiva === 'TODAS' || sedeId === String(sedeActiva);
-      const matchesPeriodo =
-        Number(periodo?.periodo_anio) === Number(periodo_anio) &&
-        Number(periodo?.periodo_mes) === Number(periodo_mes);
-
-      return (
-        matchesSearch &&
-        matchesCliente &&
-        matchesBanco &&
-        matchesPlan &&
-        matchesEstadoCobro &&
-        matchesEstadoEnvio &&
-        matchesAccion &&
-        matchesSede &&
-        matchesPeriodo
-      );
-    });
-
-    const sorted = [...filtered].sort((a, b) => {
-      const dir = sortDir === 'desc' ? -1 : 1;
-
-      if (sortBy === 'titular_nombre') {
-        return (
-          resolveTitularNombre(a).localeCompare(resolveTitularNombre(b), 'es', {
-            sensitivity: 'base'
-          }) * dir
-        );
-      }
-
-      if (sortBy === 'monto') {
-        return (
-          (Number(resolveMontoBruto(a) || 0) -
-            Number(resolveMontoBruto(b) || 0)) *
-          dir
-        );
-      }
-
-      if (sortBy === 'alta') {
-        return (
-          (new Date(resolveAlta(a) || 0).getTime() -
-            new Date(resolveAlta(b) || 0).getTime()) *
-          dir
-        );
-      }
-
-      return 0;
-    });
-
-    return sorted;
-  }, [
-    periodos,
-    periodoSeleccionado,
-    filters,
-    sedeActiva,
-    sortValue,
-    clientesById,
-    bancosById,
-    planesById
-  ]);
-
-  const totalItems = filteredAndSorted.length;
+  const totalItems = totalRows;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePage = Math.min(page, totalPages);
-
-  const paginatedRows = useMemo(() => {
-    const start = (safePage - 1) * pageSize;
-    return filteredAndSorted.slice(start, start + pageSize);
-  }, [filteredAndSorted, safePage, pageSize]);
+  const paginatedRows = filteredAndSorted;
 
   const resumen = useMemo(() => {
     const total = filteredAndSorted.length;
@@ -1954,7 +1915,7 @@ const PeriodosDebitosPage = () => {
                             <td className="px-4 py-4 align-top text-sm font-semibold text-slate-900">
                               {resolvePagos(periodo)}
                             </td>
-{/* 
+                            {/* 
                             <td className="px-4 py-4 align-top">
                               <Badge
                                 variant={getEstadoEnvioVariant(
@@ -2278,6 +2239,6 @@ const PeriodosDebitosPage = () => {
       />
     </>
   );
-};;;
+};;;;;;;;;
 
 export default PeriodosDebitosPage;
