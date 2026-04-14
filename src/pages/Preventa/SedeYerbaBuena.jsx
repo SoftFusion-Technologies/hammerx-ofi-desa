@@ -81,7 +81,7 @@ const SedeYerbaBuena = () => {
   };
 
   const whatsappUrl =
-    "https://wa.me/5493868381?text=Hola%20Hammer%2C%20quiero%20mas%20info%20de%20la%20preventa.";
+      "https://wa.me/5493816497448?text=Hola%20Hammer%2C%20quiero%20mas%20info%20de%20la%20preventa.";
 
   // --- DATOS UNIFICADOS ---
   const allFacilities = [
