@@ -217,7 +217,7 @@ const PlanesPromocionalesCarousel = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-3 text-lg md:text-4xl font-bignoodle uppercase tracking-wide text-gray-900 leading-none"
           >
-            <span className="text-orange-600">¡100 CUPOS</span>
+            <span className="text-orange-600">¡100 CUPOS </span>
             DISPONIBLES
           </motion.h3>
         </div>

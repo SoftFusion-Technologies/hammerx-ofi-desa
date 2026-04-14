@@ -325,12 +325,12 @@ const SedeYerbaBuena = () => {
               <div className="w-full rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 via-white to-orange-50 px-4 py-2.5 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[12px] md:text-xs font-extrabold uppercase tracking-[0.18em] text-orange-700">
-                    APERTURA
+                    APERTURA ESTIMADA
                   </span>
                   <span className="inline-flex items-center gap-2 text-orange-700">
                     <FaLockOpen className="text-base md:text-lg" />
                     <span className="font-bignoodle text-2xl md:text-3xl uppercase tracking-wide leading-none text-[#fc4b08]">
-                      Mayo
+                      Mayo/Junio
                     </span>
                   </span>
                 </div>
@@ -362,7 +362,7 @@ const SedeYerbaBuena = () => {
               style={{
                 backgroundImage: `url(${img_SedeFrente})`,
                 backgroundSize: "cover",
-                backgroundPosition: "cover",
+                backgroundPosition: "center 60%",
               }}
             >
               <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] transition-all duration-300 group-hover:bg-black/40 group-hover:backdrop-blur-none z-0"></div>

@@ -417,15 +417,15 @@ const DatosBancarios = ({
         <div className="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-200">
           <div>
             <p className="text-[9px] text-gray-500 uppercase font-bold leading-none">
-              CBU
+              CVU
             </p>
             <p className="text-sm text-gray-900 font-mono tracking-tighter">
-              123123123213
+              0000003100082404577290
             </p>
           </div>
           <button
             type="button"
-            onClick={() => copiarAlPortapapeles("123123123213", "cbu")}
+            onClick={() => copiarAlPortapapeles("0000003100082404577290", "cbu")}
             className="text-[10px] bg-orange-100 hover:bg-orange-200 text-orange-700 font-semibold px-3.5 py-1.5 rounded-lg transition-all border border-orange-200"
           >
             {copiado === "cbu" ? "Listo!" : "Copiar"}
@@ -437,11 +437,11 @@ const DatosBancarios = ({
             <p className="text-[9px] text-gray-500 uppercase font-bold leading-none">
               Alias
             </p>
-            <p className="text-sm text-gray-900 font-mono">apsdapsd</p>
+            <p className="text-sm text-gray-900 font-mono">hammerxsas</p>
           </div>
           <button
             type="button"
-            onClick={() => copiarAlPortapapeles("apsdapsd", "alias")}
+            onClick={() => copiarAlPortapapeles("hammerxsas", "alias")}
             className="text-[10px] bg-orange-100 hover:bg-orange-200 text-orange-700 font-semibold px-3.5 py-1.5 rounded-lg transition-all border border-orange-200"
           >
             {copiado === "alias" ? "Listo!" : "Copiar"}
@@ -452,7 +452,7 @@ const DatosBancarios = ({
           <p className="text-[9px] text-gray-500 uppercase font-bold leading-none">
             Titular
           </p>
-          <p className="text-sm text-gray-900 font-semibold">Hammerx SAS</p>
+          <p className="text-sm text-gray-900 font-semibold">HAMMERX S. A. S.</p>
         </div>
       </div>
 
