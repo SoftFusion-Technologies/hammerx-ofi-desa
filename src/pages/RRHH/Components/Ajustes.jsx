@@ -671,7 +671,7 @@ const Ajustes = ({ volverAtras }) => {
 
             {mostrarReconocimiento && (
               <div className="border border-gray-200 rounded-xl p-3 bg-gray-50 animate-fade-in">
-                <ReconocimientoFacial origen="registrar" />
+                <ReconocimientoFacial origen="registrar" mostrarReconocimiento={() => setMostrarReconocimiento(false)} />
               </div>
             )}
           </div>

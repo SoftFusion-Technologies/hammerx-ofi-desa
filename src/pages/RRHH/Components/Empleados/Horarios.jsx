@@ -78,7 +78,7 @@ const Horarios = ({
       </div>
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex flex-row">
-          <div className="bg-blue-100 p-3 rounded-2xl text-blue-600">
+          <div className="bg-blue-100 p-3 rounded-2xl text-blue-600 mr-2">
             <FaCalendarAlt className="text-2xl" />
           </div>
           <div>

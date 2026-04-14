@@ -10,12 +10,14 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
+import {formatearDuracion} from "../../Utils/convertirMinutosAHoras"
 
 const ReconocimientoFacial = ({
   origen,
   volverAtras = null,
   recargarDatos,
   onContinuar = null,
+  mostrarReconocimiento = null,
 }) => {
   const { userId: id_usuario } = useAuth();
   const { sedeSeleccionada } = useSedeUsers();
@@ -217,6 +219,17 @@ const ReconocimientoFacial = ({
         if (tieneRegistro) {
           await axios.put(`http://localhost:8080/rrhh/credenciales-faciales/${id_usuario}`, body);
           setMensajeStatus("¡Actualización exitosa!");
+
+          await Swal.fire({
+            title: "¡Actualización exitosa!",
+            text: "Tus credenciales faciales se actualizaron correctamente.",
+            icon: "success",
+            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#f97316",
+            allowOutsideClick: false,
+          });
+
+          mostrarReconocimiento && mostrarReconocimiento();
         } else {
           await axios.post("http://localhost:8080/rrhh/credenciales-faciales", body);
           setMensajeStatus("¡Registro exitoso! Ahora el sistema te reconoce.");
@@ -314,7 +327,7 @@ const ReconocimientoFacial = ({
 
       await axios.post("http://localhost:8080/rrhh/marcaciones", payloadMarcacion);
 
-      const mensajeTardanza = minutosTarde > 0 ? `<br/><br/><span style="color: red;"><b>Tardanza:</b> ${minutosTarde} minutos</span>` : "";
+      const mensajeTardanza = minutosTarde > 0 ? `<br/><br/><span style="color: red;"><b>Tardanza:</b> ${formatearDuracion(minutosTarde)}</span>` : "";
       const fechaHoraMostrar = dayjs(horaEntradaAjustada).format("DD/MM/YYYY HH:mm:ss");
 
       recargarDatos();

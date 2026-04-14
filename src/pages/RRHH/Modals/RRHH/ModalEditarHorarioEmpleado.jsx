@@ -7,10 +7,7 @@ import { FaTimes } from "react-icons/fa";
 import HorasExtrasManuales from "../../Components/HorasExtrasManuales";
 import DescuentosManuales from "../../Components/DescuentosManuales";
 
-const ESTADOS = [
-  "normal",
-  "justificado",
-];
+const ESTADOS = ["normal", "justificado"];
 
 const ESTADOS_APROBACION = ["pendiente", "aprobada", "rechazada"];
 
@@ -31,7 +28,12 @@ const extraerHora = (horarios, campoCorto, campoFechaHora) => {
   ).padStart(2, "0")}`;
 };
 
-const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
+const ModalEditarHorarioEmpleado = ({
+  horarios,
+  cerrarModal,
+  fetch,
+  soloObservacion,
+}) => {
   const { userId } = useAuth();
   const [abierto, setAbierto] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -47,13 +49,15 @@ const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
   const [minutosAutorizadosManual, setMinutosAutorizadosManual] = useState(0);
   const [horasDescuentoManual, setHorasDescuentoManual] = useState(0);
   const [minutosDescuentoManual, setMinutosDescuentoManual] = useState(0);
-  const minutosPendientesIniciales = Number(horarios?.minutos_extra_pendientes || 0);
-  const minutosAutorizadosIniciales = Number(horarios?.minutos_extra_autorizados || 0);
+  const minutosPendientesIniciales = Number(
+    horarios?.minutos_extra_pendientes || 0,
+  );
+  const minutosAutorizadosIniciales = Number(
+    horarios?.minutos_extra_autorizados || 0,
+  );
   const minutosDescuentoIniciales = Number(horarios?.minutos_descuento || 0);
 
-  const {
-    modificarPatch: modificarMarcacion,
-  } = useModificarDatosPatch();
+  const { modificarPatch: modificarMarcacion } = useModificarDatosPatch();
 
   const valoresIniciales = useMemo(
     () => ({
@@ -71,9 +75,11 @@ const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
     setAbierto(true);
     setMensaje("");
     setJustificacion(horarios?.comentarios || "");
-    setMostrarExtras(minutosPendientesIniciales > 0 || minutosAutorizadosIniciales > 0);
+    setMostrarExtras(
+      minutosPendientesIniciales > 0 || minutosAutorizadosIniciales > 0,
+    );
     setMostrarDescuentos(minutosDescuentoIniciales > 0);
-    
+
     // Inicializar inputs de extras si ya existen
     const pendientesHM = extraerMinutosAHM(minutosPendientesIniciales);
     const autorizadasHM = extraerMinutosAHM(minutosAutorizadosIniciales);
@@ -84,7 +90,13 @@ const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
     setMinutosAutorizadosManual(autorizadasHM.minutos);
     setHorasDescuentoManual(descuentoHM.horas);
     setMinutosDescuentoManual(descuentoHM.minutos);
-  }, [valoresIniciales, horarios, minutosPendientesIniciales, minutosAutorizadosIniciales, minutosDescuentoIniciales]);
+  }, [
+    valoresIniciales,
+    horarios,
+    minutosPendientesIniciales,
+    minutosAutorizadosIniciales,
+    minutosDescuentoIniciales,
+  ]);
 
   const extraerMinutosAHM = (totalMinutos) => {
     const horas = Math.floor(totalMinutos / 60);
@@ -96,9 +108,12 @@ const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
     setFormulario((prev) => ({ ...prev, [campo]: valor }));
   };
 
-  const minutosPendientesEditados = (Number(horasPendientesManual) * 60) + Number(minutosPendientesManual);
-  const minutosAutorizadosEditados = (Number(horasAutorizadasManual) * 60) + Number(minutosAutorizadosManual);
-  const minutosDescuentoEditados = (Number(horasDescuentoManual) * 60) + Number(minutosDescuentoManual);
+  const minutosPendientesEditados =
+    Number(horasPendientesManual) * 60 + Number(minutosPendientesManual);
+  const minutosAutorizadosEditados =
+    Number(horasAutorizadasManual) * 60 + Number(minutosAutorizadosManual);
+  const minutosDescuentoEditados =
+    Number(horasDescuentoManual) * 60 + Number(minutosDescuentoManual);
   const puedeGestionarExtras =
     Boolean(horarios?.horario_id) || formulario.estado === "extra";
   const debeForzarExtras = formulario.estado === "extra";
@@ -115,15 +130,15 @@ const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
     formulario.estado !== valoresIniciales.estado ||
     formulario.estado_aprobacion !== valoresIniciales.estado_aprobacion ||
     justificacion.trim() !== (horarios?.comentarios || "").trim() ||
-    (puedeGestionarExtras && mostrarExtras && (
-      minutosPendientesEditados !== minutosPendientesIniciales ||
-      minutosAutorizadosEditados !== minutosAutorizadosIniciales
-    )) ||
-    (puedeGestionarExtras && (
-      mostrarDescuentos !== (minutosDescuentoIniciales > 0) ||
-      minutosDescuentoEditados !== minutosDescuentoIniciales
-    )) ||
-    mostrarExtras !== (minutosPendientesIniciales > 0 || minutosAutorizadosIniciales > 0);
+    (puedeGestionarExtras &&
+      mostrarExtras &&
+      (minutosPendientesEditados !== minutosPendientesIniciales ||
+        minutosAutorizadosEditados !== minutosAutorizadosIniciales)) ||
+    (puedeGestionarExtras &&
+      (mostrarDescuentos !== minutosDescuentoIniciales > 0 ||
+        minutosDescuentoEditados !== minutosDescuentoIniciales)) ||
+    mostrarExtras !==
+      (minutosPendientesIniciales > 0 || minutosAutorizadosIniciales > 0);
 
   const manejarGuardar = async () => {
     setMensaje("");
@@ -158,9 +173,15 @@ const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
 
     // Si corresponde gestionar extras, enviamos valores editados o en cero (anulación)
     if (puedeGestionarExtras) {
-      const minutosPendientesFinales = mostrarExtras ? minutosPendientesEditados : 0;
-      const minutosAutorizadosFinales = mostrarExtras ? minutosAutorizadosEditados : 0;
-      const minutosDescuentoFinales = mostrarDescuentos ? minutosDescuentoEditados : 0;
+      const minutosPendientesFinales = mostrarExtras
+        ? minutosPendientesEditados
+        : 0;
+      const minutosAutorizadosFinales = mostrarExtras
+        ? minutosAutorizadosEditados
+        : 0;
+      const minutosDescuentoFinales = mostrarDescuentos
+        ? minutosDescuentoEditados
+        : 0;
 
       payload.minutos_extra_pendientes = minutosPendientesFinales;
       payload.minutos_extra_autorizados = minutosAutorizadosFinales;
@@ -189,7 +210,7 @@ const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
     <AnimatePresence>
       {abierto && (
         <motion.div
-          className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-start md:items-center justify-center p-4 overflow-auto"
+          className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -212,112 +233,148 @@ const ModalEditarHorarioEmpleado = ({ horarios, cerrarModal, fetch }) => {
 
             <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-4 border-b border-orange-400">
               <h2 className="font-bignoodle text-3xl tracking-wide">
-                Editar Marcación
+                {soloObservacion ? "Observación" : "Editar Marcación"}
               </h2>
+              {!soloObservacion && (
+
               <p className="text-orange-100 text-sm">
                 Ajustá los tiempos y estados del turno
               </p>
+              )}
             </div>
 
             <div className="p-6 space-y-5 overflow-y-auto max-h-[72vh]">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold text-gray-500 uppercase">Hora de entrada</span>
-                  <input
-                    type="time"
-                    value={formulario.entrada}
-                    onChange={(e) => manejarCambio("entrada", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
-                  />
-                </label>
+              {/* Solo observación se activa cuando un usuario empleado quiere modificar los comentarios mientras todavía la marcación está pendiente de aprobación */}
+              {!soloObservacion && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-bold text-gray-500 uppercase">
+                        Hora de entrada
+                      </span>
+                      <input
+                        type="time"
+                        value={formulario.entrada}
+                        onChange={(e) =>
+                          manejarCambio("entrada", e.target.value)
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
+                      />
+                    </label>
 
-                <label className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold text-gray-500 uppercase">Hora de salida</span>
-                  <input
-                    type="time"
-                    value={formulario.salida}
-                    onChange={(e) => manejarCambio("salida", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
-                  />
-                </label>
-              </div>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-bold text-gray-500 uppercase">
+                        Hora de salida
+                      </span>
+                      <input
+                        type="time"
+                        value={formulario.salida}
+                        onChange={(e) =>
+                          manejarCambio("salida", e.target.value)
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
+                      />
+                    </label>
+                  </div>
 
-              {/* SECCIÓN HORAS EXTRA MANUALES */}
-              {puedeGestionarExtras && (
-                <HorasExtrasManuales
-                  mostrarExtras={mostrarExtras}
-                  setMostrarExtras={setMostrarExtras}
-                  horasPendientes={horasPendientesManual}
-                  setHorasPendientes={setHorasPendientesManual}
-                  minutosPendientes={minutosPendientesManual}
-                  setMinutosPendientes={setMinutosPendientesManual}
-                  horasAutorizadas={horasAutorizadasManual}
-                  setHorasAutorizadas={setHorasAutorizadasManual}
-                  minutosAutorizadas={minutosAutorizadosManual}
-                  setMinutosAutorizadas={setMinutosAutorizadosManual}
-                  minutosPendientesIniciales={minutosPendientesIniciales}
-                  minutosAutorizadosIniciales={minutosAutorizadosIniciales}
-                  bloquearToggleExtras={debeForzarExtras}
-                  bloquearPendientes={debeForzarExtras}
-                  helperText="* Se asentarán los valores editados de pendientes y autorizadas sin modificar la hora de salida real."
-                />
+                  {/* SECCIÓN HORAS EXTRA MANUALES */}
+                  {puedeGestionarExtras && (
+                    <HorasExtrasManuales
+                      mostrarExtras={mostrarExtras}
+                      setMostrarExtras={setMostrarExtras}
+                      horasPendientes={horasPendientesManual}
+                      setHorasPendientes={setHorasPendientesManual}
+                      minutosPendientes={minutosPendientesManual}
+                      setMinutosPendientes={setMinutosPendientesManual}
+                      horasAutorizadas={horasAutorizadasManual}
+                      setHorasAutorizadas={setHorasAutorizadasManual}
+                      minutosAutorizadas={minutosAutorizadosManual}
+                      setMinutosAutorizadas={setMinutosAutorizadosManual}
+                      minutosPendientesIniciales={minutosPendientesIniciales}
+                      minutosAutorizadosIniciales={minutosAutorizadosIniciales}
+                      bloquearToggleExtras={debeForzarExtras}
+                      bloquearPendientes={debeForzarExtras}
+                      helperText="* Se asentarán los valores editados de pendientes y autorizadas sin modificar la hora de salida real."
+                    />
+                  )}
+
+                  {puedeGestionarExtras && (
+                    <DescuentosManuales
+                      mostrarDescuentos={mostrarDescuentos}
+                      setMostrarDescuentos={setMostrarDescuentos}
+                      horasDescuento={horasDescuentoManual}
+                      setHorasDescuento={setHorasDescuentoManual}
+                      minutosDescuento={minutosDescuentoManual}
+                      setMinutosDescuento={setMinutosDescuentoManual}
+                      minutosDescuentoIniciales={minutosDescuentoIniciales}
+                    />
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-bold text-gray-500 uppercase">
+                        Estado Cumplimiento
+                      </span>
+                      <select
+                        value={formulario.estado}
+                        onChange={(e) =>
+                          manejarCambio("estado", e.target.value)
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
+                        disabled={formulario.estado === "extra"}
+                      >
+                        {formulario.estado === "extra" ? (
+                          <option key="extra" value="extra">
+                            EXTRA
+                          </option>
+                        ) : (
+                          ESTADOS.map((opcion) => (
+                            <option key={opcion} value={opcion}>
+                              {opcion.toUpperCase()}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </label>
+
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-bold text-gray-500 uppercase">
+                        Estado Aprobación
+                      </span>
+                      <select
+                        value={formulario.estado_aprobacion}
+                        onChange={(e) =>
+                          manejarCambio("estado_aprobacion", e.target.value)
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
+                      >
+                        {ESTADOS_APROBACION.map((opcion) => (
+                          <option key={opcion} value={opcion}>
+                            {opcion.toUpperCase()}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                </>
               )}
 
-              {puedeGestionarExtras && (
-                <DescuentosManuales
-                  mostrarDescuentos={mostrarDescuentos}
-                  setMostrarDescuentos={setMostrarDescuentos}
-                  horasDescuento={horasDescuentoManual}
-                  setHorasDescuento={setHorasDescuentoManual}
-                  minutosDescuento={minutosDescuentoManual}
-                  setMinutosDescuento={setMinutosDescuentoManual}
-                  minutosDescuentoIniciales={minutosDescuentoIniciales}
-                />
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold text-gray-500 uppercase">Estado Cumplimiento</span>
-                  <select
-                    value={formulario.estado}
-                    onChange={(e) => manejarCambio("estado", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
-                    disabled={formulario.estado === "extra"}
-                  >
-                    {formulario.estado === "extra" ? (
-                      <option key="extra" value="extra">EXTRA</option>
-                    ) :
-                    (ESTADOS.map((opcion) => (
-                      <option key={opcion} value={opcion}>{opcion.toUpperCase()}</option>
-                    )))
-            
-                  }
-                  </select>
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold text-gray-500 uppercase">Estado Aprobación</span>
-                  <select
-                    value={formulario.estado_aprobacion}
-                    onChange={(e) => manejarCambio("estado_aprobacion", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
-                  >
-                    {ESTADOS_APROBACION.map((opcion) => (
-                      <option key={opcion} value={opcion}>{opcion.toUpperCase()}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
+              {/* COMENTARIOS */}
               <label className="flex flex-col gap-1">
-                <span className="text-[11px] font-bold text-gray-500 uppercase">Comentarios / Justificación</span>
+                <span className="text-[11px] font-bold text-gray-500 uppercase">
+                  Comentarios / Justificación
+                </span>
                 <textarea
                   value={justificacion}
-                  onChange={(e) => setJustificacion(e.target.value.slice(0, 255))}
+                  onChange={(e) =>
+                    setJustificacion(e.target.value.slice(0, 255))
+                  }
                   rows={2}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none resize-none"
                 />
-                <span className="text-[10px] text-gray-400 text-right">{justificacion.length}/255</span>
+                <span className="text-[10px] text-gray-400 text-right">
+                  {justificacion.length}/255
+                </span>
               </label>
 
               {mensaje && (

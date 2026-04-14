@@ -607,7 +607,7 @@ const PanelPrincipalRRHH = () => {
                 </div>
                 <div className="text-center">
                   <h4 className="font-bold text-gray-800 font-bignoodle text-xl tracking-wide group-hover:text-orange-700 transition-colors">
-                    REPORTAR NOVEDAD
+                    Crear consulta
                   </h4>
                   <p className="text-xs text-gray-500 mt-1">
                     ¿Olvidaste marcar? ¿Evento externo?
