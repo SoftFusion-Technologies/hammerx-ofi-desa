@@ -1,12 +1,13 @@
 /*
  * Programador: Benjamin Orellana
  * Fecha Creación: 12 / 03 / 2026
- * Versión: 1.1
+ * Versión: 1.3
  *
  * Descripción:
  * Página para listar los PLANES del módulo Débitos Automáticos.
- * En esta etapa consume GET /debitos-automaticos-planes
- * y muestra la información en formato tabla.
+ * Consume GET /debitos-automaticos-planes
+ * y muestra la información en formato tabla con precio inicial,
+ * descuento porcentual y precio final.
  *
  * Tema: Frontend - Débitos Automáticos - Planes
  * Capa: Frontend
@@ -20,15 +21,21 @@ import NavbarStaff from '../../staff/NavbarStaff';
 import {
   ArrowLeft,
   CheckCircle2,
+  CreditCard,
   Pencil,
   RefreshCw,
   Search,
+  ShieldCheck,
+  Tag,
   Trash2,
-  XCircle
+  Wallet,
+  XCircle,
+  Percent
 } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import PlanFormModal from '../../../components/Forms/DebitosAutomaticos/PlanFormModal.jsx';
 import Swal from 'sweetalert2';
+
 const API_URL = 'http://localhost:8080/debitos-automaticos-planes';
 
 const formatDate = (value) => {
@@ -53,15 +60,54 @@ const formatMoney = (value) => {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'ARS',
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(num);
+};
+
+/* Benjamin Orellana - 08/04/2026 - Formatea el descuento del plan como porcentaje para reflejar la nueva lógica comercial */
+const formatPercent = (value) => {
+  if (value === null || value === undefined || value === '') return '-';
+
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '-';
+
+  return `${num.toLocaleString('es-AR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  })}%`;
 };
 
 const getActivo = (value) => {
   return value === 1 || value === '1' || value === true;
 };
 
-const noop = () => {};
+/* Benjamin Orellana - 08/04/2026 - Normaliza montos monetarios de planes para métricas y visualización robusta */
+const toMoneyNumber = (value) => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+};
+
+const buildMetrics = (planes = []) => {
+  const total = planes.length;
+  const activos = planes.filter((item) => getActivo(item?.activo)).length;
+  const inactivos = total - activos;
+
+  const promedioFinal =
+    total > 0
+      ? planes.reduce(
+          (acc, item) => acc + toMoneyNumber(item?.precio_final),
+          0
+        ) / total
+      : 0;
+
+  return {
+    total,
+    activos,
+    inactivos,
+    promedioFinal
+  };
+};
 
 const PlanesPage = () => {
   const [planes, setPlanes] = useState([]);
@@ -229,6 +275,7 @@ const PlanesPage = () => {
     fetchPlanes();
   }, []);
 
+  /* Benjamin Orellana - 08/04/2026 - La búsqueda contempla descuento porcentual y precio final del plan */
   const planesFiltrados = useMemo(() => {
     const term = search.trim().toLowerCase();
 
@@ -243,6 +290,8 @@ const PlanesPage = () => {
         plan?.activo,
         plan?.orden_visual,
         plan?.precio_referencia,
+        plan?.descuento,
+        plan?.precio_final,
         plan?.created_at,
         plan?.updated_at
       ]
@@ -254,97 +303,118 @@ const PlanesPage = () => {
     });
   }, [planes, search]);
 
+  const metrics = useMemo(
+    () => buildMetrics(planesFiltrados),
+    [planesFiltrados]
+  );
+
   return (
     <>
       <NavbarStaff />
 
       <section className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50">
         <div className="dashboardbg min-h-[calc(100vh-80px)]">
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-            <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <Link
-                  to="/dashboard/debitos-automaticos"
-                  className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-100 backdrop-blur-md transition hover:bg-white/15"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Volver al módulo
-                </Link>
+          <div className="mx-auto max-w-[1800px] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+            <div className="relative mb-8 overflow-hidden rounded-[34px] border border-white/15 bg-gradient-to-br from-slate-950/70 via-slate-900/55 to-orange-950/40 p-5 shadow-[0_30px_80px_-36px_rgba(15,23,42,0.45)] backdrop-blur-xl sm:p-6 lg:p-7">
+              <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
+              <div className="absolute -right-20 top-0 h-56 w-56 rounded-full bg-amber-300/10 blur-3xl" />
 
-                <motion.h1
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45 }}
-                  className="font-bignoodle text-3xl uppercase tracking-[0.18em] text-white sm:text-4xl"
-                >
-                  Planes
-                </motion.h1>
+              <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+                <div className="min-w-0">
+                  <Link
+                    to="/dashboard/debitos-automaticos"
+                    className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-100 backdrop-blur-md transition hover:bg-white/15"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Volver al módulo
+                  </Link>
 
-                <motion.p
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.08 }}
-                  className="mt-2 max-w-2xl text-sm text-slate-200/85"
-                >
-                  Listado general de planes del módulo de débitos automáticos.
-                </motion.p>
-              </div>
+                  <motion.h1
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45 }}
+                    className="font-bignoodle text-3xl uppercase tracking-[0.18em] text-white sm:text-4xl lg:text-5xl"
+                  >
+                    Planes
+                  </motion.h1>
+                </div>
 
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleOpenCreatePlan}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-orange-200 bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(249,115,22,0.24)] transition hover:bg-orange-600"
-                >
-                  <Plus className="h-4 w-4" />
-                  Nuevo plan
-                </button>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={handleOpenCreatePlan}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(249,115,22,0.24)] transition hover:bg-orange-600"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Nuevo plan
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => fetchPlanes({ silent: true })}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/15"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${loadingRefresh ? 'animate-spin' : ''}`}
-                  />
-                  Actualizar
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => fetchPlanes({ silent: true })}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/15"
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 ${loadingRefresh ? 'animate-spin' : ''}`}
+                    />
+                    Actualizar
+                  </button>
+                </div>
               </div>
             </div>
-
-            <div className="mb-6 rounded-[28px] border border-white/10 bg-white/10 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="relative w-full lg:max-w-md">
+            <div className="mb-6 rounded-[30px] border border-white/15 bg-white/75 p-4 shadow-[0_22px_60px_-34px_rgba(15,23,42,0.25)] backdrop-blur-xl sm:p-5">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div className="relative w-full xl:max-w-xl">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar por código, nombre o descripción..."
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    placeholder="Buscar por código, nombre, descripción, precio, descuento % o precio final..."
+                    className="h-13 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
                   />
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-right">
-                  <p className="text-[11px] uppercase tracking-widest text-slate-300/70">
-                    Resultado actual
-                  </p>
-                  <p className="text-sm font-semibold text-white">
-                    {planesFiltrados.length} plan
-                    {planesFiltrados.length === 1 ? '' : 'es'}
-                  </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:min-w-[520px]">
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                      Resultado actual
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                      {planesFiltrados.length} plan
+                      {planesFiltrados.length === 1 ? '' : 'es'}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                      Activos visibles
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                      {planesFiltrados.filter((item) => getActivo(item?.activo))
+                        .length || 0}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                      Precio final promedio
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                      {formatMoney(metrics.promedioFinal)}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {loading && (
-              <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.1)]">
+              <div className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.1)]">
                 <div className="animate-pulse p-6">
-                  <div className="mb-4 h-6 w-48 rounded bg-slate-200" />
+                  <div className="mb-4 h-6 w-56 rounded bg-slate-200" />
                   <div className="space-y-3">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="h-12 rounded-xl bg-slate-200" />
+                    {Array.from({ length: 7 }).map((_, i) => (
+                      <div key={i} className="h-14 rounded-2xl bg-slate-200" />
                     ))}
                   </div>
                 </div>
@@ -352,7 +422,7 @@ const PlanesPage = () => {
             )}
 
             {!loading && error && (
-              <div className="rounded-[28px] border border-rose-200 bg-white p-8 shadow-[0_18px_40px_rgba(15,23,42,0.1)]">
+              <div className="rounded-[30px] border border-rose-200 bg-white p-8 shadow-[0_18px_40px_rgba(15,23,42,0.1)]">
                 <div className="flex flex-col items-center justify-center text-center">
                   <XCircle className="mb-3 h-12 w-12 text-rose-500" />
                   <h3 className="text-xl font-bold text-slate-800">
@@ -375,7 +445,7 @@ const PlanesPage = () => {
             )}
 
             {!loading && !error && planesFiltrados.length === 0 && (
-              <div className="rounded-[28px] border border-white/10 bg-white/90 p-10 text-center shadow-[0_18px_40px_rgba(15,23,42,0.1)]">
+              <div className="rounded-[30px] border border-white/10 bg-white/95 p-10 text-center shadow-[0_18px_40px_rgba(15,23,42,0.1)]">
                 <h3 className="text-xl font-bold text-slate-800">
                   No hay planes para mostrar
                 </h3>
@@ -388,122 +458,148 @@ const PlanesPage = () => {
             )}
 
             {!loading && !error && planesFiltrados.length > 0 && (
-              <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
+              <div className="overflow-hidden rounded-[32px] border border-white/15 bg-white/90 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.28)] backdrop-blur-xl">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead className="bg-slate-50">
+                  <table className="min-w-[1700px] w-full border-collapse">
+                    <thead className="sticky top-0 z-[1] bg-orange-600 text-white">
                       <tr>
-                        <th className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
                           ID
                         </th>
-                        <th className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
                           Código
                         </th>
-                        <th className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
                           Nombre
                         </th>
-                        <th className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
                           Descripción
                         </th>
-                        <th className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                          Activo
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
+                          Estado
                         </th>
-                        <th className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                          Orden visual
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
+                          Orden
                         </th>
-                        <th className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                          Precio referencia
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
+                          Precio inicial
                         </th>
-                        <th className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                          Fecha de creación
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
+                          Descuento (%)
                         </th>
-                        <th className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                          Fecha de actualización
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
+                          Precio final
                         </th>
-                        <th className="px-4 py-4 text-right text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
+                          Creación
+                        </th>
+                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
+                          Actualización
+                        </th>
+                        <th className="px-5 py-4 text-right text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
                           Acciones
                         </th>
                       </tr>
                     </thead>
 
                     <tbody>
-                      {planesFiltrados.map((plan, index) => (
-                        <tr
-                          key={plan?.id ?? index}
-                          className="group border-t border-slate-100 transition duration-200 hover:bg-orange-500"
-                        >
-                          <td className="px-4 py-4 text-sm font-semibold text-slate-700 transition group-hover:text-white">
-                            {plan?.id ?? '-'}
-                          </td>
+                      {planesFiltrados.map((plan, index) => {
+                        const activo = getActivo(plan?.activo);
 
-                          <td className="px-4 py-4 text-sm text-slate-700 transition group-hover:text-white">
-                            {plan?.codigo || '-'}
-                          </td>
+                        return (
+                          <tr
+                            key={plan?.id ?? index}
+                            className="group border-t border-slate-100 transition-all duration-200 hover:bg-gradient-to-r hover:from-orange-500 hover:to-orange-600"
+                          >
+                            <td className="px-5 py-4 text-sm font-bold text-slate-700 transition group-hover:text-white">
+                              #{plan?.id ?? '-'}
+                            </td>
 
-                          <td className="px-4 py-4 text-sm font-medium text-slate-800 transition group-hover:text-white">
-                            {plan?.nombre || '-'}
-                          </td>
+                            <td className="px-5 py-4 text-sm text-slate-700 transition group-hover:text-white">
+                              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white">
+                                <Tag className="h-3.5 w-3.5" />
+                                {plan?.codigo || '-'}
+                              </div>
+                            </td>
 
-                          <td className="px-4 py-4 text-sm text-slate-600 transition group-hover:text-white">
-                            {plan?.descripcion || '-'}
-                          </td>
+                            <td className="px-5 py-4 text-sm font-semibold text-slate-900 transition group-hover:text-white">
+                              {plan?.nombre || '-'}
+                            </td>
 
-                          <td className="px-4 py-4 text-sm transition group-hover:text-white">
-                            <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition ${
-                                getActivo(plan?.activo)
-                                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 group-hover:bg-white/15 group-hover:text-white group-hover:ring-white/20'
-                                  : 'bg-rose-50 text-rose-700 ring-1 ring-rose-200 group-hover:bg-white/15 group-hover:text-white group-hover:ring-white/20'
-                              }`}
-                            >
-                              {getActivo(plan?.activo) ? (
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                              ) : (
-                                <XCircle className="h-3.5 w-3.5" />
-                              )}
-                              {getActivo(plan?.activo) ? 'Sí' : 'No'}
-                            </span>
-                          </td>
+                            <td className="px-5 py-4 text-sm text-slate-600 transition group-hover:text-white/95">
+                              <div className="max-w-[340px] whitespace-normal leading-6">
+                                {plan?.descripcion || '-'}
+                              </div>
+                            </td>
 
-                          <td className="px-4 py-4 text-sm text-slate-700 transition group-hover:text-white">
-                            {plan?.orden_visual ?? '-'}
-                          </td>
-
-                          <td className="px-4 py-4 text-sm text-slate-700 transition group-hover:text-white">
-                            {formatMoney(plan?.precio_referencia)}
-                          </td>
-
-                          <td className="px-4 py-4 text-sm text-slate-600 transition group-hover:text-white">
-                            {formatDate(plan?.created_at)}
-                          </td>
-
-                          <td className="px-4 py-4 text-sm text-slate-600 transition group-hover:text-white">
-                            {formatDate(plan?.updated_at)}
-                          </td>
-
-                          <td className="px-4 py-4">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleOpenEditPlan(plan)}
-                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-600 transition hover:bg-amber-100 group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white"
-                                title="Editar"
+                            <td className="px-5 py-4 text-sm transition group-hover:text-white">
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition ${
+                                  activo
+                                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 group-hover:bg-white/15 group-hover:text-white group-hover:ring-white/20'
+                                    : 'bg-rose-50 text-rose-700 ring-1 ring-rose-200 group-hover:bg-white/15 group-hover:text-white group-hover:ring-white/20'
+                                }`}
                               >
-                                <Pencil className="h-4 w-4" />
-                              </button>
+                                {activo ? (
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                ) : (
+                                  <XCircle className="h-3.5 w-3.5" />
+                                )}
+                                {activo ? 'Activo' : 'Inactivo'}
+                              </span>
+                            </td>
 
-                              <button
-                                type="button"
-                                onClick={() => handleDeletePlan(plan)}
-                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white"
-                                title="Eliminar"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                            <td className="px-5 py-4 text-sm text-slate-700 transition group-hover:text-white">
+                              {plan?.orden_visual ?? '-'}
+                            </td>
+
+                            <td className="px-5 py-4 text-sm font-medium text-slate-800 transition group-hover:text-white">
+                              {formatMoney(plan?.precio_referencia)}
+                            </td>
+
+                            <td className="px-5 py-4 text-sm transition group-hover:text-white">
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700 transition group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white">
+                                <Percent className="h-3.5 w-3.5" />
+                                {formatPercent(plan?.descuento)}
+                              </span>
+                            </td>
+
+                            <td className="px-5 py-4 text-sm font-bold text-slate-900 transition group-hover:text-white">
+                              {formatMoney(plan?.precio_final)}
+                            </td>
+
+                            <td className="px-5 py-4 text-sm text-slate-600 transition group-hover:text-white/95">
+                              {formatDate(plan?.created_at)}
+                            </td>
+
+                            <td className="px-5 py-4 text-sm text-slate-600 transition group-hover:text-white/95">
+                              {formatDate(plan?.updated_at)}
+                            </td>
+
+                            <td className="px-5 py-4">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditPlan(plan)}
+                                  className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-600 transition hover:bg-amber-100 group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white"
+                                  title="Editar"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeletePlan(plan)}
+                                  className="flex h-11 w-11 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -512,6 +608,7 @@ const PlanesPage = () => {
           </div>
         </div>
       </section>
+
       <PlanFormModal
         open={openPlanModal}
         onClose={handleClosePlanModal}

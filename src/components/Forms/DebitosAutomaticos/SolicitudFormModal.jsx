@@ -25,7 +25,8 @@ const API_URL =
 const BANCOS_ENDPOINT = `${API_URL}/debitos-automaticos-bancos?activo=1`;
 const PLANES_ENDPOINT = `${API_URL}/debitos-automaticos-planes`;
 const TERMINOS_ENDPOINT = `${API_URL}/debitos-automaticos-terminos`;
-
+/* Benjamin Orellana - 07/04/2026 - Endpoint de sedes operativas para permitir seleccionar la sede en el alta interna de solicitudes */
+const SEDES_ENDPOINT = `${API_URL}/sedes/ciudad`;
 const backdropV = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
@@ -106,6 +107,8 @@ const createEmptyForm = (rolCarga = 'ADMIN') => ({
   titular_dni: '',
   titular_email: '',
   titular_telefono: '',
+  /* Benjamin Orellana - 07/04/2026 - Se incorpora sede_id al estado del formulario para registrar la sede seleccionada en la solicitud interna */
+  sede_id: '',
 
   banco_id: '',
   marca_tarjeta: 'VISA',
@@ -144,6 +147,11 @@ const validateForm = (form, mode = 'create') => {
 
   if (!form.titular_email.trim()) {
     return 'El email del titular es obligatorio.';
+  }
+
+  /* Benjamin Orellana - 07/04/2026 - Se exige sede_id en el alta/edición interna para alinear el flujo con la nueva lógica de solicitudes */
+  if (!form.sede_id) {
+    return 'Debes seleccionar una sede.';
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -195,9 +203,9 @@ const validateForm = (form, mode = 'create') => {
     return 'Debes aceptar los términos para crear la solicitud.';
   }
 
-  if (!ROLES_CARGA.includes(form.rol_carga_origen)) {
-    return 'El rol de carga origen es inválido.';
-  }
+  // if (!ROLES_CARGA.includes(form.rol_carga_origen)) {
+  //   return 'El rol de carga origen es inválido.';
+  // }
 
   const requiereAdicional =
     form.modalidad_adhesion === 'AMBOS' ||
@@ -232,6 +240,17 @@ const resolveCreatedId = (result) => {
   return result?.data?.id || result?.data?.data?.id || result?.id || null;
 };
 
+// Benjamin Orellana - 2026/04/13 - Resuelve qué valor inicial mostrar en el input de tarjeta según el nivel de acceso devuelto por backend.
+const resolveInitialCardValue = (data) => {
+  const fullCard = String(data?.tarjeta_numero_completo || '').replace(
+    /\D/g,
+    ''
+  );
+  if (fullCard) return fullCard;
+
+  return '';
+};
+
 export default function SolicitudFormModal({
   open,
   mode = 'create',
@@ -254,19 +273,27 @@ export default function SolicitudFormModal({
   const [planes, setPlanes] = useState([]);
   const [terminos, setTerminos] = useState([]);
   const [loadingCatalogs, setLoadingCatalogs] = useState(false);
+  const [sedes, setSedes] = useState([]);
 
   const titleId = 'debito-solicitud-form-title';
   const formId = 'debito-solicitud-form';
 
+  // Benjamin Orellana - 2026/04/13 - En edición, si backend devolvió tarjeta completa para un usuario habilitado, se precarga en el input.
   const mapSolicitudToForm = (data, fallbackRol = 'ADMIN') => ({
     titular_nombre: data?.titular_nombre || '',
     titular_dni: data?.titular_dni || '',
     titular_email: data?.titular_email || '',
     titular_telefono: data?.titular_telefono || '',
+    /* Benjamin Orellana - 07/04/2026 - Se hidrata sede_id desde la solicitud existente para soportar edición interna */
+    sede_id: data?.sede_id
+      ? String(data.sede_id)
+      : data?.sede?.id
+        ? String(data.sede.id)
+        : '',
 
     banco_id: data?.banco_id ? String(data.banco_id) : '',
     marca_tarjeta: data?.marca_tarjeta || 'VISA',
-    tarjeta_numero: '',
+    tarjeta_numero: resolveInitialCardValue(data),
     confirmo_tarjeta_credito: Number(data?.confirmo_tarjeta_credito ?? 1) === 1,
 
     modalidad_adhesion: data?.modalidad_adhesion || 'TITULAR_SOLO',
@@ -311,17 +338,32 @@ export default function SolicitudFormModal({
       try {
         setLoadingCatalogs(true);
 
-        const [bancosRes, planesRes, terminosRes] = await Promise.all([
-          axios.get(BANCOS_ENDPOINT),
-          axios.get(PLANES_ENDPOINT),
-          axios.get(TERMINOS_ENDPOINT)
-        ]);
+        const [bancosRes, planesRes, terminosRes, sedesRes] = await Promise.all(
+          [
+            axios.get(BANCOS_ENDPOINT),
+            axios.get(PLANES_ENDPOINT),
+            axios.get(TERMINOS_ENDPOINT),
+            axios.get(SEDES_ENDPOINT)
+          ]
+        );
 
         if (!active) return;
 
         setBancos(Array.isArray(bancosRes.data) ? bancosRes.data : []);
         setPlanes(Array.isArray(planesRes.data) ? planesRes.data : []);
         setTerminos(Array.isArray(terminosRes.data) ? terminosRes.data : []);
+        /* Benjamin Orellana - 07/04/2026 - Se cargan sedes operativas para selección interna en el formulario */
+        setSedes(
+          Array.isArray(sedesRes.data)
+            ? sedesRes.data.filter(
+                (item) =>
+                  String(item?.nombre || '').trim() &&
+                  String(item?.nombre || '')
+                    .toLowerCase()
+                    .trim() !== 'multisede'
+              )
+            : []
+        );
       } catch (error) {
         if (!active) return;
 
@@ -406,6 +448,8 @@ export default function SolicitudFormModal({
       titular_dni: form.titular_dni.trim(),
       titular_email: form.titular_email.trim().toLowerCase(),
       titular_telefono: form.titular_telefono.trim() || null,
+      /* Benjamin Orellana - 07/04/2026 - Se envía sede_id al backend en el alta/edición interna de solicitudes */
+      sede_id: toIntOrNull(form.sede_id),
 
       banco_id: toIntOrNull(form.banco_id),
       marca_tarjeta: form.marca_tarjeta,
@@ -680,6 +724,21 @@ export default function SolicitudFormModal({
                               inputMode="numeric"
                             />
                           </Field>
+                          <Field label="Sede" required icon={Landmark}>
+                            <select
+                              name="sede_id"
+                              value={form.sede_id}
+                              onChange={handleChange}
+                              className={INPUT_UI}
+                            >
+                              <option value="">Seleccionar sede</option>
+                              {sedes.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                  {item.nombre}
+                                </option>
+                              ))}
+                            </select>
+                          </Field>
                         </div>
                       </section>
 
@@ -728,14 +787,20 @@ export default function SolicitudFormModal({
                           </Field>
                           <Field
                             label="Número de tarjeta"
-                            required
+                            required={mode === 'create'}
                             icon={CreditCard}
                           >
                             <input
                               name="tarjeta_numero"
                               value={form.tarjeta_numero}
                               onChange={handleChange}
-                              placeholder="Ingresá la tarjeta completa"
+                              placeholder={
+                                mode === 'edit'
+                                  ? initialData?.tarjeta_mascara
+                                    ? `Actual: ${initialData.tarjeta_mascara}`
+                                    : 'Ingresá una nueva tarjeta solo si querés reemplazarla'
+                                  : 'Ingresá la tarjeta completa'
+                              }
                               className={INPUT_UI}
                               inputMode="numeric"
                             />

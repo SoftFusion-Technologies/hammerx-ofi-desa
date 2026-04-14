@@ -17,7 +17,8 @@ import {
 import Footer from '../../components/footer/Footer';
 import creditCardType from 'credit-card-type';
 import { FaCcVisa, FaCcMastercard } from 'react-icons/fa';
-
+/* Benjamin Orellana - 07/04/2026 - Íconos sociales para la firma visual del modal de éxito */
+import { FaFacebookF, FaWhatsapp, FaInstagram } from 'react-icons/fa';
 const API_URL = 'http://localhost:8080';
 
 const BANCOS_ENDPOINT = `${API_URL}/debitos-automaticos-bancos`;
@@ -53,6 +54,8 @@ const initialForm = {
   titular_dni: '',
   titular_email: '',
   titular_telefono: '',
+  /* Benjamin Orellana - 07/04/2026 - Se agrega sede_id al estado inicial del formulario para enviar la sede seleccionada en el flujo de débitos automáticos */
+  sede_id: '',
   banco_id: '',
   marca_tarjeta: '',
   confirmo_tarjeta_credito: false,
@@ -106,15 +109,6 @@ function maskCard(number) {
     .trim();
 }
 
-function formatARS(value) {
-  const amount = Number(value || 0);
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0
-  }).format(amount);
-}
-
 function luhnCheck(cardNumber) {
   const digits = onlyDigits(cardNumber);
   if (digits.length < 13 || digits.length > 19) return false;
@@ -162,7 +156,7 @@ function getTerminosLabel(termino) {
   );
 }
 
-function validateForm(form) {
+function validateForm(form, { requireSede = false } = {}) {
   const errors = {};
   const titularDni = onlyDigits(form.titular_dni);
   const tarjetaNumero = onlyDigits(form.tarjeta_numero);
@@ -170,6 +164,11 @@ function validateForm(form) {
   const needsAdditional =
     form.modalidad_adhesion === 'AMBOS' ||
     form.modalidad_adhesion === 'SOLO_ADICIONAL';
+
+  /* Benjamin Orellana - 07/04/2026 - Se valida sede_id cuando el formulario se usa dentro del nuevo flujo por pasos */
+  if (requireSede && !form.sede_id) {
+    errors.sede_id = 'Seleccioná una sede antes de continuar.';
+  }
 
   if (!form.titular_nombre.trim()) {
     errors.titular_nombre = 'Ingresá el nombre completo del titular.';
@@ -242,7 +241,12 @@ function validateForm(form) {
   return errors;
 }
 
-export default function DebitosAutomaticosPublicPage() {
+/* Benjamin Orellana - 07/04/2026 - Se habilita modo embebido para reutilizar el formulario de débitos dentro del flujo por pasos con selección previa de sede */
+export default function DebitosAutomaticosPublicPage({
+  embedded = false,
+  selectedSede = null,
+  onBack = null
+}) {
   const [showIntro, setShowIntro] = useState(true);
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
@@ -291,6 +295,36 @@ export default function DebitosAutomaticosPublicPage() {
     const timer = setTimeout(() => setShowIntro(false), 1200);
     return () => clearTimeout(timer);
   }, []);
+
+  /* Benjamin Orellana - 07/04/2026 - En modo embebido se desactiva la intro propia porque el flujo contenedor ya maneja la entrada visual */
+  useEffect(() => {
+    if (embedded) {
+      setShowIntro(false);
+    }
+  }, [embedded]);
+
+  /* Benjamin Orellana - 07/04/2026 - Se sincroniza la sede elegida en el paso 1 con el formulario embebido para enviarla al backend */
+  useEffect(() => {
+    if (!embedded || !selectedSede?.id) return;
+
+    setForm((prev) => {
+      const nextSedeId = String(selectedSede.id);
+
+      if (String(prev.sede_id || '') === nextSedeId) return prev;
+
+      return {
+        ...prev,
+        sede_id: nextSedeId
+      };
+    });
+
+    setErrors((prev) => {
+      if (!prev.sede_id) return prev;
+      const next = { ...prev };
+      delete next.sede_id;
+      return next;
+    });
+  }, [embedded, selectedSede]);
 
   useEffect(() => {
     let active = true;
@@ -476,11 +510,22 @@ export default function DebitosAutomaticosPublicPage() {
   };
 
   const submitSolicitud = async () => {
+    /* Benjamin Orellana - 07/04/2026 - Se resuelve sede_id desde la sede seleccionada del contenedor para asegurar que siempre viaje al backend */
+    const resolvedSedeId = Number(embedded ? selectedSede?.id : form.sede_id);
+
+    if (!resolvedSedeId) {
+      setServerError('sede_id es obligatorio.');
+      scrollToFormTop();
+      return;
+    }
+
     const payload = {
       titular_nombre: form.titular_nombre.trim(),
       titular_dni: onlyDigits(form.titular_dni),
       titular_email: form.titular_email.trim().toLowerCase(),
       titular_telefono: form.titular_telefono.trim() || null,
+      /* Benjamin Orellana - 07/04/2026 - Se agrega sede_id al estado inicial del formulario para enviar la sede seleccionada en el flujo de débitos automáticos */
+      sede_id: resolvedSedeId,
       banco_id: Number(form.banco_id),
       marca_tarjeta: form.marca_tarjeta,
       confirmo_tarjeta_credito: form.confirmo_tarjeta_credito ? 1 : 0,
@@ -537,8 +582,10 @@ export default function DebitosAutomaticosPublicPage() {
       setErrors({});
       setServerError('');
 
+      /* Benjamin Orellana - 07/04/2026 - Luego del envío se conserva la sede seleccionada para no romper el flujo embebido */
       setForm({
         ...initialForm,
+        sede_id: embedded && selectedSede?.id ? String(selectedSede.id) : '',
         terminos_id: form.terminos_id
       });
 
@@ -553,12 +600,15 @@ export default function DebitosAutomaticosPublicPage() {
     } finally {
       setSubmitting(false);
     }
-  };
+  };;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const foundErrors = validateForm(form);
+    /* Benjamin Orellana - 07/04/2026 - En modo embebido se exige que la sede ya venga seleccionada desde el paso 1 */
+    const foundErrors = validateForm(form, {
+      requireSede: embedded
+    });
     setErrors(foundErrors);
     setServerError('');
 
@@ -691,28 +741,33 @@ export default function DebitosAutomaticosPublicPage() {
     );
   }
 
+  const shellClassName = embedded
+    ? 'relative w-full overflow-visible bg-transparent text-slate-900'
+    : 'relative min-h-screen overflow-hidden bg-white text-slate-900';
+
   return (
-    <section className="relative min-h-screen overflow-hidden bg-white text-slate-900">
-      <LightParticlesBackgroundCanvas />
-
-      <div className="pointer-events-none absolute inset-0 opacity-70 [mask-image:radial-gradient(50%_50%_at_50%_50%,transparent,black)]">
-        <div
-          className="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full blur-3xl"
-          style={{
-            background:
-              'conic-gradient(from 180deg at 50% 50%, rgba(251,146,60,.22), rgba(244,114,182,.14), rgba(251,191,36,.20), rgba(251,146,60,.22))'
-          }}
-        />
-      </div>
-
-      <IntroOverlay open={showIntro} onClose={() => setShowIntro(false)} />
-
+    <section className={shellClassName}>
+      {!embedded && <LightParticlesBackgroundCanvas />}
+      {!embedded && (
+        <div className="pointer-events-none absolute inset-0 opacity-70 [mask-image:radial-gradient(50%_50%_at_50%_50%,transparent,black)]">
+          <div
+            className="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full blur-3xl"
+            style={{
+              background:
+                'conic-gradient(from 180deg at 50% 50%, rgba(251,146,60,.22), rgba(244,114,182,.14), rgba(251,191,36,.20), rgba(251,146,60,.22))'
+            }}
+          />
+          <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8"></div>{' '}
+        </div>
+      )}
+      {!embedded && (
+        <IntroOverlay open={showIntro} onClose={() => setShowIntro(false)} />
+      )}
       <SuccessModal
         open={!!successData}
         data={successData}
         onClose={() => setSuccessData(null)}
       />
-
       <TerminosModal
         open={openTerminosModal}
         termino={currentTermino}
@@ -732,7 +787,13 @@ export default function DebitosAutomaticosPublicPage() {
         onConfirm={submitSolicitud}
         onEditSection={handleEditSection}
       />
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+      <div
+        className={`relative z-10 mx-auto flex w-full ${
+          embedded
+            ? 'max-w-none items-start justify-start px-0 py-0'
+            : 'min-h-screen max-w-5xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8'
+        }`}
+      >
         {' '}
         <motion.div
           ref={formTopRef}
@@ -741,22 +802,65 @@ export default function DebitosAutomaticosPublicPage() {
           animate="show"
           className="w-full"
         >
-          <div className="mx-auto mb-8 max-w-4xl text-center">
-            <motion.div
-              variants={itemUp}
-              className="mb-4 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-orange-700 shadow-sm backdrop-blur"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              Hammerx
-            </motion.div>
+          {embedded ? (
+            <div className="mb-6 overflow-hidden rounded-[28px] border border-orange-100 bg-white/95 shadow-[0_18px_60px_-30px_rgba(251,146,60,0.38)]">
+              <div className="border-b border-orange-100 bg-gradient-to-r from-orange-50 via-white to-orange-50 px-5 py-4">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-orange-700">
+                      <ShieldCheck className="h-4 w-4" />
+                      Paso 2
+                    </div>
 
-            <motion.h1
-              variants={itemUp}
-              className="text-balance font-bignoodle text-3xl font-black uppercase tracking-tight text-slate-900 md:text-6xl"
-            >
-              Adherite al débito automático
-            </motion.h1>
-          </div>
+                    <h2 className="mt-3 font-bignoodle text-3xl tracking-wide text-slate-900">
+                      Completá tu solicitud de débito automático
+                    </h2>
+
+                    <p className="mt-1 text-sm text-slate-600">
+                      Ya seleccionaste la sede. Ahora completá los datos del
+                      formulario.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {selectedSede?.nombre && (
+                      <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
+                        <Building2 className="h-4 w-4" />
+                        {selectedSede.nombre}
+                      </div>
+                    )}
+
+                    {typeof onBack === 'function' && (
+                      <button
+                        type="button"
+                        onClick={onBack}
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-orange-300 hover:bg-orange-50"
+                      >
+                        Volver a sedes
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto mb-8 max-w-4xl text-center">
+              <motion.div
+                variants={itemUp}
+                className="mb-4 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-orange-700 shadow-sm backdrop-blur"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Hammerx
+              </motion.div>
+
+              <motion.h1
+                variants={itemUp}
+                className="text-balance font-bignoodle text-3xl font-black uppercase tracking-tight text-slate-900 md:text-6xl"
+              >
+                Adherite al débito automático
+              </motion.h1>
+            </div>
+          )}
 
           <div className="mx-auto w-full max-w-4xl">
             {' '}
@@ -986,54 +1090,6 @@ export default function DebitosAutomaticosPublicPage() {
                   </FieldBlock>
                 </div>
               </div>
-
-              <div className="relative py-3 mt-2">
-                <div className="h-px w-full bg-gradient-to-r from-transparent via-orange-300 to-transparent" />
-              </div>
-
-              <SectionTitle
-                icon={<BookUser className="h-5 w-5" />}
-                title="PLAN"
-              />
-
-              {form.modalidad_adhesion !== 'SOLO_ADICIONAL' && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FieldBlock
-                    // label="Plan del titular"
-                    error={errors.titular_plan_id}
-                  >
-                    <select
-                      value={form.titular_plan_id}
-                      onChange={(e) =>
-                        handleChange('titular_plan_id', e.target.value)
-                      }
-                      className={inputClass(errors.titular_plan_id)}
-                    >
-                      <option value="">Seleccionar plan del titular</option>
-                      {planes.map((plan) => (
-                        <option key={plan.id} value={plan.id}>
-                          {getPlanLabel(plan)}
-                        </option>
-                      ))}
-                    </select>
-                  </FieldBlock>
-
-                  {/* <div className="rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3">
-                        <div className="mt-2 text-sm font-semibold text-slate-800">
-                          {selectedTitularPlan
-                            ? getPlanLabel(selectedTitularPlan)
-                            : 'Todavía no seleccionaste un plan'}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {selectedTitularPlan?.precio_referencia !== undefined
-                            ? `Referencia: ${formatARS(
-                                selectedTitularPlan.precio_referencia
-                              )}`
-                            : 'El detalle final quedará sujeto a validación interna.'}
-                        </div>
-                      </div> */}
-                </div>
-              )}
 
               <div className="relative py-3 mt-2">
                 <div className="h-px w-full bg-gradient-to-r from-transparent via-orange-300 to-transparent" />
@@ -1270,15 +1326,58 @@ export default function DebitosAutomaticosPublicPage() {
                 </div>
               </div>
 
-              {/* <SectionTitle
-                  icon={<CheckCircle2 className="h-5 w-5" />}
-                  title="Términos y confirmación"
-                  subtitle="Revisá la información y confirmá para registrar tu solicitud."
-                /> */}
-
               <div className="relative py-3 mt-2">
                 <div className="h-px w-full bg-gradient-to-r from-transparent via-orange-300 to-transparent" />
               </div>
+
+              {form.modalidad_adhesion !== 'SOLO_ADICIONAL' && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FieldBlock
+                    // label="Plan del titular"
+                    error={errors.titular_plan_id}
+                  >
+                    <SectionTitle
+                      icon={<BookUser className="h-5 w-5" />}
+                      title="PLAN"
+                    />
+                    <select
+                      value={form.titular_plan_id}
+                      onChange={(e) =>
+                        handleChange('titular_plan_id', e.target.value)
+                      }
+                      className={inputClass(errors.titular_plan_id)}
+                    >
+                      <option value="">Seleccionar plan del titular</option>
+                      {planes.map((plan) => (
+                        <option key={plan.id} value={plan.id}>
+                          {getPlanLabel(plan)}
+                        </option>
+                      ))}
+                    </select>
+                  </FieldBlock>
+
+                  {/* <div className="rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3">
+                        <div className="mt-2 text-sm font-semibold text-slate-800">
+                          {selectedTitularPlan
+                            ? getPlanLabel(selectedTitularPlan)
+                            : 'Todavía no seleccionaste un plan'}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {selectedTitularPlan?.precio_referencia !== undefined
+                            ? `Referencia: ${formatARS(
+                                selectedTitularPlan.precio_referencia
+                              )}`
+                            : 'El detalle final quedará sujeto a validación interna.'}
+                        </div>
+                      </div> */}
+                </div>
+              )}
+
+              {form.modalidad_adhesion !== 'SOLO_ADICIONAL' && (
+                <div className="relative py-3 mt-2">
+                  <div className="h-px w-full bg-gradient-to-r from-transparent via-orange-300 to-transparent" />
+                </div>
+              )}
 
               <div ref={terminosSectionRef} className="space-y-4 mt-4">
                 <div className="grid gap-4">
@@ -1414,7 +1513,7 @@ export default function DebitosAutomaticosPublicPage() {
           </div>
         </motion.div>
       </div>
-      <Footer></Footer>
+      {!embedded && <Footer></Footer>}{' '}
     </section>
   );
 }
@@ -1542,16 +1641,18 @@ function SuccessModal({ open, data, onClose }) {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-500 text-white">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-
-            <h3 className="mt-5 text-center text-2xl font-black uppercase tracking-tight text-slate-900">
-              Solicitud enviada
+            {/* Benjamin Orellana - 07/04/2026 - Texto principal actualizado del modal de éxito */}
+            <h3 className="mt-5 text-center font-bignoodle text-4xl font-black uppercase tracking-tight text-slate-900">
+              Solicitud enviada.
             </h3>
 
             <p className="mt-3 text-center text-sm leading-6 text-slate-600">
               Tu adhesión fue registrada correctamente.
+              <br />
+              Por favor revisa la casilla de tu correo.
             </p>
 
-            <div className="mt-6 grid gap-3">
+            {/* <div className="mt-6 grid gap-3">
               <SummaryItem label="ID de solicitud" value={data?.id || '-'} />
               <SummaryItem label="Estado" value={data?.estado || 'PENDIENTE'} />
               <SummaryItem
@@ -1559,6 +1660,46 @@ function SuccessModal({ open, data, onClose }) {
                 value={data?.titular_nombre || '-'}
               />
               <SummaryItem label="DNI" value={data?.titular_dni || '-'} />
+            </div> */}
+
+            {/* Benjamin Orellana - 07/04/2026 - Firma sutil de Soft Fusion con redes sociales en el modal de éxito */}
+            <div className="mt-6 flex flex-col items-center justify-center gap-2 border-t border-slate-100 pt-4">
+              <span className="text-center text-[11px] font-medium tracking-[0.04em] text-slate-400/90">
+                Sistema desarrollado por{' '}
+                <span className="font-bold text-pink-600">Soft Fusion</span>
+              </span>
+
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://www.facebook.com/profile.php?id=61551009572957&mibextid=wwXIfr&rdid=i9TyFp5jNmBtdYT8&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1JAMUqUEaQ%2F%3Fmibextid%3DwwXIfr#"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-slate-400/80 transition hover:text-blue-600"
+                  aria-label="Facebook Soft Fusion"
+                >
+                  <FaFacebookF size={12} />
+                </a>
+
+                <a
+                  href="https://api.whatsapp.com/send/?phone=5493815430503&text&type=phone_number&app_absent=0"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-slate-400/80 transition hover:text-green-500"
+                  aria-label="WhatsApp Soft Fusion"
+                >
+                  <FaWhatsapp size={12} />
+                </a>
+
+                <a
+                  href="https://www.instagram.com/softfusiontechnologies/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-slate-400/80 transition hover:text-pink-500"
+                  aria-label="Instagram Soft Fusion"
+                >
+                  <FaInstagram size={12} />
+                </a>
+              </div>
             </div>
 
             <button
@@ -1690,6 +1831,7 @@ function LightParticlesBackgroundCanvas() {
   );
 }
 
+
 function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
   const scrollRef = useRef(null);
   const [canAccept, setCanAccept] = useState(false);
@@ -1705,6 +1847,12 @@ function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
     const el = scrollRef.current;
     if (!el) return;
 
+    /* Benjamin Orellana - 2026/04/13 - Reinicia el scroll del modal al abrir o cambiar el término para una lectura consistente. */
+    el.scrollTop = 0;
+    setCanAccept(false);
+    setScrollProgress(0);
+
+    /* Benjamin Orellana - 2026/04/13 - Controla avance de lectura y habilitación del botón de aceptación al llegar al final. */
     const checkScrollState = () => {
       const { scrollTop, scrollHeight, clientHeight } = el;
 
@@ -1734,6 +1882,7 @@ function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
   }, [open, termino]);
 
   const acceptEnabled = accepted || canAccept;
+  const acceptButtonDisabled = accepted || !acceptEnabled;
 
   return (
     <AnimatePresence>
@@ -1772,6 +1921,7 @@ function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
               <button
                 type="button"
                 onClick={onClose}
+                aria-label="Cerrar"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
               >
                 <X className="h-5 w-5" />
@@ -1812,17 +1962,18 @@ function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
 
             <div
               ref={scrollRef}
-              className="overflow-y-auto px-5 py-5 md:px-6 md:py-6"
+              className="overflow-y-auto overscroll-contain bg-gradient-to-b from-slate-50 to-orange-50/30 px-4 py-5 md:px-6 md:py-6"
             >
               {termino?.contenido_html ? (
-                <div
-                  className="prose prose-slate max-w-none prose-headings:font-black prose-headings:tracking-tight prose-p:text-slate-600 prose-strong:text-slate-800"
-                  dangerouslySetInnerHTML={{
-                    __html: termino.contenido_html
-                  }}
-                />
+                <div className="mx-auto w-full max-w-3xl">
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: termino.contenido_html
+                    }}
+                  />
+                </div>
               ) : (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
                   No hay contenido disponible para los términos y condiciones.
                 </div>
               )}
@@ -1833,18 +1984,22 @@ function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
                 <div className="text-xs leading-5 text-slate-500">
                   {!accepted && !canAccept
                     ? 'El botón “Leí y acepto” se habilita al llegar al final.'
-                    : 'Ya podés confirmar la aceptación de los términos.'}
+                    : accepted
+                      ? 'La aceptación ya fue registrada correctamente.'
+                      : 'Ya podés confirmar la aceptación de los términos.'}
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <button
                     type="button"
                     onClick={onAccept}
-                    disabled={!acceptEnabled}
+                    disabled={acceptButtonDisabled}
                     className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${
-                      acceptEnabled
-                        ? 'bg-orange-600 text-white shadow-[0_16px_38px_-14px_rgba(251,146,60,0.75)] hover:bg-orange-500'
-                        : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
+                      accepted
+                        ? 'cursor-default border border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : acceptEnabled
+                          ? 'bg-orange-600 text-white shadow-[0_16px_38px_-14px_rgba(251,146,60,0.75)] hover:bg-orange-500'
+                          : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
                     }`}
                   >
                     {accepted ? 'Términos aceptados' : 'Leí y acepto'}

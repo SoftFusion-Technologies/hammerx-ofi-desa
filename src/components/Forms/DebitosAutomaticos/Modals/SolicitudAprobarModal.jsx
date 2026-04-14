@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   BadgeCheck,
-  Building2,
   CalendarDays,
   CheckCircle2,
   CreditCard,
@@ -121,22 +120,137 @@ const monthInputToLabel = (value) => {
 
 const normalizeMontoInput = (raw) => {
   if (raw === undefined || raw === null) return '';
-  return String(raw).replace(',', '.');
+  return String(raw).replace(',', '.').trim();
+};
+
+const parseNullableNumber = (value) => {
+  const normalized = normalizeMontoInput(value);
+  if (normalized === '') return null;
+
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : null;
+};
+
+const toInputNumberString = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '';
+  return String(Number(n.toFixed(2)));
+};
+
+const calculateMontoBase = (montoInicial, descuento) => {
+  const monto = Number(montoInicial);
+  const desc = Number(descuento);
+
+  if (!Number.isFinite(monto) || !Number.isFinite(desc)) return null;
+
+  const montoSeguro = Math.max(monto, 0);
+  const descuentoSeguro = Math.min(Math.max(desc, 0), 100);
+
+  return Number(
+    (montoSeguro - (montoSeguro * descuentoSeguro) / 100).toFixed(2)
+  );
 };
 
 const isValidPositiveAmount = (value) => {
-  const n = Number(normalizeMontoInput(value));
-  return Number.isFinite(n) && n > 0;
+  const n = parseNullableNumber(value);
+  return n !== null && n > 0;
+};
+
+const isValidDiscount = (value) => {
+  const n = parseNullableNumber(value);
+  return n !== null && n >= 0 && n <= 100;
+};
+
+/* Benjamin Orellana - 09/04/2026 - Resuelve automáticamente el plan a utilizar según la modalidad de adhesión de la solicitud */
+const resolvePlanFromSolicitud = (solicitud) => {
+  if (!solicitud) {
+    return {
+      plan: null,
+      source: null,
+      warning: ''
+    };
+  }
+
+  const modalidad = solicitud?.modalidad_adhesion;
+
+  if (modalidad === 'TITULAR_SOLO' || modalidad === 'AMBOS') {
+    if (solicitud?.plan_titular) {
+      return {
+        plan: solicitud.plan_titular,
+        source: 'titular',
+        warning: ''
+      };
+    }
+
+    return {
+      plan: null,
+      source: 'titular',
+      warning:
+        'No se encontró el plan del titular para esta solicitud. Completá manualmente los campos comerciales.'
+    };
+  }
+
+  if (modalidad === 'SOLO_ADICIONAL') {
+    if (solicitud?.adicional?.plan) {
+      return {
+        plan: solicitud.adicional.plan,
+        source: 'adicional',
+        warning: ''
+      };
+    }
+
+    return {
+      plan: null,
+      source: 'adicional',
+      warning:
+        'No se encontró el plan del adicional para esta solicitud. Completá manualmente los campos comerciales.'
+    };
+  }
+
+  return {
+    plan: null,
+    source: null,
+    warning:
+      'No se pudo resolver el plan de la solicitud. Completá manualmente los campos comerciales.'
+  };
+};
+
+/* Benjamin Orellana - 09/04/2026 - Obtiene valores iniciales del bloque comercial a partir del plan resuelto */
+const buildCommercialDefaultsFromPlan = (plan) => {
+  if (!plan) {
+    return {
+      monto_inicial_vigente: '',
+      descuento_vigente: '',
+      monto_base_vigente: ''
+    };
+  }
+
+  const precioReferencia = parseNullableNumber(plan?.precio_referencia);
+  const descuento = parseNullableNumber(plan?.descuento);
+  const precioFinal = parseNullableNumber(plan?.precio_final);
+
+  const descuentoResolved = descuento ?? 0;
+  const precioFinalCalculado =
+    precioReferencia !== null
+      ? calculateMontoBase(precioReferencia, descuentoResolved)
+      : null;
+
+  return {
+    monto_inicial_vigente:
+      precioReferencia !== null ? toInputNumberString(precioReferencia) : '',
+    descuento_vigente: toInputNumberString(descuentoResolved),
+    monto_base_vigente:
+      precioFinal !== null
+        ? toInputNumberString(precioFinal)
+        : precioFinalCalculado !== null
+          ? toInputNumberString(precioFinalCalculado)
+          : ''
+  };
 };
 
 const buildTitlePlan = (solicitud) => {
-  if (!solicitud) return '—';
-
-  if (solicitud?.plan_titular?.nombre) return solicitud.plan_titular.nombre;
-  if (solicitud?.adicional?.plan?.nombre)
-    return solicitud.adicional.plan.nombre;
-
-  return '—';
+  const resolved = resolvePlanFromSolicitud(solicitud);
+  return resolved?.plan?.nombre || '—';
 };
 
 const buildTarjetaLabel = (solicitud) => {
@@ -151,10 +265,12 @@ const buildTarjetaLabel = (solicitud) => {
 };
 
 const emptyForm = {
-  sede_id: '',
+  monto_inicial_vigente: '',
+  descuento_vigente: '',
   monto_base_vigente: '',
   fecha_aprobacion: buildTodayDateInput(),
   fecha_inicio_cobro: buildNextMonthInput(),
+  especial: '',
   observaciones_internas: ''
 };
 
@@ -166,83 +282,73 @@ export default function SolicitudAprobarModal({
   apiBaseUrl = 'http://localhost:8080'
 }) {
   const [form, setForm] = useState(emptyForm);
-  const [sedes, setSedes] = useState([]);
-  const [loadingSedes, setLoadingSedes] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  useEffect(() => {
-    if (!open || !solicitud) return;
-
-    setErrorMsg('');
-    setForm({
-      sede_id: '',
-      monto_base_vigente: '',
-      fecha_aprobacion: buildTodayDateInput(),
-      fecha_inicio_cobro: buildNextMonthInput(),
-      observaciones_internas: ''
-    });
-  }, [open, solicitud]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    let active = true;
-
-    const fetchSedes = async () => {
-      try {
-        setLoadingSedes(true);
-
-        const response = await axios.get(`${apiBaseUrl}/sedes`, {
-          params: { es_ciudad: true }
-        });
-
-        if (!active) return;
-
-        const raw = Array.isArray(response.data) ? response.data : [];
-
-        const filtered = raw.filter(
-          (sede) =>
-            sede &&
-            sede.es_ciudad === true &&
-            String(sede.estado || '').toLowerCase() === 'activo' &&
-            String(sede.nombre || '')
-              .trim()
-              .toLowerCase() !== 'multisede'
-        );
-
-        setSedes(filtered);
-      } catch (error) {
-        if (!active) return;
-        setSedes([]);
-        setErrorMsg(
-          error?.response?.data?.mensajeError ||
-            'No se pudieron cargar las sedes.'
-        );
-      } finally {
-        if (active) setLoadingSedes(false);
-      }
-    };
-
-    fetchSedes();
-
-    return () => {
-      active = false;
-    };
-  }, [open, apiBaseUrl]);
+  const resolvedPlan = useMemo(
+    () => resolvePlanFromSolicitud(solicitud),
+    [solicitud]
+  );
 
   const titularPlanLabel = useMemo(
     () => buildTitlePlan(solicitud),
     [solicitud]
   );
 
-  const selectedSede = useMemo(() => {
-    return sedes.find((s) => Number(s.id) === Number(form.sede_id)) || null;
-  }, [sedes, form.sede_id]);
+  useEffect(() => {
+    if (!open || !solicitud) return;
 
+    const commercialDefaults = buildCommercialDefaultsFromPlan(
+      resolvedPlan?.plan
+    );
+
+    setErrorMsg('');
+    setForm({
+      monto_inicial_vigente: commercialDefaults.monto_inicial_vigente,
+      descuento_vigente: commercialDefaults.descuento_vigente,
+      monto_base_vigente: commercialDefaults.monto_base_vigente,
+      fecha_aprobacion: buildTodayDateInput(),
+      fecha_inicio_cobro: buildNextMonthInput(),
+      especial: '',
+      observaciones_internas: ''
+    });
+  }, [open, solicitud, resolvedPlan]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const montoInicial = parseNullableNumber(form.monto_inicial_vigente);
+    const descuento = parseNullableNumber(form.descuento_vigente);
+
+    if (montoInicial === null || descuento === null) {
+      setForm((prev) => {
+        if (prev.monto_base_vigente === '') return prev;
+        return {
+          ...prev,
+          monto_base_vigente: ''
+        };
+      });
+      return;
+    }
+
+    const recalculado = calculateMontoBase(montoInicial, descuento);
+    const nextValue =
+      recalculado !== null ? toInputNumberString(recalculado) : '';
+
+    setForm((prev) => {
+      if (prev.monto_base_vigente === nextValue) return prev;
+      return {
+        ...prev,
+        monto_base_vigente: nextValue
+      };
+    });
+  }, [open, form.monto_inicial_vigente, form.descuento_vigente]);
+
+  /* Benjamin Orellana - 08/04/2026 - La aprobación ya no depende de seleccionar sede en el modal */
   const canSubmit = useMemo(() => {
     return (
-      Number(form.sede_id) > 0 &&
+      isValidPositiveAmount(form.monto_inicial_vigente) &&
+      isValidDiscount(form.descuento_vigente) &&
       isValidPositiveAmount(form.monto_base_vigente) &&
       Boolean(form.fecha_aprobacion) &&
       Boolean(form.fecha_inicio_cobro) &&
@@ -250,6 +356,7 @@ export default function SolicitudAprobarModal({
     );
   }, [form, loadingSubmit]);
 
+  /* Benjamin Orellana - 08/04/2026 - Se muestra la sede ya registrada en la solicitud como dato informativo dentro del resumen de aprobación */
   const summaryItems = useMemo(() => {
     if (!solicitud) return [];
 
@@ -310,13 +417,18 @@ export default function SolicitudAprobarModal({
       return;
     }
 
-    if (!Number(form.sede_id)) {
-      setErrorMsg('Seleccioná una sede.');
+    if (!isValidPositiveAmount(form.monto_inicial_vigente)) {
+      setErrorMsg('Ingresá un monto inicial válido mayor a 0.');
+      return;
+    }
+
+    if (!isValidDiscount(form.descuento_vigente)) {
+      setErrorMsg('Ingresá un descuento válido entre 0 y 100.');
       return;
     }
 
     if (!isValidPositiveAmount(form.monto_base_vigente)) {
-      setErrorMsg('Ingresá un monto válido mayor a 0.');
+      setErrorMsg('Ingresá un monto base válido mayor a 0.');
       return;
     }
 
@@ -334,13 +446,21 @@ export default function SolicitudAprobarModal({
       setLoadingSubmit(true);
       setErrorMsg('');
 
+      /* Benjamin Orellana - 09/04/2026 - Se envían monto inicial, descuento y monto base al aprobar la solicitud */
       const payload = {
-        sede_id: Number(form.sede_id),
+        monto_inicial_vigente: Number(
+          Number(normalizeMontoInput(form.monto_inicial_vigente)).toFixed(2)
+        ),
+        descuento_vigente: Number(
+          Number(normalizeMontoInput(form.descuento_vigente)).toFixed(2)
+        ),
         monto_base_vigente: Number(
           Number(normalizeMontoInput(form.monto_base_vigente)).toFixed(2)
         ),
         fecha_aprobacion: form.fecha_aprobacion,
         fecha_inicio_cobro: form.fecha_inicio_cobro,
+        // Benjamin Orellana - 08/04/2026 - Se envía el campo especial opcional al aprobar para persistir promociones puntuales del cliente
+        especial: form.especial?.trim() || undefined,
         observaciones_internas: form.observaciones_internas?.trim() || undefined
       };
 
@@ -454,58 +574,76 @@ export default function SolicitudAprobarModal({
                     {solicitud.adicional.dni || '—'}
                   </div>
                 )}
+
+                {resolvedPlan?.warning ? (
+                  <div className="mt-3 flex items-start gap-3 rounded-[22px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{resolvedPlan.warning}</span>
+                  </div>
+                ) : null}
               </div>
 
               <div className="space-y-4">
-                <FieldBlock
-                  label="Sede"
-                  icon={Building2}
-                  required
-                >
-                  <select
-                    value={form.sede_id}
-                    onChange={(e) => handleChange('sede_id', e.target.value)}
-                    disabled={loadingSubmit || loadingSedes}
-                    className="h-12 w-full rounded-[22px] border border-slate-200 bg-white px-4 text-sm font-medium text-slate-800 outline-none transition-all duration-200 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <FieldBlock
+                    label="Monto inicial vigente"
+                    icon={Wallet}
+                    required
                   >
-                    <option value="">
-                      {loadingSedes ? 'Cargando sedes...' : 'Seleccionar sede'}
-                    </option>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={form.monto_inicial_vigente}
+                      onChange={(e) =>
+                        handleChange('monto_inicial_vigente', e.target.value)
+                      }
+                      disabled={loadingSubmit}
+                      placeholder="Ej: 70000"
+                      className="h-12 w-full rounded-[22px] border border-slate-200 bg-white px-4 text-sm font-medium text-slate-800 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                    />
+                  </FieldBlock>
 
-                    {sedes.map((sede) => (
-                      <option key={sede.id} value={sede.id}>
-                        {sede.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </FieldBlock>
+                  <FieldBlock label="Descuento vigente" icon={Wallet} required>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={form.descuento_vigente}
+                      onChange={(e) =>
+                        handleChange('descuento_vigente', e.target.value)
+                      }
+                      disabled={loadingSubmit}
+                      placeholder="Ej: 10"
+                      className="h-12 w-full rounded-[22px] border border-slate-200 bg-white px-4 text-sm font-medium text-slate-800 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                    />
+                  </FieldBlock>
 
-                <FieldBlock
-                  label="Monto del plan"
-                  icon={Wallet}
-                  required
-                >
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    inputMode="decimal"
-                    value={form.monto_base_vigente}
-                    onChange={(e) =>
-                      handleChange('monto_base_vigente', e.target.value)
-                    }
-                    disabled={loadingSubmit}
-                    placeholder="Ej: 40000"
-                    className="h-12 w-full rounded-[22px] border border-slate-200 bg-white px-4 text-sm font-medium text-slate-800 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-slate-50"
-                  />
-                </FieldBlock>
+                  <FieldBlock label="Monto base vigente" icon={Wallet} required>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={form.monto_base_vigente}
+                      onChange={(e) =>
+                        handleChange('monto_base_vigente', e.target.value)
+                      }
+                      disabled={loadingSubmit}
+                      placeholder="Ej: 63000"
+                      className="h-12 w-full rounded-[22px] border border-slate-200 bg-white px-4 text-sm font-medium text-slate-800 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                    />
+                  </FieldBlock>
+                </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FieldBlock
-                    label="Fecha de aprobación"
+                    label="Fecha de Alta"
                     icon={CalendarDays}
                     required
-                    // helper="Fecha operativa del alta."
                   >
                     <input
                       type="date"
@@ -519,10 +657,9 @@ export default function SolicitudAprobarModal({
                   </FieldBlock>
 
                   <FieldBlock
-                    label="Inicio de cobro"
+                    label="Fecha de Inicio"
                     icon={CalendarDays}
                     required
-                    // helper="Primer mes que se crea para cobrar."
                   >
                     <input
                       type="month"
@@ -536,37 +673,19 @@ export default function SolicitudAprobarModal({
                   </FieldBlock>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleChange(
-                        'fecha_inicio_cobro',
-                        buildCurrentMonthInput()
-                      )
-                    }
+                <FieldBlock label="Especial" icon={Sparkles}>
+                  <input
+                    type="text"
+                    value={form.especial}
+                    onChange={(e) => handleChange('especial', e.target.value)}
                     disabled={loadingSubmit}
-                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-700 transition-all duration-200 hover:border-orange-200 hover:text-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Mes actual
-                  </button>
+                    placeholder="Ej: Primer mes $10.000"
+                    maxLength={255}
+                    className="h-12 w-full rounded-[22px] border border-slate-200 bg-white px-4 text-sm font-medium text-slate-800 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                  />
+                </FieldBlock>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleChange('fecha_inicio_cobro', buildNextMonthInput())
-                    }
-                    disabled={loadingSubmit}
-                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-700 transition-all duration-200 hover:border-orange-200 hover:text-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Próximo mes
-                  </button>
-                </div>
-
-                <FieldBlock
-                  label="Observaciones internas"
-                  icon={Sparkles}
-                >
+                <FieldBlock label="Observaciones internas" icon={Sparkles}>
                   <textarea
                     rows={4}
                     value={form.observaciones_internas}
@@ -579,6 +698,7 @@ export default function SolicitudAprobarModal({
                   />
                 </FieldBlock>
               </div>
+
               {errorMsg && (
                 <div className="flex items-start gap-3 rounded-[22px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -663,19 +783,6 @@ function SummaryInline({ icon: Icon, label, value }) {
             {value || '—'}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function MiniPreview({ label, value }) {
-  return (
-    <div className="rounded-2xl bg-white px-3 py-3">
-      <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
-        {label}
-      </div>
-      <div className="mt-1 text-sm font-semibold text-slate-800">
-        {value || '—'}
       </div>
     </div>
   );

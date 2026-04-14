@@ -19,6 +19,8 @@
     "credit-card-type": "^10.1.2",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "exceljs": "^4.4.0",
+    "face-api.js": "^0.22.2",
     "formik": "^2.4.5",
     "framer-motion": "^11.18.2",
     "lucide-react": "^0.475.0",

@@ -1,18 +1,15 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import NavbarStaff from '../staff/NavbarStaff';
+import { useAuth } from '../../AuthContext';
 
 import {
   Building2,
   Layers3,
   FileText,
   ClipboardList,
-  UserPlus,
   Users,
-  CalendarDays,
-  FileArchive,
-  CheckCircle2,
-  History
+  CalendarDays
 } from 'lucide-react';
 
 const DashboardTile = ({
@@ -39,13 +36,13 @@ const DashboardTile = ({
         type={to ? undefined : 'button'}
       >
         <div className="relative h-full overflow-hidden rounded-2xl border border-slate-100 bg-white/95 shadow-[0_18px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_24px_60px_rgba(15,23,42,0.2)]">
-          <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-orange-500/6 via-pink-500/6 to-emerald-400/6" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-orange-500/6 via-pink-500/6 to-emerald-400/6 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-          <div className="relative z-10 p-5 flex flex-col gap-3 h-full">
+          <div className="relative z-10 flex h-full flex-col gap-3 p-5">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-3">
                 {Icon && (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-colors duration-300">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 transition-colors duration-300 group-hover:bg-orange-500 group-hover:text-white">
                     <Icon className="h-5 w-5" />
                   </div>
                 )}
@@ -66,7 +63,7 @@ const DashboardTile = ({
             </div>
 
             {description && (
-              <p className="text-xs text-slate-500 leading-snug">
+              <p className="text-xs leading-snug text-slate-500">
                 {description}
               </p>
             )}
@@ -90,14 +87,14 @@ const seccionesDebitos = {
     {
       title: 'Planes',
       description:
-        'Gestión de planes disponibles para adhesiones y formularios.',
+        'Gestión de planes disponibles para adhesiones y formulario publico.',
       to: '/dashboard/debitos-automaticos/planes',
       icon: Layers3
     },
     {
       title: 'Términos',
       description:
-        'Versionado, activación e historial legal de términos y condiciones.',
+        'Versionado, activación e historial de términos y condiciones.',
       to: '/dashboard/debitos-automaticos/terminos',
       icon: FileText
     }
@@ -111,15 +108,12 @@ const seccionesDebitos = {
       to: '/dashboard/debitos-automaticos/solicitudes',
       icon: ClipboardList
     },
-
     {
       title: 'Clientes y adicionales',
-      description:
-        'Clientes ya aprobados y activos dentro del sistema de débitos.',
+      description: 'Clientes ya aprobados y activos dentro de débitos.',
       to: '/dashboard/debitos-automaticos/clientes',
       icon: Users
-    },
-
+    }
   ],
 
   operacion: [
@@ -129,59 +123,79 @@ const seccionesDebitos = {
         'Control mensual de cobros, rechazos, pagos manuales y bajas.',
       to: '/dashboard/debitos-automaticos/periodos',
       icon: CalendarDays
-    },
-    {
-      title: 'Archivos banco',
-      description: 'Carga y administración de archivos bancarios importados.',
-      to: '/dashboard/debitos-automaticos/archivos-banco',
-      icon: FileArchive
-    },
-    {
-      title: 'Resultados banco',
-      description:
-        'Resultados procesados de importaciones y conciliaciones bancarias.',
-      to: '/dashboard/debitos-automaticos/resultados-banco',
-      icon: CheckCircle2
-    },
-    {
-      title: 'Historial',
-      description:
-        'Trazabilidad y auditoría completa del módulo de débitos automáticos.',
-      to: '/dashboard/debitos-automaticos/historial',
-      icon: History
     }
   ]
 };
 
+/* Benjamin Orellana - 2026/04/10 - Usuarios con acceso completo al home del módulo Débitos Automáticos. */
+const DEBITOS_FULL_ACCESS_USER_IDS = new Set([1, 15, 19]);
+
+/* Benjamin Orellana - 2026/04/10 - Correos privilegiados normalizados para tolerar diferencias de mayúsculas/minúsculas. */
+const DEBITOS_FULL_ACCESS_EMAILS = new Set([
+  'carlosg@hammer.ar',
+  'marcelog@hammer.ar',
+  'benja@gmail.com',
+  'azultaborda@icloud.com'
+]);
+
+/* Benjamin Orellana - 2026/04/10 - Normaliza strings para comparaciones seguras de identidad. */
+const normalizeIdentityValue = (value) =>
+  String(value || '')
+    .trim()
+    .toLowerCase();
+
+/* Benjamin Orellana - 2026/04/10 - Define si el usuario puede ver todo el dashboard o debe comportarse como vendedor. */
+const canAccessFullDebitosDashboard = ({ userLevel, userId, userName }) => {
+  const normalizedLevel = normalizeIdentityValue(userLevel);
+  const normalizedUserName = normalizeIdentityValue(userName);
+  const numericUserId = Number(userId);
+
+  const isPrivilegedById = Number.isFinite(numericUserId)
+    ? DEBITOS_FULL_ACCESS_USER_IDS.has(numericUserId)
+    : false;
+
+  const isPrivilegedByEmail =
+    !!normalizedUserName && DEBITOS_FULL_ACCESS_EMAILS.has(normalizedUserName);
+
+  if (isPrivilegedById || isPrivilegedByEmail) return true;
+
+  if (normalizedLevel === 'vendedor') return false;
+  if (normalizedLevel === 'admin') return false;
+
+  return false;
+};
+
 const AdminPageDebitosAutomaticos = () => {
+  const { userLevel, userId, userName } = useAuth();
+
+  /* Benjamin Orellana - 2026/04/10 - Vendedores y admins no privilegiados ingresan directamente a Solicitudes. */
+  const hasFullAccess = canAccessFullDebitosDashboard({
+    userLevel,
+    userId,
+    userName
+  });
+
+  if (!hasFullAccess) {
+    return <Navigate to="/dashboard/debitos-automaticos/solicitudes" replace />;
+  }
+
   return (
     <>
       <NavbarStaff />
 
-      <section className="relative w-full min-h-[calc(100vh-80px)]">
+      <section className="relative min-h-[calc(100vh-80px)] w-full">
         <div className="dashboardbg min-h-[calc(100vh-80px)]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-14">
-            {/* ENCABEZADO */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
+            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <motion.h1
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="text-2xl sm:text-3xl lg:text-4xl font-bignoodle tracking-[.18em] uppercase text-white"
+                  className="font-bignoodle text-2xl uppercase tracking-[.18em] text-white sm:text-3xl lg:text-4xl"
                 >
                   Débitos Automáticos
                 </motion.h1>
-
-                <motion.p
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 }}
-                  className="mt-1 text-sm text-slate-200/80 max-w-xl"
-                >
-                  Panel central del módulo para administrar configuración,
-                  solicitudes, clientes, operación bancaria y auditoría.
-                </motion.p>
               </div>
 
               <motion.div
@@ -201,15 +215,13 @@ const AdminPageDebitosAutomaticos = () => {
               </motion.div>
             </div>
 
-            {/* GRID PRINCIPAL */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-              {/* CONFIGURACIÓN */}
-              <div className="flex flex-col gap-5 w-full">
-                <div className="pb-2 border-b border-orange-500/30 mb-2">
+            <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
+              <div className="flex w-full flex-col gap-5">
+                <div className="mb-2 border-b border-orange-500/30 pb-2">
                   <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">
                     CONFIGURACIÓN
                   </h2>
-                  <p className="text-xs text-slate-300 font-semibold">
+                  <p className="text-xs font-semibold text-slate-300">
                     Parámetros base del módulo
                   </p>
                 </div>
@@ -226,13 +238,12 @@ const AdminPageDebitosAutomaticos = () => {
                 ))}
               </div>
 
-              {/* ADHESIONES */}
-              <div className="flex flex-col gap-5 w-full">
-                <div className="pb-2 border-b border-orange-500/30 mb-2">
+              <div className="flex w-full flex-col gap-5">
+                <div className="mb-2 border-b border-orange-500/30 pb-2">
                   <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">
                     ADHESIONES
                   </h2>
-                  <p className="text-xs text-slate-300 font-semibold">
+                  <p className="text-xs font-semibold text-slate-300">
                     Solicitudes, clientes y adicionales
                   </p>
                 </div>
@@ -249,14 +260,13 @@ const AdminPageDebitosAutomaticos = () => {
                 ))}
               </div>
 
-              {/* OPERACIÓN */}
-              <div className="flex flex-col gap-5 w-full">
-                <div className="pb-2 border-b border-orange-500/30 mb-2">
+              <div className="flex w-full flex-col gap-5">
+                <div className="mb-2 border-b border-orange-500/30 pb-2">
                   <h2 className="font-bignoodle text-2xl tracking-widest text-orange-400">
                     OPERACIÓN
                   </h2>
-                  <p className="text-xs text-slate-300 font-semibold">
-                    Seguimiento mensual, banco y auditoría
+                  <p className="text-xs font-semibold text-slate-300">
+                    Seguimiento mensual, archivos y banco
                   </p>
                 </div>
 

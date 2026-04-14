@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef
+} from 'react';
 import axios from 'axios';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -39,8 +45,7 @@ import { useAuth } from '../../../AuthContext';
 import '../../../styles/staff/dashboard.css';
 import '../../../styles/staff/background.css';
 
-const API_URL =
-  import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:8080';
+const API_URL = 'http://localhost:8080';
 
 const LIST_ENDPOINT = `${API_URL}/debitos-automaticos-solicitudes`;
 const PENDING_ENDPOINT = `${API_URL}/debitos-automaticos-solicitudes/pendientes`;
@@ -58,27 +63,6 @@ const ESTADOS = [
 const CANALES = ['PUBLICO', 'INTERNO'];
 
 const MODALIDADES = ['TITULAR_SOLO', 'AMBOS', 'SOLO_ADICIONAL'];
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 18 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.38,
-      delay: i * 0.06,
-      ease: [0.16, 1, 0.3, 1]
-    }
-  })
-};
-
-const statusStyles = {
-  PENDIENTE: 'border-amber-300/60 bg-amber-50 text-amber-700',
-  APROBADA: 'border-emerald-300/60 bg-emerald-50 text-emerald-700',
-  RECHAZADA: 'border-rose-300/60 bg-rose-50 text-rose-700',
-  OBSERVADA: 'border-orange-300/60 bg-orange-50 text-orange-700',
-  CANCELADA: 'border-slate-300/70 bg-slate-100 text-slate-600'
-};
 
 const prettyText = (value) => {
   if (!value) return '—';
@@ -105,6 +89,7 @@ const buildSearchText = (item) => {
     item?.titular_nombre,
     item?.titular_dni,
     item?.titular_email,
+    item?.sede?.nombre,
     item?.banco?.nombre,
     item?.marca_tarjeta,
     item?.modalidad_adhesion,
@@ -196,7 +181,35 @@ function FilterSelect({ value, onChange, placeholder, options }) {
     </div>
   );
 }
+/* Benjamin Orellana - 07/04/2026 - Select reutilizable para filtros cuyos options vienen como objetos id/nombre */
+function FilterSelectObject({
+  value,
+  onChange,
+  placeholder,
+  options,
+  valueKey = 'id',
+  labelKey = 'nombre'
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={onChange}
+        className="h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-orange-300 focus:ring-4 focus:ring-orange-100"
+      >
+        <option value="">{placeholder}</option>
 
+        {(Array.isArray(options) ? options : []).map((item) => (
+          <option key={item?.[valueKey]} value={item?.[valueKey]}>
+            {item?.[labelKey] || `#${item?.[valueKey]}`}
+          </option>
+        ))}
+      </select>
+
+      <Filter className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+    </div>
+  );
+}
 function EmptyState({ onReload }) {
   return (
     <div className="rounded-[28px] border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
@@ -337,12 +350,16 @@ export default function SolicitudesPage() {
   const [error, setError] = useState('');
   const [quickView, setQuickView] = useState('ALL');
   const [currentPage, setCurrentPage] = useState(1);
+  /* Benjamin Orellana - 07/04/2026 - Catálogo de sedes para poblar el filtro visual por sede en la grilla de solicitudes */
+  const [sedesOptions, setSedesOptions] = useState([]);
 
   const [filters, setFilters] = useState({
     q: '',
     estado: '',
     canal_origen: '',
-    modalidad_adhesion: ''
+    modalidad_adhesion: '',
+    /* Benjamin Orellana - 07/04/2026 - Se agrega filtro local por sede para solicitudes de débitos automáticos */
+    sede_id: ''
   });
 
   const [detailOpen, setDetailOpen] = useState(false);
@@ -395,10 +412,32 @@ export default function SolicitudesPage() {
     setSelectedSolicitudToCancel(null);
   };
 
-  // Benjamin Orellana - 23/03/2026 - Se obtiene el nivel del usuario autenticado para condicionar la visualización de tarjeta en frontend
-  const { userId } = useAuth();
+  // Benjamin Orellana - 2026/04/13 - Se obtiene identidad autenticada para enviar al backend el contexto necesario de tarjeta completa.
+  const { userId, userName } = useAuth();
 
   const authUserId = userId;
+
+  // Benjamin Orellana - 2026/04/13 - En este proyecto userName contiene el correo autenticado del usuario.
+  const authUserEmail = useMemo(() => {
+    return String(userName || '')
+      .trim()
+      .toLowerCase();
+  }, [userName]);
+
+  // Benjamin Orellana - 2026/04/13 - Headers reutilizables para que backend resuelva si el usuario puede ver tarjeta desencriptada.
+  const authRequestConfig = useMemo(() => {
+    const headers = {};
+
+    if (authUserId) {
+      headers['x-auth-user-id'] = String(authUserId);
+    }
+
+    if (authUserEmail) {
+      headers['x-auth-user-email'] = authUserEmail;
+    }
+
+    return { headers };
+  }, [authUserId, authUserEmail]);
   /* Benjamin Orellana - 23/03/2026 - Estado expandible para mostrar subtabla de adicionales por solicitud */
   const [expandedAdicionales, setExpandedAdicionales] = useState({});
 
@@ -503,41 +542,100 @@ export default function SolicitudesPage() {
     }
   };
 
-  const fetchSolicitudes = async ({ silent = false } = {}) => {
-    try {
-      if (silent) {
-        setLoadingRefresh(true);
-      } else {
-        setLoading(true);
+  /* Benjamin Orellana - 07/04/2026 - Referencia para evitar requests superpuestas durante el polling */
+  const isFetchingRef = useRef(false);
+
+  /* Benjamin Orellana - 07/04/2026 - Memoización de la función de carga según la vista actual */
+  const fetchSolicitudes = useCallback(
+    async ({ silent = false } = {}) => {
+      if (isFetchingRef.current) return;
+
+      isFetchingRef.current = true;
+
+      try {
+        if (silent) {
+          setLoadingRefresh(true);
+        } else {
+          setLoading(true);
+        }
+
+        setError('');
+
+        const endpoint =
+          quickView === 'PENDIENTES' ? PENDING_ENDPOINT : LIST_ENDPOINT;
+
+        // Benjamin Orellana - 2026/04/13 - El listado envía el contexto del usuario autenticado para que backend decida si devuelve tarjeta completa.
+        const response = await axios.get(endpoint, authRequestConfig);
+        const data = Array.isArray(response.data) ? response.data : [];
+
+        setRows(
+          data.map((item) => ({
+            ...item,
+            cargado_por_nombre:
+              item?.cargado_por_nombre ||
+              item?.usuario_carga?.name ||
+              'Alta formulario página web'
+          }))
+        );
+      } catch (err) {
+        setRows([]);
+        setError(
+          err?.response?.data?.mensajeError ||
+            err?.message ||
+            'No se pudo obtener el listado de solicitudes.'
+        );
+      } finally {
+        setLoading(false);
+        setLoadingRefresh(false);
+        isFetchingRef.current = false;
       }
+    },
+    [quickView, authRequestConfig]
+  );
 
-      setError('');
-
-      const endpoint =
-        quickView === 'PENDIENTES' ? PENDING_ENDPOINT : LIST_ENDPOINT;
-
-      const response = await axios.get(endpoint, {
-        params: authUserId ? { auth_user_id: authUserId } : {}
-      });
-
-      setRows(Array.isArray(response.data) ? response.data : []);
-    } catch (err) {
-      setRows([]);
-      setError(
-        err?.response?.data?.mensajeError ||
-          err?.message ||
-          'No se pudo obtener el listado de solicitudes.'
-      );
-    } finally {
-      setLoading(false);
-      setLoadingRefresh(false);
-    }
-  };
-
+  /* Benjamin Orellana - 07/04/2026 - Polling automático cada 1 segundo con limpieza al desmontar */
   useEffect(() => {
     fetchSolicitudes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quickView]);
+
+    const intervalId = setInterval(() => {
+      fetchSolicitudes({ silent: true });
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [fetchSolicitudes]);
+
+  /* Benjamin Orellana - 07/04/2026 - Se cargan sedes operativas para el filtro de solicitudes por sede */
+  useEffect(() => {
+    let active = true;
+
+    const fetchSedes = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/sedes/ciudad`);
+        const data = Array.isArray(response.data) ? response.data : [];
+
+        if (!active) return;
+
+        setSedesOptions(
+          data.filter(
+            (item) =>
+              String(item?.nombre || '').trim() &&
+              String(item?.nombre || '')
+                .toLowerCase()
+                .trim() !== 'multisede'
+          )
+        );
+      } catch (err) {
+        if (!active) return;
+        setSedesOptions([]);
+      }
+    };
+
+    fetchSedes();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!toastMessage) return;
@@ -563,6 +661,15 @@ export default function SolicitudesPage() {
       );
     }
 
+    /* Benjamin Orellana - 07/04/2026 - Se agrega filtro local por sede_id usando la relación sede ya incluida en las solicitudes */
+    if (filters.sede_id) {
+      data = data.filter(
+        (item) =>
+          String(item?.sede_id || item?.sede?.id || '') ===
+          String(filters.sede_id)
+      );
+    }
+
     if (debouncedQ?.trim()) {
       const search = debouncedQ.trim().toLowerCase();
       data = data.filter((item) => buildSearchText(item).includes(search));
@@ -575,6 +682,7 @@ export default function SolicitudesPage() {
     filters.estado,
     filters.canal_origen,
     filters.modalidad_adhesion,
+    filters.sede_id,
     debouncedQ
   ]);
 
@@ -592,7 +700,8 @@ export default function SolicitudesPage() {
     debouncedQ,
     filters.estado,
     filters.canal_origen,
-    filters.modalidad_adhesion
+    filters.modalidad_adhesion,
+    filters.sede_id
   ]);
 
   useEffect(() => {
@@ -613,7 +722,9 @@ export default function SolicitudesPage() {
       q: '',
       estado: '',
       canal_origen: '',
-      modalidad_adhesion: ''
+      modalidad_adhesion: '',
+      /* Benjamin Orellana - 07/04/2026 - Se limpia también el filtro por sede */
+      sede_id: ''
     });
     setQuickView('ALL');
   };
@@ -714,9 +825,11 @@ export default function SolicitudesPage() {
     try {
       setLoadingEdit(true);
 
-      const response = await axios.get(
-        `${API_URL}/debitos-automaticos-solicitudes/${id}`
-      );
+      // Benjamin Orellana - 2026/04/13 - La carga del detalle para edición también envía el contexto autenticado de tarjeta.
+     const response = await axios.get(
+       `${API_URL}/debitos-automaticos-solicitudes/${id}`,
+       authRequestConfig
+     );
 
       const detalle = resolveSolicitudDetalle(response);
 
@@ -778,6 +891,13 @@ export default function SolicitudesPage() {
 
     return response.data;
   };
+
+  /* Benjamin Orellana - 07/04/2026 - Normalización robusta de modalidad de adhesión para remarcar solicitudes solo adicional */
+  const normalizeModalidadAdhesion = (value) =>
+    String(value || '')
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '_');
 
   return (
     <>
@@ -904,7 +1024,8 @@ export default function SolicitudesPage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-[1.5fr_0.85fr_0.85fr_1fr_auto]">
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-[1.5fr_0.85fr_0.85fr_1fr_1fr_auto]">
+                {' '}
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -914,7 +1035,6 @@ export default function SolicitudesPage() {
                     className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-orange-300 focus:ring-4 focus:ring-orange-100"
                   />
                 </div>
-
                 <FilterSelect
                   value={filters.estado}
                   onChange={handleFilterChange('estado')}
@@ -925,21 +1045,26 @@ export default function SolicitudesPage() {
                   }
                   options={quickView === 'PENDIENTES' ? [] : ESTADOS}
                 />
-
                 <FilterSelect
                   value={filters.canal_origen}
                   onChange={handleFilterChange('canal_origen')}
                   placeholder="Canal origen"
                   options={CANALES}
                 />
-
                 <FilterSelect
                   value={filters.modalidad_adhesion}
                   onChange={handleFilterChange('modalidad_adhesion')}
                   placeholder="Modalidad adhesión"
                   options={MODALIDADES}
                 />
-
+                <FilterSelectObject
+                  value={filters.sede_id}
+                  onChange={handleFilterChange('sede_id')}
+                  placeholder="Sede"
+                  options={sedesOptions}
+                  valueKey="id"
+                  labelKey="nombre"
+                />
                 <button
                   type="button"
                   onClick={handleClearFilters}
@@ -1009,7 +1134,9 @@ export default function SolicitudesPage() {
                     <tr>
                       {[
                         'Solicitud',
+                        'Cargado por',
                         'Titular',
+                        'Sede',
                         'Banco',
                         'Marca',
                         'Modalidad',
@@ -1065,9 +1192,23 @@ export default function SolicitudesPage() {
                           expandedAdicionales[item.id]
                         );
 
+                        /* Benjamin Orellana - 07/04/2026 - Detección visual de solicitudes cuya modalidad es solo adicional */
+                        const isSoloAdicional =
+                          normalizeModalidadAdhesion(
+                            item.modalidad_adhesion
+                          ) === 'SOLO_ADICIONAL';
+
                         return (
                           <React.Fragment key={item.id}>
-                            <tr className="group bg-white transition-all duration-200 hover:bg-orange-500 hover:shadow-[inset_0_0_0_1px_rgba(249,115,22,0.35)]">
+                            <tr
+                              className={[
+                                'group transition-all duration-200',
+                                isSoloAdicional
+                                  ? 'bg-gradient-to-r from-orange-50 via-amber-50/70 to-white shadow-[inset_5px_0_0_0_rgba(249,115,22,0.95)] hover:bg-orange-500 hover:shadow-[inset_5px_0_0_0_rgba(255,255,255,0.9),inset_0_0_0_1px_rgba(249,115,22,0.35)]'
+                                  : 'bg-white hover:bg-orange-500 hover:shadow-[inset_0_0_0_1px_rgba(249,115,22,0.35)]'
+                              ].join(' ')}
+                            >
+                              {' '}
                               <td className="border-b border-slate-100 px-5 py-4 align-top transition-colors duration-200 group-hover:border-orange-400">
                                 <div className="flex items-start gap-3">
                                   {rowHasAdicionales ? (
@@ -1103,13 +1244,35 @@ export default function SolicitudesPage() {
                                     <div className="flex w-[44px] justify-center" />
                                   )}
 
-                                  <div className="inline-flex min-w-[78px] flex-col rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white px-3 py-2 shadow-sm transition-all duration-200 group-hover:border-white/80 group-hover:bg-white group-hover:shadow-[0_10px_24px_-14px_rgba(15,23,42,0.28)]">
+                                  <div
+                                    className={[
+                                      'inline-flex min-w-[78px] flex-col rounded-2xl px-3 py-2 shadow-sm transition-all duration-200 group-hover:border-white/80 group-hover:bg-white group-hover:shadow-[0_10px_24px_-14px_rgba(15,23,42,0.28)]',
+                                      isSoloAdicional
+                                        ? 'border border-orange-300 bg-gradient-to-br from-orange-100 via-orange-50 to-white ring-2 ring-orange-200/60'
+                                        : 'border border-orange-100 bg-gradient-to-br from-orange-50 to-white'
+                                    ].join(' ')}
+                                  >
+                                    {' '}
                                     <div className="text-sm font-extrabold text-slate-900 transition-colors duration-200 group-hover:text-slate-900">
                                       #{item.id}
                                     </div>
                                     <div className="mt-1 text-[11px] font-medium text-slate-500 transition-colors duration-200 group-hover:text-slate-600">
                                       {formatDate(item.created_at)}
                                     </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="border-b border-slate-100 px-5 py-4 align-top transition-colors duration-200 group-hover:border-orange-400">
+                                <div className="max-w-[190px]">
+                                  <div className="text-sm font-semibold text-slate-900 transition-colors duration-200 group-hover:text-white">
+                                    {item.cargado_por_nombre ||
+                                      'Alta formulario página web'}
+                                  </div>
+
+                                  <div className="mt-1 text-[11px] font-medium text-slate-500 transition-colors duration-200 group-hover:text-orange-50">
+                                    {item.usuario_carga_id
+                                      ? `${item.usuario_carga?.email}`
+                                      : 'Canal público'}
                                   </div>
                                 </div>
                               </td>
@@ -1126,25 +1289,34 @@ export default function SolicitudesPage() {
                                   </div>
                                 </div>
                               </td>
-
+                              <td className="border-b border-slate-100 px-5 py-4 align-top transition-colors duration-200 group-hover:border-orange-400">
+                                <div className="max-w-[170px] whitespace-normal text-sm font-semibold text-slate-800 transition-colors duration-200 group-hover:text-white">
+                                  {item?.sede?.nombre || '—'}
+                                </div>
+                              </td>
                               <td className="border-b border-slate-100 px-5 py-4 align-top transition-colors duration-200 group-hover:border-orange-400">
                                 <div className="max-w-[170px] whitespace-normal text-sm font-semibold text-slate-800 transition-colors duration-200 group-hover:text-white">
                                   {item.banco?.nombre || '—'}
                                 </div>
                               </td>
-
                               <td className="border-b border-slate-100 px-5 py-4 align-top transition-colors duration-200 group-hover:border-orange-400">
                                 <span className="inline-flex rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-xs font-extrabold uppercase tracking-[0.12em] text-orange-700 transition-all duration-200 group-hover:border-white/80 group-hover:bg-white group-hover:text-orange-700">
                                   {item.marca_tarjeta || '—'}
                                 </span>
                               </td>
-
                               <td className="border-b border-slate-100 px-5 py-4 align-top transition-colors duration-200 group-hover:border-orange-400">
-                                <div className="max-w-[150px] whitespace-normal text-sm font-medium leading-relaxed text-slate-700 transition-colors duration-200 group-hover:text-white">
-                                  {prettyText(item.modalidad_adhesion)}
+                                <div className="max-w-[150px] whitespace-normal leading-relaxed">
+                                  {isSoloAdicional ? (
+                                    <span className="inline-flex rounded-full border border-orange-300 bg-orange-100 px-3 py-1 text-xs font-extrabold uppercase tracking-[0.12em] text-orange-800 transition-all duration-200 group-hover:border-white/80 group-hover:bg-white group-hover:text-orange-700">
+                                      {prettyText(item.modalidad_adhesion)}
+                                    </span>
+                                  ) : (
+                                    <div className="text-sm font-medium text-slate-700 transition-colors duration-200 group-hover:text-white">
+                                      {prettyText(item.modalidad_adhesion)}
+                                    </div>
+                                  )}
                                 </div>
                               </td>
-
                               <td className="border-b border-slate-100 px-5 py-4 align-top transition-colors duration-200 group-hover:border-orange-400">
                                 <div className="max-w-[220px] truncate text-sm font-semibold text-slate-800 transition-colors duration-200 group-hover:text-white">
                                   {item.plan_titular?.nombre || '—'}
@@ -1163,7 +1335,6 @@ export default function SolicitudesPage() {
                                   </div>
                                 </div>
                               </td>
-
                               <td className="border-b border-slate-100 px-6 py-4 align-top transition-colors duration-200 group-hover:border-orange-400">
                                 <div className="rounded-[23px] border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition-all duration-200 group-hover:border-white/20 group-hover:bg-white/10 group-hover:shadow-none">
                                   <div className="grid w-[180px] grid-cols-5 gap-10">

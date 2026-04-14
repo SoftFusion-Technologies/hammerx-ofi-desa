@@ -27,6 +27,8 @@ import SolicitudAprobarModal from './SolicitudAprobarModal';
 import SolicitudRechazarModal from './SolicitudRechazarModal';
 import SolicitudCancelarModal from './SolicitudCancelarModal';
 
+import { useAuth } from '../../../../AuthContext';
+
 const statusStyles = {
   PENDIENTE:
     'border-amber-200 bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
@@ -74,6 +76,25 @@ const formatPercent = (value) => {
 const formatMonth = (value) => {
   if (value === null || value === undefined || value === '') return '—';
   return `${value}`;
+};
+
+// Benjamin Orellana - 2026/04/13 - Prioriza la tarjeta completa si vino desde backend; si no, usa máscara o últimos 4.
+const formatCardDisplay = (solicitud) => {
+  const raw = String(solicitud?.tarjeta_numero_completo || '').replace(
+    /\D/g,
+    ''
+  );
+
+  if (raw) {
+    return raw.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+  }
+
+  if (solicitud?.tarjeta_mascara) return solicitud.tarjeta_mascara;
+  if (solicitud?.tarjeta_ultimos4) {
+    return `**** **** **** ${solicitud.tarjeta_ultimos4}`;
+  }
+
+  return '—';
 };
 
 const canEditSolicitud = (estado) =>
@@ -167,6 +188,33 @@ export default function SolicitudDetailModal({
   const [observeModalOpen, setObserveModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
+  // Benjamin Orellana - 2026/04/13 - Se obtiene identidad autenticada para que backend decida si devuelve tarjeta completa.
+  const { userId, userName } = useAuth();
+
+  const authUserId = userId;
+
+  // Benjamin Orellana - 2026/04/13 - En este proyecto userName contiene el correo autenticado del usuario.
+  const authUserEmail = useMemo(() => {
+    return String(userName || '')
+      .trim()
+      .toLowerCase();
+  }, [userName]);
+
+  // Benjamin Orellana - 2026/04/13 - Headers reutilizables para endpoints que pueden devolver tarjeta desencriptada.
+  const authRequestConfig = useMemo(() => {
+    const headers = {};
+
+    if (authUserId) {
+      headers['x-auth-user-id'] = String(authUserId);
+    }
+
+    if (authUserEmail) {
+      headers['x-auth-user-email'] = authUserEmail;
+    }
+
+    return { headers };
+  }, [authUserId, authUserEmail]);
+
   const closeAllInnerModals = useCallback(() => {
     setApproveModalOpen(false);
     setRejectModalOpen(false);
@@ -182,7 +230,8 @@ export default function SolicitudDetailModal({
       setError('');
 
       const response = await axios.get(
-        `${apiBaseUrl}/debitos-automaticos-solicitudes/${solicitudId}`
+        `${apiBaseUrl}/debitos-automaticos-solicitudes/${solicitudId}`,
+        authRequestConfig
       );
 
       const detalle = resolveSolicitudDetalle(response);
@@ -201,7 +250,7 @@ export default function SolicitudDetailModal({
     } finally {
       setLoading(false);
     }
-  }, [apiBaseUrl, solicitudId]);
+  }, [apiBaseUrl, solicitudId, authRequestConfig]);
 
   useEffect(() => {
     if (!open || !solicitudId) return;
@@ -547,8 +596,12 @@ export default function SolicitudDetailModal({
                             value={solicitud.marca_tarjeta}
                           />
                           <DetailItem
-                            label="Tarjeta máscara"
-                            value={solicitud.tarjeta_mascara}
+                            label={
+                              solicitud?.tarjeta_numero_completo
+                                ? 'Tarjeta completa'
+                                : 'Tarjeta'
+                            }
+                            value={formatCardDisplay(solicitud)}
                           />
                           <DetailItem
                             label="Últimos 4"
