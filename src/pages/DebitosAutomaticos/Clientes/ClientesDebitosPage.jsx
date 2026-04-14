@@ -402,7 +402,48 @@ const ClientesDebitosPage = () => {
   const [sortValue, setSortValue] = useState('titular_nombre|asc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
+  // Benjamin Orellana - 2026/04/14 - Se guarda el total real informado por backend para paginación server-side.
+  const [totalItems, setTotalItems] = useState(0);
 
+  // Benjamin Orellana - 2026/04/14 - Se traduce el sort visual del frontend a los campos válidos del backend.
+  const buildBackendSortParams = (sortValue) => {
+    const [sortBy, sortDir] = String(sortValue || 'titular_nombre|asc').split(
+      '|'
+    );
+
+    if (sortBy === 'titular_nombre') {
+      return {
+        order_by: 'titular_nombre',
+        order_direction: sortDir === 'desc' ? 'DESC' : 'ASC'
+      };
+    }
+
+    if (sortBy === 'alta') {
+      return {
+        order_by: 'created_at',
+        order_direction: sortDir === 'desc' ? 'DESC' : 'ASC'
+      };
+    }
+
+    if (sortBy === 'inicio') {
+      return {
+        order_by: 'fecha_inicio_cobro',
+        order_direction: sortDir === 'desc' ? 'DESC' : 'ASC'
+      };
+    }
+
+    if (sortBy === 'monto_final') {
+      return {
+        order_by: 'monto_base_vigente',
+        order_direction: sortDir === 'desc' ? 'DESC' : 'ASC'
+      };
+    }
+
+    return {
+      order_by: 'created_at',
+      order_direction: 'DESC'
+    };
+  };
   /* Benjamin Orellana - 06/04/2026 - Helper defensivo para interpretar flags booleanos provenientes del backend */
   const isTrueLike = (value) =>
     value === true ||
@@ -461,7 +502,7 @@ const ClientesDebitosPage = () => {
     return String(getClienteEstado(cliente) || '') !== 'ACTIVO';
   };
 
-  /* Benjamin Orellana - 2026/04/13 - Carga inicial del padrón y catálogos enviando contexto autenticado para resolver tarjeta completa cuando corresponda. */
+  // Benjamin Orellana - 2026/04/14 - La grilla de clientes pasa a trabajar con filtros, orden y paginación server-side para no cortar registros al crecer el padrón.
   const fetchData = useCallback(
     async ({ silent = false } = {}) => {
       try {
@@ -469,8 +510,28 @@ const ClientesDebitosPage = () => {
         if (!silent) setLoading(true);
         if (silent) setRefreshing(true);
 
+        const sortParams = buildBackendSortParams(sortValue);
+
+        const clienteParams = {
+          page,
+          limit: pageSize,
+          q: String(filters.q || '').trim() || undefined,
+          banco_id: filters.banco_id || undefined,
+          titular_plan_id: filters.plan_id || undefined,
+          estado_general: filters.estado_general || undefined,
+          modalidad_adhesion: filters.modalidad_adhesion || undefined,
+          sede_id:
+            sedeActiva !== 'TODAS'
+              ? sedeTabs.find((tab) => tab.key === sedeActiva)?.id || undefined
+              : undefined,
+          ...sortParams
+        };
+
         const requests = await Promise.allSettled([
-          api.get('/debitos-automaticos-clientes', authRequestConfig),
+          api.get('/debitos-automaticos-clientes', {
+            ...authRequestConfig,
+            params: clienteParams
+          }),
           api.get('/sedes?es_ciudad=true'),
           api.get('/debitos-automaticos-bancos?activo=1'),
           api.get('/debitos-automaticos-planes'),
@@ -487,6 +548,11 @@ const ClientesDebitosPage = () => {
           clientesRes.status === 'fulfilled'
             ? normalizeArray(clientesRes.value.data)
             : [];
+
+        const totalClientes =
+          clientesRes.status === 'fulfilled'
+            ? Number(clientesRes.value?.data?.total || 0)
+            : 0;
 
         const sedesData =
           sedesRes.status === 'fulfilled'
@@ -526,7 +592,6 @@ const ClientesDebitosPage = () => {
               !hasta || !Number.isNaN(hasta.getTime()) ? true : false;
 
             if (!validoDesde || !validoHasta) return true;
-
             if (desde && now < desde) return false;
             if (hasta && now > hasta) return false;
 
@@ -541,6 +606,7 @@ const ClientesDebitosPage = () => {
           });
 
         setClientes(clientesData);
+        setTotalItems(totalClientes);
         setSedes(sedesData);
         setBancos(bancosData);
         setPlanes(planesData);
@@ -562,7 +628,15 @@ const ClientesDebitosPage = () => {
         setRefreshing(false);
       }
     },
-    [authRequestConfig]
+    [
+      authRequestConfig,
+      filters,
+      page,
+      pageSize,
+      sedeActiva,
+      sedeTabs,
+      sortValue
+    ]
   );
 
   useEffect(() => {
@@ -785,13 +859,10 @@ const ClientesDebitosPage = () => {
     return sorted;
   }, [clientes, filters, sedeActiva, sortValue, sedeTabs]);
 
-  const totalItems = filteredAndSorted.length;
+  // Benjamin Orellana - 2026/04/14 - La tabla usa directamente la página devuelta por backend sin re-filtrar ni re-paginar localmente.
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePage = Math.min(page, totalPages);
-  const paginatedRows = useMemo(() => {
-    const start = (safePage - 1) * pageSize;
-    return filteredAndSorted.slice(start, start + pageSize);
-  }, [filteredAndSorted, safePage, pageSize]);
+  const paginatedRows = clientes;
 
   /* Benjamin Orellana - 2026/04/13 - Expansión lazy del adicional reutilizando el contexto autenticado para que el backend mantenga coherencia de tarjeta completa en el cliente. */
   const handleToggleRow = async (cliente) => {
@@ -1884,6 +1955,6 @@ const ClientesDebitosPage = () => {
       />
     </>
   );
-};
+};;;;;
 
 export default ClientesDebitosPage;
