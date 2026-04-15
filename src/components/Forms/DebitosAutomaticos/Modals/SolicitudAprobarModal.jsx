@@ -161,6 +161,24 @@ const isValidDiscount = (value) => {
   return n !== null && n >= 0 && n <= 100;
 };
 
+/* Benjamin Orellana - 2026/04/15 - Resuelve el plan efectivo de la solicitud para buscar su configuración comercial por sede en aprobación. */
+const resolvePlanIdFromSolicitud = (solicitud) => {
+  if (!solicitud) return null;
+
+  if (
+    solicitud.modalidad_adhesion === 'TITULAR_SOLO' ||
+    solicitud.modalidad_adhesion === 'AMBOS'
+  ) {
+    return Number(solicitud.titular_plan_id) || null;
+  }
+
+  if (solicitud.modalidad_adhesion === 'SOLO_ADICIONAL') {
+    return Number(solicitud?.adicional?.plan_id) || null;
+  }
+
+  return null;
+};
+
 /* Benjamin Orellana - 09/04/2026 - Resuelve automáticamente el plan a utilizar según la modalidad de adhesión de la solicitud */
 const resolvePlanFromSolicitud = (solicitud) => {
   if (!solicitud) {
@@ -298,21 +316,101 @@ export default function SolicitudAprobarModal({
   useEffect(() => {
     if (!open || !solicitud) return;
 
-    const commercialDefaults = buildCommercialDefaultsFromPlan(
-      resolvedPlan?.plan
-    );
+    let active = true;
 
-    setErrorMsg('');
-    setForm({
-      monto_inicial_vigente: commercialDefaults.monto_inicial_vigente,
-      descuento_vigente: commercialDefaults.descuento_vigente,
-      monto_base_vigente: commercialDefaults.monto_base_vigente,
-      fecha_aprobacion: buildTodayDateInput(),
-      fecha_inicio_cobro: buildNextMonthInput(),
-      especial: '',
-      observaciones_internas: ''
-    });
-  }, [open, solicitud, resolvedPlan]);
+    /* Benjamin Orellana - 2026/04/15 - El modal de aprobación precarga el precio base desde plan+sede y el descuento desde el snapshot del banco para reflejar correctamente la nueva arquitectura comercial. */
+    const hydrateCommercialDefaults = async () => {
+      try {
+        const planId = resolvePlanIdFromSolicitud(solicitud);
+        const sedeId = Number(solicitud?.sede_id) || null;
+        const descuentoBanco = parseNullableNumber(
+          solicitud?.beneficio_descuento_off_pct_snapshot
+        );
+
+        let precioBase = null;
+
+        if (planId && sedeId) {
+          const res = await axios.get(
+            `${apiBaseUrl}/debitos-automaticos-planes-sedes`,
+            {
+              params: {
+                plan_id: planId,
+                sede_id: sedeId,
+                activo: 1
+              }
+            }
+          );
+
+          const payload = res?.data;
+          const registros = Array.isArray(payload)
+            ? payload
+            : Array.isArray(payload?.registros)
+              ? payload.registros
+              : Array.isArray(payload?.rows)
+                ? payload.rows
+                : Array.isArray(payload?.data)
+                  ? payload.data
+                  : [];
+
+          const configuracion = registros[0] || null;
+          precioBase = parseNullableNumber(configuracion?.precio_base);
+        }
+
+        if (!active) return;
+
+        const descuentoResolved = descuentoBanco !== null ? descuentoBanco : 0;
+
+        const montoBaseCalculado =
+          precioBase !== null
+            ? calculateMontoBase(precioBase, descuentoResolved)
+            : null;
+
+        setErrorMsg('');
+        setForm({
+          monto_inicial_vigente:
+            precioBase !== null ? toInputNumberString(precioBase) : '',
+          descuento_vigente: toInputNumberString(descuentoResolved),
+          monto_base_vigente:
+            montoBaseCalculado !== null
+              ? toInputNumberString(montoBaseCalculado)
+              : '',
+          fecha_aprobacion: buildTodayDateInput(),
+          fecha_inicio_cobro: buildNextMonthInput(),
+          especial: '',
+          observaciones_internas: ''
+        });
+      } catch (error) {
+        if (!active) return;
+
+        const descuentoBanco = parseNullableNumber(
+          solicitud?.beneficio_descuento_off_pct_snapshot
+        );
+
+        setErrorMsg(
+          error?.response?.data?.mensajeError ||
+            'No se pudo precargar el precio del plan para la sede seleccionada.'
+        );
+
+        setForm({
+          monto_inicial_vigente: '',
+          descuento_vigente: toInputNumberString(
+            descuentoBanco !== null ? descuentoBanco : 0
+          ),
+          monto_base_vigente: '',
+          fecha_aprobacion: buildTodayDateInput(),
+          fecha_inicio_cobro: buildNextMonthInput(),
+          especial: '',
+          observaciones_internas: ''
+        });
+      }
+    };
+
+    hydrateCommercialDefaults();
+
+    return () => {
+      active = false;
+    };
+  }, [open, solicitud, apiBaseUrl]);
 
   useEffect(() => {
     if (!open) return;

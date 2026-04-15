@@ -905,7 +905,7 @@ export default function SolicitudesPage() {
 
       <section className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-white text-slate-900">
         <div className="dashboardbg min-h-[calc(100vh-80px)]">
-          <div className="mx-auto w-full max-w-[1880px] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+          <div className="mx-auto w-full max-w-[2300px] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
             {/* Header */}
             <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>

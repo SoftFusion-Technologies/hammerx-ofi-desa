@@ -23,6 +23,7 @@ const API_URL = 'http://localhost:8080';
 
 const BANCOS_ENDPOINT = `${API_URL}/debitos-automaticos-bancos`;
 const PLANES_ENDPOINT = `${API_URL}/debitos-automaticos-planes`;
+const PLANES_POR_SEDE_ENDPOINT = `${API_URL}/debitos-automaticos-planes-por-sede`;
 const TERMINOS_ENDPOINT = `${API_URL}/debitos-automaticos-terminos`;
 const SUBMIT_ENDPOINT = `${API_URL}/debitos-automaticos-solicitudes/publica`;
 
@@ -141,10 +142,25 @@ function getBancoLabel(banco) {
   );
 }
 
+function formatARS(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return null;
+
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(num);
+}
+
 function getPlanLabel(plan) {
-  return (
-    plan?.nombre || plan?.descripcion || plan?.codigo || `Plan #${plan?.id}`
-  );
+  const base =
+    plan?.nombre || plan?.descripcion || plan?.codigo || `Plan #${plan?.id}`;
+
+  // const precio = formatARS(plan?.precio_base);
+
+  return base;
 }
 
 function getTerminosLabel(termino) {
@@ -329,13 +345,22 @@ export default function DebitosAutomaticosPublicPage({
   useEffect(() => {
     let active = true;
 
+    /* Benjamin Orellana - 2026/04/15 - En el flujo embebido se cargan los planes filtrados por la sede seleccionada para evitar ofrecer combinaciones plan+sede inválidas en el formulario público. */
     const fetchCatalogs = async () => {
       try {
         setLoadingCatalogs(true);
+        setServerError('');
+
+        const planesRequest =
+          embedded && selectedSede?.id
+            ? axios.get(PLANES_POR_SEDE_ENDPOINT, {
+                params: { sede_id: selectedSede.id }
+              })
+            : axios.get(PLANES_ENDPOINT);
 
         const [bancosRes, planesRes, terminosRes] = await Promise.all([
           axios.get(BANCOS_ENDPOINT),
-          axios.get(PLANES_ENDPOINT),
+          planesRequest,
           axios.get(TERMINOS_ENDPOINT)
         ]);
 
@@ -352,13 +377,16 @@ export default function DebitosAutomaticosPublicPage({
         setTerminos(terminosData);
 
         const latestTermino =
-          terminosData.sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
+          [...terminosData].sort((a, b) => Number(b.id) - Number(a.id))[0] ||
+          null;
 
         setForm((prev) => ({
           ...prev,
           terminos_id: latestTermino?.id ? String(latestTermino.id) : ''
         }));
       } catch (error) {
+        if (!active) return;
+
         setServerError(
           error?.response?.data?.mensajeError ||
             'No se pudieron cargar los datos necesarios del formulario.'
@@ -368,13 +396,68 @@ export default function DebitosAutomaticosPublicPage({
       }
     };
 
+    /* Benjamin Orellana - 2026/04/15 - Si el flujo embebido todavía no tiene sede seleccionada, no se consultan planes hasta contar con esa referencia. */
+    if (embedded && !selectedSede?.id) {
+      setPlanes([]);
+      setLoadingCatalogs(false);
+      return () => {
+        active = false;
+      };
+    }
+
     fetchCatalogs();
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [embedded, selectedSede?.id]);
 
+    useEffect(() => {
+      /* Benjamin Orellana - 2026/04/15 - Si cambia la sede y el plan previamente elegido ya no existe en el catálogo filtrado, se limpia la selección para evitar enviar IDs inválidos. */
+      setForm((prev) => {
+        const titularValido =
+          !prev.titular_plan_id ||
+          planes.some(
+            (item) => String(item.id) === String(prev.titular_plan_id)
+          );
+
+        const adicionalValido =
+          !prev.adicional_plan_id ||
+          planes.some(
+            (item) => String(item.id) === String(prev.adicional_plan_id)
+          );
+
+        if (titularValido && adicionalValido) return prev;
+
+        return {
+          ...prev,
+          titular_plan_id: titularValido ? prev.titular_plan_id : '',
+          adicional_plan_id: adicionalValido ? prev.adicional_plan_id : ''
+        };
+      });
+
+      setErrors((prev) => {
+        const next = { ...prev };
+
+        const titularValido =
+          !form.titular_plan_id ||
+          planes.some(
+            (item) => String(item.id) === String(form.titular_plan_id)
+          );
+
+        const adicionalValido =
+          !form.adicional_plan_id ||
+          planes.some(
+            (item) => String(item.id) === String(form.adicional_plan_id)
+          );
+
+        if (!titularValido) delete next.titular_plan_id;
+        if (!adicionalValido) delete next.adicional_plan_id;
+
+        return next;
+      });
+    }, [planes, form.titular_plan_id, form.adicional_plan_id]);
+  
   const handleChange = (field, value) => {
     setForm((prev) => {
       const next = { ...prev, [field]: value };
@@ -600,7 +683,7 @@ export default function DebitosAutomaticosPublicPage({
     } finally {
       setSubmitting(false);
     }
-  };;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1385,16 +1468,14 @@ export default function DebitosAutomaticosPublicPage({
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
                         <div className="text-sm font-bold text-slate-800">
-                          {currentTermino
-                            ? getTerminosLabel(currentTermino)
-                            : 'Términos y Condiciones - Débitos Automáticos'}
+                          Términos y Condiciones
                         </div>
 
-                        <div className="mt-1 text-xs text-slate-500">
+                        {/* <div className="mt-1 text-xs text-slate-500">
                           {currentTermino?.version
                             ? `Versión: ${currentTermino.version}`
                             : 'Versión activa'}
-                        </div>
+                        </div> */}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2">
@@ -1831,7 +1912,6 @@ function LightParticlesBackgroundCanvas() {
   );
 }
 
-
 function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
   const scrollRef = useRef(null);
   const [canAccept, setCanAccept] = useState(false);
@@ -1888,7 +1968,8 @@ function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[75] flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm"
+          /* Benjamin Orellana - 2026/04/15 - Se elimina margen exterior en mobile para aprovechar toda la altura visible del modal. */
+          className="fixed inset-0 z-[75] flex items-center justify-center bg-slate-950/55 p-0 sm:p-4 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -1898,57 +1979,47 @@ function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.985 }}
             transition={{ duration: 0.32, ease: easeOut }}
-            className="relative flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_35px_100px_-35px_rgba(15,23,42,0.38)]"
+            /* Benjamin Orellana - 2026/04/15 - Se lleva el modal a alto completo real en mobile para ceder más espacio al HTML legal. */
+            className="relative flex h-[100dvh] max-h-[100dvh] w-full max-w-4xl flex-col overflow-hidden bg-white sm:h-[92vh] sm:max-h-[92vh] sm:rounded-[28px] sm:border sm:border-slate-200 sm:shadow-[0_35px_100px_-35px_rgba(15,23,42,0.38)]"
           >
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 md:px-6">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
-                  <FileText className="h-4 w-4" />
+            {/* Benjamin Orellana - 2026/04/15 - Se reduce el alto del header para dar prioridad visual al contenido legal. */}
+            <div className="flex items-start justify-between gap-2 border-b border-slate-100 px-3 py-2.5 sm:px-4 md:px-5">
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-700">
+                  <FileText className="h-3 w-3" />
                   Carta
                 </div>
 
-                <h3 className="mt-3 text-xl font-black tracking-tight text-slate-900 md:text-2xl">
-                  {termino?.titulo || 'Términos y Condiciones'}
+                <h3 className="mt-1.5 pr-2 text-[16px] font-black leading-[1.1] tracking-tight text-slate-900 sm:text-[20px]">
+                  Términos y Condiciones
                 </h3>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  {termino?.version
-                    ? `Versión ${termino.version}`
-                    : 'Versión vigente'}
-                </p>
               </div>
 
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Cerrar"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
               >
-                <X className="h-5 w-5" />
+                <X className="h-[18px] w-[18px]" />
               </button>
             </div>
 
-            <div className="border-b border-slate-100 px-5 py-3 md:px-6">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-slate-800">
-                    {accepted
-                      ? 'Ya aceptaste esta carta'
-                      : 'Deslizá hasta el final para habilitar la aceptación'}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {accepted
-                      ? 'Podés revisar nuevamente el contenido.'
-                      : `Progreso de lectura: ${Math.round(scrollProgress)}%`}
-                  </div>
+            {/* Benjamin Orellana - 2026/04/15 - Se minimiza la franja informativa para liberar más alto útil al área scrolleable. */}
+            <div className="border-b border-slate-100 px-3 py-1.5 sm:px-4 md:px-5">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <div className="max-w-[190px] text-[10px] font-medium leading-3.5 text-slate-500 sm:max-w-none sm:text-[11px]">
+                  {accepted
+                    ? 'Carta aceptada'
+                    : 'Deslizá hasta el final para aceptar'}
                 </div>
 
-                <div className="min-w-[110px] text-right text-xs font-semibold text-slate-500">
-                  {accepted ? 'Aceptado' : `${Math.round(scrollProgress)}%`}
+                <div className="shrink-0 text-[10px] font-semibold text-slate-500 sm:text-[11px]">
+                  {accepted ? '100%' : `${Math.round(scrollProgress)}%`}
                 </div>
               </div>
 
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className={`h-full rounded-full transition-all duration-300 ${
                     acceptEnabled ? 'bg-orange-500' : 'bg-sky-500'
@@ -1960,59 +2031,65 @@ function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
               </div>
             </div>
 
+            {/* Benjamin Orellana - 2026/04/15 - Se reducen paddings y espaciados del cuerpo para que entre más contenido de la carta. */}
             <div
               ref={scrollRef}
-              className="overflow-y-auto overscroll-contain bg-gradient-to-b from-slate-50 to-orange-50/30 px-4 py-5 md:px-6 md:py-6"
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-2.5 py-2 sm:px-3 sm:py-3 md:px-4"
             >
               {termino?.contenido_html ? (
-                <div className="mx-auto w-full max-w-3xl">
+                <div className="mx-auto w-full max-w-none">
                   <div
+                    className="
+                      text-[12.5px] leading-[1.45] text-slate-700
+                      sm:text-[13px] sm:leading-[1.55]
+                      [&>*:first-child]:mt-0
+                      [&>*:last-child]:mb-0
+                      [&_h1]:mb-2 [&_h1]:text-base [&_h1]:font-bold [&_h1]:leading-tight [&_h1]:text-slate-900
+                      [&_h2]:mb-1.5 [&_h2]:mt-3 [&_h2]:text-[15px] [&_h2]:font-bold [&_h2]:leading-tight [&_h2]:text-slate-900
+                      [&_h3]:mb-1.5 [&_h3]:mt-2.5 [&_h3]:text-[13px] [&_h3]:font-semibold [&_h3]:leading-tight [&_h3]:text-slate-900
+                      [&_p]:mb-2 [&_p]:text-inherit
+                      [&_ul]:mb-2 [&_ul]:pl-4
+                      [&_ol]:mb-2 [&_ol]:pl-4
+                      [&_li]:mb-1
+                      [&_strong]:font-semibold [&_strong]:text-slate-900
+                    "
                     dangerouslySetInnerHTML={{
                       __html: termino.contenido_html
                     }}
                   />
                 </div>
               ) : (
-                <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                <div className="mx-auto w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
                   No hay contenido disponible para los términos y condiciones.
                 </div>
               )}
             </div>
 
-            <div className="border-t border-slate-100 px-5 py-4 md:px-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-xs leading-5 text-slate-500">
-                  {!accepted && !canAccept
-                    ? 'El botón “Leí y acepto” se habilita al llegar al final.'
-                    : accepted
-                      ? 'La aceptación ya fue registrada correctamente.'
-                      : 'Ya podés confirmar la aceptación de los términos.'}
-                </div>
+            {/* Benjamin Orellana - 2026/04/15 - Se compacta el footer de acciones para dejar más pantalla al texto de términos. */}
+            <div className="border-t border-slate-100 px-3 py-2 sm:px-4 md:px-5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={onAccept}
+                  disabled={acceptButtonDisabled}
+                  className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
+                    accepted
+                      ? 'cursor-default border border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : acceptEnabled
+                        ? 'bg-orange-600 text-white shadow-[0_16px_38px_-14px_rgba(251,146,60,0.75)] hover:bg-orange-500'
+                        : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
+                  }`}
+                >
+                  {accepted ? 'Términos aceptados' : 'Leí y acepto'}
+                </button>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={onAccept}
-                    disabled={acceptButtonDisabled}
-                    className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${
-                      accepted
-                        ? 'cursor-default border border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : acceptEnabled
-                          ? 'bg-orange-600 text-white shadow-[0_16px_38px_-14px_rgba(251,146,60,0.75)] hover:bg-orange-500'
-                          : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
-                    }`}
-                  >
-                    {accepted ? 'Términos aceptados' : 'Leí y acepto'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Cerrar
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Cerrar
+                </button>
               </div>
             </div>
           </motion.div>
@@ -2021,6 +2098,7 @@ function TerminosModal({ open, termino, accepted, onAccept, onClose }) {
     </AnimatePresence>
   );
 }
+
 function ReviewSubmitModal({
   open,
   form,

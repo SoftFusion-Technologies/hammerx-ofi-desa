@@ -24,6 +24,7 @@ const API_URL =
 
 const BANCOS_ENDPOINT = `${API_URL}/debitos-automaticos-bancos?activo=1`;
 const PLANES_ENDPOINT = `${API_URL}/debitos-automaticos-planes`;
+const PLANES_POR_SEDE_ENDPOINT = `${API_URL}/debitos-automaticos-planes-por-sede`;
 const TERMINOS_ENDPOINT = `${API_URL}/debitos-automaticos-terminos`;
 /* Benjamin Orellana - 07/04/2026 - Endpoint de sedes operativas para permitir seleccionar la sede en el alta interna de solicitudes */
 const SEDES_ENDPOINT = `${API_URL}/sedes/ciudad`;
@@ -338,20 +339,17 @@ export default function SolicitudFormModal({
       try {
         setLoadingCatalogs(true);
 
-        const [bancosRes, planesRes, terminosRes, sedesRes] = await Promise.all(
-          [
-            axios.get(BANCOS_ENDPOINT),
-            axios.get(PLANES_ENDPOINT),
-            axios.get(TERMINOS_ENDPOINT),
-            axios.get(SEDES_ENDPOINT)
-          ]
-        );
+        const [bancosRes, terminosRes, sedesRes] = await Promise.all([
+          axios.get(BANCOS_ENDPOINT),
+          axios.get(TERMINOS_ENDPOINT),
+          axios.get(SEDES_ENDPOINT)
+        ]);
 
         if (!active) return;
 
         setBancos(Array.isArray(bancosRes.data) ? bancosRes.data : []);
-        setPlanes(Array.isArray(planesRes.data) ? planesRes.data : []);
         setTerminos(Array.isArray(terminosRes.data) ? terminosRes.data : []);
+
         /* Benjamin Orellana - 07/04/2026 - Se cargan sedes operativas para selección interna en el formulario */
         setSedes(
           Array.isArray(sedesRes.data)
@@ -364,6 +362,9 @@ export default function SolicitudFormModal({
               )
             : []
         );
+
+        /* Benjamin Orellana - 2026/04/15 - Los planes ya no se cargan globalmente al abrir el modal; dependen de la sede seleccionada. */
+        setPlanes([]);
       } catch (error) {
         if (!active) return;
 
@@ -390,6 +391,82 @@ export default function SolicitudFormModal({
     };
   }, [open]);
 
+    useEffect(() => {
+      if (!open) return;
+
+      let active = true;
+
+      /* Benjamin Orellana - 2026/04/15 - Los planes internos se cargan por sede para impedir seleccionar configuraciones inexistentes comercialmente. */
+      const fetchPlanesBySede = async () => {
+        try {
+          const sedeId = Number(form?.sede_id);
+
+          if (!Number.isFinite(sedeId) || sedeId <= 0) {
+            setPlanes([]);
+            return;
+          }
+
+          const response = await axios.get(PLANES_POR_SEDE_ENDPOINT, {
+            params: { sede_id: sedeId }
+          });
+
+          if (!active) return;
+
+          const planesData = Array.isArray(response.data) ? response.data : [];
+          setPlanes(planesData);
+        } catch (error) {
+          if (!active) return;
+
+          setPlanes([]);
+
+          const backendMessage =
+            error?.response?.data?.mensajeError ||
+            error?.message ||
+            'No se pudieron cargar los planes de la sede seleccionada.';
+
+          await Swal.fire({
+            icon: 'error',
+            title: 'No se pudieron cargar los planes',
+            text: backendMessage,
+            confirmButtonColor: '#f97316'
+          });
+        }
+      };
+
+      fetchPlanesBySede();
+
+      return () => {
+        active = false;
+      };
+    }, [open, form?.sede_id]);
+  
+    useEffect(() => {
+      if (!open) return;
+
+      /* Benjamin Orellana - 2026/04/15 - Si la sede cambia y los planes seleccionados ya no existen en el catálogo filtrado, se limpian para evitar grabar IDs inválidos. */
+      setForm((prev) => {
+        const titularValido =
+          !prev.titular_plan_id ||
+          planes.some(
+            (item) => String(item.id) === String(prev.titular_plan_id)
+          );
+
+        const adicionalValido =
+          !prev.adicional_plan_id ||
+          planes.some(
+            (item) => String(item.id) === String(prev.adicional_plan_id)
+          );
+
+        if (titularValido && adicionalValido) return prev;
+
+        return {
+          ...prev,
+          titular_plan_id: titularValido ? prev.titular_plan_id : '',
+          adicional_plan_id: adicionalValido ? prev.adicional_plan_id : ''
+        };
+      });
+    }, [planes, open]);
+
   const requiresTitularPlan =
     form.modalidad_adhesion === 'TITULAR_SOLO' ||
     form.modalidad_adhesion === 'AMBOS';
@@ -397,6 +474,25 @@ export default function SolicitudFormModal({
   const requiresAdicional =
     form.modalidad_adhesion === 'AMBOS' ||
     form.modalidad_adhesion === 'SOLO_ADICIONAL';
+
+  const formatARS = (value) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return null;
+
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(num);
+  };
+
+  /* Benjamin Orellana - 2026/04/15 - Se muestra el precio base del plan resuelto por sede para que la carga interna sea consistente con la configuración comercial vigente. */
+  const getPlanOptionLabel = (plan) => {
+    const base = plan?.nombre || plan?.codigo || `Plan #${plan?.id}`;
+    // const precio = formatARS(plan?.precio_base);
+    return base;
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -834,17 +930,19 @@ export default function SolicitudFormModal({
                               name="titular_plan_id"
                               value={form.titular_plan_id}
                               onChange={handleChange}
-                              disabled={!requiresTitularPlan}
+                              disabled={!requiresTitularPlan || !form.sede_id}
                               className={INPUT_UI}
                             >
                               <option value="">
-                                {requiresTitularPlan
-                                  ? 'Seleccionar plan'
-                                  : 'No aplica para esta modalidad'}
+                                {!requiresTitularPlan
+                                  ? 'No aplica para esta modalidad'
+                                  : !form.sede_id
+                                    ? 'Seleccionar sede primero'
+                                    : 'Seleccionar plan'}
                               </option>
                               {planes.map((item) => (
                                 <option key={item.id} value={item.id}>
-                                  {item.nombre}
+                                  {getPlanOptionLabel(item)}
                                 </option>
                               ))}
                             </select>
@@ -1002,7 +1100,7 @@ export default function SolicitudFormModal({
                                   <option value="">Seleccionar plan</option>
                                   {planes.map((item) => (
                                     <option key={item.id} value={item.id}>
-                                      {item.nombre}
+                                      {getPlanOptionLabel(item)}
                                     </option>
                                   ))}
                                 </select>

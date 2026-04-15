@@ -1,18 +1,17 @@
 /*
  * Programador: Benjamin Orellana
  * Fecha Creación: 12 / 03 / 2026
- * Versión: 1.2
+ * Versión: 1.3
  *
  * Descripción:
  * Modal de alta / edición de planes del módulo Débitos Automáticos.
- * Permite gestionar código, nombre, descripción, estado, orden visual,
- * precio inicial, descuento porcentual y precio final calculado en tiempo real.
+ * Permite gestionar código, nombre, descripción, estado y orden visual.
  *
  * Tema: Frontend - Débitos Automáticos - Formulario de Planes
  * Capa: Frontend
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   X,
@@ -21,9 +20,6 @@ import {
   BadgeCheck,
   FileText,
   ArrowDownWideNarrow,
-  CircleDollarSign,
-  Percent,
-  Wallet,
   Sparkles
 } from 'lucide-react';
 
@@ -54,10 +50,7 @@ const emptyForm = {
   nombre: '',
   descripcion: '',
   activo: true,
-  orden_visual: '0',
-  precio_referencia: '',
-  descuento: '',
-  precio_final: ''
+  orden_visual: '0'
 };
 
 const toText = (value) => {
@@ -70,53 +63,6 @@ const toIntOrNull = (value) => {
   const num = Number(value);
   if (!Number.isInteger(num)) return null;
   return num;
-};
-
-const toNumberOrNull = (value) => {
-  if (value === '' || value === null || value === undefined) return null;
-  const num = Number(value);
-  return Number.isFinite(num) ? Number(num.toFixed(2)) : null;
-};
-
-/* Benjamin Orellana - 08/04/2026 - Calcula el precio final del plan aplicando descuento porcentual con piso en cero */
-const calcularPrecioFinal = (precioReferencia, descuento) => {
-  if (precioReferencia === null || precioReferencia === undefined) return null;
-
-  const precio = Number(precioReferencia || 0);
-  const descPct = Number(descuento || 0);
-
-  if (!Number.isFinite(precio) || !Number.isFinite(descPct)) return null;
-
-  const precioFinal = precio - precio * (descPct / 100);
-
-  return Number(Math.max(precioFinal, 0).toFixed(2));
-};
-
-const formatMoney = (value) => {
-  if (value === null || value === undefined || value === '') return '-';
-
-  const num = Number(value);
-  if (!Number.isFinite(num)) return '-';
-
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(num);
-};
-
-/* Benjamin Orellana - 08/04/2026 - Formatea el descuento del plan como porcentaje para la preview comercial */
-const formatPercent = (value) => {
-  if (value === null || value === undefined || value === '') return '-';
-
-  const num = Number(value);
-  if (!Number.isFinite(num)) return '-';
-
-  return `${num.toLocaleString('es-AR', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  })}%`;
 };
 
 const validateForm = (form) => {
@@ -133,51 +79,17 @@ const validateForm = (form) => {
     return 'El orden visual debe ser un número entero.';
   }
 
-  const precioReferencia = toNumberOrNull(form.precio_referencia);
-  if (form.precio_referencia !== '' && precioReferencia === null) {
-    return 'El precio inicial debe ser numérico.';
-  }
-
-  if (precioReferencia !== null && precioReferencia < 0) {
-    return 'El precio inicial no puede ser negativo.';
-  }
-
-  const descuento = toNumberOrNull(form.descuento);
-  if (form.descuento !== '' && descuento === null) {
-    return 'El descuento debe ser numérico.';
-  }
-
-  if (descuento !== null && descuento < 0) {
-    return 'El descuento no puede ser negativo.';
-  }
-
-  if (descuento !== null && descuento > 100) {
-    return 'El descuento no puede ser mayor a 100%.';
-  }
-
-  if (
-    (precioReferencia === null || precioReferencia === undefined) &&
-    descuento !== null &&
-    descuento > 0
-  ) {
-    return 'No puedes informar descuento si el precio inicial está vacío.';
-  }
-
   return '';
 };
 
+/* Benjamin Orellana - 2026/04/15 - El payload del plan queda reducido al catálogo base, ya que los precios y valores comerciales se administran por sede en otra tabla. */
 const getPayloadFromForm = (form) => {
-  const precioReferencia = toNumberOrNull(form.precio_referencia);
-  const descuento = toNumberOrNull(form.descuento) ?? 0;
-
   return {
     codigo: form.codigo.trim().toUpperCase(),
     nombre: form.nombre.trim(),
     descripcion: form.descripcion.trim() || null,
     activo: form.activo ? 1 : 0,
-    orden_visual: toIntOrNull(form.orden_visual) ?? 0,
-    precio_referencia: precioReferencia,
-    descuento
+    orden_visual: toIntOrNull(form.orden_visual) ?? 0
   };
 };
 
@@ -227,18 +139,6 @@ export default function PlanFormModal({ open, onClose, onSubmit, initial }) {
     setSaving(false);
     setErrorMsg('');
 
-    const precioReferencia = toText(initial?.precio_referencia);
-    const descuento = toText(
-      initial?.descuento !== null && initial?.descuento !== undefined
-        ? initial?.descuento
-        : 0
-    );
-
-    const precioFinalCalculado = calcularPrecioFinal(
-      toNumberOrNull(precioReferencia),
-      toNumberOrNull(descuento) ?? 0
-    );
-
     setForm({
       codigo: initial?.codigo || '',
       nombre: initial?.nombre || '',
@@ -247,37 +147,9 @@ export default function PlanFormModal({ open, onClose, onSubmit, initial }) {
         initial?.activo === 1 ||
         initial?.activo === true ||
         initial?.activo === '1',
-      orden_visual: toText(initial?.orden_visual ?? 0),
-      precio_referencia: precioReferencia,
-      descuento,
-      precio_final:
-        precioFinalCalculado !== null ? toText(precioFinalCalculado) : ''
+      orden_visual: toText(initial?.orden_visual ?? 0)
     });
   }, [open, initial]);
-
-  /* Benjamin Orellana - 08/04/2026 - Se calcula el precio final en vivo usando descuento porcentual */
-  const precioReferenciaPreview = useMemo(
-    () => toNumberOrNull(form.precio_referencia),
-    [form.precio_referencia]
-  );
-
-  const descuentoPreview = useMemo(
-    () => toNumberOrNull(form.descuento) ?? 0,
-    [form.descuento]
-  );
-
-  const precioFinalPreview = useMemo(
-    () => calcularPrecioFinal(precioReferenciaPreview, descuentoPreview),
-    [precioReferenciaPreview, descuentoPreview]
-  );
-
-  useEffect(() => {
-    setForm((prev) => ({
-      ...prev,
-      precio_final:
-        precioFinalPreview !== null ? toText(precioFinalPreview) : ''
-    }));
-  }, [precioFinalPreview]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -390,11 +262,6 @@ export default function PlanFormModal({ open, onClose, onSubmit, initial }) {
                   >
                     {isEdit ? 'Editar plan' : 'Nuevo plan'}
                   </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                    Cargá la información principal del plan y definí el precio
-                    inicial, el descuento porcentual y el precio final que
-                    quedará operativo en el módulo de débitos automáticos.
-                  </p>
                 </div>
               </div>
 
@@ -485,11 +352,11 @@ export default function PlanFormModal({ open, onClose, onSubmit, initial }) {
                   <div className="mb-4 flex items-center gap-2">
                     <ArrowDownWideNarrow className="h-5 w-5 text-orange-500" />
                     <h4 className="text-base font-bold text-slate-900">
-                      Orden y estructura comercial
+                      Orden y estructura del catálogo
                     </h4>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <div>
                       <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <ArrowDownWideNarrow className="h-4 w-4 text-orange-500" />
@@ -506,97 +373,25 @@ export default function PlanFormModal({ open, onClose, onSubmit, initial }) {
                       />
                     </div>
 
-                    <div>
-                      <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <CircleDollarSign className="h-4 w-4 text-orange-500" />
-                        Precio inicial
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        name="precio_referencia"
-                        value={form.precio_referencia}
-                        onChange={handleChange}
-                        placeholder="Ej: 50000"
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <Percent className="h-4 w-4 text-orange-500" />
-                        Descuento (%)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        name="descuento"
-                        value={form.descuento}
-                        onChange={handleChange}
-                        placeholder="Ej: 10"
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <Wallet className="h-4 w-4 text-orange-500" />
-                        Precio final
-                      </label>
-                      <input
-                        type="text"
-                        name="precio_final"
-                        value={
-                          precioFinalPreview !== null
-                            ? formatMoney(precioFinalPreview)
-                            : '-'
-                        }
-                        readOnly
-                        className="w-full rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 font-semibold text-emerald-800 outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <StatPreviewCard
-                      icon={CircleDollarSign}
-                      label="Precio inicial"
-                      value={formatMoney(precioReferenciaPreview)}
+                    {/* <StatPreviewCard
+                      icon={Hash}
+                      label="Código normalizado"
+                      value={
+                        form.codigo?.trim()
+                          ? form.codigo.trim().toUpperCase()
+                          : '-'
+                      }
                       tone="slate"
-                    />
+                    /> */}
+{/* 
                     <StatPreviewCard
-                      icon={Percent}
-                      label="Descuento"
-                      value={formatPercent(descuentoPreview)}
-                      tone="orange"
-                    />
-                    <StatPreviewCard
-                      icon={Sparkles}
-                      label="Precio final"
-                      value={formatMoney(precioFinalPreview)}
-                      tone="emerald"
-                    />
+                      icon={BadgeCheck}
+                      label="Estado"
+                      value={form.activo ? 'Activo' : 'Inactivo'}
+                      tone={form.activo ? 'emerald' : 'orange'}
+                    /> */}
                   </div>
-
-                  <div className="mt-4 rounded-[20px] border border-orange-100 bg-orange-50/70 px-4 py-3">
-                    <div className="flex items-start gap-3">
-                      <Sparkles className="mt-0.5 h-4.5 w-4.5 text-orange-500" />
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">
-                          El precio final se calcula automáticamente
-                        </p>
-                        <p className="mt-1 text-xs leading-6 text-slate-600">
-                          La fórmula aplicada es:
-                          <span className="mx-1 font-bold text-slate-800">
-                            Precio inicial - (Precio inicial × Descuento / 100)
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+               
                 </div>
 
                 <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-2 sm:flex-row sm:justify-end">

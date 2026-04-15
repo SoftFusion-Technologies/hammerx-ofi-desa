@@ -312,6 +312,7 @@ const PeriodosDebitosPage = () => {
   /* Benjamin Orellana - 2026/04/10 - Estado para reutilizar el alta manual de cliente desde la pantalla de períodos. */
   const [terminos, setTerminos] = useState([]);
   const [openCrear, setOpenCrear] = useState(false);
+  const [deshacerCobroLoadingId, setDeshacerCobroLoadingId] = useState(null);
 
   /* Benjamin Orellana - 2026/04/13 - Se obtiene identidad autenticada para que backend decida si devuelve tarjeta completa en períodos. */
   const { userId, userLevel, userName } = useAuth();
@@ -801,6 +802,13 @@ const PeriodosDebitosPage = () => {
     return { total, cobrados, pendientes, incidencias };
   }, [filteredAndSorted]);
 
+  const refreshAfterPeriodoMutation = useCallback(() => {
+    return Promise.allSettled([
+      fetchPeriodos({ silent: true }),
+      fetchCatalogos()
+    ]);
+  }, [fetchPeriodos, fetchCatalogos]);
+
   /* Benjamin Orellana - 01/04/2026 - Apertura del detalle de período consumiendo primero el OBR real */
   const handleOpenPeriodo = async (periodo) => {
     const periodoId = getPeriodoId(periodo);
@@ -939,6 +947,111 @@ const PeriodosDebitosPage = () => {
     }
   };
 
+  const handleOpenDeshacerCobro = async (periodo) => {
+    const periodoId = getPeriodoId(periodo);
+
+    if (!periodoId || deshacerCobroLoadingId === periodoId) return;
+
+    const { value: formValues, isConfirmed } = await Swal.fire({
+      title: 'Deshacer cobro',
+      html: `
+      <div style="text-align:left;display:flex;flex-direction:column;gap:12px">
+        <textarea
+          id="motivo_detalle"
+          class="swal2-textarea"
+          placeholder="Motivo de la reversa"
+          style="margin:0;width:100%;min-height:120px;"
+        ></textarea>
+
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;">
+          <input id="marcar_para_reintento" type="checkbox" checked />
+          Dejar el período listo para reintento
+        </label>
+      </div>
+    `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Deshacer cobro',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#f97316',
+      focusConfirm: false,
+      preConfirm: () => {
+        const motivo_detalle =
+          document.getElementById('motivo_detalle')?.value?.trim() || '';
+        const marcar_para_reintento =
+          document.getElementById('marcar_para_reintento')?.checked || false;
+
+        if (!motivo_detalle) {
+          Swal.showValidationMessage('Debés ingresar el motivo de la reversa.');
+          return false;
+        }
+
+        return {
+          motivo_detalle,
+          marcar_para_reintento
+        };
+      }
+    });
+
+    if (!isConfirmed || !formValues) return;
+
+    try {
+      setDeshacerCobroLoadingId(periodoId);
+
+      const response = await api.put(
+        `/debitos-automaticos-periodos/${periodoId}/deshacer-cobro`,
+        {
+          ...formValues,
+          updated_by: userId
+        },
+        authRequestConfig
+      );
+
+      const rowActualizada =
+        normalizeSingle(response?.data) || response?.data?.row || null;
+
+      /* Benjamin Orellana - 15/04/2026 - Se reemplaza localmente el período actualizado para evitar inconsistencias visuales antes del refetch. */
+      if (rowActualizada) {
+        setPeriodos((prev) =>
+          (Array.isArray(prev) ? prev : []).map((item) =>
+            getPeriodoId(item) === periodoId ? rowActualizada : item
+          )
+        );
+
+        if (selectedPeriodo && getPeriodoId(selectedPeriodo) === periodoId) {
+          setSelectedPeriodo(rowActualizada);
+        }
+      }
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Cobro revertido',
+        text: 'El período volvió a pendiente correctamente.',
+        confirmButtonColor: '#f97316'
+      });
+
+     refreshAfterPeriodoMutation().catch((error) => {
+       console.error(
+         'Error al refrescar datos luego de actualizar un período:',
+         error
+       );
+     });
+    } catch (error) {
+      console.error('Error al deshacer cobro:', error);
+
+      await Swal.fire({
+        icon: 'error',
+        title: 'No se pudo revertir',
+        text:
+          error?.response?.data?.mensajeError ||
+          error?.message ||
+          'Ocurrió un error al deshacer el cobro.',
+        confirmButtonColor: '#f97316'
+      });
+    } finally {
+      setDeshacerCobroLoadingId(null);
+    }
+  };
   /* Benjamin Orellana - 01/04/2026 - Generación manual del mes operativo usando el endpoint específico del módulo */
   const handleGenerarMes = async () => {
     const { periodo_anio, periodo_mes } = parsePeriodInput(periodoSeleccionado);
@@ -1194,27 +1307,29 @@ const PeriodosDebitosPage = () => {
     totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const currentRangeEnd = Math.min(safePage * pageSize, totalItems);
 
-  /* Benjamin Orellana - 01/04/2026 - Matriz central de reglas visuales y de habilitación para acciones de períodos según estado_cobro y accion_requerida */
+  /* Benjamin Orellana - 15/04/2026 - Se separa la reversa de cobro de la acción de reintento para no mezclar semánticas de negocio. */
   const getPeriodoActionRules = (periodo) => {
     const estadoCobro = String(periodo?.estado_cobro || '').toUpperCase();
     const accion = String(periodo?.accion_requerida || '').toUpperCase();
 
-    const isCerrado = estadoCobro === 'COBRADO' || estadoCobro === 'BAJA';
+    const isCobrado = estadoCobro === 'COBRADO';
+    const isBaja = estadoCobro === 'BAJA';
 
     return {
       canView: true,
-      canApprove: !isCerrado,
-      canBaja: !isCerrado,
-      canCambioTarjeta: !isCerrado && accion !== 'CAMBIO_TARJETA',
-      canPagoManual: !isCerrado && accion !== 'COBRO_MANUAL',
+      canApprove: !isCobrado && !isBaja,
+      canBaja: !isCobrado && !isBaja,
+      canCambioTarjeta: !isCobrado && !isBaja && accion !== 'CAMBIO_TARJETA',
+      canPagoManual: !isCobrado && !isBaja && accion !== 'COBRO_MANUAL',
       canReintentar:
-        !isCerrado &&
+        !isBaja &&
         (estadoCobro === 'RECHAZADO' ||
           accion === 'CAMBIO_TARJETA' ||
-          accion === 'COBRO_MANUAL')
+          accion === 'COBRO_MANUAL' ||
+          accion === 'REINTENTO'),
+      canDeshacerCobro: isCobrado
     };
   };
-
   /* Benjamin Orellana - 01/04/2026 - Estilo visual contextual por fila para que la operación mensual se lea más rápido */
   const getPeriodoRowClassName = (periodo) => {
     const estadoCobro = String(periodo?.estado_cobro || '').toUpperCase();
@@ -1357,7 +1472,7 @@ const PeriodosDebitosPage = () => {
       <NavbarStaff />
 
       <section className="dashboardbg min-h-[calc(100vh-80px)] bg-[#fff7f2]">
-        <div className="mx-auto max-w-[1800px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-[2200px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <motion.div
             variants={panelV}
             initial="hidden"
@@ -1719,74 +1834,35 @@ const PeriodosDebitosPage = () => {
                 </div>
               </div>
 
-              <div
-                ref={tableScrollRef}
-                onMouseDown={handleTableMouseDown}
-                onMouseMove={handleTableMouseMove}
-                onMouseUp={handleTableMouseUpOrLeave}
-                onMouseLeave={handleTableMouseUpOrLeave}
-                onClickCapture={handleTableClickCapture}
-                className="overflow-x-auto cursor-grab active:cursor-grabbing select-none"
-              >
-                {' '}
-                <table className="min-w-[2200px] w-full border-collapse">
-                  <thead className="bg-orange-500 text-white">
+              <div className="overflow-hidden rounded-[26px] border border-orange-100 bg-white shadow-[0_16px_45px_-30px_rgba(15,23,42,0.2)]">
+                <table className="w-full table-fixed border-collapse">
+                  <thead className="bg-gradient-to-r from-orange-500 to-orange-400 text-white">
                     <tr className="text-left">
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Nombre
+                      <th className="w-[18%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em]">
+                        Cliente
                       </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        DNI
-                      </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
+                      <th className="w-[14%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em]">
                         Plan
                       </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Monto inicial
+                      <th className="w-[15%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em]">
+                        Comercial
                       </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Desc. cliente %
+                      <th className="w-[15%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em]">
+                        Banco / Tarjeta
                       </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Monto final
+                      <th className="w-[12%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em]">
+                        Ciclo
                       </th>
-                      {/* <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Neto estimado
-                      </th> */}
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Banco
+                      <th className="w-[10%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em]">
+                        Estado
                       </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Tarjeta
-                      </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Alta
-                      </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Inicio
-                      </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Baja
-                      </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
+                      <th className="w-[8%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-center">
                         Pagos
                       </th>
-                      {/* <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Estado envío
-                      </th> */}
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Estado cobro
+                      <th className="w-[12%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em]">
+                        Seguimiento
                       </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Acción requerida
-                      </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Motivo
-                      </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em]">
-                        Observaciones
-                      </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-[0.18em] text-center">
+                      <th className="w-[16%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-center">
                         Acciones
                       </th>
                     </tr>
@@ -1799,7 +1875,7 @@ const PeriodosDebitosPage = () => {
                           key={`skeleton-${index}`}
                           className="border-b border-slate-100"
                         >
-                          {Array.from({ length: 18 }).map((__, cellIndex) => (
+                          {Array.from({ length: 9 }).map((__, cellIndex) => (
                             <td key={cellIndex} className="px-4 py-4">
                               <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
                             </td>
@@ -1808,7 +1884,7 @@ const PeriodosDebitosPage = () => {
                       ))
                     ) : paginatedRows.length === 0 ? (
                       <tr>
-                        <td colSpan={19} className="px-6 py-16 text-center">
+                        <td colSpan={9} className="px-6 py-16 text-center">
                           <div className="mx-auto max-w-xl">
                             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
                               <Search className="h-6 w-6" />
@@ -1830,145 +1906,182 @@ const PeriodosDebitosPage = () => {
                         return (
                           <tr
                             key={getPeriodoId(periodo)}
-                            className={`group border-b border-slate-100 transition-colors duration-200 ${getPeriodoRowClassName(
+                            className={`group border-b border-slate-100 align-top transition-colors duration-200 ${getPeriodoRowClassName(
                               periodo
                             )}`}
                           >
                             <td className="px-4 py-4 align-top">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-bold text-slate-900">
-                                  {resolveTitularNombre(periodo)}
+                              <div className="space-y-1.5">
+                                <div className="flex items-start gap-2">
+                                  <p className="text-sm font-black leading-5 text-slate-900 break-words">
+                                    {resolveTitularNombre(periodo)}
+                                  </p>
+                                  {shouldShowNuevoBadgePeriodo(periodo) && (
+                                    <NuevoBadge />
+                                  )}
+                                </div>
+
+                                <p className="text-xs font-medium text-slate-600">
+                                  DNI {resolveTitularDni(periodo)}
                                 </p>
-                                {shouldShowNuevoBadgePeriodo(periodo) && (
-                                  <NuevoBadge />
-                                )}
-                              </div>
 
-                              <p className="mt-1 text-xs text-slate-500">
-                                {formatMonthLabel(
-                                  Number(periodo?.periodo_anio),
-                                  Number(periodo?.periodo_mes)
-                                )}
-                              </p>
-                            </td>
-                            <td className="px-4 py-4 align-top text-sm font-medium text-slate-700">
-                              {resolveTitularDni(periodo)}
-                            </td>
-
-                            <td className="px-4 py-4 align-top">
-                              <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
-                                <BadgeDollarSign className="h-4 w-4 text-orange-500" />
-                                {resolvePlanNombre(periodo)}
+                                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                                  {formatMonthLabel(
+                                    Number(periodo?.periodo_anio),
+                                    Number(periodo?.periodo_mes)
+                                  )}
+                                </p>
                               </div>
                             </td>
 
-                            <td className="px-4 py-4 align-top text-sm font-semibold text-slate-900">
-                              {formatCurrency(
-                                resolveMontoInicialClienteAplicado(periodo),
-                                resolveMoneda(periodo)
-                              )}
-                            </td>
-
                             <td className="px-4 py-4 align-top">
-                              <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700">
-                                {formatPercent(
-                                  resolveDescuentoClientePctAplicado(periodo)
-                                )}
-                              </span>
-                            </td>
-
-                            <td className="px-4 py-4 align-top text-sm font-semibold text-slate-900">
-                              {formatCurrency(
-                                resolveMontoBruto(periodo),
-                                resolveMoneda(periodo)
-                              )}
-                            </td>
-
-                            {/* <td className="px-4 py-4 align-top text-sm font-semibold text-emerald-700">
-                              {formatCurrency(
-                                resolveMontoNetoEstimado(periodo),
-                                resolveMoneda(periodo)
-                              )}
-                            </td> */}
-
-                            <td className="px-4 py-4 align-top">
-                              <div className="inline-flex items-center gap-2 text-sm text-slate-700">
-                                <Landmark className="h-4 w-4 text-orange-500" />
-                                {resolveBancoNombre(periodo)}
+                              <div className="flex items-start gap-2">
+                                <BadgeDollarSign className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
+                                <p className="text-sm font-semibold leading-5 text-slate-700 break-words">
+                                  {resolvePlanNombre(periodo)}
+                                </p>
                               </div>
                             </td>
 
-                            <td className="px-4 py-4 align-top text-sm text-slate-700">
-                              {resolveTarjeta(periodo)}
-                            </td>
-
-                            <td className="px-4 py-4 align-top text-sm text-slate-700">
-                              <div>{formatDate(resolveAlta(periodo))}</div>
-                            </td>
-
-                            <td className="px-4 py-4 align-top text-sm text-slate-700">
-                              {formatDate(resolveInicio(periodo))}
-                            </td>
-                            <td className="px-4 py-4 align-top text-sm text-slate-700">
-                              {formatDate(resolveFechaBaja(periodo))}
-                            </td>
-                            <td className="px-4 py-4 align-top text-sm font-semibold text-slate-900">
-                              {resolvePagos(periodo)}
-                            </td>
-                            {/* 
                             <td className="px-4 py-4 align-top">
-                              <Badge
-                                variant={getEstadoEnvioVariant(
-                                  periodo?.estado_envio
-                                )}
-                              >
-                                {String(
-                                  periodo?.estado_envio || '-'
-                                ).replaceAll('_', ' ')}
-                              </Badge>
-                            </td> */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                                    Inicial
+                                  </span>
+                                  <span className="text-sm font-bold text-slate-800 text-right">
+                                    {formatCurrency(
+                                      resolveMontoInicialClienteAplicado(
+                                        periodo
+                                      ),
+                                      resolveMoneda(periodo)
+                                    )}
+                                  </span>
+                                </div>
 
-                            <td className="px-4 py-4 align-top">
-                              <Badge
-                                variant={getEstadoCobroVariant(
-                                  periodo?.estado_cobro
-                                )}
-                              >
-                                {String(
-                                  periodo?.estado_cobro || '-'
-                                ).replaceAll('_', ' ')}
-                              </Badge>
-                            </td>
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                                    Desc.
+                                  </span>
+                                  <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-orange-700">
+                                    {formatPercent(
+                                      resolveDescuentoClientePctAplicado(
+                                        periodo
+                                      )
+                                    )}
+                                  </span>
+                                </div>
 
-                            <td className="px-4 py-4 align-top">
-                              <Badge
-                                variant={getAccionVariant(
-                                  periodo?.accion_requerida
-                                )}
-                              >
-                                {String(
-                                  periodo?.accion_requerida || '-'
-                                ).replaceAll('_', ' ')}
-                              </Badge>
-                            </td>
-
-                            <td className="px-4 py-4 align-top text-sm text-slate-700">
-                              {resolveMotivo(periodo)}
-                            </td>
-
-                            {/* <td className="px-4 py-4 align-top text-sm font-semibold text-slate-900">
-                              {formatCurrency(
-                                periodo?.monto_neto_estimado,
-                                resolveMoneda(periodo)
-                              )}
-                            </td> */}
-
-                            <td className="px-4 py-4 align-top text-sm text-slate-700">
-                              {resolveObservaciones(periodo)}
+                                <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-2">
+                                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                                    Final
+                                  </span>
+                                  <span className="text-sm font-black text-slate-900 text-right">
+                                    {formatCurrency(
+                                      resolveMontoBruto(periodo),
+                                      resolveMoneda(periodo)
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
                             </td>
 
                             <td className="px-4 py-4 align-top">
-                              <div className="flex flex-wrap items-center justify-center gap-2">
+                              <div className="space-y-2">
+                                <div className="flex items-start gap-2">
+                                  <Landmark className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
+                                  <p className="text-sm font-semibold leading-5 text-slate-800 break-words">
+                                    {resolveBancoNombre(periodo)}
+                                  </p>
+                                </div>
+
+                                <p className="text-xs leading-5 text-slate-500 break-words">
+                                  {resolveTarjeta(periodo)}
+                                </p>
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-4 align-top">
+                              <div className="space-y-2.5">
+                                <div>
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                    Alta
+                                  </p>
+                                  <p className="mt-0.5 text-sm font-medium text-slate-700">
+                                    {formatDate(resolveAlta(periodo))}
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                    Inicio
+                                  </p>
+                                  <p className="mt-0.5 text-sm font-medium text-slate-700">
+                                    {formatDate(resolveInicio(periodo))}
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                    Baja
+                                  </p>
+                                  <p className="mt-0.5 text-sm font-medium text-slate-700">
+                                    {formatDate(resolveFechaBaja(periodo))}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-4 align-top">
+                              <div className="flex flex-col gap-2">
+                                <Badge
+                                  variant={getEstadoCobroVariant(
+                                    periodo?.estado_cobro
+                                  )}
+                                >
+                                  {String(
+                                    periodo?.estado_cobro || '-'
+                                  ).replaceAll('_', ' ')}
+                                </Badge>
+
+                                <Badge
+                                  variant={getAccionVariant(
+                                    periodo?.accion_requerida
+                                  )}
+                                >
+                                  {String(
+                                    periodo?.accion_requerida || '-'
+                                  ).replaceAll('_', ' ')}
+                                </Badge>
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-4 align-top text-center">
+                              <div className="mx-auto inline-flex h-11 min-w-[44px] items-center justify-center rounded-2xl border border-orange-200 bg-orange-50 px-3 text-sm font-black text-orange-700">
+                                {resolvePagos(periodo)}
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-4 align-top">
+                              <div className="space-y-2">
+                                <p
+                                  className="text-xs font-semibold leading-5 text-slate-700 break-words"
+                                  title={resolveMotivo(periodo)}
+                                >
+                                  {resolveMotivo(periodo)}
+                                </p>
+
+                                <p
+                                  className="text-xs leading-5 text-slate-500 break-words"
+                                  title={resolveObservaciones(periodo)}
+                                >
+                                  {resolveObservaciones(periodo)}
+                                </p>
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-4 align-top">
+                              <div className="grid grid-cols-3 place-items-center gap-2">
                                 <ActionButton
                                   icon={Eye}
                                   title="Ver"
@@ -2012,10 +2125,23 @@ const PeriodosDebitosPage = () => {
 
                                 <ActionButton
                                   icon={RotateCcw}
-                                  title="Reintentar"
+                                  title={
+                                    rules.canDeshacerCobro
+                                      ? 'Deshacer cobro'
+                                      : 'Reintentar'
+                                  }
                                   variant="info"
-                                  onClick={() => handleOpenReintentar(periodo)}
-                                  disabled={!rules.canReintentar}
+                                  onClick={() =>
+                                    rules.canDeshacerCobro
+                                      ? handleOpenDeshacerCobro(periodo)
+                                      : handleOpenReintentar(periodo)
+                                  }
+                                  disabled={
+                                    (!rules.canDeshacerCobro &&
+                                      !rules.canReintentar) ||
+                                    deshacerCobroLoadingId ===
+                                      getPeriodoId(periodo)
+                                  }
                                 />
                               </div>
                             </td>
@@ -2026,7 +2152,6 @@ const PeriodosDebitosPage = () => {
                   </tbody>
                 </table>
               </div>
-
               {!loading && totalItems > 0 && (
                 <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                   <p className="text-sm text-slate-500">
@@ -2239,6 +2364,6 @@ const PeriodosDebitosPage = () => {
       />
     </>
   );
-};;;;;;;;;
+};
 
 export default PeriodosDebitosPage;

@@ -520,9 +520,10 @@ const ClientesDebitosPage = () => {
           titular_plan_id: filters.plan_id || undefined,
           estado_general: filters.estado_general || undefined,
           modalidad_adhesion: filters.modalidad_adhesion || undefined,
+          // Benjamin Orellana - 2026/04/14 - Se evita depender de sedeTabs para no recrear fetchData al recargar el catálogo de sedes.
           sede_id:
             sedeActiva !== 'TODAS'
-              ? sedeTabs.find((tab) => tab.key === sedeActiva)?.id || undefined
+              ? Number(sedeActiva) || undefined
               : undefined,
           ...sortParams
         };
@@ -628,15 +629,7 @@ const ClientesDebitosPage = () => {
         setRefreshing(false);
       }
     },
-    [
-      authRequestConfig,
-      filters,
-      page,
-      pageSize,
-      sedeActiva,
-      sedeTabs,
-      sortValue
-    ]
+    [authRequestConfig, filters, page, pageSize, sedeActiva, sortValue]
   );
 
   useEffect(() => {
@@ -1955,6 +1948,6 @@ const ClientesDebitosPage = () => {
       />
     </>
   );
-};;;;;
+};
 
 export default ClientesDebitosPage;

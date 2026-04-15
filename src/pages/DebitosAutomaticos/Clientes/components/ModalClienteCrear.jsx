@@ -23,7 +23,7 @@ import {
 /*
  * Programador: Benjamin Orellana
  * Fecha Creación: 06 / 04 / 2026
- * Versión: 1.3
+ * Versión: 1.4
  *
  * Descripción:
  * Modal de alta directa para clientes del módulo Débitos Automáticos.
@@ -34,7 +34,6 @@ import {
  * Capa: Frontend
  */
 
-/* Benjamin Orellana - 06/04/2026 - Se corrige el autocompletado del beneficio al seleccionar banco y se normalizan catálogos para soportar tanto arrays crudos como arrays de options */
 const backdropV = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
@@ -57,9 +56,14 @@ const panelV = {
   }
 };
 
+const API_URL =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:8080';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080'
+  baseURL: API_URL
 });
+
+const PLANES_POR_SEDE_ENDPOINT = `${API_URL}/debitos-automaticos-planes-por-sede`;
 
 const onlyDigits = (value) => String(value || '').replace(/\D/g, '');
 
@@ -94,7 +98,6 @@ const normalizeSingle = (payload) => {
   return payload;
 };
 
-/* Benjamin Orellana - 09/04/2026 - Helpers numéricos para autocompletar y recalcular los valores comerciales vigentes en alta directa */
 const parseNullableNumber = (value) => {
   if (value === undefined || value === null || value === '') return null;
 
@@ -124,36 +127,16 @@ const calculateMontoBase = (montoInicial, descuento) => {
   );
 };
 
-const getCommercialValuesFromPlan = (plan) => {
-  if (!plan) {
-    return {
-      monto_inicial_vigente: '',
-      descuento_vigente: '',
-      monto_base_vigente: ''
-    };
-  }
+const formatARS = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return null;
 
-  const precioReferencia = parseNullableNumber(plan?.precio_referencia);
-  const descuento = parseNullableNumber(plan?.descuento);
-  const precioFinal = parseNullableNumber(plan?.precio_final);
-
-  const descuentoResuelto = descuento ?? 0;
-  const montoCalculado =
-    precioReferencia !== null
-      ? calculateMontoBase(precioReferencia, descuentoResuelto)
-      : null;
-
-  return {
-    monto_inicial_vigente:
-      precioReferencia !== null ? toInputNumberString(precioReferencia) : '',
-    descuento_vigente: toInputNumberString(descuentoResuelto),
-    monto_base_vigente:
-      precioFinal !== null
-        ? toInputNumberString(precioFinal)
-        : montoCalculado !== null
-          ? toInputNumberString(montoCalculado)
-          : ''
-  };
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(num);
 };
 
 const ESTADO_OPTIONS = [
@@ -181,13 +164,6 @@ const ROL_CARGA_OPTIONS = [
   { value: 'VENDEDOR', label: 'Vendedor' },
   { value: 'RECEPCION', label: 'Recepción' }
 ];
-
-const getPlanLabel = (item) =>
-  item?.nombre ||
-  item?.descripcion ||
-  item?.titulo ||
-  item?.label ||
-  `Plan #${item?.id ?? item?.value ?? '-'}`;
 
 const getBancoLabel = (item) =>
   item?.nombre ||
@@ -235,47 +211,6 @@ const normalizeBancoItem = (item) => ({
     ''
 });
 
-/* Benjamin Orellana - 09/04/2026 - Se preservan explícitamente los campos comerciales del plan para autocompletar valores vigentes */
-const normalizePlanItem = (item) => ({
-  ...item,
-  id: item?.id ?? item?.value ?? '',
-  nombre: item?.nombre || item?.label || item?.descripcion || item?.titulo || '',
-  precio_referencia:
-    item?.precio_referencia ??
-    item?.precioReferencia ??
-    item?.monto_inicial ??
-    item?.montoInicial ??
-    null,
-  descuento:
-    item?.descuento ??
-    item?.descuento_pct ??
-    item?.descuentoPct ??
-    0,
-  precio_final:
-    item?.precio_final ??
-    item?.precioFinal ??
-    item?.monto_final ??
-    item?.montoFinal ??
-    null
-});
-
-/* Benjamin Orellana - 09/04/2026 - Determina si el plan ya viene con datos comerciales suficientes para hidratar el formulario sin consultar detalle */
-const hasCommercialPlanData = (plan) => {
-  if (!plan) return false;
-
-  return (
-    parseNullableNumber(plan?.precio_referencia) !== null ||
-    parseNullableNumber(plan?.precio_final) !== null
-  );
-};
-
-/* Benjamin Orellana - 09/04/2026 - Normaliza una respuesta de detalle de plan para poder reutilizar la misma lógica de autocompletado */
-const normalizePlanDetailPayload = (payload) => {
-  const single = normalizeSingle(payload);
-  const raw = single?.registro || single?.plan || single?.data || single;
-  return normalizePlanItem(raw);
-};
-
 const normalizeSedeItem = (item) => ({
   ...item,
   id: item?.id ?? item?.value ?? '',
@@ -286,6 +221,19 @@ const normalizeTerminoItem = (item) => ({
   ...item,
   id: item?.id ?? item?.value ?? '',
   titulo: item?.titulo || item?.label || item?.nombre || ''
+});
+
+const normalizePlanBySedeItem = (item) => ({
+  ...item,
+  id: item?.id ?? item?.value ?? '',
+  nombre:
+    item?.nombre || item?.label || item?.descripcion || item?.titulo || '',
+  codigo: item?.codigo || '',
+  precio_base:
+    item?.precio_base ??
+    item?.monto_inicial_vigente ??
+    item?.precioReferencia ??
+    null
 });
 
 const buildInitialForm = (defaultRolCarga = 'ADMIN') => ({
@@ -324,7 +272,6 @@ const buildInitialForm = (defaultRolCarga = 'ADMIN') => ({
   beneficio_reintegro_desde_mes_snapshot: '',
   beneficio_reintegro_duracion_meses_snapshot: '',
 
-  /* Benjamin Orellana - 09/04/2026 - Se agregan los tres campos comerciales vigentes al alta directa */
   monto_inicial_vigente: '',
   descuento_vigente: '',
   monto_base_vigente: '',
@@ -341,7 +288,7 @@ const Section = ({ icon: Icon, title, children, className = '' }) => (
     className={`rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.35)] ${className}`}
   >
     <div className="mb-3 flex items-center gap-2">
-      {Icon && <Icon className="h-4 w-4 text-orange-500" />}
+      {Icon ? <Icon className="h-4 w-4 text-orange-500" /> : null}
       <h3 className="text-sm font-bold text-slate-900">{title}</h3>
     </div>
     {children}
@@ -409,6 +356,36 @@ const applyBancoBenefitToForm = (prevForm, banco) => {
   };
 };
 
+/* Benjamin Orellana - 2026/04/15 - Resuelve qué plan impacta los campos comerciales según la modalidad actual del alta directa. */
+const resolveCommercialPlanId = (form) => {
+  if (!form) return '';
+
+  if (form.modalidad_adhesion === 'SOLO_ADICIONAL') {
+    return form.adicional_plan_id || '';
+  }
+
+  return form.titular_plan_id || '';
+};
+
+/* Benjamin Orellana - 2026/04/15 - Calcula monto inicial, descuento y monto base a partir del precio_base del plan por sede y del beneficio snapshot del banco. */
+const getCommercialValuesFromPlanAndBenefit = ({
+  plan,
+  beneficioDescuentoPct
+}) => {
+  const montoInicial = parseNullableNumber(plan?.precio_base);
+  const descuento = parseNullableNumber(beneficioDescuentoPct) ?? 0;
+
+  const montoBase =
+    montoInicial !== null ? calculateMontoBase(montoInicial, descuento) : null;
+
+  return {
+    monto_inicial_vigente:
+      montoInicial !== null ? toInputNumberString(montoInicial) : '',
+    descuento_vigente: toInputNumberString(descuento),
+    monto_base_vigente: montoBase !== null ? toInputNumberString(montoBase) : ''
+  };
+};
+
 const ModalClienteCrear = ({
   open,
   onClose,
@@ -424,13 +401,17 @@ const ModalClienteCrear = ({
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [planesBySede, setPlanesBySede] = useState([]);
+  const [loadingPlanesBySede, setLoadingPlanesBySede] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+
     setForm(buildInitialForm(defaultRolCarga));
     setError('');
     setSuccessMsg('');
     setSubmitting(false);
+    setPlanesBySede([]);
   }, [open, defaultRolCarga]);
 
   const sedesOptions = useMemo(() => {
@@ -464,15 +445,6 @@ const ModalClienteCrear = ({
       );
   }, [bancos]);
 
-  const planesOptions = useMemo(() => {
-    return (Array.isArray(planes) ? planes : [])
-      .map(normalizePlanItem)
-      .filter((item) => item?.id)
-      .sort((a, b) =>
-        String(getPlanLabel(a)).localeCompare(String(getPlanLabel(b)), 'es')
-      );
-  }, [planes]);
-
   const terminosOptions = useMemo(() => {
     return (Array.isArray(terminos) ? terminos : [])
       .map(normalizeTerminoItem)
@@ -485,16 +457,26 @@ const ModalClienteCrear = ({
       );
   }, [terminos]);
 
-  /* Benjamin Orellana - 09/04/2026 - Se indexan los planes para autocompletar rápidamente los valores comerciales */
+  const planesBySedeOptions = useMemo(() => {
+    return (Array.isArray(planesBySede) ? planesBySede : [])
+      .map(normalizePlanBySedeItem)
+      .filter((item) => item?.id)
+      .sort((a, b) =>
+        String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es')
+      );
+  }, [planesBySede]);
+
   const planesMap = useMemo(() => {
     const map = new Map();
-    planesOptions.forEach((item) => {
+
+    planesBySedeOptions.forEach((item) => {
       if (item?.id) {
         map.set(String(item.id), item);
       }
     });
+
     return map;
-  }, [planesOptions]);
+  }, [planesBySedeOptions]);
 
   const selectedBanco = useMemo(() => {
     if (!form.banco_id) return null;
@@ -509,48 +491,85 @@ const ModalClienteCrear = ({
     form.modalidad_adhesion === 'AMBOS' ||
     form.modalidad_adhesion === 'SOLO_ADICIONAL';
 
-  /* Benjamin Orellana - 09/04/2026 - Hidrata monto inicial, descuento y monto final desde el plan seleccionado, consultando el detalle si el catálogo vino recortado */
-  const hydrateCommercialFieldsFromPlanId = async (planId) => {
-    if (!planId) {
-      setForm((prev) => ({
-        ...prev,
-        monto_inicial_vigente: '',
-        descuento_vigente: '',
-        monto_base_vigente: ''
-      }));
-      return;
-    }
-
-    try {
-      let plan = planesMap.get(String(planId)) || null;
-
-      if (!hasCommercialPlanData(plan)) {
-        const response = await api.get(`/debitos-automaticos-planes/${planId}`);
-        plan = normalizePlanDetailPayload(response.data);
-      }
-
-      const commercial = getCommercialValuesFromPlan(plan);
-
-      setForm((prev) => ({
-        ...prev,
-        monto_inicial_vigente: commercial.monto_inicial_vigente,
-        descuento_vigente: commercial.descuento_vigente,
-        monto_base_vigente: commercial.monto_base_vigente
-      }));
-    } catch (err) {
-      setForm((prev) => ({
-        ...prev,
-        monto_inicial_vigente: '',
-        descuento_vigente: '0',
-        monto_base_vigente: ''
-      }));
-
-      setError(
-        err?.response?.data?.mensajeError ||
-          'No se pudo cargar automáticamente el plan seleccionado.'
-      );
-    }
+  /* Benjamin Orellana - 2026/04/15 - Se muestra el precio base resuelto por sede en los combos del alta directa de clientes para evitar selecciones ambiguas. */
+  const getPlanOptionLabel = (plan) => {
+    const base = plan?.nombre || plan?.codigo || `Plan #${plan?.id}`;
+    // const precio = formatARS(plan?.precio_base);
+    return base;
   };
+
+  useEffect(() => {
+    if (!open) return;
+
+    let active = true;
+
+    /* Benjamin Orellana - 2026/04/15 - El alta directa de clientes carga planes por sede para impedir seleccionar configuraciones inexistentes comercialmente. */
+    const fetchPlanesBySede = async () => {
+      try {
+        const sedeId = Number(form?.sede_id);
+
+        if (!Number.isFinite(sedeId) || sedeId <= 0) {
+          setPlanesBySede([]);
+          return;
+        }
+
+        setLoadingPlanesBySede(true);
+
+        const response = await axios.get(PLANES_POR_SEDE_ENDPOINT, {
+          params: { sede_id: sedeId }
+        });
+
+        if (!active) return;
+
+        const planesData = Array.isArray(response.data) ? response.data : [];
+        setPlanesBySede(planesData);
+      } catch (fetchError) {
+        if (!active) return;
+
+        setPlanesBySede([]);
+        setError(
+          fetchError?.response?.data?.mensajeError ||
+            fetchError?.message ||
+            'No se pudieron cargar los planes de la sede seleccionada.'
+        );
+      } finally {
+        if (active) setLoadingPlanesBySede(false);
+      }
+    };
+
+    fetchPlanesBySede();
+
+    return () => {
+      active = false;
+    };
+  }, [open, form?.sede_id]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    /* Benjamin Orellana - 2026/04/15 - Si cambia la sede y los planes elegidos ya no existen en el catálogo filtrado, se limpian para evitar grabar IDs inválidos. */
+    setForm((prev) => {
+      const titularValido =
+        !prev.titular_plan_id ||
+        planesBySedeOptions.some(
+          (item) => String(item.id) === String(prev.titular_plan_id)
+        );
+
+      const adicionalValido =
+        !prev.adicional_plan_id ||
+        planesBySedeOptions.some(
+          (item) => String(item.id) === String(prev.adicional_plan_id)
+        );
+
+      if (titularValido && adicionalValido) return prev;
+
+      return {
+        ...prev,
+        titular_plan_id: titularValido ? prev.titular_plan_id : '',
+        adicional_plan_id: adicionalValido ? prev.adicional_plan_id : ''
+      };
+    });
+  }, [planesBySedeOptions, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -563,7 +582,7 @@ const ModalClienteCrear = ({
     }
   }, [open, form.terminos_id, terminosOptions]);
 
-  /* Benjamin Orellana - 06/04/2026 - Se fuerza la hidratación de snapshots de beneficio cada vez que cambia el banco seleccionado, y también se limpian cuando no hay banco */
+  /* Benjamin Orellana - 06/04/2026 - Se fuerza la hidratación de snapshots de beneficio cada vez que cambia el banco seleccionado, y también se limpian cuando no hay banco. */
   useEffect(() => {
     if (!open) return;
 
@@ -578,7 +597,44 @@ const ModalClienteCrear = ({
     });
   }, [open, form.banco_id, selectedBanco]);
 
-  /* Benjamin Orellana - 09/04/2026 - Recalcula automáticamente el monto final cuando cambian monto inicial o descuento */
+  /* Benjamin Orellana - 2026/04/15 - Sincroniza automáticamente monto inicial, descuento vigente y monto base tomando el precio_base del plan filtrado por sede y el beneficio snapshot del banco seleccionado. */
+  useEffect(() => {
+    if (!open) return;
+
+    setForm((prev) => {
+      const planId = resolveCommercialPlanId(prev);
+      const planSeleccionado = planesMap.get(String(planId)) || null;
+
+      const commercial = getCommercialValuesFromPlanAndBenefit({
+        plan: planSeleccionado,
+        beneficioDescuentoPct: prev.beneficio_descuento_off_pct_snapshot
+      });
+
+      if (
+        prev.monto_inicial_vigente === commercial.monto_inicial_vigente &&
+        prev.descuento_vigente === commercial.descuento_vigente &&
+        prev.monto_base_vigente === commercial.monto_base_vigente
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        monto_inicial_vigente: commercial.monto_inicial_vigente,
+        descuento_vigente: commercial.descuento_vigente,
+        monto_base_vigente: commercial.monto_base_vigente
+      };
+    });
+  }, [
+    open,
+    planesMap,
+    form.titular_plan_id,
+    form.adicional_plan_id,
+    form.modalidad_adhesion,
+    form.beneficio_descuento_off_pct_snapshot
+  ]);
+
+  /* Benjamin Orellana - 09/04/2026 - Recalcula automáticamente el monto final cuando cambian monto inicial o descuento, dejando el valor editable para ajustes manuales posteriores. */
   useEffect(() => {
     if (!open) return;
 
@@ -670,30 +726,6 @@ const ModalClienteCrear = ({
           next.adicional_telefono = '';
           next.adicional_plan_id = '';
         }
-      }
-
-      /* Benjamin Orellana - 09/04/2026 - Al seleccionar el plan titular se autocompletan los campos comerciales vigentes */
-      if (field === 'titular_plan_id') {
-        const planSeleccionado = planesMap.get(String(value)) || null;
-        const commercial = getCommercialValuesFromPlan(planSeleccionado);
-
-        next.monto_inicial_vigente = commercial.monto_inicial_vigente;
-        next.descuento_vigente = commercial.descuento_vigente;
-        next.monto_base_vigente = commercial.monto_base_vigente;
-      }
-
-      /* Benjamin Orellana - 09/04/2026 - En modalidad solo adicional, al seleccionar el plan adicional también se autocompletan los campos comerciales */
-      if (
-        field === 'adicional_plan_id' &&
-        (prev.modalidad_adhesion === 'SOLO_ADICIONAL' ||
-          next.modalidad_adhesion === 'SOLO_ADICIONAL')
-      ) {
-        const planSeleccionado = planesMap.get(String(value)) || null;
-        const commercial = getCommercialValuesFromPlan(planSeleccionado);
-
-        next.monto_inicial_vigente = commercial.monto_inicial_vigente;
-        next.descuento_vigente = commercial.descuento_vigente;
-        next.monto_base_vigente = commercial.monto_base_vigente;
       }
 
       return next;
@@ -826,7 +858,6 @@ const ModalClienteCrear = ({
           ? null
           : Number(form.beneficio_reintegro_duracion_meses_snapshot),
 
-      /* Benjamin Orellana - 09/04/2026 - Se envían los tres campos comerciales vigentes al crear el cliente */
       monto_inicial_vigente: Number(form.monto_inicial_vigente),
       descuento_vigente: Number(form.descuento_vigente),
       monto_base_vigente: Number(form.monto_base_vigente),
@@ -1195,23 +1226,28 @@ const ModalClienteCrear = ({
                     <Label>Plan titular</Label>
                     <Select
                       value={form.titular_plan_id}
-                      onChange={async (e) => {
-                        const value = e.target.value;
-                        handleChange('titular_plan_id', value);
-
-                        if (form.modalidad_adhesion !== 'SOLO_ADICIONAL') {
-                          await hydrateCommercialFieldsFromPlanId(value);
-                        }
-                      }}
+                      onChange={(e) =>
+                        handleChange('titular_plan_id', e.target.value)
+                      }
                       disabled={
                         submitting ||
-                        form.modalidad_adhesion === 'SOLO_ADICIONAL'
+                        form.modalidad_adhesion === 'SOLO_ADICIONAL' ||
+                        !form.sede_id ||
+                        loadingPlanesBySede
                       }
                     >
-                      <option value="">Seleccionar plan</option>
-                      {planesOptions.map((item) => (
+                      <option value="">
+                        {form.modalidad_adhesion === 'SOLO_ADICIONAL'
+                          ? 'No aplica para esta modalidad'
+                          : !form.sede_id
+                            ? 'Seleccionar sede primero'
+                            : loadingPlanesBySede
+                              ? 'Cargando planes...'
+                              : 'Seleccionar plan'}
+                      </option>
+                      {planesBySedeOptions.map((item) => (
                         <option key={item.id} value={item.id}>
-                          {getPlanLabel(item)}
+                          {getPlanOptionLabel(item)}
                         </option>
                       ))}
                     </Select>
@@ -1285,20 +1321,23 @@ const ModalClienteCrear = ({
                       <Label>Plan adicional</Label>
                       <Select
                         value={form.adicional_plan_id}
-                        onChange={async (e) => {
-                          const value = e.target.value;
-                          handleChange('adicional_plan_id', value);
-
-                          if (form.modalidad_adhesion === 'SOLO_ADICIONAL') {
-                            await hydrateCommercialFieldsFromPlanId(value);
-                          }
-                        }}
-                        disabled={submitting}
+                        onChange={(e) =>
+                          handleChange('adicional_plan_id', e.target.value)
+                        }
+                        disabled={
+                          submitting || !form.sede_id || loadingPlanesBySede
+                        }
                       >
-                        <option value="">Seleccionar plan</option>
-                        {planesOptions.map((item) => (
+                        <option value="">
+                          {!form.sede_id
+                            ? 'Seleccionar sede primero'
+                            : loadingPlanesBySede
+                              ? 'Cargando planes...'
+                              : 'Seleccionar plan'}
+                        </option>
+                        {planesBySedeOptions.map((item) => (
                           <option key={item.id} value={item.id}>
-                            {getPlanLabel(item)}
+                            {getPlanOptionLabel(item)}
                           </option>
                         ))}
                       </Select>
@@ -1454,9 +1493,8 @@ const ModalClienteCrear = ({
                       onChange={(e) =>
                         handleChange('monto_base_vigente', e.target.value)
                       }
-                      disabled
+                      disabled={submitting}
                       leftIcon={Wallet}
-                      className="bg-slate-50"
                     />
                   </div>
 
@@ -1574,17 +1612,17 @@ const ModalClienteCrear = ({
               </Section>
             </div>
 
-            {error && (
+            {error ? (
               <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
               </div>
-            )}
+            ) : null}
 
-            {successMsg && (
+            {successMsg ? (
               <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                 {successMsg}
               </div>
-            )}
+            ) : null}
 
             <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
@@ -1619,6 +1657,6 @@ const ModalClienteCrear = ({
       </motion.div>
     </AnimatePresence>
   );
-};;
+};
 
 export default ModalClienteCrear;
