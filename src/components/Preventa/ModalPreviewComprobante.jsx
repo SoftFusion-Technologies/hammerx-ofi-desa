@@ -8,7 +8,8 @@ function ModalPreviewComprobante({
   fileName,
   esImagen,
   esPdf,
-  onDownload
+  onDownload,
+  
 }) {
   const [previewError, setPreviewError] = useState(false);
   const [expandido, setExpandido] = useState(false);
@@ -42,7 +43,7 @@ function ModalPreviewComprobante({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
     >
       <div

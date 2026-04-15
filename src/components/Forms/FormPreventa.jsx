@@ -9,6 +9,8 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 import axios from "axios";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 // ==========================================
 // Sub-componente: Stepper de Progreso
@@ -675,6 +677,10 @@ const FormPreventa = ({
     domicilio: "",
     celular: "",
   });
+  const [datosComprobante, setDatosComprobante] = useState(null);
+  const [mostrarAlertaDniDuplicado, setMostrarAlertaDniDuplicado] = useState(false);
+  const [preventaDuplicada, setPreventaDuplicada] = useState(null);
+  const [confirmarDuplicado, setConfirmarDuplicado] = useState(false);
 
   const [archivoComprobante, setArchivoComprobante] = useState(null);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
@@ -684,6 +690,7 @@ const FormPreventa = ({
   const [cargandoHorarios, setCargandoHorarios] = useState(true);
 
   const [pasoActivo, setPasoActivo] = useState("paso-1");
+  const [bloquearSubmitTemporal, setBloquearSubmitTemporal] = useState(false);
 
   const [mostrarAlertaComprobante, setMostrarAlertaComprobante] =
     useState(false);
@@ -701,6 +708,7 @@ const FormPreventa = ({
   const botonFinalizarRef = useRef(null);
   const observacionesRef = useRef(null);
   const cierreExitoTimeoutRef = useRef(null);
+  const comprobanteRef = useRef(null);
 
   const esMostrador = metodoInscripcion === "mostrador";
   const requiereTurno =
@@ -770,6 +778,10 @@ const FormPreventa = ({
     setErrorObservacion(false);
     setObservacionRequerida(false);
     setTextoObservacion("");
+    setDatosComprobante(null);
+    setMostrarAlertaDniDuplicado(false);
+    setPreventaDuplicada(null);
+    setConfirmarDuplicado(false);
   };
 
   const manejarCerrarFormulario = () => {
@@ -859,6 +871,33 @@ const FormPreventa = ({
     }, 50);
   };
 
+const descargarComprobantePDF = async (e) => {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  if (!comprobanteRef.current) return;
+
+  try {
+    const canvas = await html2canvas(comprobanteRef.current, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const imgWidth = 190;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
+    pdf.save("comprobante-preinscripcion.pdf");
+  } catch (error) {
+    console.error("Error al descargar comprobante PDF", error);
+  }
+};
+
   const avanzarDesdePaso1 = () => {
     if (requiereTurno && !turnoSeleccionado) {
       setMostrarAlertaPasoTurno(true);
@@ -869,37 +908,66 @@ const FormPreventa = ({
   };
 
   const avanzarDesdePaso2 = () => {
-    if (!archivoComprobante) {
-      setMostrarAlertaAvanceSinComprobante(true);
-      return;
-    }
-
-    irAlPaso(requiereTurno ? "paso-3" : "paso-2");
-  };
+  if (!archivoComprobante) {
+    setMostrarAlertaAvanceSinComprobante(true);
+    return;
+  }
+  setBloquearSubmitTemporal(true);
+  irAlPaso(requiereTurno ? "paso-3" : "paso-2");
+  setTimeout(() => {
+    setBloquearSubmitTemporal(false);
+  }, 400);
+};
 
   const avanzarDesdeTransferenciaSinComprobante = () => {
     setMostrarAlertaAvanceSinComprobante(false);
     irAlPaso(requiereTurno ? "paso-3" : "paso-2");
   };
 
-  const intentarEnviar = (e) => {
+  const verificarDniDuplicado = async () => {
+    const dniLimpio = String(datosFormulario.dni || "").trim();
+
+    if (!dniLimpio) {
+      return { existe: false, preventa: null };
+    }
+
+    const respuesta = await axios.get(
+      `http://localhost:8080/preventas/verificar-dni/${encodeURIComponent(dniLimpio)}`
+    );
+
+    return respuesta.data;
+  };
+
+  const intentarEnviar = async (e) => {
     e.preventDefault();
+    if (bloquearSubmitTemporal) return;
 
     if (!esMostrador && !archivoComprobante) {
       if (observacionRequerida && textoObservacion.trim() !== "") {
         setErrorObservacion(false);
-        procesarEnvioBackend(textoObservacion.trim());
+      } else {
+        setMostrarAlertaComprobante(true);
+        return;
+      }
+    }
+
+    try {
+      const verificacion = await verificarDniDuplicado();
+
+      if (verificacion?.existe && !confirmarDuplicado) {
+        setPreventaDuplicada(verificacion.preventa || null);
+        setMostrarAlertaDniDuplicado(true);
         return;
       }
 
-      setMostrarAlertaComprobante(true);
-      return;
+      procesarEnvioBackend(textoObservacion.trim(), confirmarDuplicado);
+    } catch (error) {
+      console.error("Error al verificar DNI duplicado", error);
+      procesarEnvioBackend(textoObservacion.trim(), confirmarDuplicado);
     }
-
-    procesarEnvioBackend(textoObservacion.trim());
   };
 
-  const confirmarContinuarSinComprobante = () => {
+  const confirmarContinuarSinComprobante = async () => {
     setObservacionRequerida(true);
 
     if (textoObservacion.trim() === "") {
@@ -911,10 +979,42 @@ const FormPreventa = ({
 
     setErrorObservacion(false);
     setMostrarAlertaComprobante(false);
-    procesarEnvioBackend(textoObservacion);
+
+    try {
+      const verificacion = await verificarDniDuplicado();
+
+      if (verificacion?.existe && !confirmarDuplicado) {
+        setPreventaDuplicada(verificacion.preventa || null);
+        setMostrarAlertaDniDuplicado(true);
+        return;
+      }
+
+      procesarEnvioBackend(textoObservacion.trim(), confirmarDuplicado);
+    } catch (error) {
+      console.error("Error al verificar DNI duplicado", error);
+      procesarEnvioBackend(textoObservacion.trim(), confirmarDuplicado);
+    }
   };
 
-  const procesarEnvioBackend = async (observacionExtra = "") => {
+  const confirmarEnvioDuplicado = () => {
+    setMostrarAlertaDniDuplicado(false);
+    setConfirmarDuplicado(true);
+
+    setTimeout(() => {
+      procesarEnvioBackend(textoObservacion.trim(), true);
+    }, 100);
+  };
+
+  const cancelarEnvioDuplicado = () => {
+    setMostrarAlertaDniDuplicado(false);
+    setPreventaDuplicada(null);
+    setConfirmarDuplicado(false);
+  };
+
+  const procesarEnvioBackend = async (
+      observacionExtra = "",
+      forzarDuplicado = false
+    ) => {
     setMostrarAlertaComprobante(false);
     setEstadoEnvio("enviando");
 
@@ -946,6 +1046,9 @@ const FormPreventa = ({
       );
       formData.append("metodo_inscripcion", "WEB");
       formData.append("estado_contacto", "PENDIENTE");
+      if (forzarDuplicado) {
+        formData.append("confirmar_duplicado", "1");
+      }
 
       if (observacionExtra) {
         formData.append("observaciones", observacionExtra);
@@ -979,7 +1082,24 @@ const FormPreventa = ({
       if (respuestaEnviarFormulario.status === 201) {
         setEstadoEnvio("exito");
         setNombreCliente(datosFormulario.nombreApellido.toUpperCase());
-
+        if (!esMostrador) {
+          setDatosComprobante({
+            nombreApellido: datosFormulario.nombreApellido,
+            dni: datosFormulario.dni,
+            fechaNacimiento: datosFormulario.fechaNacimiento,
+            correo: datosFormulario.correo,
+            domicilio: datosFormulario.domicilio,
+            celular: datosFormulario.celular,
+            plan: planSeleccionado.title,
+            modalidadPago,
+            monto,
+            metodoPago: esMostrador ? "MOSTRADOR" : "TRANSFERENCIA",
+            turno: turnoSeleccionado
+              ? `${turnoSeleccionado.hhmm} hs | ${turnoSeleccionado.grupo_label || turnoSeleccionado.grp}`
+              : null,
+            fecha: new Date().toLocaleString("es-AR"),
+          });
+        }
         setDatosFormulario({
           nombreApellido: "",
           dni: "",
@@ -994,10 +1114,13 @@ const FormPreventa = ({
         setErrorObservacion(false);
         setObservacionRequerida(false);
         setPasoActivo("paso-1");
+        setMostrarAlertaDniDuplicado(false);
+        setPreventaDuplicada(null);
+        setConfirmarDuplicado(false);
 
         cierreExitoTimeoutRef.current = setTimeout(() => {
           manejarCerrarFormulario();
-        }, 5000);
+        }, 300000);
       }
     } catch (error) {
       console.error("Error al enviar formulario", error);
@@ -1012,6 +1135,7 @@ const FormPreventa = ({
           ref={botonFinalizarRef}
           type="submit"
           disabled={
+            bloquearSubmitTemporal ||
             estadoEnvio === "enviando" ||
             (observacionRequerida && textoObservacion.trim() === "")
           }
@@ -1078,7 +1202,7 @@ const FormPreventa = ({
             ref={botonFinalizarRef}
             type="submit"
             disabled={
-              estadoEnvio === "enviando" ||
+              bloquearSubmitTemporal || estadoEnvio === "enviando" ||
               (observacionRequerida && textoObservacion.trim() === "")
             }
             className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bignoodle text-lg md:text-xl py-3.5 rounded-xl uppercase tracking-wider shadow-[0_5px_15px_rgba(234,88,12,0.3)] hover:shadow-[0_5px_15px_rgba(234,88,12,0.5)] disabled:opacity-50 disabled:shadow-none disabled:hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shrink-0"
@@ -1122,6 +1246,7 @@ const FormPreventa = ({
           ref={botonFinalizarRef}
           type="submit"
           disabled={
+            bloquearSubmitTemporal ||
             estadoEnvio === "enviando" ||
             (observacionRequerida && textoObservacion.trim() === "")
           }
@@ -1292,25 +1417,133 @@ const FormPreventa = ({
                 ref={scrollContainerRef}
                 className="overflow-y-auto flex-1 p-4 md:p-6 pb-10 custom-scrollbar relative"
               >
-                {estadoEnvio === "exito" ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-10 h-full flex flex-col items-center justify-center bg-white rounded-xl shadow-sm"
-                  >
-                    <div className="w-20 h-20 bg-green-50 border border-green-200 rounded-full flex items-center justify-center mx-auto mb-5">
-                      <span className="text-4xl text-green-500">✓</span>
+              {estadoEnvio === "exito" ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className=" md:py-3 flex flex-col items-center bg-white rounded-xl shadow-sm"
+                >
+                  {esMostrador ? (
+                    <div className="w-full max-w-7xl mx-auto rounded-md border border-orange-200 bg-white shadow-sm overflow-hidden">
+                      <div className="bg-gradient-to-r from-orange-700 via-orange-600 to-orange-500 px-3 py-2.5 text-white text-center">
+                        <p className="text-[9px] md:text-[10px] uppercase tracking-[0.18em] font-bold opacity-90">
+                          Formulario enviado
+                        </p>
+                        <p className="text-base md:text-lg font-bignoodle mt-1 opacity-95">
+                          Enviado con éxito
+                        </p>
+                      </div>
+
+                      <div className="p-3 md:p-4 text-center">
+                        <p className="text-sm md:text-base text-gray-700 leading-relaxed font-medium">
+                          Nos pondremos en contacto cuando tengamos fecha para nuestra
+                          preventa en sucursal.
+                        </p>
+                      </div>
                     </div>
-                    <h4 className="text-2xl font-bignoodle uppercase text-gray-900 mb-2 tracking-wide">
-                      ¡Pre-inscripción completada!
-                    </h4>
-                    <p className="text-gray-600 text-sm px-4">
-                      {esMostrador
-                        ? "Pronto nos pondremos en contacto contigo."
-                        : `${nombreCliente}, tu pre-inscripción ha sido recibida correctamente. Si tienes alguna consulta, no dudes en contactarnos. ¡Gracias por elegirnos!`}
-                    </p>
-                  </motion.div>
-                ) : (
+                  ) : (
+                    datosComprobante && (
+                      <div
+                        ref={comprobanteRef}
+                        className="w-full max-w-sm md:max-w-lg mx-auto rounded-xl border border-orange-200 bg-white shadow-sm overflow-hidden"
+                      >
+                        <div className="bg-gradient-to-r from-orange-700 via-orange-600 to-orange-500 px-3 py-2.5 text-white text-center">
+                          <p className="text-[9px] md:text-[10px] uppercase tracking-[0.18em] font-bold opacity-90">
+                            Comprobante
+                          </p>
+                          <p className="text-base md:text-lg font-bignoodle mt-1 opacity-95">
+                            Inscripción completada con éxito
+                          </p>
+                        </div>
+
+                        <div className="p-3 md:p-4 flex flex-col gap-2.5 md:gap-3">
+                          <div className="text-center">
+                            <p className="text-[9px] md:text-[10px] uppercase font-bold text-gray-500">
+                              Cliente
+                            </p>
+                            <p className="text-sm md:text-base font-bold text-gray-900 leading-tight break-words">
+                              {datosComprobante.nombreApellido}
+                            </p>
+                          </div>
+
+                          <div className="text-center bg-gray-50 rounded-lg py-2 px-3 border border-gray-200">
+                            <p className="text-[9px] md:text-[10px] uppercase font-bold text-gray-500">
+                              Plan
+                            </p>
+                            <p className="text-xs md:text-sm font-semibold text-gray-900 leading-tight">
+                              {datosComprobante.plan}
+                            </p>
+                          </div>
+
+                          {datosComprobante.turno && (
+                            <div className="text-center bg-white rounded-lg py-2 px-3 border border-gray-200">
+                              <p className="text-[9px] md:text-[10px] uppercase font-bold text-gray-500">
+                                Turno
+                              </p>
+                              <p className="text-xs md:text-sm font-semibold text-gray-900 leading-tight">
+                                {datosComprobante.turno}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="text-center bg-orange-50 rounded-xl py-2.5 md:py-3 px-3 border border-orange-200">
+                            <p className="text-[9px] md:text-[10px] uppercase font-bold text-orange-700">
+                              Monto
+                            </p>
+                            <p className="text-2xl md:text-3xl font-bignoodle tracking-wider text-orange-600 leading-none">
+                              $
+                              {Number(datosComprobante.monto).toLocaleString("es-AR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 md:gap-3 text-center">
+                            <div className="border border-gray-200 rounded-lg py-2 px-2 bg-white">
+                              <p className="text-[9px] md:text-[10px] uppercase font-bold text-gray-500">
+                                Fecha
+                              </p>
+                              <p className="text-[11px] md:text-xs font-semibold text-gray-900 leading-tight">
+                                {datosComprobante.fecha}
+                              </p>
+                            </div>
+
+                            <div className="border border-gray-200 rounded-lg py-2 px-2 bg-white">
+                              <p className="text-[9px] md:text-[10px] uppercase font-bold text-gray-500">
+                                DNI
+                              </p>
+                              <p className="text-[11px] md:text-xs font-semibold text-gray-900 leading-tight">
+                                {datosComprobante.dni}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="rounded-lg border border-dashed border-orange-300 bg-orange-50 px-3 py-2 text-center">
+                            <button
+                              type="button"
+                              onClick={descargarComprobantePDF}
+                              className="text-[9px] md:text-[10px] text-orange-700 font-bold uppercase tracking-wide"
+                            >
+                              Haz una captura o ({` `}
+                              <span className="underline cursor-pointer hover:text-orange-800 transition-colors">
+                                descarga el comprobante
+                              </span>
+                              {` )`}
+                            </button>
+                          </div>
+
+                          <div className="text-center pt-0.5">
+                            <p className="text-[10px] md:text-[11px] text-gray-500 font-semibold uppercase tracking-wide">
+                              Gracias por elegirnos
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </motion.div>
+              ) : (
                   <>
                     <div className="pt-2">{renderizarPasoActual()}</div>
                     {renderBotonesPaso()}
@@ -1465,6 +1698,87 @@ const FormPreventa = ({
                             className="flex-1 py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-[0_4px_12px_rgba(234,88,12,0.3)]"
                           >
                             Avanzar igual
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {mostrarAlertaDniDuplicado && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4"
+                  >
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                      animate={{ scale: 1, y: 0, opacity: 1 }}
+                      exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 25,
+                      }}
+                      className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md flex flex-col"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mb-4 border border-orange-100">
+                          <FiAlertCircle className="text-3xl" />
+                        </div>
+
+                        <h3 className="text-xl md:text-2xl font-bignoodle uppercase text-gray-900 tracking-wide mb-2">
+                          DNI ya registrado
+                        </h3>
+
+                        <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                          Ya existe un formulario enviado con tu DNI.
+                        </p>
+
+                        {preventaDuplicada && (
+                          <div className="w-full rounded-xl border border-gray-200 bg-gray-50 p-4 text-left mb-5">
+                            <p className="text-xs text-gray-700">
+                              <span className="font-bold">Plan:</span>{" "}
+                              {preventaDuplicada.plan_seleccionado || "-"}
+                            </p>
+                            <p className="text-xs text-gray-700 mt-1">
+                              <span className="font-bold">Duracion:</span>{" "}
+                              {preventaDuplicada.duracion_plan || "-"}
+                            </p>
+                            <p className="text-xs text-gray-700 mt-1">
+                              <span className="font-bold">Modalidad de pago:</span>{" "}
+                              {preventaDuplicada.modalidad_pago || "-"}
+                            </p>
+                            <p className="text-xs text-gray-700 mt-1">
+                              <span className="font-bold">Fecha del registro:</span>{" "}
+                              {preventaDuplicada.created_at
+                                ? new Date(preventaDuplicada.created_at).toLocaleString("es-AR")
+                                : "-"}
+                            </p>
+                          </div>
+                        )}
+
+                        <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                          ¿Desea continuar e igualmente enviar este formulario?
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-3 w-full">
+                          <button
+                            type="button"
+                            onClick={cancelarEnvioDuplicado}
+                            className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition-colors"
+                          >
+                            Volver
+                          </button>
+                          <button
+                            type="button"
+                            onClick={confirmarEnvioDuplicado}
+                            className="flex-1 py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-[0_4px_12px_rgba(234,88,12,0.3)]"
+                          >
+                            Confirmar igual
                           </button>
                         </div>
                       </div>

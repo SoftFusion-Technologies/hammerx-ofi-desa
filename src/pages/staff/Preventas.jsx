@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import PlanesPromocionalesCarousel from "../../components/Preventa/PlanesPromocionalesCarousel";
 import {
   FaPlus,
   FaSearch,
@@ -28,6 +29,7 @@ import {
   FaClock,
   FaEye,
   FaTrash,
+  FaUserCircle
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import NavbarStaff from "./NavbarStaff";
@@ -103,7 +105,8 @@ const Preventas = () => {
   const [preventas, setPreventas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-
+  
+  const [mostrarAgregarSocio, setMostrarAgregarSocio] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [filtroInscripcion, setFiltroInscripcion] = useState("todos");
   const [filtroEstado, setFiltroEstado] = useState("todos");
@@ -234,9 +237,29 @@ const Preventas = () => {
     setModalDetalle({ abierto: false, preventa: null });
   };
 
-  const guardarDetallePreventa = async (id, datosActualizados) => {
-    setGuardandoDetalle(true);
-    try {
+const guardarDetallePreventa = async (id, datosActualizados, nuevoComprobante) => {
+  setGuardandoDetalle(true);
+
+  try {
+    let respuesta;
+
+    if (nuevoComprobante) {
+      const formData = new FormData();
+
+      formData.append("nombre_apellido", datosActualizados.nombre_apellido ?? "");
+      formData.append("dni", datosActualizados.dni ?? "");
+      formData.append("fecha_nacimiento", datosActualizados.fecha_nacimiento ?? "");
+      formData.append("correo", datosActualizados.correo ?? "");
+      formData.append("domicilio", datosActualizados.domicilio ?? "");
+      formData.append("celular", datosActualizados.celular ?? "");
+      formData.append("comprobante", nuevoComprobante);
+
+      respuesta = await axios.put(`${API_BASE}/preventas/${id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    } else {
       const payload = {
         nombre_apellido: datosActualizados.nombre_apellido,
         dni: datosActualizados.dni,
@@ -246,30 +269,44 @@ const Preventas = () => {
         celular: datosActualizados.celular,
       };
 
-      const respuesta = await axios.put(`${API_BASE}/preventas/${id}`, payload);
-      if (respuesta.status === 200) {
-        const preventaActualizada = respuesta?.data?.preventa;
-
-        if (preventaActualizada?.id) {
-          setPreventas((prev) =>
-            prev.map((item) =>
-              item.id === id ? { ...item, ...preventaActualizada } : item,
-            ),
-          );
-        } else {
-          await obtenerPreventas();
-        }
-
-        alertaRapida("Preventa actualizada", "success");
-        cerrarModalDetalle();
-      }
-    } catch (err) {
-      console.error("Error al editar preventa:", err);
-      Swal.fire("Error", "No se pudo actualizar la preventa.", "error");
-    } finally {
-      setGuardandoDetalle(false);
+      respuesta = await axios.put(`${API_BASE}/preventas/${id}`, payload);
     }
-  };
+
+    if (respuesta.status === 200) {
+      const preventaActualizada = respuesta?.data?.preventa;
+
+      if (preventaActualizada?.id) {
+        setPreventas((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, ...preventaActualizada } : item,
+          ),
+        );
+
+        setModalDetalle((prev) =>
+          prev.preventa?.id === id
+            ? { ...prev, preventa: { ...prev.preventa, ...preventaActualizada } }
+            : prev,
+        );
+      } else {
+        await obtenerPreventas();
+      }
+
+      alertaRapida(
+        nuevoComprobante
+          ? "Preventa y comprobante actualizados"
+          : "Preventa actualizada",
+        "success",
+      );
+
+      cerrarModalDetalle();
+    }
+  } catch (err) {
+    console.error("Error al editar preventa:", err);
+    Swal.fire("Error", "No se pudo actualizar la preventa.", "error");
+  } finally {
+    setGuardandoDetalle(false);
+  }
+};
 
   const eliminarPreventa = async (id) => {
     const confirmacion = await Swal.fire({
@@ -518,6 +555,9 @@ const Preventas = () => {
   const paginaSiguiente = () =>
     paginaActual < totalPaginas && setPaginaActual((p) => p + 1);
 
+  const cerrarModalPlanes = () => {
+    setMostrarAgregarSocio(false);
+  };
 
   const formatearPesosArgentinos = (valor, decimales = 2) => {
     try {
@@ -537,6 +577,12 @@ const Preventas = () => {
       return String(valor);
     }
   };
+
+  useEffect(() => {
+    if(!mostrarAgregarSocio) {
+      obtenerPreventas();
+    }
+  }, [mostrarAgregarSocio]);
 
   return (
     <>
@@ -567,6 +613,14 @@ const Preventas = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setMostrarAgregarSocio(!mostrarAgregarSocio)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                  title="Refrescar"
+                  >
+                  <FaUserCircle className={cargando ? "animate-spin" : ""} />{" "}
+                  {mostrarAgregarSocio ? "Ocultar planes" : "Agregar cliente"}
+                </button>
                 <button
                   onClick={obtenerPreventas}
                   className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
@@ -938,6 +992,45 @@ const Preventas = () => {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {mostrarAgregarSocio && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 p-4"
+            onClick={cerrarModalPlanes}
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="relative h-auto w-full max-w-7xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+                <h2 className="text-sm font-semibold text-zinc-700 md:text-base">
+                  Planes promocionales
+                </h2>
+                <button
+                  onClick={cerrarModalPlanes}
+                  className="rounded-lg border border-zinc-200 px-2.5 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
+                  aria-label="Cerrar modal de planes"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className="max-h-[calc(90vh-60px)] overflow-y-auto">
+                <PlanesPromocionalesCarousel obtenerPreventas={obtenerPreventas} />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <ModalPreviewComprobante
         isOpen={modalComprobante.abierto}
         onClose={cerrarModalComprobante}
@@ -947,6 +1040,7 @@ const Preventas = () => {
         esPdf={modalComprobante.esPdf}
         onDownload={descargarComprobante}
       />
+
       <ModalDetallePreventa
         isOpen={modalDetalle.abierto}
         preventa={modalDetalle.preventa}
@@ -955,6 +1049,7 @@ const Preventas = () => {
         onClose={cerrarModalDetalle}
         onSave={guardarDetallePreventa}
         onDelete={eliminarPreventa}
+        onPreviewComprobante={abrirModalComprobante}
       />
       <ModalObservacionPreventa
         isOpen={modalObservacion.abierto}

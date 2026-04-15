@@ -30,7 +30,7 @@ function ModalObservacionPreventa({
           <div className="flex items-start justify-between gap-3 border-b border-zinc-200 px-5 py-4">
             <div className="min-w-0">
               <h3 className="text-sm font-bold uppercase tracking-wide text-zinc-800 sm:text-base">
-                Observacion del cliente
+                Observación dellada por el cliente
               </h3>
               <p className="truncate text-xs text-zinc-500">
                 {clienteNombre || "Sin cliente"}

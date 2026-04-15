@@ -58,14 +58,14 @@ const Navbar = () => {
           </Link>
 
           <Link
-            to="/nueva_sede_hammerx_barrio_norte"
+            to="/nueva_sede_hammerx_yerba_buena"
             className="link"
             onClick={() => {
               setActive('');
               window.scrollTo(0, 0);
             }}
           >
-            Nueva sede Bº Norte
+            Nueva sede Yerba Buena
           </Link>
 
           <Link to="/nosotros/quienessomos" className="link">
@@ -107,11 +107,11 @@ const Navbar = () => {
           </Link>
 
           <Link
-            to="/nueva_sede_hammerx_barrio_norte"
+            to="/nueva_sede_hammerx_yerba_buena"
             className="block py-2 px-4"
             onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
           >
-            Nueva sede Bº Norte
+            Nueva sede Yerba Buena
           </Link>
           <Link
             to="/nosotros/quienessomos"

@@ -20,7 +20,8 @@ import imgLogo from './IMG_2463.png';
 import {
   BrowserRouter as Router,
   Routes as Rutas,
-  Route as Ruta
+  Route as Ruta,
+  Navigate,
 } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 
@@ -332,8 +333,8 @@ const App = memo(() => {
                     <Ruta path="/Sedes/BarrioSur" element={<NewSede />} />
                     <Ruta
                       path="/nueva_sede_hammerx_barrio_norte"
-                      element={<SedeBarrioNorte />}
-                    />{' '}
+                      element={<Navigate to="/nueva_sede_hammerx_yerba_buena" replace />}
+                    />
                     <Ruta
                       path="/nueva_sede_hammerx_yerba_buena"
                       element={<SedeYerbaBuena />}
@@ -1010,6 +1011,7 @@ const App = memo(() => {
                 '/innovation',
                 '/login',
                 '/reservas-pilates',
+                '/dashboard-rrhh',
                 '/dashboard',
                 '/debitos-automaticos'
               ]}

@@ -420,8 +420,7 @@ const PlanesPromocionalesCarousel = () => {
                     <p className="text-4xl md:text-5xl font-extrabold mt-auto text-gray-900 tracking-tight">
                       $
                       {planSeleccionado.precios.semestral.toLocaleString(
-                        "es-AR",
-                        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                        "es-AR"
                       )}
                     </p>
                   </motion.button>
@@ -449,10 +448,7 @@ const PlanesPromocionalesCarousel = () => {
                     </p>
                     <p className="text-4xl md:text-5xl font-extrabold mt-auto text-gray-900 tracking-tight">
                       $
-                      {planSeleccionado.precios.anual.toLocaleString("es-AR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      {planSeleccionado.precios.anual.toLocaleString("es-AR")}
                     </p>
                   </motion.button>
                 </div>
