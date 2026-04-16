@@ -40,6 +40,14 @@ function HideOnPaths({ paths = [], children }) {
 
   return ocultar ? null : children;
 }
+
+function RedirectToUrl({ url }) {
+  useEffect(() => {
+    window.location.replace(url);
+  }, [url]);
+
+  return null;
+}
 import Footer from './components/footer/Footer'; // Importa el componente del pie de página
 import LoginForm from './components/login/LoginForm';
 import LoginProfesorPilates from './components/login/LoginProfesorPilates.jsx';
@@ -282,6 +290,11 @@ const App = memo(() => {
     };
   }, []);
 
+  const whatsappAconquijaUrl =
+    'https://wa.me/5493816497448?text=Hola%21%20Vengo%20desde%20las%20redes%20sociales.%20Quiero%20info%20sobre%20sede%20Aconquija%202044%21';
+  const whatsappBarrioNorteUrl =
+    'https://wa.me/5493815584172?text=Hola%21%20Vengo%20desde%20las%20redes%20sociales.%20Quiero%20info%20sobre%20sede%20Barrio%20Norte%21';
+
   return (
     <AuthProvider>
       <AuthInstructorProvider>
@@ -333,8 +346,8 @@ const App = memo(() => {
                     <Ruta path="/Sedes/BarrioSur" element={<NewSede />} />
                     <Ruta
                       path="/nueva_sede_hammerx_barrio_norte"
-                      element={<Navigate to="/nueva_sede_hammerx_yerba_buena" replace />}
-                    />
+                      element={<SedeBarrioNorte />}
+                    />{' '}
                     <Ruta
                       path="/nueva_sede_hammerx_yerba_buena"
                       element={<SedeYerbaBuena />}
@@ -363,6 +376,14 @@ const App = memo(() => {
                     {/* Página de Legales */}
                     <Ruta path="/contacto" element={<Contacto />} />{' '}
                     {/* Página de Contacto */}
+                    <Ruta
+                      path="/contacto.aconquija2044"
+                      element={<RedirectToUrl url={whatsappAconquijaUrl} />}
+                    />
+                    <Ruta
+                      path="/contacto.barrionorte"
+                      element={<RedirectToUrl url={whatsappBarrioNorteUrl} />}
+                    />
                     <Ruta path="/login" element={<LoginForm />} />{' '}
                     <Ruta path="/pilates" element={<LoginProfesorPilates />} />
                     {/* Página de Logeo */}
@@ -923,7 +944,9 @@ const App = memo(() => {
                       path="/comentarios/concepcion"
                       element={<ComentariosPageConcep />}
                     />
-                    <Ruta path="/nueva_sede_hammerx" element={<NewSede />} />
+                    <Ruta path="/nueva_sede_hammerx" 
+                    element={<Navigate to="/nueva_sede_hammerx_yerba_buena" replace />}
+                    />
                     <Ruta path="/productos" element={<ProductosPrincipal />} />
                     <Ruta
                       path="/debitos-automaticos"

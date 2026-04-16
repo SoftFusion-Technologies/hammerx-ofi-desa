@@ -8,39 +8,41 @@ const VideoModal = ({ isOpen, onClose, src, poster }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const closeModal = () => {
-    if (videoRef.current) {
-      videoRef.current.pause();
+    const v = videoRef.current;
+
+    if (v) {
+      v.pause();
       try {
-        videoRef.current.currentTime = 0;
+        v.currentTime = 0;
       } catch (e) {}
     }
+
     setIsLoading(true);
     onClose && onClose();
   };
 
   const toggleSound = (e) => {
     e.stopPropagation();
-
-    if (!videoRef.current) return;
-
-    const newMuted = !muted;
-    videoRef.current.muted = newMuted;
-    setMuted(newMuted);
+    setMuted((prev) => !prev);
   };
 
+  // Solo abre/cierra y reproduce el video
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
 
     if (isOpen) {
       setIsLoading(true);
-      v.muted = muted;
-      v.load();
 
-      const p = v.play();
-      if (p && typeof p.then === "function") {
-        p.catch(() => {});
-      }
+      const playVideo = async () => {
+        try {
+          await v.play();
+        } catch (e) {
+          // Algunos navegadores pueden bloquear autoplay con sonido
+        }
+      };
+
+      playVideo();
     } else {
       v.pause();
       try {
@@ -52,11 +54,21 @@ const VideoModal = ({ isOpen, onClose, src, poster }) => {
     return () => {
       if (v) v.pause();
     };
-  }, [isOpen, src, muted]);
+  }, [isOpen, src]);
+
+  // Solo sincroniza el mute, sin recargar el video
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+
+    v.muted = muted;
+  }, [muted]);
 
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === "Escape" && isOpen) closeModal();
+      if (e.key === "Escape" && isOpen) {
+        closeModal();
+      }
     };
 
     window.addEventListener("keydown", onKey);
@@ -90,7 +102,7 @@ const VideoModal = ({ isOpen, onClose, src, poster }) => {
             e.stopPropagation();
             closeModal();
           }}
-          className="absolute top-3 right-3 md:top-4 md:right-4 z-[230] h-10 w-10 md:h-11 md:w-11 rounded-full border border-orange-300/45 bg-black/70 text-white shadow-[0_8px_24px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-black/85"
+          className="absolute top-3 right-3 md:top-4 md:right-4 z-[230] h-10 w-10 md:h-11 md:w-11 rounded-full border border-orange-300/45 bg-black/70 text-white shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-black/85"
         >
           <FaTimes className="mx-auto text-base md:text-lg" />
         </button>
