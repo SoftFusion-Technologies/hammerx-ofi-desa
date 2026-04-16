@@ -27,8 +27,11 @@ import {
   XCircle,
   CornerDownRight,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  BookOpen,
+  X
 } from 'lucide-react';
+
 
 import NavbarStaff from '../../../pages/staff/NavbarStaff';
 import Footer from '../../../components/footer/Footer';
@@ -41,6 +44,8 @@ import SolicitudCancelarModal from '../../../components/Forms/DebitosAutomaticos
 
 // Benjamin Orellana - 23/03/2026 - Hook de autenticación para detectar nivel admin en la vista de solicitudes
 import { useAuth } from '../../../AuthContext';
+
+import instructivoImg from './MARZO-DASHBOARD-1776296527751.png';
 
 import '../../../styles/staff/dashboard.css';
 import '../../../styles/staff/background.css';
@@ -352,7 +357,7 @@ export default function SolicitudesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   /* Benjamin Orellana - 07/04/2026 - Catálogo de sedes para poblar el filtro visual por sede en la grilla de solicitudes */
   const [sedesOptions, setSedesOptions] = useState([]);
-
+  const [openInstructivo, setOpenInstructivo] = useState(false);
   const [filters, setFilters] = useState({
     q: '',
     estado: '',
@@ -1504,7 +1509,87 @@ export default function SolicitudesPage() {
             </div>
           </div>
         </div>
+        {/* Benjamin Orellana - 2026/04/16 - Botón flotante ampliado con pulso visual para destacar el instructivo sin romper la estética. */}
+        <div className="pointer-events-none fixed bottom-5 right-4 z-[70] sm:bottom-6 sm:right-6">
+          <div className="pointer-events-auto relative">
+            <span className="absolute inset-0 rounded-[28px] bg-orange-400/30 blur-xl animate-pulse" />
 
+            <motion.button
+              type="button"
+              onClick={() => setOpenInstructivo(true)}
+              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+              animate={{
+                opacity: [1, 0.92, 1],
+                scale: [1, 1.04, 1],
+                y: [0, -2, 0]
+              }}
+              transition={{
+                duration: 1.7,
+                repeat: Infinity,
+                ease: 'easeInOut'
+              }}
+              whileHover={{ scale: 1.05, y: -3 }}
+              whileTap={{ scale: 0.98 }}
+              className="group relative inline-flex items-center gap-4 rounded-[26px] border border-orange-300/90 bg-white/95 px-5 py-4 text-base font-bold text-slate-800 shadow-[0_20px_50px_-18px_rgba(15,23,42,0.38)] backdrop-blur-xl transition hover:border-orange-400 hover:bg-white sm:px-6 sm:py-4"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-[20px] bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-[0_12px_24px_-10px_rgba(249,115,22,0.72)]">
+                <BookOpen className="h-6 w-6" />
+              </span>
+
+              <span className="hidden sm:flex sm:flex-col sm:items-start sm:leading-tight">
+                <span className="text-base font-extrabold text-slate-800">
+                  Ver fechas
+                </span>
+              </span>
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Benjamin Orellana - 2026/04/16 - Modal visual para mostrar imagen instructiva fija del módulo. */}
+        <AnimatePresence>
+          {openInstructivo ? (
+            <motion.div
+              className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/72 p-3 backdrop-blur-md sm:p-5"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOpenInstructivo(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 12 }}
+                transition={{ duration: 0.22 }}
+                onClick={(e) => e.stopPropagation()}
+                className="relative w-full max-w-[1100px] overflow-hidden rounded-[30px] border border-white/15 bg-white shadow-[0_30px_80px_-24px_rgba(0,0,0,0.45)]"
+              >
+                <div className="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-white via-orange-50/50 to-white px-4 py-4 sm:px-6">
+                  <div>
+                    <h3 className="font-bignoodle text-2xl uppercase text-slate-900 sm:text-3xl">
+                      Instructivo del módulo
+                    </h3>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setOpenInstructivo(false)}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="flex h-[calc(100vh-220px)] items-center justify-center bg-slate-50 p-3 sm:h-[calc(100vh-240px)] sm:p-4">
+                  <img
+                    src={instructivoImg}
+                    alt="Instructivo del módulo de solicitudes"
+                    className="max-h-full max-w-full rounded-[24px] border border-slate-200 bg-white object-contain shadow-[0_20px_50px_-30px_rgba(15,23,42,0.25)]"
+                  />
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
         <Footer />
       </section>
 
