@@ -407,10 +407,7 @@ const DatosBancarios = ({
           <p className="text-gray-500 text-xs">Monto a transferir:</p>
           <p className="text-3xl font-bignoodle text-orange-600 tracking-widest leading-none">
             $
-            {monto.toLocaleString("es-AR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {monto.toLocaleString("es-AR")}
           </p>
         </div>
       </div>
