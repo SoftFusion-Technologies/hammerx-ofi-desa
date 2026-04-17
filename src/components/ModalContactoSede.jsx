@@ -15,6 +15,7 @@ export const sedes = [
   { nombre: "Concepción", numero: "3865855100" },
   { nombre: "Barrio Sur", numero: "3813988383" },
   { nombre: "Barrio norte", numero: "3815584172" },
+  { nombre: "Yerba buena - Aconquija 2044", numero: "3816497448" },
 ];
 
 import { FaWhatsapp, FaTimes } from "react-icons/fa";
