@@ -3,15 +3,15 @@
 --Descripción: Interfaz de administración para la supervisión de horarios del personal. Permite a los responsables de RRHH filtrar la nómina de empleados activos por sede y acceder a la visualización detallada de los turnos y cronogramas de cada usuario de forma individual.
 */
 import React, { useState, useEffect, useMemo } from "react";
-import { usarPromiseAll } from "../../hooks/usarPromiseAll";
-import { useAuth } from "../../../../AuthContext";
+import { usarPromiseAll } from "../../../hooks/usarPromiseAll";
+import { useAuth } from "../../../../../AuthContext";
 import { FaUsers, FaMapMarkerAlt, FaEye, FaArrowLeft } from "react-icons/fa";
-import Horarios from "../Empleados/Horarios";
+import Horarios from "../../Empleados/Horarios/Horarios";
 import {
   normalizarSedes,
   normalizarSedes_2,
-} from "../../Utils/NormalizarSedes";
-import { esAdminRRHH } from "../../Utils/AdminAutorizadosRRHH";
+} from "../../../Utils/NormalizarSedes";
+import { esAdminRRHH } from "../../../Utils/AdminAutorizadosRRHH";
 
 const HorariosUsuarios = ({ volverAtras = null }) => {
   const { userLevel, userLevelAdmin} = useAuth();
@@ -129,13 +129,6 @@ const HorariosUsuarios = ({ volverAtras = null }) => {
               className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
             >
               <div className="space-y-2 mb-3">
-                <p className="text-[11px] text-gray-400">EMAIL</p>
-                <p className="text-sm font-medium text-gray-700 break-all">
-                  {toUpperText(emp.usuario.email)}
-                </p>
-              </div>
-
-              <div className="space-y-2 mb-3">
                 <p className="text-[11px] text-gray-400">NOMBRE Y APELLIDO</p>
                 <p className="text-sm font-bold text-gray-800 break-words">
                   {toUpperText(emp.usuario.name)}
@@ -169,7 +162,6 @@ const HorariosUsuarios = ({ volverAtras = null }) => {
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider">
             <tr>
-              <th className="px-6 py-4 font-bold">Email</th>
               <th className="px-6 py-4 font-bold">Nombre y apellido</th>
               <th className="px-6 py-4 font-bold">Sede</th>
               <th className="px-6 py-4 font-bold text-center">Acciones</th>
@@ -194,11 +186,6 @@ const HorariosUsuarios = ({ volverAtras = null }) => {
                   key={emp.id}
                   className="hover:bg-blue-50/30 transition-colors"
                 >
-                  <td className="px-6 py-4">
-                    <div className="text-xs text-gray-400">
-                      {toUpperText(emp.usuario.email)}
-                    </div>
-                  </td>
                   <td className="px-6 py-4">
                     <div className="text-xs text-gray-400">
                       {toUpperText(emp.usuario.name)}

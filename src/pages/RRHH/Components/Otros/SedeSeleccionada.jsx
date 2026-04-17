@@ -4,10 +4,10 @@
 */
 
 import React, { useState } from "react";
-import useObtenerDatos from "../hooks/obtenerDatos";
+import useObtenerDatos from "../../hooks/obtenerDatos";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSedeUsers } from "../Context/SedeUsersContext";
-import img_hammerxsoft from "../../../images/staff/hammerxsoft5.png";
+import { useSedeUsers } from "../../Context/SedeUsersContext";
+import img_hammerxsoft from "../../../../images/staff/hammerxsoft5.png";
 
 const PanelSeleccionSede = ({ idUsuario, onSeleccionarSede }) => {
   const {

@@ -15,12 +15,13 @@ import {
   FaFileAlt,
   FaHistory,
   FaUser,
+  FaInfoCircle,
 } from "react-icons/fa";
 import { FaRegNewspaper } from "react-icons/fa6";
-import { useAuth } from "../../../../AuthContext";
-import ModalAprobarLiquidacion from "../../Modals/RRHH/ModalAprobarLiquidacion";
-import Liquidaciones from "../Empleados/Liquidaciones";
-import HistorialMarcas from "../Empleados/HistorialMarcas";
+import { useAuth } from "../../../../../AuthContext";
+import ModalAprobarLiquidacion from "../../../Modals/RRHH/ModalAprobarLiquidacion";
+import Liquidaciones from "../../Empleados/Liquidaciones/Liquidaciones";
+import HistorialMarcas from "../../Empleados/Marcaciones/HistorialMarcas";
 
 dayjs.extend(isBetween);
 
@@ -1152,24 +1153,45 @@ const AprobarLiquidacion = ({
                 </div>
 
                 {esAdelanto && (
-                  <div>
-                    <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-400">
+                <div>
+                  <div className="mb-1 flex items-center gap-2">
+                    <label className="block text-[11px] font-bold uppercase tracking-wide text-gray-400">
                       Tipo de adelanto
                     </label>
-                    <select
-                      value={subtipoAdelanto}
-                      onChange={(e) => setSubtipoAdelanto(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none transition-all focus:border-orange-500"
-                    >
-                      <option value="horas_trabajadas">
-                        Adelanto de horas ya trabajadas
-                      </option>
-                      <option value="horas_futuras">
-                        Adelanto de horas futuras
-                      </option>
-                    </select>
+
+                    <div className="group relative inline-flex">
+                      <FaInfoCircle className="cursor-help text-[12px] text-amber-500" />
+
+                      <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-[260px] -translate-x-1/2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-center text-[11px] font-semibold leading-snug text-amber-900 opacity-0 shadow-md transition-all duration-200 group-hover:opacity-100">
+                        {subtipoAdelanto === "horas_trabajadas"
+                          ? "Usa este concepto cuando el empleado solo solicitó cobrar sus horas trabajadas antes de la fecha de liquidación."
+                          : "Usa este concepto si querés adelantar horas que aún no trabajó."}
+                      </div>
+                    </div>
                   </div>
-                )}
+
+                  <select
+                    value={subtipoAdelanto}
+                    onChange={(e) => setSubtipoAdelanto(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none transition-all focus:border-orange-500"
+                  >
+                    <option value="horas_trabajadas">
+                      Adelanto de horas ya trabajadas
+                    </option>
+                    <option value="horas_futuras">
+                      Adelanto de horas futuras
+                    </option>
+                  </select>
+
+                  <div className="mt-2">
+                    <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-[11px] font-semibold leading-snug text-amber-900">
+                      {subtipoAdelanto === "horas_trabajadas"
+                        ? "Usa este concepto cuando el empleado solo solicitó cobrar sus horas trabajadas antes de la fecha de liquidación."
+                        : "Usa este concepto si querés adelantar horas que aún no trabajó."}
+                    </span>
+                  </div>
+                </div>
+              )}
 
                 {esAdelantoHorasFuturas ? (
                   <div>
@@ -1215,7 +1237,7 @@ const AprobarLiquidacion = ({
                   </div>
                 ) : (
                   <div>
-                    <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-400">
+      {/*               <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-400">
                       Horas a descontar manualmente
                     </label>
 
@@ -1256,7 +1278,7 @@ const AprobarLiquidacion = ({
                         {formatearMinutos(deudaACobrarEnEstePeriodo)} por deuda
                         anterior.
                       </p>
-                    )}
+                    )} */}
                   </div>
                 )}
 

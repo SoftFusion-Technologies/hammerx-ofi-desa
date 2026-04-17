@@ -26,25 +26,27 @@ import {
   FaArrowLeft,
   FaCheckCircle,
 } from "react-icons/fa";
-import { quitarSegundos } from "../../Utils/formatTime";
+import { quitarSegundos } from "../../../Utils/formatTime";
 import { IoMdAdd } from "react-icons/io";
-import useObtenerDatos from "../../hooks/obtenerDatos";
-import { useAuth } from "../../../../AuthContext";
+import useObtenerDatos from "../../../hooks/obtenerDatos";
+import { useAuth } from "../../../../../AuthContext";
 import { MdDelete, MdOutlineEdit } from "react-icons/md";
-import ModalEditarHorarioEmpleado from "../../Modals/RRHH/ModalEditarHorarioEmpleado";
-import { useSedeUsers } from "../../Context/SedeUsersContext";
-import useEliminarDatos from "../../hooks/eliminarDatos";
+import ModalEditarHorarioEmpleado from "../../../Modals/RRHH/ModalEditarHorarioEmpleado";
+import { useSedeUsers } from "../../../Context/SedeUsersContext";
+import useEliminarDatos from "../../../hooks/eliminarDatos";
 import Swal from "sweetalert2";
-import ModalCambiarEstadoAprobacion from "../../Modals/RRHH/ModalCambiarEstadoAprobacion";
-import ModalCambiarEstadoAsistencia from "../../Modals/RRHH/ModalCambiarEstadoAsistencia";
-import ModalAgregarMarcacion from "../../Modals/RRHH/ModalAgregarMarcacion";
-import { esAdminRRHH } from "../../Utils/AdminAutorizadosRRHH";
-import {formatearDuracion} from "../../Utils/convertirMinutosAHoras";
+import ModalCambiarEstadoAprobacion from "../../../Modals/RRHH/ModalCambiarEstadoAprobacion";
+import ModalCambiarEstadoAsistencia from "../../../Modals/RRHH/ModalCambiarEstadoAsistencia";
+import ModalAgregarMarcacion from "../../../Modals/RRHH/ModalAgregarMarcacion";
+import { esAdminRRHH } from "../../../Utils/AdminAutorizadosRRHH";
+import { formatearDuracion } from "../../../Utils/convertirMinutosAHoras";
 import {
   calcularMinutosNetoTurno,
   obtenerMinutosPositivos,
-} from "../../Utils/calculosMarcaciones";
-import { obtenerEtiquetaMobileDia } from "../../Utils/etiquetaCalendarioMobile";
+} from "../../../Utils/calculosMarcaciones";
+import { obtenerEtiquetaMobileDia } from "../../../Utils/etiquetaCalendarioMobile";
+import ModalNovedad from "../../../Modals/Empleado/ModalNovedad";
+import { FiMessageSquare } from "react-icons/fi";
 
 const EMPTY_ARRAY = [];
 
@@ -86,6 +88,7 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
     error: errorEliminacion,
     eliminar,
   } = useEliminarDatos();
+  const [turnoMensajeAbierto, setTurnoMensajeAbierto] = useState(null);
 
   const historial_marcaciones = Array.isArray(datos) ? datos : EMPTY_ARRAY;
 
@@ -154,9 +157,29 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
     setHorasMensualesTexto(formatearDuracion(acumuladorMinutosMensuales));
   }, [fechaActual, asistenciasFiltradas]);
 
+
+  // ---  LÓGICA DE LÍMITE DE MESES ---
+  const mesActualSistema = startOfMonth(new Date());
+  const limiteRetroceso = subMonths(mesActualSistema, 1);
+  
+  // Validaciones de límite
+  const estaEnElLimiteRetroceso = startOfMonth(fechaActual) <= limiteRetroceso;
+  const estaEnElLimiteFuturo = startOfMonth(fechaActual) >= mesActualSistema;
+  
+  // Deshabilitar botones si NO es admin y alcanzó los límites
+  const deshabilitarBotonAtras = !esAdminAutorizadoRRHHH && estaEnElLimiteRetroceso;
+  const deshabilitarBotonAdelante = !esAdminAutorizadoRRHHH && estaEnElLimiteFuturo;
+
   // Funciones de navegación
-  const mesAnterior = () => setFechaActual(subMonths(fechaActual, 1));
-  const mesSiguiente = () => setFechaActual(addMonths(fechaActual, 1));
+  const mesAnterior = () => {
+    if (deshabilitarBotonAtras) return; 
+    setFechaActual(subMonths(fechaActual, 1));
+  };
+  
+  const mesSiguiente = () => {
+    if (deshabilitarBotonAdelante) return; // Bloqueo de seguridad hacia el futuro
+    setFechaActual(addMonths(fechaActual, 1));
+  };
 
   const onDateClick = (day) => {
     setDiaSeleccionado(day);
@@ -228,19 +251,19 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
           isSameDay(parseISO(r.fecha), day),
         );
 
-        // Estilos condicionales
         const esMismoMes = isSameMonth(day, mesInicio);
         const esSeleccionado = isSameDay(day, diaSeleccionado);
         const tieneAsistencia = !!registroDia;
 
-        //Calcular total del día para mostrar en la celda
-        let totalMinutosDia = 0;
-        if (tieneAsistencia) {
-          registroDia.turnos.forEach((t) => {
-            totalMinutosDia += calcularMinutosNetoTurno(t);
-          });
-        }
         const etiquetaMobileDia = obtenerEtiquetaMobileDia(registroDia);
+
+        const estiloMobile = etiquetaMobileDia && (
+          <span
+            className={`text-xs font-black leading-none ${etiquetaMobileDia.colorClase}`}
+          >
+            {etiquetaMobileDia.texto}
+          </span>
+        );
 
         days.push(
           <div
@@ -261,35 +284,37 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
             {/* CONTENIDO DE LA CELDA */}
             {tieneAsistencia && (
               <>
-                {/* VERSION MOVIL */}
+                {/* MOBILE */}
                 <div className="md:hidden mt-2 flex min-h-[18px] items-center justify-center">
-                  {etiquetaMobileDia && (
-                    <span
-                      className={`text-xs font-black leading-none ${etiquetaMobileDia.colorClase}`}
-                    >
-                      {etiquetaMobileDia.texto}
-                    </span>
-                  )}
+                  {estiloMobile}
                 </div>
 
-                {/* VERSION PC */}
-                <div className="hidden md:flex flex-col w-full px-1 gap-1 overflow-y-auto">
+                {/* PC - TURNOS */}
+                <div className="hidden md:flex flex-col w-full px-1 gap-1 overflow-y-auto flex-1">
                   {registroDia.turnos.map((turno, idx) => (
                     <div
                       key={idx}
                       className={`text-[10px] rounded px-1 text-center whitespace-nowrap 
-            ${colorHorario(turno.estado_aprobacion)} 
-            ${colorEstadoCumplimiento(turno.minutos_tarde ? Number(turno.minutos_tarde) && "tarde" : turno.estado, true)}
-          `}
+                        ${colorHorario(turno.estado_aprobacion)} 
+                        ${colorEstadoCumplimiento(
+                          Number(turno.minutos_tarde) > 0
+                            ? "tarde"
+                            : turno.estado,
+                          true,
+                        )}
+                      `}
                     >
                       {quitarSegundos(turno.entrada) || "—"} -{" "}
-                      {quitarSegundos(turno.salida) || "—"}
+                      {!turno.salida || turno.salida.includes("23:59")
+                        ? "S/R"
+                        : quitarSegundos(turno.salida)}
                     </div>
                   ))}
+                </div>
 
-                  <div className="mt-auto text-[10px] text-center font-bold text-gray-400">
-                    {formatearDuracion(totalMinutosDia)}
-                  </div>
+                {/* FOOTER PC */}
+                <div className="hidden md:flex w-full justify-center pb-1">
+                  {estiloMobile}
                 </div>
               </>
             )}
@@ -409,7 +434,11 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
           </p>
         ) : (
           <div className="space-y-2.5">
+            
             {registro.turnos.map((turno, i) => {
+              const mensajeRelacionado = obtenerUltimoMensajeAclaracion(turno);
+              const claveMensajeTurno = `${registro.fecha}-${turno.id}`;
+              const estaAbierto = turnoMensajeAbierto === claveMensajeTurno;
               const minutosExtras = Number(turno.minutos_extra_pendientes) > 0;
               const minutosAutorizados =
                 Number(turno.minutos_extra_autorizados) > 0;
@@ -442,9 +471,10 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
                         </span>
 
                         <span className="text-gray-300">—</span>
-
                         <span className="inline-flex items-center gap-1 text-rose-700 bg-rose-50 border border-rose-100 rounded-md px-2 py-1">
-                          Salida: {quitarSegundos(turno.salida) || "—"}
+                          {!turno.salida || turno.salida.includes("23:59")
+                            ? "Sin registro"
+                            : "Salida: " + quitarSegundos(turno.salida)}
                         </span>
                       </div>
 
@@ -467,9 +497,9 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
                     </div>
 
                     {/* BADGES */}
-                    
+
                     <div className="flex flex-wrap gap-1.5">
-                      {(esAdminAutorizadoRRHHH && turno.estado === "normal" ||
+                      {((esAdminAutorizadoRRHHH && turno.estado === "normal") ||
                         turno.estado === "justificado") && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[10px] font-semibold border border-gray-200">
                           <FaClock className="text-[9px]" />
@@ -511,7 +541,7 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
 
                       {obtenerMinutosPositivos(turno.minutos_tarde) > 0 && (
                         <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-semibold border border-red-200">
-                          {formatearDuracion (turno.minutos_tarde)} tarde
+                          {formatearDuracion(turno.minutos_tarde)} tarde
                         </span>
                       )}
 
@@ -519,26 +549,55 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
                         turno.minutos_salida_anticipada,
                       ) > 0 && (
                         <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-semibold border border-red-200">
-                          {formatearDuracion(turno.minutos_salida_anticipada)} antes
+                          {formatearDuracion(turno.minutos_salida_anticipada)}{" "}
+                          antes
                         </span>
                       )}
                     </div>
 
-                    {/*  NOTAS / ORIGEN */ }
+                    {/* MENSAJE RELACIONADO */}
+                    {mensajeRelacionado && (
+                    <div className="mt-1">
+                      <button
+                        onClick={() =>
+                          setTurnoMensajeAbierto((prev) =>
+                            prev === claveMensajeTurno ? null : claveMensajeTurno
+                          )
+                        }
+                        className="flex items-center gap-1 text-[10px] text-orange-600 hover:text-orange-700"
+                      >
+                        <FiMessageSquare size={12} />
+                        Ver aclaración
+                      </button>
+                    </div>
+                  )}
+
+                  {/*  */}
+                  {mensajeRelacionado && estaAbierto && (
+                    <div className="mt-1 rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px]">
+                      <div className="font-semibold text-orange-700">
+                        {formatearTipoMensaje(mensajeRelacionado.tipo_mensaje)}
+                      </div>
+                      <div className="text-gray-700">
+                        {mensajeRelacionado.mensaje}
+                      </div>
+                    </div>
+                  )}
+
+                    {/*  NOTAS / ORIGEN */}
                     <div className="flex flex-col gap-1.5 text-[10px]">
-                      {turno.comentarios && (
+                      {turno.comentarios && esAdminAutorizadoRRHHH && (
                         <p className="text-gray-500 italic bg-gray-50 border border-dashed border-gray-200 rounded-md px-2 py-1 leading-snug">
                           "{turno.comentarios}"
                         </p>
-                      )}                 
-                      
+                      )}
+
                       {esAdminAutorizadoRRHHH && turno.origen && (
                         <span className="text-gray-400 font-semibold uppercase tracking-tight">
                           Vía {turno.origen}
                         </span>
                       )}
                     </div>
-     
 
                     {/* ACCIONES */}
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100">
@@ -548,21 +607,17 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
                             turno.estado_aprobacion,
                           )}`}
                           onClick={() => {
-                             const fechaFormateada = new Date(
-                                diaSeleccionado,
-                              ).toLocaleDateString("en-US");
-                              setHorarioSeleccionado({
-                                ...turno,
-                                fecha_registro: fechaFormateada,
-                              });
-                            if (esAdminAutorizadoRRHHH){
+                            const fechaFormateada = new Date(
+                              diaSeleccionado,
+                            ).toLocaleDateString("en-US");
+                            setHorarioSeleccionado({
+                              ...turno,
+                              fecha_registro: fechaFormateada,
+                            });
+                            if (esAdminAutorizadoRRHHH) {
                               setAbrirModalAprobacion(true);
-                            }else if(turno.estado_aprobacion.toLowerCase() === "pendiente"){
-                              setAbrirSoloObservacion(true);
-                              setAbrirModalEditar(true);
                             }
-                          }
-                        }
+                          }}
                         >
                           {turno.estado_aprobacion.toUpperCase()}
                         </button>
@@ -587,6 +642,24 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
                         >
                           {turno.estado.toUpperCase()}
                         </button>
+
+                        {turno.estado_aprobacion.toLowerCase() === "pendiente" && !esAdminAutorizadoRRHHH && (
+                        <button
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all bg-gray-300 text-gray-800`}
+                          onClick={() => {
+                            const fechaFormateada = new Date(
+                              diaSeleccionado,
+                            ).toLocaleDateString("en-US");
+                            setHorarioSeleccionado({
+                              ...turno,
+                              fecha_registro: fechaFormateada,
+                            });
+                            setAbrirSoloObservacion(true);
+                          }}
+                        >
+                          CREAR CONSULTA
+                        </button>
+                        )}
                       </div>
 
                       {esAdminAutorizadoRRHHH && (
@@ -652,17 +725,37 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
 
             {/* TOTAL DEL DÍA */}
             <div className="mt-3 pt-2 border-t border-gray-200 flex justify-end items-center gap-2">
-              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+              {/* <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                 Total:
               </span>
               <span className="bg-orange-600 text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm">
                 {formatearHorario(registro.horasTotales)}
+              </span> */}
+              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                Horas válidas:
+              </span>
+              <span className="bg-orange-600 text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm">
+                {formatearHorario(registro.horasTotalesSinPendientes)}
               </span>
             </div>
           </div>
         )}
       </div>
     );
+  };
+
+  const obtenerUltimoMensajeAclaracion = (turno) => {
+    if (!turno?.mensajes_aclaracion?.length) return null;
+
+    return [...turno.mensajes_aclaracion].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at),
+    )[0];
+  };
+
+  const formatearTipoMensaje = (tipo) => {
+    if (!tipo) return "Aclaración";
+
+    return tipo.replaceAll("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   return (
@@ -687,7 +780,12 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
           <div className="flex items-center bg-white rounded-full shadow-sm border border-gray-200 p-1">
             <button
               onClick={mesAnterior}
-              className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"
+              disabled={deshabilitarBotonAtras}
+              className={`p-2 rounded-full transition-colors ${
+                deshabilitarBotonAtras
+                  ? "text-gray-300 cursor-not-allowed" // Estilo bloqueado
+                  : "hover:bg-gray-100 text-gray-600"  // Estilo normal
+              }`}
             >
               <FaChevronLeft />
             </button>
@@ -696,7 +794,12 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
             </h2>
             <button
               onClick={mesSiguiente}
-              className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"
+              disabled={deshabilitarBotonAdelante}
+              className={`p-2 rounded-full transition-colors ${
+                deshabilitarBotonAdelante
+                  ? "text-gray-300 cursor-not-allowed" // Estilo bloqueado
+                  : "hover:bg-gray-100 text-gray-600"  // Estilo normal
+              }`}
             >
               <FaChevronRight />
             </button>
@@ -753,13 +856,19 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
       {abrirModalEditar && horarioSeleccionado && (
         <ModalEditarHorarioEmpleado
           horarios={horarioSeleccionado}
-          soloObservacion={abrirSoloObservacion}
           fetch={realizarPeticion}
           cerrarModal={() => {
             setAbrirModalEditar(false);
-            setAbrirSoloObservacion(false);
             setHorarioSeleccionado(null);
           }}
+        />
+      )}
+
+      {abrirSoloObservacion && horarioSeleccionado && (
+        <ModalNovedad
+          diaSeleccionado={format(diaSeleccionado, "yyyy-MM-dd")}
+          cerrarModal={() => setAbrirSoloObservacion(false)}
+          horarioSeleccionado={horarioSeleccionado}
         />
       )}
 

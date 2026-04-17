@@ -4,13 +4,13 @@
 */
 import React, { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
-import { useAuth } from "../../../../AuthContext";
-import { useSedeUsers } from "../../Context/SedeUsersContext";
+import { useAuth } from "../../../../../AuthContext";
+import { useSedeUsers } from "../../../Context/SedeUsersContext";
 import axios from "axios";
 import Swal from "sweetalert2";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
-import {formatearDuracion} from "../../Utils/convertirMinutosAHoras"
+import {formatearDuracion} from "../../../Utils/convertirMinutosAHoras"
 
 const ReconocimientoFacial = ({
   origen,

@@ -17,8 +17,8 @@ import {
   FaChevronDown,
   FaChevronUp
 } from "react-icons/fa";
-import { useAuth } from "../../../AuthContext";
-import ReconocimientoFacial from "./Empleados/ReconocimientoFacial";
+import { useAuth } from "../../../../../AuthContext";
+import ReconocimientoFacial from "../Reconocimiento-Facial/ReconocimientoFacial";
 
 const Ajustes = ({ volverAtras }) => {
   const usuarioAuth = useAuth();
@@ -471,7 +471,7 @@ const Ajustes = ({ volverAtras }) => {
         <div className="mb-3">
           <button
             onClick={volverAtras}
-            className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-gray-200 rounded-lg text-gray-700 text-sm font-semibold hover:border-orange-500 hover:text-orange-600 hover:shadow-md transition-all duration-200 group"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-xl text-gray-700 font-semibold hover:border-emerald-500 hover:text-emerald-600 hover:shadow-md transition-all duration-200 group"
           >
             <FaArrowLeft className="group-hover:-translate-x-1 transition-transform duration-200" />
             Volver atrás

@@ -17,11 +17,11 @@ import { FaRegNewspaper } from "react-icons/fa6";
 import {
   normalizarSedes,
   normalizarSedes_2,
-} from "../../Utils/NormalizarSedes";
-import Liquidaciones from "../Empleados/Liquidaciones";
+} from "../../../Utils/NormalizarSedes";
+import Liquidaciones from "../../Empleados/Liquidaciones/Liquidaciones";
 import LiquidacionesPendientesUsuarios from "./LiquidacionesPendientesUsuarios";
-import { useAuth } from "../../../../AuthContext";
-import { esAdminRRHH } from "../../Utils/AdminAutorizadosRRHH";
+import { useAuth } from "../../../../../AuthContext";
+import { esAdminRRHH } from "../../../Utils/AdminAutorizadosRRHH";
 
 const API_URL = "http://localhost:8080";
 
@@ -31,7 +31,6 @@ const LiquidacionesUsuarios = ({ volverAtras = null }) => {
     datosUsuarioLogeado.userLevel,
     datosUsuarioLogeado.userLevelAdmin,
   );
-  console.log(esAdminAutorizadoRRHHH);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 

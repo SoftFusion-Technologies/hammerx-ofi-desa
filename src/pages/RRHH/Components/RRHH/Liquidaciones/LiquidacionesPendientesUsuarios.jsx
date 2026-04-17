@@ -12,13 +12,13 @@ import {
   FaSearch,
   FaUserClock,
 } from "react-icons/fa";
-import { useAuth } from "../../../../AuthContext";
+import { useAuth } from "../../../../../AuthContext";
 import {
   normalizarSedes,
   normalizarSedes_2,
-} from "../../Utils/NormalizarSedes";
+} from "../../../Utils/NormalizarSedes";
 import AprobarLiquidacion from "./AprobarLiquidacion";
-import { esAdminRRHH } from "../../Utils/AdminAutorizadosRRHH";
+import { esAdminRRHH } from "../../../Utils/AdminAutorizadosRRHH";
 import { FaRegNewspaper } from "react-icons/fa6";
 import LiquidacionesUsuarios from "./LiquidacionesUsuarios";
 

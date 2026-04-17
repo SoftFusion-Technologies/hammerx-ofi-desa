@@ -77,7 +77,7 @@ const HorasExtrasManuales = ({
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2 text-xs font-bold uppercase text-amber-700">
 					{mostrarBadgePendientes ? <FaClock size={14} /> : <FaPlusCircle />}
-					Horas Extra Manuales
+					Añadir horas Manuales
 				</div>
 
 				{mostrarBadgePendientes && (
@@ -95,7 +95,7 @@ const HorasExtrasManuales = ({
 					disabled={bloquearToggleExtras}
 					className="h-4 w-4 rounded border-amber-300 text-orange-600 focus:ring-orange-500"
 				/>
-				<span>Añadir horas extras manuales</span>
+				<span>Modificar horas extras manuales</span>
 			</label>
 
 			{mostrarExtras && (

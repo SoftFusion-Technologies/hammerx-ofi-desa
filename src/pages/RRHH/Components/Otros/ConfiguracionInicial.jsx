@@ -15,9 +15,9 @@ import {
 } from "react-icons/fa";
 import { IoExit } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import ReconocimientoFacial from "./Empleados/ReconocimientoFacial";
-import img_hammerxsoft from "../../../images/staff/hammerxsoft4.png";
-import { useAuth } from "../../../AuthContext";
+import ReconocimientoFacial from "../Empleados/Reconocimiento-Facial/ReconocimientoFacial";
+import img_hammerxsoft from "../../../../images/staff/hammerxsoft4.png";
+import { useAuth } from "../../../../AuthContext";
 
 const ConfiguracionInicial = ({
   nombreUsuario,

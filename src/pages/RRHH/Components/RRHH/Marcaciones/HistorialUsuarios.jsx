@@ -4,8 +4,8 @@
 */
 
 import React, { useState, useEffect, useMemo } from "react";
-import { usarPromiseAll } from "../../hooks/usarPromiseAll";
-import { useAuth } from "../../../../AuthContext";
+import { usarPromiseAll } from "../../../hooks/usarPromiseAll";
+import { useAuth } from "../../../../../AuthContext";
 import {
   FaHistory,
   FaMapMarkerAlt,
@@ -16,9 +16,9 @@ import {
 import {
   normalizarSedes,
   normalizarSedes_2,
-} from "../../Utils/NormalizarSedes";
-import HistorialMarcas from "../Empleados/HistorialMarcas";
-import { esAdminRRHH } from "../../Utils/AdminAutorizadosRRHH";
+} from "../../../Utils/NormalizarSedes";
+import HistorialMarcas from "../../Empleados/Marcaciones/HistorialMarcas";
+import { esAdminRRHH } from "../../../Utils/AdminAutorizadosRRHH";
 
 const HistorialUsuarios = ({ volverAtras = null }) => {
   const { userLevel, userLevelAdmin } = useAuth();
@@ -236,9 +236,11 @@ const HistorialUsuarios = ({ volverAtras = null }) => {
                   <p className="text-sm font-bold text-gray-800 break-words">
                     {toUpperText(emp.usuario.name)}
                   </p>
-                  <p className="text-xs text-gray-400 break-all mt-1">
-                    {toUpperText(emp.usuario.email)}
-                  </p>
+                  <span
+                    className={`px-1 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold ${emp.cantidad_pendientes > 0 ? "bg-yellow-100 text-yellow-600" : ""}`}
+                  >
+                    {emp.cantidad_pendientes || 0} Pendientes
+                  </span>
                 </div>
                 <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[10px] font-semibold whitespace-nowrap">
                   {toUpperText(normalizarSedes(emp.sede.nombre))}

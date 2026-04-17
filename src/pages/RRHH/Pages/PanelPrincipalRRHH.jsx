@@ -21,29 +21,32 @@ import {
 import { IoNewspaperOutline } from "react-icons/io5";
 import { FaFaceGrin } from "react-icons/fa6";
 import { AnimatePresence, motion } from "framer-motion";
-import ModalNovedad from "../Modals/ModalNovedad";
-import Liquidaciones from "../Components/Empleados/Liquidaciones";
-import Horarios from "../Components/Empleados/Horarios";
-import HorariosAlumnos from "../Components/RRHH/HorariosUsuarios";
-import HistorialMarcas from "../Components/Empleados/HistorialMarcas";
-import Ajustes from "../Components/Ajustes";
-import ConfiguracionInicial from "../Components/ConfiguracionInicial";
-import LiquidacionesUsuarios from "../Components/RRHH/LiquidacionesUsuarios";
-import HistorialUsuarios from "../Components/RRHH/HistorialUsuarios";
+import ModalNovedad from "../Modals/Empleado/ModalNovedad";
 import CalendarioHammer from "../Components/CalendarioHammer";
 import { useAuth } from "../../../AuthContext";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import PanelSeleccionSede from "../Components/SedeSeleccionada";
+import PanelSeleccionSede from "../Components/Otros/SedeSeleccionada";
 import { useSedeUsers } from "../Context/SedeUsersContext";
-import ReconocimientoFacial from "../Components/Empleados/ReconocimientoFacial";
 import useModificarDatosPatch from "../hooks/modificarDatosPatch";
 import Swal from "sweetalert2";
-import Cargando from "../Components/Cargando";
-import LiquidacionesPendientesUsuarios from "../Components/RRHH/LiquidacionesPendientesUsuarios";
-import ConversacionesHistorial from "../Components/RRHH/ConversacionesHistorial";
-import ConversacionesDetalle from "../Components/RRHH/ConversacionesDetalle";
+import Cargando from "../Components/Reciclables/Cargando";
+/* Importaciones de componentes generales */
+import Ajustes from "../Components/Empleados/Ajustes/Ajustes";
+import ConfiguracionInicial from "../Components/Otros/ConfiguracionInicial";
+/* Importaciones de componentes especidificos de Empleados */
+import Liquidaciones from "../Components/Empleados/Liquidaciones/Liquidaciones";
+import Horarios from "../Components/Empleados/Horarios/Horarios";
+import HistorialMarcas from "../Components/Empleados/Marcaciones/HistorialMarcas";
+import ReconocimientoFacial from "../Components/Empleados/Reconocimiento-Facial/ReconocimientoFacial";
+/* Importaciones de componentes específicos para RRHH */
+import LiquidacionesUsuarios from "../Components/RRHH/Liquidaciones/LiquidacionesUsuarios";
+import LiquidacionesPendientesUsuarios from "../Components/RRHH/Liquidaciones/LiquidacionesPendientesUsuarios";
+import HistorialUsuarios from "../Components/RRHH/Marcaciones/HistorialUsuarios";
+import HorariosAlumnos from "../Components/RRHH/Horarios/HorariosUsuarios";
+import ConversacionesHistorial from "../Components/RRHH/Conversaciones-Mensajes/ConversacionesHistorial";
+import ConversacionesDetalle from "../Components/RRHH/Conversaciones-Mensajes/ConversacionesDetalle";
 import { esAdminRRHH } from "../Utils/AdminAutorizadosRRHH";
 import useAgregarDatos from "../hooks/agregarDatos";
 dayjs.extend(utc);
@@ -499,7 +502,7 @@ const PanelPrincipalRRHH = () => {
                 variants={itemStagger}
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.24 }}
-                className={`md:col-span-3 ${esAdminAutorizadoRRHHH ? "" : "lg:col-span-2"} relative overflow-hidden rounded-3xl border border-orange-100 bg-gradient-to-br from-white via-white to-orange-50 p-7 md:p-8 shadow-lg hover:shadow-2xl hover:border-orange-300 transition-all duration-300 flex flex-col md:flex-row items-center gap-7 group`}
+                className={`md:col-span-3 ${esAdminAutorizadoRRHHH ? "" : "lg:col-span-2"} relative overflow-hidden rounded-3xl border border-orange-100 bg-gradient-to-br from-white via-white to-orange-50 p-2 md:p-8 shadow-lg hover:shadow-2xl hover:border-orange-300 transition-all duration-300 flex flex-col md:flex-row items-center gap-7 group`}
               >
                 {/* decoraciones */}
                 <motion.div
@@ -600,7 +603,7 @@ const PanelPrincipalRRHH = () => {
                 onClick={() => setMostrarModal(true)}
                 whileHover={{ y: -4, scale: 1.01 }}
                 whileTap={{ scale: 0.97 }}
-                className="bg-gradient-to-br from-orange-50 to-orange-100/50 hover:from-orange-100 hover:to-orange-100 border-2 border-dashed border-orange-300 rounded-3xl p-6 flex flex-col items-center justify-center gap-3 transition-all duration-300 active:scale-95 group shadow-sm hover:shadow-lg"
+                className="bg-gradient-to-br from-orange-50 to-orange-100/50 hover:from-orange-100 hover:to-orange-100 border-2 border-dashed border-orange-300 rounded-3xl p-2 lg:p-6 flex flex-col items-center justify-center gap-3 transition-all duration-300 active:scale-95 group shadow-sm hover:shadow-lg"
               >
                 <div className="bg-white p-3 rounded-full text-orange-600 shadow-md group-hover:scale-110 transition-transform duration-300">
                   <FaEdit className="text-2xl" />
@@ -623,7 +626,7 @@ const PanelPrincipalRRHH = () => {
                 onClick={() => manejarClick("Liquidaciones_pendientes")}
                 whileHover={{ y: -4, scale: 1.01 }}
                 whileTap={{ scale: 0.97 }}
-                className="bg-white/95 backdrop-blur rounded-3xl p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
+                className="bg-white/95 backdrop-blur rounded-3xl p-2 md:p-5  shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
               >
                 <div className="bg-green-50 p-3 rounded-xl text-green-600 ring-1 ring-green-100">
                   <FaMoneyBillWave className="text-2xl" />
@@ -644,7 +647,7 @@ const PanelPrincipalRRHH = () => {
               onClick={() => manejarClick("Liquidaciones")}
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.97 }}
-              className="bg-white/95 backdrop-blur rounded-3xl p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
+              className="bg-white/95 backdrop-blur rounded-3xl p-2 md:p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
             >
               <div className="bg-green-50 p-3 rounded-xl text-green-600 ring-1 ring-green-100">
                 <FaHistory className="text-2xl" />
@@ -664,7 +667,7 @@ const PanelPrincipalRRHH = () => {
               onClick={() => manejarClick("Novedades")}
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.97 }}
-              className="bg-white/95 backdrop-blur rounded-3xl p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
+              className="bg-white/95 backdrop-blur rounded-3xl p-2 md:p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
             >
               <div className="bg-purple-50 p-3 rounded-xl text-green-600 ring-1 ring-green-100 relative">
                 <IoNewspaperOutline className="text-2xl" />
@@ -691,7 +694,7 @@ const PanelPrincipalRRHH = () => {
               onClick={() => manejarClick("Horarios")}
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.97 }}
-              className="bg-white/95 backdrop-blur rounded-3xl p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
+              className="bg-white/95 backdrop-blur rounded-3xl p-2 md:p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
             >
               <div className="bg-blue-50 p-3 rounded-xl text-blue-600 ring-1 ring-blue-100">
                 <FaCalendarAlt className="text-2xl" />
@@ -710,7 +713,7 @@ const PanelPrincipalRRHH = () => {
               onClick={() => manejarClick("Historial")}
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.97 }}
-              className="relative bg-white/95 backdrop-blur rounded-3xl p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
+              className="relative bg-white/95 backdrop-blur rounded-3xl p-2 md:p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
             >
               {/* Icono */}
               <div className="bg-purple-50 p-3 rounded-xl text-purple-600 ring-1 ring-purple-100 relative">
@@ -761,7 +764,7 @@ const PanelPrincipalRRHH = () => {
                 onClick={() => manejarClick("Configuracion")}
                 whileHover={{ y: -4, scale: 1.01 }}
                 whileTap={{ scale: 0.97 }}
-                className="bg-white/95 backdrop-blur rounded-3xl p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
+                className="bg-white/95 backdrop-blur rounded-3xl p-2 md:p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
               >
                 <div className="bg-gray-100 p-3 rounded-xl text-gray-600 ring-1 ring-gray-200">
                   <FaCog className="text-2xl" />
@@ -814,35 +817,39 @@ const PanelPrincipalRRHH = () => {
             </p>
 
             {/* Datos secundarios */}
-            <div className="flex items-center gap-3 mt-1 text-xs">
-              {/* Puesto */}
-              <div className="flex items-center gap-1 text-orange-100/90">
-                <FaUserCircle className="text-xs opacity-80" />
-                <span className="truncate">{usuario.puesto}</span>
-              </div>
+            <div className="flex items-center justify-between gap-3 mt-1 text-xs">
+              <div className="flex gap-3">
+                {/* Puesto */}
+                <div className="flex items-center gap-1 text-orange-100/90">
+                  <FaUserCircle className="text-xs opacity-80" />
+                  <span className="truncate">{usuario.puesto}</span>
+                </div>
 
-              {/* Separador */}
-              <span className="text-orange-200/50">•</span>
+                {/* Separador */}
+                <span className="text-orange-200/50">•</span>
 
-              {/* Sucursal */}
-              <div className="flex items-center gap-1 text-orange-50/90 min-w-0">
-                <FaMapMarkerAlt className="text-xs shrink-0" />
-                <span className="truncate">{usuario.sucursal}</span>
+                {/* Sucursal */}
+                <div className="flex items-center gap-1 text-orange-50/90 min-w-0">
+                  <FaMapMarkerAlt className="text-xs shrink-0" />
+                  <span className="truncate">{usuario.sucursal}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1 text-orange-50/90 min-w-0">
-                <span className="inline-flex items-center bg-white/20 px-2 py-1 rounded-lg shadow-sm border border-orange-100/30 font-mono text-xs font-semibold tracking-widest">
-                  <svg
-                    className="w-4 h-4 mr-1 text-orange-200"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 6v6l4 2" />
-                  </svg>
-                  {horaActualNavbar.format("HH:mm:ss")}
-                </span>
+              <div>
+                <div className="flex items-center gap-1 text-orange-50/90 min-w-0">
+                  <span className="inline-flex items-center bg-white/20 px-2 py-1 rounded-lg shadow-sm border border-orange-100/30 font-mono text-xs font-semibold tracking-widest">
+                    <svg
+                      className="w-4 h-4 mr-1 text-orange-200"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 6v6l4 2" />
+                    </svg>
+                    {horaActualNavbar.format("HH:mm")}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -890,7 +897,7 @@ const PanelPrincipalRRHH = () => {
                     <circle cx="12" cy="12" r="10" />
                     <path d="M12 6v6l4 2" />
                   </svg>
-                  {horaActualNavbar.format("HH:mm:ss")}
+                  {horaActualNavbar.format("HH:mm")}
                 </span>
               </div>
             </div>

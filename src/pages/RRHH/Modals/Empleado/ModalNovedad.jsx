@@ -1,10 +1,10 @@
 import { FaTimes } from "react-icons/fa";
-import { useState } from "react";
-import useAgregarDatos from "../hooks/agregarDatos";
+import { useEffect, useState } from "react";
+import useAgregarDatos from "../../hooks/agregarDatos";
 import Swal from "sweetalert2";
-import { useAuth } from "../../../AuthContext";
+import { useAuth } from "../../../../AuthContext";
 import * as yup from "yup";
-import { useSedeUsers } from "../Context/SedeUsersContext"
+import { useSedeUsers } from "../../Context/SedeUsersContext"
 
 const valoresIniciales = {
   fecha: "",
@@ -21,7 +21,7 @@ const schemaAclaracion = yup.object({
     .max(500, "El mensaje no puede superar los 500 caracteres"),
 });
 
-const ModalNovedad = ({ cerrarModal }) => {
+const ModalNovedad = ({ cerrarModal, diaSeleccionado, horarioSeleccionado }) => {
   const { sedeSeleccionada } = useSedeUsers();
 
   const { userId } = useAuth();
@@ -36,6 +36,14 @@ const ModalNovedad = ({ cerrarModal }) => {
     comentario: valoresIniciales.comentario,
   });
 
+  useEffect(() => {
+    if (diaSeleccionado) {
+      setDatosFormulario((prev) => ({
+        ...prev,
+        fecha: diaSeleccionado,
+      }));
+    }
+  }, [diaSeleccionado]);
   const [erroresFormulario, setErroresFormulario] = useState({});
 
   const manejarCambio = (event) => {
@@ -52,6 +60,8 @@ const ModalNovedad = ({ cerrarModal }) => {
       }));
     }
   };
+
+  console.log(horarioSeleccionado)
 
   const manejarEnviarMensaje = async () => {
     try {
@@ -74,8 +84,9 @@ const ModalNovedad = ({ cerrarModal }) => {
         emisor_user_id: Number(userId),
         destinatario_tipo: "rrhh",
         tipo_mensaje: datosFormulario.motivo,
-        mensaje: datosFormulario.comentario.toUpperCase().trim(),
+        mensaje: datosFormulario.comentario.trim(),
         fecha_referencia: datosFormulario.fecha,
+        marcacion_id: horarioSeleccionado?.id || null,
       };
 
       await agregar("/rrhh-mensajes", cuerpoMensaje);
@@ -115,7 +126,7 @@ const ModalNovedad = ({ cerrarModal }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-        <div className="bg-emerald-600 p-4 flex justify-between items-center">
+        <div className="bg-orange-600 p-4 flex justify-between items-center">
           <h3 className="text-white font-bold text-lg font-bignoodle tracking-wide uppercase">
             Enviar Aclaración a RRHH
           </h3>
@@ -142,7 +153,8 @@ const ModalNovedad = ({ cerrarModal }) => {
                 name="fecha"
                 value={datosFormulario.fecha}
                 onChange={manejarCambio}
-                className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:border-emerald-500 outline-none"
+                className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:border-orange-500 outline-none"
+                disabled={diaSeleccionado}
               />
               {erroresFormulario.fecha && (
                 <p className="text-xs text-red-600 mt-1">
@@ -152,13 +164,13 @@ const ModalNovedad = ({ cerrarModal }) => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">
-                Tipo de Novedad
+                Tipo de Aclaración
               </label>
               <select
                 name="motivo"
                 value={datosFormulario.motivo}
                 onChange={manejarCambio}
-                className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:border-emerald-500 outline-none"
+                className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:border-orange-500 outline-none"
               >
                 <option value="aclaracion">ACLARACIÓN GENERAL</option>
                 <option value="olvido_ingreso">OLVIDO DE ENTRADA</option>
@@ -172,7 +184,7 @@ const ModalNovedad = ({ cerrarModal }) => {
 
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">
-              Mensaje / Explicación
+              Explicación
             </label>
             <textarea
               name="comentario"
@@ -180,7 +192,7 @@ const ModalNovedad = ({ cerrarModal }) => {
               onChange={manejarCambio}
               placeholder="Explica detalladamente lo sucedido para que RRHH pueda solucionarlo..."
               rows="4"
-              className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-emerald-500 outline-none resize-none"
+              className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-orange-500 outline-none resize-none"
             ></textarea>
             {erroresFormulario.comentario && (
               <p className="text-xs text-red-600 mt-1">
@@ -193,7 +205,7 @@ const ModalNovedad = ({ cerrarModal }) => {
             <button
               type="submit"
               disabled={cargandoEnvio}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition-colors uppercase tracking-wider"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl shadow-lg transition-colors uppercase tracking-wider"
             >
               {cargandoEnvio ? "Enviando Mensaje..." : "Enviar Aclaración"}
             </button>

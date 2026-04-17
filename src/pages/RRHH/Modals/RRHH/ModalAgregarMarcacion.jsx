@@ -161,7 +161,7 @@ const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
                   <option key={h.id} value={h.id}>
                     {h.hora_entrada.substring(0, 5)} a{" "}
                     {h.hora_salida.substring(0, 5)} —{" "}
-                    {h.comentarios || "Horario pactado"}
+                    {h.comentarios || "Horario habitual"}
                   </option>
                 ))}
               </select>

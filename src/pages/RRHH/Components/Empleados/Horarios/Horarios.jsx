@@ -9,9 +9,9 @@ import {
   FaClock,
   FaArrowLeft,
 } from "react-icons/fa";
-import { useAuth } from "../../../../AuthContext";
-import { useSedeUsers } from "../../Context/SedeUsersContext";
-import useObtenerDatos from "../../hooks/obtenerDatos";
+import { useAuth } from "../../../../../AuthContext";
+import { useSedeUsers } from "../../../Context/SedeUsersContext";
+import useObtenerDatos from "../../../hooks/obtenerDatos";
 
 const Horarios = ({
   setVistaActiva = null,
@@ -92,7 +92,7 @@ const Horarios = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {horariosSemanales.map((dia, index) => {
           const esFranco = dia.turnos.length === 0;
           return (
@@ -104,11 +104,6 @@ const Horarios = ({
                 <h3 className="font-bold text-gray-700 uppercase tracking-wide">
                   {dia.dia}
                 </h3>
-                {esFranco && (
-                  <span className="text-[10px] bg-gray-200 text-gray-500 px-2 py-1 rounded font-bold">
-                    FRANCO
-                  </span>
-                )}
               </div>
 
               <div className="space-y-2">

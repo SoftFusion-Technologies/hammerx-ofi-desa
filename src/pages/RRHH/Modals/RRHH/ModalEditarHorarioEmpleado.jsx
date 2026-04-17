@@ -4,12 +4,28 @@ import useModificarDatosPatch from "../../hooks/modificarDatosPatch";
 import { format, parse } from "date-fns";
 import { useAuth } from "../../../../AuthContext";
 import { FaTimes } from "react-icons/fa";
-import HorasExtrasManuales from "../../Components/HorasExtrasManuales";
-import DescuentosManuales from "../../Components/DescuentosManuales";
+import HorasExtrasManuales from "../../Components/RRHH/Marcaciones/Subcomponent/HorasExtrasManuales";
+import DescuentosManuales from "../../Components/RRHH/Marcaciones/Subcomponent/DescuentosManuales";
 
 const ESTADOS = ["normal", "justificado"];
 
-const ESTADOS_APROBACION = ["pendiente", "aprobada", "rechazada"];
+/* const ESTADOS_APROBACION = ["pendiente", "aprobada", "rechazada"]; */
+
+const ESTADOS_APROBACION = [{
+  value: "pendiente",
+  accion_realizar: "pendiente",
+  label: "Pendiente",
+},
+{
+  value: "aprobada",
+  accion_realizar: "no_modificar_horas",
+  label: "No modificar horas",
+}
+,{
+  value: "aprobada",
+  accion_realizar: "modificar_horas",
+  label: "Modificar horas",
+}]
 
 const formatearFechaHora = (valor) => {
   if (!valor) return "-";
@@ -65,6 +81,7 @@ const ModalEditarHorarioEmpleado = ({
       salida: extraerHora(horarios, "salida", "hora_salida"),
       estado: horarios?.estado || "normal",
       estado_aprobacion: horarios?.estado_aprobacion || "pendiente",
+      accion_realizar: ESTADOS_APROBACION.find(op => op.value === horarios?.estado_aprobacion)?.accion_realizar,
     }),
     [horarios],
   );
@@ -128,7 +145,7 @@ const ModalEditarHorarioEmpleado = ({
     formulario.entrada !== valoresIniciales.entrada ||
     formulario.salida !== valoresIniciales.salida ||
     formulario.estado !== valoresIniciales.estado ||
-    formulario.estado_aprobacion !== valoresIniciales.estado_aprobacion ||
+    formulario.estado_aprobacion !== valoresIniciales.estado_aprobacion || formulario.accion_realizar !== valoresIniciales.accion_realizar ||
     justificacion.trim() !== (horarios?.comentarios || "").trim() ||
     (puedeGestionarExtras &&
       mostrarExtras &&
@@ -277,39 +294,6 @@ const ModalEditarHorarioEmpleado = ({
                     </label>
                   </div>
 
-                  {/* SECCIÓN HORAS EXTRA MANUALES */}
-                  {puedeGestionarExtras && (
-                    <HorasExtrasManuales
-                      mostrarExtras={mostrarExtras}
-                      setMostrarExtras={setMostrarExtras}
-                      horasPendientes={horasPendientesManual}
-                      setHorasPendientes={setHorasPendientesManual}
-                      minutosPendientes={minutosPendientesManual}
-                      setMinutosPendientes={setMinutosPendientesManual}
-                      horasAutorizadas={horasAutorizadasManual}
-                      setHorasAutorizadas={setHorasAutorizadasManual}
-                      minutosAutorizadas={minutosAutorizadosManual}
-                      setMinutosAutorizadas={setMinutosAutorizadosManual}
-                      minutosPendientesIniciales={minutosPendientesIniciales}
-                      minutosAutorizadosIniciales={minutosAutorizadosIniciales}
-                      bloquearToggleExtras={debeForzarExtras}
-                      bloquearPendientes={debeForzarExtras}
-                      helperText="* Se asentarán los valores editados de pendientes y autorizadas sin modificar la hora de salida real."
-                    />
-                  )}
-
-                  {puedeGestionarExtras && (
-                    <DescuentosManuales
-                      mostrarDescuentos={mostrarDescuentos}
-                      setMostrarDescuentos={setMostrarDescuentos}
-                      horasDescuento={horasDescuentoManual}
-                      setHorasDescuento={setHorasDescuentoManual}
-                      minutosDescuento={minutosDescuentoManual}
-                      setMinutosDescuento={setMinutosDescuentoManual}
-                      minutosDescuentoIniciales={minutosDescuentoIniciales}
-                    />
-                  )}
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="flex flex-col gap-1">
                       <span className="text-[11px] font-bold text-gray-500 uppercase">
@@ -342,20 +326,57 @@ const ModalEditarHorarioEmpleado = ({
                         Estado Aprobación
                       </span>
                       <select
-                        value={formulario.estado_aprobacion}
+                        value={formulario.accion_realizar}
                         onChange={(e) =>
-                          manejarCambio("estado_aprobacion", e.target.value)
+                        {
+                          manejarCambio("accion_realizar", e.target.value)
+                          manejarCambio("estado_aprobacion", ESTADOS_APROBACION.find(op => op.accion_realizar === e.target.value)?.value || "pendiente")
+                        }
                         }
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
                       >
                         {ESTADOS_APROBACION.map((opcion) => (
-                          <option key={opcion} value={opcion}>
-                            {opcion.toUpperCase()}
+                          <option key={opcion.accion_realizar} value={opcion.accion_realizar}>
+                            {opcion.label.toUpperCase()}
                           </option>
                         ))}
                       </select>
                     </label>
                   </div>
+
+                                    {/* SECCIÓN HORAS EXTRA MANUALES */}
+                  {puedeGestionarExtras && formulario.accion_realizar === "modificar_horas" && (
+                    <HorasExtrasManuales
+                      mostrarExtras={mostrarExtras}
+                      setMostrarExtras={setMostrarExtras}
+                      horasPendientes={horasPendientesManual}
+                      setHorasPendientes={setHorasPendientesManual}
+                      minutosPendientes={minutosPendientesManual}
+                      setMinutosPendientes={setMinutosPendientesManual}
+                      horasAutorizadas={horasAutorizadasManual}
+                      setHorasAutorizadas={setHorasAutorizadasManual}
+                      minutosAutorizadas={minutosAutorizadosManual}
+                      setMinutosAutorizadas={setMinutosAutorizadosManual}
+                      minutosPendientesIniciales={minutosPendientesIniciales}
+                      minutosAutorizadosIniciales={minutosAutorizadosIniciales}
+                      bloquearToggleExtras={debeForzarExtras}
+                      bloquearPendientes={debeForzarExtras}
+                      helperText="* Se asentarán los valores editados de pendientes y autorizadas sin modificar la hora de salida real."
+                    />
+                  )}
+
+                  {puedeGestionarExtras && formulario.accion_realizar === "modificar_horas" && (
+                    <DescuentosManuales
+                      mostrarDescuentos={mostrarDescuentos}
+                      setMostrarDescuentos={setMostrarDescuentos}
+                      horasDescuento={horasDescuentoManual}
+                      setHorasDescuento={setHorasDescuentoManual}
+                      minutosDescuento={minutosDescuentoManual}
+                      setMinutosDescuento={setMinutosDescuentoManual}
+                      minutosDescuentoIniciales={minutosDescuentoIniciales}
+                    />
+                  )}
+
                 </>
               )}
 

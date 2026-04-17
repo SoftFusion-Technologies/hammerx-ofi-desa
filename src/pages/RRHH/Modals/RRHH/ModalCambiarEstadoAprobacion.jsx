@@ -7,10 +7,25 @@ import { AnimatePresence, motion } from "framer-motion";
 import useModificarDatosPatch from "../../hooks/modificarDatosPatch";
 import { useAuth } from "../../../../AuthContext";
 import { FaTimes } from "react-icons/fa";
-import HorasExtrasManuales from "../../Components/HorasExtrasManuales";
-import DescuentosManuales from "../../Components/DescuentosManuales";
+import HorasExtrasManuales from "../../Components/RRHH/Marcaciones/Subcomponent/HorasExtrasManuales";
+import DescuentosManuales from "../../Components/RRHH/Marcaciones/Subcomponent/DescuentosManuales";
 
-const ESTADOS_APROBACION = ["pendiente", "aprobada", "rechazada"];
+
+const ESTADOS_APROBACION = [{
+  value: "pendiente",
+  accion_realizar: "pendiente",
+  label: "Pendiente",
+},
+{
+  value: "aprobada",
+  accion_realizar: "no_modificar_horas",
+  label: "No modificar horas",
+}
+,{
+  value: "aprobada",
+  accion_realizar: "modificar_horas",
+  label: "Modificar horas",
+}]
 
 // Funciones auxiliares locales
 const convertirMinutosA_HM = (totalMinutos) => {
@@ -25,9 +40,11 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [estadoSeleccionado, setEstadoSeleccionado] = useState(horarios?.estado_aprobacion || "pendiente");
-  const [motivoRechazo, setMotivoRechazo] = useState(horarios?.motivo_rechazo || "");
+  const [accionRealizar, setAccionRealizar] = useState(ESTADOS_APROBACION.find(op => op.value === estadoSeleccionado)?.accion_realizar || "pendiente");
+  const [comentarios, setComentarios] = useState(horarios?.comentarios || "");
   const [mostrarExtras, setMostrarExtras] = useState(false);
   const [mostrarDescuentos, setMostrarDescuentos] = useState(false);
+  console.log(horarios.estado_aprobacion)
 
 
   // Estados para manejo de horas y minutos por separado
@@ -63,14 +80,13 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
     setMinutosAutorizadasInput(autorizadasHM.minutos);
     setHorasDescuentoInput(descuentoHM.horas);
     setMinutosDescuentoInput(descuentoHM.minutos);
-    setMotivoRechazo(horarios?.comentarios || "");
+    setComentarios(horarios?.comentarios || "");
 
     if (horarios?.estado === "extra") {
       setMostrarExtras(true);
     }
   }, [horarios, minutosPendientesTotales, minutosAutorizadosTotales, minutosDescuentoTotales]);
 
-  const esRechazo = estadoSeleccionado === "rechazada";
   const puedeGestionarExtras =
     Boolean(horarios?.horario_id) || horarios?.estado === "extra";
   const debeForzarExtras = horarios?.estado === "extra";
@@ -83,7 +99,7 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
 
   const manejarGuardar = async () => {
     setMensaje("");
-    if (puedeGestionarExtras && estadoSeleccionado === "aprobada" && mostrarExtras) {
+    if (puedeGestionarExtras && estadoSeleccionado === "aprobada" && accionRealizar === "modificar_horas" && mostrarExtras) {
       if (minutosPendientesEditados < 0 || minutosAutorizadosEditados < 0) {
         setMensaje("La cantidad no puede ser negativa.");
         return;
@@ -95,10 +111,10 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
       estado_aprobacion: estadoSeleccionado,
       aprobado_por: userId,
       fecha_aprobacion: new Date().toISOString(),
-      comentarios: esRechazo ? motivoRechazo : null,
+      comentarios: comentarios || null,
     };
 
-    if (puedeGestionarExtras && estadoSeleccionado === "aprobada") {
+    if (puedeGestionarExtras && estadoSeleccionado === "aprobada" && accionRealizar === "modificar_horas") {
       const minutosPendientesFinales = mostrarExtras ? minutosPendientesEditados : 0;
       const minutosAutorizadosFinales = mostrarExtras ? minutosAutorizadosEditados : 0;
       const minutosDescuentoFinales = mostrarDescuentos ? minutosDescuentoEditados : 0;
@@ -169,20 +185,23 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
             <label className="flex flex-col gap-1">
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Estado del Registro</span>
               <select
-                value={estadoSeleccionado}
-                onChange={(e) => setEstadoSeleccionado(e.target.value)}
+                value={accionRealizar}
+                onChange={(e) => {
+                  setAccionRealizar(e.target.value);
+                  setEstadoSeleccionado(ESTADOS_APROBACION.find(op => op.accion_realizar === e.target.value)?.value);
+                }}
                 className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-orange-400 outline-none transition-all"
               >
                 {ESTADOS_APROBACION.map((opcion) => (
-                  <option key={opcion} value={opcion}>
-                    {opcion.toUpperCase()}
+                  <option key={opcion.accion_realizar} value={opcion.accion_realizar}>
+                    {opcion.label.toUpperCase()}
                   </option>
                 ))}
               </select>
             </label>
 
             {/* Gestión de Horas Extra HM */}
-            {estadoSeleccionado === "aprobada" && puedeGestionarExtras && (
+            {estadoSeleccionado === "aprobada" && puedeGestionarExtras && accionRealizar === "modificar_horas" && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -209,7 +228,7 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
               </motion.div>
             )}
 
-            {estadoSeleccionado === "aprobada" && puedeGestionarExtras && (
+            {estadoSeleccionado === "aprobada" && puedeGestionarExtras && accionRealizar === "modificar_horas" && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -229,7 +248,7 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
 
             {(() => {
               const tieneComentarios = Boolean(horarios?.comentarios);
-              return esRechazo && (
+              return (
               <motion.label 
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
@@ -237,8 +256,8 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
               >
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{tieneComentarios ? "¿Quieres añadir más comentarios?" : "¿Quieres añadir un comentario?"}</span>
                 <textarea
-                  value={motivoRechazo}
-                  onChange={(e) => setMotivoRechazo(e.target.value.slice(0, 255))}
+                  value={comentarios}
+                  onChange={(e) => setComentarios(e.target.value.slice(0, 255))}
                   placeholder="Explicá el motivo..."
                   rows={3}
                   className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-400 outline-none resize-none"
