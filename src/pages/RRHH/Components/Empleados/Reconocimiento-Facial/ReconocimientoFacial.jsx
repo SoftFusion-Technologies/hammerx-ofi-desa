@@ -37,6 +37,7 @@ const ReconocimientoFacial = ({
   const [camaraHabilitada, setCamaraHabilitada] = useState(false);
   const [errorMarcacion, setErrorMarcacion] = useState(null);
   const [horariosAsignados, setHorariosAsignados] = useState([]);
+  const [feriadosHoyHammer, setFeriadosHoyHammer] = useState([]);
   
   // Nuevo estado para manejar la UI de carga de forma elegante
   const [cargando, setCargando] = useState(true);
@@ -65,11 +66,20 @@ const ReconocimientoFacial = ({
         // Obtener horarios en paralelo
         const promesaHorarios = async () => {
           try {
-            const urlHorarios = `http://localhost:8080/rrhh/horarios?usuario_id=${id_usuario}&&sede_id=${sedeSeleccionada.id}`;
+            const urlHorarios = `http://localhost:8080/rrhh/horarios?usuario_id=${id_usuario}&sede_id=${sedeSeleccionada.id}`;
             const respuestaHorarios = await axios.get(urlHorarios);
-            if (montado) setHorariosAsignados(respuestaHorarios.data);
+
+            const urlFeriados = `http://localhost:8080/rrhh/feriados-programados`;
+            const respuestaFeriados = await axios.get(urlFeriados, {
+              params: { fechahoy: dayjs().format("YYYY-MM-DD") },
+            });
+
+            if (montado) {
+              setHorariosAsignados(respuestaHorarios.data);
+              setFeriadosHoyHammer(respuestaFeriados.data);
+            }
           } catch (error) {
-            console.error("Error al obtener los horarios:", error);
+            console.error("Error al obtener datos:", error);
           }
         };
         tareasPromesas.push(promesaHorarios());
@@ -248,10 +258,12 @@ const ReconocimientoFacial = ({
   const procesarMarcacion = async () => {
     try {
       setMensajeStatus("Verificando horario y guardando...");
-      const horaConfiable = dayjs(); 
+            const horaConfiable = dayjs(); 
+      /* const horaConfiable = dayjs("2026-04-21 08:20:00"); // lunes */
       const currentDayjsDay = horaConfiable.day();
       const diaActual = currentDayjsDay === 0 ? 7 : currentDayjsDay;
       const fechaHoy = horaConfiable.format("YYYY-MM-DD");
+      const esFeriado = feriadosHoyHammer.length > 0;
       
       const horariosDeHoy = horariosAsignados.filter((h) => h.dia_semana === diaActual);
 
@@ -289,10 +301,14 @@ const ReconocimientoFacial = ({
         }
       }
 
-      if (!esHorarioNormal) {
+      if (!esHorarioNormal || esFeriado) {
+        const esCasoFeriado = esFeriado;
+
         const confirmacion = await Swal.fire({
-          title: "Fuera de horario",
-          text: "Estás intentando marcar fuera de tu rango horario establecido. ¿Estás realizando horas extras?",
+          title: esCasoFeriado ? "Día feriado" : "Fuera de horario",
+          text: esCasoFeriado
+            ? "Hoy es feriado. ¿Estás realizando horas extras?"
+            : "Estás intentando marcar fuera de tu rango horario establecido. ¿Estás realizando horas extras?",
           icon: "warning",
           showCancelButton: true,
           confirmButtonColor: "#f97316",

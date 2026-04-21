@@ -27,7 +27,7 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { quitarSegundos } from "../../../Utils/formatTime";
-import { IoMdAdd } from "react-icons/io";
+import { IoMdAdd, IoIosWarning } from "react-icons/io";
 import useObtenerDatos from "../../../hooks/obtenerDatos";
 import { useAuth } from "../../../../../AuthContext";
 import { MdDelete, MdOutlineEdit } from "react-icons/md";
@@ -47,6 +47,7 @@ import {
 import { obtenerEtiquetaMobileDia } from "../../../Utils/etiquetaCalendarioMobile";
 import ModalNovedad from "../../../Modals/Empleado/ModalNovedad";
 import { FiMessageSquare } from "react-icons/fi";
+import ObtenerFechaInternet from './../../../../Pilates/utils/ObtenerFechaInternet';
 
 const EMPTY_ARRAY = [];
 
@@ -229,131 +230,285 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
     }
   };
 
-  // Renderizado de celdas del calendario
-  const renderCeldas = () => {
-    const mesInicio = startOfMonth(fechaActual);
-    const mesFin = endOfMonth(mesInicio);
-    const fechaInicio = startOfWeek(mesInicio, { weekStartsOn: 1 });
-    const fechaFin = endOfWeek(mesFin, { weekStartsOn: 1 });
+const renderDiasSemana = () => {
+  const days = [];
+  let startDate = startOfWeek(fechaActual, { weekStartsOn: 1 });
 
-    const rows = [];
-    let days = [];
-    let day = fechaInicio;
-    let formattedDate = "";
+  for (let i = 0; i < 7; i++) {
+    days.push(
+      <div
+        className="col-span-1 text-center py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#F9FAFB]"
+        key={i}
+      >
+        {format(addDays(startDate, i), "EEE", { locale: es })}
+      </div>
+    );
+  }
 
-    while (day <= fechaFin) {
-      for (let i = 0; i < 7; i++) {
-        formattedDate = format(day, "d");
-        const cloneDay = day;
+  return <div className="grid grid-cols-7 border-b border-gray-100">{days}</div>;
+};
 
-        // Buscar si hay registro para este día
-        const registroDia = asistenciasFiltradas.find((r) =>
-          isSameDay(parseISO(r.fecha), day),
-        );
+const renderCeldas = () => {
+  const mesInicio = startOfMonth(fechaActual);
+  const mesFin = endOfMonth(mesInicio);
+  const fechaInicio = startOfWeek(mesInicio, { weekStartsOn: 1 });
+  const fechaFin = endOfWeek(mesFin, { weekStartsOn: 1 });
 
-        const esMismoMes = isSameMonth(day, mesInicio);
-        const esSeleccionado = isSameDay(day, diaSeleccionado);
-        const tieneAsistencia = !!registroDia;
+  const rows = [];
+  let days = [];
+  let day = fechaInicio;
 
-        const etiquetaMobileDia = obtenerEtiquetaMobileDia(registroDia);
-
-        const estiloMobile = etiquetaMobileDia && (
-          <span
-            className={`text-xs font-black leading-none ${etiquetaMobileDia.colorClase}`}
-          >
-            {etiquetaMobileDia.texto}
-          </span>
-        );
-
-        days.push(
-          <div
-            className={`relative flex flex-col justify-start items-center h-16 md:h-28 border border-gray-100 transition-all cursor-pointer
-              ${!esMismoMes ? "bg-gray-50 text-gray-300" : "bg-white text-gray-700"}
-              ${esSeleccionado ? "ring-2 ring-inset ring-orange-500 bg-orange-50" : "hover:bg-gray-50"}
-            `}
-            key={day}
-            onClick={() => onDateClick(cloneDay)}
-          >
-            {/* Número del día */}
-            <span
-              className={`text-xs md:text-sm font-bold p-1 ${!esMismoMes ? "text-gray-300" : ""}`}
-            >
-              {formattedDate}
-            </span>
-
-            {/* CONTENIDO DE LA CELDA */}
-            {tieneAsistencia && (
-              <>
-                {/* MOBILE */}
-                <div className="md:hidden mt-2 flex min-h-[18px] items-center justify-center">
-                  {estiloMobile}
-                </div>
-
-                {/* PC - TURNOS */}
-                <div className="hidden md:flex flex-col w-full px-1 gap-1 overflow-y-auto flex-1">
-                  {registroDia.turnos.map((turno, idx) => (
-                    <div
-                      key={idx}
-                      className={`text-[10px] rounded px-1 text-center whitespace-nowrap 
-                        ${colorHorario(turno.estado_aprobacion)} 
-                        ${colorEstadoCumplimiento(
-                          Number(turno.minutos_tarde) > 0
-                            ? "tarde"
-                            : turno.estado,
-                          true,
-                        )}
-                      `}
-                    >
-                      {quitarSegundos(turno.entrada) || "—"} -{" "}
-                      {!turno.salida || turno.salida.includes("23:59")
-                        ? "S/R"
-                        : quitarSegundos(turno.salida)}
-                    </div>
-                  ))}
-                </div>
-
-                {/* FOOTER PC */}
-                <div className="hidden md:flex w-full justify-center pb-1">
-                  {estiloMobile}
-                </div>
-              </>
-            )}
-          </div>,
-        );
-        day = addDays(day, 1);
-      }
-      rows.push(
-        <div className="grid grid-cols-7" key={day}>
-          {days}
-        </div>,
-      );
-      days = [];
-    }
-    return <div className="bg-white rounded-b-lg shadow-sm">{rows}</div>;
-  };
-
-  // Renderizado de los días de la semana (L M M J V S D)
-  const renderDiasSemana = () => {
-    const days = [];
-    let startDate = startOfWeek(fechaActual, { weekStartsOn: 1 });
-
+  while (day <= fechaFin) {
     for (let i = 0; i < 7; i++) {
+      const formattedDate = format(day, "d");
+      const cloneDay = day;
+
+      const registroDia = asistenciasFiltradas.find((r) =>
+        isSameDay(parseISO(r.fecha), day)
+      );
+
+      const esMismoMes = isSameMonth(day, mesInicio);
+      const esSeleccionado = isSameDay(day, diaSeleccionado);
+      const tieneAsistencia = !!registroDia;
+
+      // ---------------- COLORES GENERALES ----------------
+      let cellBg = "bg-white";
+      let hourColor = "text-gray-700";
+      let labelColor = "text-gray-400";
+
+      let alMenosUnPendiente = false;
+
+      if (tieneAsistencia && registroDia.turnos.length > 0) {
+        alMenosUnPendiente = registroDia.turnos.some(
+          (t) => t.estado_aprobacion === "pendiente"
+        );
+
+        const estado = alMenosUnPendiente ? "pendiente" : "aprobada";
+
+        if (estado === "aprobada") {
+          cellBg = "bg-[#ECF7F0]";
+          hourColor = "text-[#1B5E20]";
+          labelColor = "text-[#1B5E20]";
+        } else {
+          cellBg = "bg-[#FFF8E1]";
+          hourColor = "text-[#B07D05]";
+          labelColor = "text-[#B07D05]";
+        }
+      }
+
+      const horasTexto =
+        tieneAsistencia && registroDia.horasTotalesPendientes
+          ? `+${registroDia.horasTotalesPendientes.split(":")[0]}h`
+          : "";
+
       days.push(
         <div
-          className="col-span-1 text-center py-2 text-xs font-bold text-gray-400 uppercase tracking-wider"
-          key={i}
+          className={`relative flex flex-col items-center justify-start h-16 lg:h-36 border-[0.5px] border-gray-100 transition-all cursor-pointer
+            ${!esMismoMes ? "bg-gray-50 text-gray-300" : cellBg}
+            ${
+              esSeleccionado
+                ? "ring-2 ring-inset ring-orange-500 z-10"
+                : "hover:bg-opacity-80"
+            }
+          `}
+          key={day}
+          onClick={() => onDateClick(cloneDay)}
         >
-          {format(addDays(startDate, i), "EEE", { locale: es })}
-        </div>,
+          {/* DIA */}
+          <span
+            className={`text-[10px] lg:text-[11px] font-bold mt-1 ${
+              !esMismoMes ? "text-gray-200" : "text-gray-500"
+            }`}
+          >
+            {formattedDate}
+          </span>
+
+          {tieneAsistencia && esMismoMes && (
+            <>
+              {/* MOBILE */}
+              <div
+                className={`lg:hidden flex-1 flex items-center justify-center font-black text-xs ${hourColor}`}
+              >
+                {horasTexto}
+              </div>
+
+              {/* DESKTOP */}
+              <div className="hidden lg:flex w-[90%] h-[75%] bg-white rounded-xl border border-gray-100 shadow-sm mt-1 p-2 flex-col items-center justify-between">
+                <div
+                  className={`text-3xl font-black tracking-tighter ${hourColor}`}
+                >
+                  {horasTexto}
+                </div>
+
+                <div className="flex flex-col items-center w-full px-1">
+                  <div className="w-full h-[1px] bg-gray-100 mb-1"></div>
+
+                  {registroDia.turnos.map((turno, idx) => {
+                    // ---------------- VARIABLES ----------------
+                    const tieneHorario = !!turno.horario_id;
+
+                    const salidaExtra =
+                      tieneHorario &&
+                      turno.minutos_extra_pendientes > 0;
+
+                    const horarioExtra = !tieneHorario;
+
+                    const origenAutomatico =
+                      turno.origen === "automatico";
+
+                    const salidaSinRegistro =
+                      !turno.salida ||
+                      turno.salida.includes("23:59");
+
+                    const esPendiente =
+                      turno.estado_aprobacion === "pendiente";
+
+                    const entrada = quitarSegundos(turno.entrada);
+                    const salida = salidaSinRegistro
+                      ? "Sin registro"
+                      : quitarSegundos(turno.salida);
+
+                    // ---------------- COLORES ----------------
+                    const baseColor = esPendiente
+                      ? "text-yellow-500"
+                      : "text-gray-500";
+
+                    // ---------------- CASOS ----------------
+                    // 1. AUTOMATICO → siempre mismo texto
+                    if (origenAutomatico) {
+                      return (
+                        <div
+                          key={idx}
+                          className={`text-[10px] font-bold ${baseColor} flex items-center gap-1 truncate w-full justify-center`}
+                        >
+                          {turno.estado === "tarde" && (
+                            <FaClock className="text-red-400 shrink-0" size={8} />
+                          )}
+                          <span className="truncate">
+                            Sin registro - Sin registro
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    // 2. HORARIO EXTRA → todo amarillo si pendiente
+                    if (horarioExtra) {
+                      return (
+                        <div
+                          key={idx}
+                          className={`text-[10px] font-bold ${baseColor} flex items-center gap-1 truncate w-full justify-center`}
+                        >
+                          {turno.estado === "tarde" && (
+                            <FaClock className="text-red-400 shrink-0" size={8} />
+                          )}
+                          <span className="truncate">
+                            {entrada} - {salida}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    // 3. SALIDA EXTRA → SOLO salida amarilla
+                    if (salidaExtra) {
+                      return (
+                        <div
+                          key={idx}
+                          className="text-[10px] font-bold flex items-center gap-1 truncate w-full justify-center"
+                        >
+                          {turno.estado === "tarde" && (
+                            <FaClock className="text-red-400 shrink-0" size={8} />
+                          )}
+
+                          <span className="truncate text-gray-500">
+                            {entrada} -
+                          </span>
+
+                          <span
+                            className={`truncate ${
+                              esPendiente ? "text-yellow-500" : "text-gray-500"
+                            }`}
+                          >
+                            {salida}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    // 4. SALIDA SIN REGISTRO → SOLO "Sin registro" amarillo
+                    if (salidaSinRegistro) {
+                      return (
+                        <div
+                          key={idx}
+                          className="text-[10px] font-bold flex items-center gap-1 truncate w-full justify-center"
+                        >
+                          {turno.estado === "tarde" && (
+                            <FaClock className="text-red-400 shrink-0" size={8} />
+                          )}
+
+                          <span className="truncate text-gray-500">
+                            {entrada} -
+                          </span>
+
+                          <span
+                            className={`truncate ${
+                              esPendiente ? "text-yellow-500" : "text-gray-500"
+                            }`}
+                          >
+                            Sin registro
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    // 5. NORMAL
+                    return (
+                      <div
+                        key={idx}
+                        className={`text-[10px] font-bold ${
+                          esPendiente ? "text-yellow-500" : "text-gray-500"
+                        } flex items-center gap-1 truncate w-full justify-center`}
+                      >
+                        {turno.estado === "tarde" && (
+                          <FaClock className="text-red-400 shrink-0" size={8} />
+                        )}
+                        <span className="truncate">
+                          {entrada} - {salida}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* LABEL */}
+                <div
+                  className={`text-[9px] font-black uppercase tracking-widest ${labelColor}`}
+                >
+                  {alMenosUnPendiente ? "Pendiente" : "Aprobada"}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       );
+
+      day = addDays(day, 1);
     }
-    return (
-      <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
+
+    rows.push(
+      <div className="grid grid-cols-7" key={day}>
         {days}
       </div>
     );
-  };
 
+    days = [];
+  }
+
+  return (
+    <div className="bg-white rounded-b-2xl shadow-xl overflow-hidden">
+      {rows}
+    </div>
+  );
+};
   // Renderizado del detalle al pie (Para Móvil principalmente)
   const renderDetalleDiaSeleccionado = () => {
     const registro = asistenciasFiltradas.find((r) =>
@@ -403,345 +558,232 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
       }
     };
 
-    return (
-      <div className="mt-6 bg-white p-4 rounded-2xl shadow-lg border-l-4 border-orange-500 animate-fade-in-up">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bignoodle text-xl text-gray-800 flex items-center gap-2">
-            <FaCalendarDay className="text-orange-500" />
-            DETALLE DEL{" "}
-            {format(diaSeleccionado, "dd 'de' MMMM", {
-              locale: es,
-            }).toUpperCase()}
-          </h3>
+return (
+  <div className="mt-6 space-y-4 animate-fade-in-up">
+    {/* Cabecera */}
+    <div className="flex justify-between items-center mb-6 px-2">
+      <h3 className="font-bignoodle text-2xl text-gray-800 flex items-center gap-2 tracking-wide">
+        <FaCalendarDay className="text-orange-500" />
+        DETALLE DEL{" "}
+        {format(diaSeleccionado, "dd 'de' MMMM", {
+          locale: es,
+        }).toUpperCase()}
+      </h3>
 
-          {esAdminAutorizadoRRHHH && (
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:from-emerald-600 hover:to-green-700 hover:shadow-lg active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-300/70"
-              onClick={() => {
-                setAbrirModalAgregarMarcacion(true);
-                setHorarioSeleccionado({ diaSeleccionado, usuario });
-              }}
-            >
-              <IoMdAdd size={15} className="mr-1" /> Agregar marca
-            </button>
-          )}
-        </div>
+      {esAdminAutorizadoRRHHH && (
+        <button
+          type="button"
+          className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:shadow-lg active:scale-95 transition-all"
+          onClick={() => {
+            setAbrirModalAgregarMarcacion(true);
+            setHorarioSeleccionado({ diaSeleccionado, usuario });
+          }}
+        >
+          <IoMdAdd size={18} className="mr-1" /> Agregar marca
+        </button>
+      )}
+    </div>
 
-        {!registro ? (
-          <p className="text-sm text-gray-400 mt-2 italic">
-            No hay registros de asistencia para este día.
-          </p>
-        ) : (
-          <div className="space-y-2.5">
-            
-            {registro.turnos.map((turno, i) => {
-              const mensajeRelacionado = obtenerUltimoMensajeAclaracion(turno);
-              const claveMensajeTurno = `${registro.fecha}-${turno.id}`;
-              const estaAbierto = turnoMensajeAbierto === claveMensajeTurno;
-              const minutosExtras = Number(turno.minutos_extra_pendientes) > 0;
-              const minutosAutorizados =
-                Number(turno.minutos_extra_autorizados) > 0;
-              const minutosDescuento = obtenerMinutosPositivos(
-                turno.minutos_descuento,
-              );
+    {!registro ? (
+      <p className="text-center py-10 text-gray-400 italic bg-white rounded-2xl border border-dashed border-gray-300">
+        No hay registros de asistencia para este día.
+      </p>
+    ) : (
+      <div className="space-y-5">
+        {registro.turnos.map((turno, i) => {
+          const mensajeRelacionado = obtenerUltimoMensajeAclaracion(turno);
+          const minutosExtras = Number(turno.minutos_extra_pendientes) > 0;
+          const minutosAutorizados = Number(turno.minutos_extra_autorizados) > 0;
+          const minutosDescuento = obtenerMinutosPositivos(turno.minutos_descuento);
+          const minutosTarde = obtenerMinutosPositivos(turno.minutos_tarde) > 0;
+          const fechaFormateada = new Date(diaSeleccionado).toLocaleDateString("en-US");
 
-              return (
-                <div
-                  key={i}
-                  className={`relative rounded-xl border px-3 py-2.5 shadow-sm transition-all ${
-                    turno.estado_aprobacion === "aprobada"
-                      ? "bg-white border-gray-200"
-                      : turno.estado_aprobacion === "pendiente"
-                        ? "bg-orange-50/60 border-orange-200"
-                        : "bg-red-50/60 border-red-200"
-                  }`}
-                >
-                  {/* Numeración discreta */}
-                  <span className="absolute top-2 right-2 text-[10px] font-bold text-gray-400 bg-gray-100 border border-gray-200 rounded-full px-1.5 py-0.5 leading-none">
-                    #{i + 1}
-                  </span>
-
-                  <div className="flex flex-col gap-2">
-                    {/* FILA PRINCIPAL */}
-                    <div className="pr-10">
-                      <div className="flex flex-wrap items-center gap-1.5 text-[13px] sm:text-sm font-bold text-gray-700">
-                        <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-md px-2 py-1">
-                          Entrada: {quitarSegundos(turno.entrada) || "—"}
+          return (
+            <div key={i} className="bg-[#FBFBFB] rounded-[24px] border border-gray-100 shadow-sm overflow-hidden">
+              {/* CUERPO PRINCIPAL (3 Columnas en PC) */}
+              <div className="p-5 md:p-6 flex flex-col md:flex-row gap-6">
+                
+                {/* COLUMNA 1: Horarios e Info Base */}
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <h4 className="text-gray-800 font-bold text-lg md:text-xl">Turno {i + 1}</h4>
+                    {/* Badge de Horas del Turno (Recuperado) */}
+{/*                     {((esAdminAutorizadoRRHHH && turno.estado === "normal") || turno.estado === "justificado") && (
+                      <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[10px] font-bold border border-gray-200 uppercase">
+                        {formatearHorario(turno.horas_turno)}
+                      </span>
+                    )} */}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+                      <p className="text-gray-700 text-sm md:text-base">
+                        Entrada: <span className="font-bold">{turno.origen === "automatico" ? "S/R" : (quitarSegundos(turno.entrada) || "—")}</span>
+                        {" — "}
+                        Salida: <span className="font-bold">
+                          {turno.origen === "automatico" || !turno.salida || turno.salida.includes("23:59") ? "S/R" : quitarSegundos(turno.salida)}
                         </span>
-
-                        <span className="text-gray-300">—</span>
-                        <span className="inline-flex items-center gap-1 text-rose-700 bg-rose-50 border border-rose-100 rounded-md px-2 py-1">
-                          {!turno.salida || turno.salida.includes("23:59")
-                            ? "Sin registro"
-                            : "Salida: " + quitarSegundos(turno.salida)}
-                        </span>
-                      </div>
-
-                      {turno.horario_hora_entrada &&
-                        turno.horario_hora_salida && (
-                          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500">
-                            <span className="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-2 py-0.5">
-                              <FaClock className="text-[10px]" />
-                              Habitual
-                            </span>
-
-                            <span className="text-gray-600">
-                              {quitarSegundos(turno.horario_hora_entrada) ||
-                                "—"}{" "}
-                              —{" "}
-                              {quitarSegundos(turno.horario_hora_salida) || "—"}
-                            </span>
-                          </div>
-                        )}
+                      </p>
                     </div>
 
-                    {/* BADGES */}
-
-                    <div className="flex flex-wrap gap-1.5">
-                      {((esAdminAutorizadoRRHHH && turno.estado === "normal") ||
-                        turno.estado === "justificado") && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[10px] font-semibold border border-gray-200">
-                          <FaClock className="text-[9px]" />
-                          {formatearHorario(turno.horas_turno)}
-                        </span>
-                      )}
-
-                      {minutosExtras && (
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                            minutosAutorizados
-                              ? "bg-amber-100 text-amber-700 border-amber-200"
-                              : "bg-amber-100 text-amber-700 border-amber-200"
-                          }`}
-                        >
-                          <FaCheckCircle className="text-[9px]" />
-                          {formatearDuracion(
-                            turno.minutos_extra_pendientes,
-                          )}{" "}
-                          {minutosAutorizados ? "realizadas" : "pendientes"}
-                        </span>
-                      )}
-
-                      {minutosAutorizados && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                          <FaCheckCircle className="text-[9px]" />
-                          {formatearDuracion(
-                            turno.minutos_extra_autorizados,
-                          )}{" "}
-                          autorizadas
-                        </span>
-                      )}
-
-                      {minutosDescuento > 0 && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[10px] font-bold border border-red-200">
-                          Descuento: {formatearDuracion(minutosDescuento)}
-                        </span>
-                      )}
-
-                      {obtenerMinutosPositivos(turno.minutos_tarde) > 0 && (
-                        <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-semibold border border-red-200">
-                          {formatearDuracion(turno.minutos_tarde)} tarde
-                        </span>
-                      )}
-
-                      {obtenerMinutosPositivos(
-                        turno.minutos_salida_anticipada,
-                      ) > 0 && (
-                        <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-semibold border border-red-200">
-                          {formatearDuracion(turno.minutos_salida_anticipada)}{" "}
-                          antes
-                        </span>
-                      )}
-                    </div>
-
-                    {/* MENSAJE RELACIONADO */}
-                    {mensajeRelacionado && (
-                    <div className="mt-1">
-                      <button
-                        onClick={() =>
-                          setTurnoMensajeAbierto((prev) =>
-                            prev === claveMensajeTurno ? null : claveMensajeTurno
-                          )
-                        }
-                        className="flex items-center gap-1 text-[10px] text-orange-600 hover:text-orange-700"
-                      >
-                        <FiMessageSquare size={12} />
-                        Ver aclaración
-                      </button>
-                    </div>
-                  )}
-
-                  {/*  */}
-                  {mensajeRelacionado && estaAbierto && (
-                    <div className="mt-1 rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px]">
-                      <div className="font-semibold text-orange-700">
-                        {formatearTipoMensaje(mensajeRelacionado.tipo_mensaje)}
-                      </div>
-                      <div className="text-gray-700">
-                        {mensajeRelacionado.mensaje}
-                      </div>
-                    </div>
-                  )}
-
-                    {/*  NOTAS / ORIGEN */}
-                    <div className="flex flex-col gap-1.5 text-[10px]">
-                      {turno.comentarios && esAdminAutorizadoRRHHH && (
-                        <p className="text-gray-500 italic bg-gray-50 border border-dashed border-gray-200 rounded-md px-2 py-1 leading-snug">
-                          "{turno.comentarios}"
+                    {turno.horario_hora_entrada && (
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]"></span>
+                        <p className="text-gray-500 text-sm md:text-base">
+                          Habitual: <span className="font-medium text-gray-600">
+                            {quitarSegundos(turno.horario_hora_entrada)} a {quitarSegundos(turno.horario_hora_salida) || "—"}
+                          </span>
                         </p>
-                      )}
-
-                      {esAdminAutorizadoRRHHH && turno.origen && (
-                        <span className="text-gray-400 font-semibold uppercase tracking-tight">
-                          Vía {turno.origen}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* ACCIONES */}
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100">
-                      <div className="flex flex-wrap gap-1.5">
-                        <button
-                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all ${colorHorario(
-                            turno.estado_aprobacion,
-                          )}`}
-                          onClick={() => {
-                            const fechaFormateada = new Date(
-                              diaSeleccionado,
-                            ).toLocaleDateString("en-US");
-                            setHorarioSeleccionado({
-                              ...turno,
-                              fecha_registro: fechaFormateada,
-                            });
-                            if (esAdminAutorizadoRRHHH) {
-                              setAbrirModalAprobacion(true);
-                            }
-                          }}
-                        >
-                          {turno.estado_aprobacion.toUpperCase()}
-                        </button>
-
-                        <button
-                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all ${colorEstadoCumplimiento(
-                            turno.estado,
-                          )}`}
-                          onClick={() => {
-                            if (!esAdminAutorizadoRRHHH) return;
-                            if (turno.estado.toLowerCase() === "extra") return;
-
-                            const fechaFormateada = new Date(
-                              diaSeleccionado,
-                            ).toLocaleDateString("en-US");
-                            setHorarioSeleccionado({
-                              ...turno,
-                              fecha_registro: fechaFormateada,
-                            });
-                            setAbrirModalEstadoAsistencia(true);
-                          }}
-                        >
-                          {turno.estado.toUpperCase()}
-                        </button>
-
-                        {turno.estado_aprobacion.toLowerCase() === "pendiente" && !esAdminAutorizadoRRHHH && (
-                        <button
-                          className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all bg-gray-300 text-gray-800`}
-                          onClick={() => {
-                            const fechaFormateada = new Date(
-                              diaSeleccionado,
-                            ).toLocaleDateString("en-US");
-                            setHorarioSeleccionado({
-                              ...turno,
-                              fecha_registro: fechaFormateada,
-                            });
-                            setAbrirSoloObservacion(true);
-                          }}
-                        >
-                          CREAR CONSULTA
-                        </button>
-                        )}
                       </div>
-
-                      {esAdminAutorizadoRRHHH && (
-                        <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200 shrink-0">
-                          <button
-                            className="p-1.5 text-blue-500 hover:bg-white hover:shadow-sm rounded-md transition-all"
-                            onClick={() => {
-                              const fechaFormateada = new Date(
-                                diaSeleccionado,
-                              ).toLocaleDateString("en-US");
-                              setHorarioSeleccionado({
-                                ...turno,
-                                fecha_registro: fechaFormateada,
-                              });
-                              setAbrirModalEditar(true);
-                            }}
-                          >
-                            <MdOutlineEdit size={15} />
-                          </button>
-
-                          <button
-                            className="p-1.5 text-red-500 hover:bg-white hover:shadow-sm rounded-md transition-all"
-                            onClick={async () => {
-                              const resultado = await Swal.fire({
-                                title: "¿Eliminar marcación?",
-                                icon: "warning",
-                                showCancelButton: true,
-                                confirmButtonColor: "#d33",
-                                confirmButtonText: "Sí, eliminar",
-                                cancelButtonText: "Cancelar",
-                              });
-
-                              if (resultado.isConfirmed) {
-                                try {
-                                  await eliminar(
-                                    `/rrhh/marcaciones/${turno.id}`,
-                                  );
-                                  realizarPeticion();
-                                  Swal.fire(
-                                    "Eliminado",
-                                    "La marcación fue eliminada.",
-                                    "success",
-                                  );
-                                } catch (e) {
-                                  Swal.fire(
-                                    "Error",
-                                    "No se pudo eliminar.",
-                                    "error",
-                                  );
-                                }
-                              }
-                            }}
-                          >
-                            <MdDelete size={15} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
 
-            {/* TOTAL DEL DÍA */}
-            <div className="mt-3 pt-2 border-t border-gray-200 flex justify-end items-center gap-2">
-              {/* <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                Total:
-              </span>
-              <span className="bg-orange-600 text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm">
-                {formatearHorario(registro.horasTotales)}
-              </span> */}
-              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                Horas válidas:
-              </span>
-              <span className="bg-orange-600 text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm">
-                {formatearHorario(registro.horasTotalesSinPendientes)}
-              </span>
+                <div className="hidden md:block w-px bg-gray-200 self-stretch my-2"></div>
+
+                {/* COLUMNA 2: Aclaración y Metadatos */}
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <span className="text-gray-400 text-xs block mb-1 font-semibold uppercase tracking-wider">Aclaración:</span>
+                    <p className="text-gray-700 italic text-sm md:text-base">
+                      {mensajeRelacionado ? mensajeRelacionado.mensaje : "Sin aclaraciones"}
+                    </p>
+                  </div>
+                  {/* Vía Origen (Recuperado) */}
+                  {esAdminAutorizadoRRHHH && turno.origen && (
+                    <span className="text-[10px] text-gray-400 font-bold uppercase mt-2">{turno.origen}</span>
+                  )}
+                </div>
+
+                {/* COLUMNA 3: Estados y Botón Consulta */}
+                <div className="flex flex-col gap-2 min-w-[160px]">
+                  <button
+                    onClick={() => {
+                      setHorarioSeleccionado({
+                        ...turno,
+                        fecha_registro: fechaFormateada,
+                      });
+                      if (esAdminAutorizadoRRHHH) setAbrirModalAprobacion(true);
+                    }}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-bold text-xs border transition-all ${colorHorario(
+                      turno.estado_aprobacion
+                    )}`}
+                  >
+                    {turno.estado_aprobacion.toUpperCase() === "PENDIENTE" ? (
+                      <>
+                        <IoIosWarning size={15} className="opacity-70" />
+                        {turno.estado_aprobacion.toUpperCase()}
+                      </>
+                    ) : (
+                      turno.estado_aprobacion.toUpperCase()
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (!esAdminAutorizadoRRHHH || turno.estado.toLowerCase() === "extra") return;
+                      setHorarioSeleccionado({ ...turno, fecha_registro: fechaFormateada });
+                      setAbrirModalEstadoAsistencia(true);
+                    }}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-bold text-xs border transition-all ${colorEstadoCumplimiento(turno.estado)}`}
+                  >
+                    {turno.estado.toUpperCase()}
+                  </button>
+
+                  {/* Botón Crear Consulta (Recuperado) */}
+                  {turno.estado_aprobacion.toLowerCase() === "pendiente" && !esAdminAutorizadoRRHHH && (
+                    <button
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-bold text-xs border transition-all bg-gray-200"
+                      onClick={() => {
+                        setHorarioSeleccionado({ ...turno, fecha_registro: fechaFormateada });
+                        setAbrirSoloObservacion(true);
+                      }}
+                    >
+                      CREAR CONSULTA
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* FOOTER: Indicadores de tiempo y Acciones (Recuperado todo) */}
+              <div className="px-5 md:px-6 py-3 bg-white border-t border-gray-100 flex flex-wrap justify-between items-center gap-3">
+                <div className="flex flex-wrap gap-4">
+                  {(minutosExtras && !minutosAutorizados && turno.estado_aprobacion != "aprobada") && (
+                    <p className="text-orange-600 font-bold text-xs">
+                      Pendiente: <span className="font-black">+{formatearDuracion(turno.minutos_extra_pendientes)}</span>
+                    </p>
+                  )}
+                  {minutosAutorizados && (
+                    <p className="text-emerald-600 font-bold text-xs flex items-center gap-1">
+                      <FaCheckCircle size={10} /> Autorizadas: {formatearDuracion(turno.minutos_extra_autorizados)}
+                    </p>
+                  )}
+                  {minutosDescuento > 0 && (
+                    <p className="text-red-600 font-bold text-xs">
+                      Descuento: {formatearDuracion(minutosDescuento)}
+                    </p>
+                  )}
+                  {minutosTarde && (
+                    <p className="text-rose-500 font-bold text-xs">
+                      Tarde: {formatearDuracion(turno.minutos_tarde)}
+                    </p>
+                  )}
+                </div>
+
+                {/* Acciones Admin (Recuperado Editar y Eliminar) */}
+                {esAdminAutorizadoRRHHH && (
+                  <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
+                    <button
+                      className="p-1.5 text-blue-500 hover:bg-white rounded-md transition-all"
+                      onClick={() => {
+                        setHorarioSeleccionado({ ...turno, fecha_registro: fechaFormateada });
+                        setAbrirModalEditar(true);
+                      }}
+                    >
+                      <MdOutlineEdit size={16} />
+                    </button>
+                    <button
+                      className="p-1.5 text-red-500 hover:bg-white rounded-md transition-all"
+                      onClick={async () => {
+                        const resultado = await Swal.fire({
+                          title: "¿Eliminar marcación?",
+                          icon: "warning",
+                          showCancelButton: true,
+                          confirmButtonColor: "#d33",
+                          confirmButtonText: "Sí, eliminar",
+                        });
+                        if (resultado.isConfirmed) {
+                          try {
+                            await eliminar(`/rrhh/marcaciones/${turno.id}`);
+                            realizarPeticion();
+                            Swal.fire("Eliminado", "La marcación fue eliminada.", "success");
+                          } catch (e) {
+                            Swal.fire("Error", "No se pudo eliminar.", "error");
+                          }
+                        }
+                      }}
+                    >
+                      <MdDelete size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })}
+
+        {/* Total del día */}
+        <div className="mt-6 pt-4 flex justify-end items-center gap-4">
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Horas válidas del día:</span>
+          <span className="bg-orange-600 text-white px-5 py-2 rounded-2xl font-black text-lg shadow-lg">
+            {formatearHorario(registro.horasTotalesSinPendientes)}
+          </span>
+        </div>
       </div>
-    );
+    )}
+  </div>
+);
   };
 
   const obtenerUltimoMensajeAclaracion = (turno) => {

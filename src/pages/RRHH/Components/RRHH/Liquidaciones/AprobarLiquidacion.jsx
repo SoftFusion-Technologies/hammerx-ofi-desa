@@ -23,6 +23,7 @@ import ModalAprobarLiquidacion from "../../../Modals/RRHH/ModalAprobarLiquidacio
 import Liquidaciones from "../../Empleados/Liquidaciones/Liquidaciones";
 import HistorialMarcas from "../../Empleados/Marcaciones/HistorialMarcas";
 
+
 dayjs.extend(isBetween);
 
 const API_URL = "http://localhost:8080";
@@ -125,7 +126,7 @@ const AprobarLiquidacion = ({
   const [descuentoMinutos, setDescuentoMinutos] = useState("");
 
   const [adelantoHoras, setAdelantoHoras] = useState("");
-  const [adelantoMinutos, setAdelantoMinutos] = useState("");
+  const [adelantoMediaHora, setAdelantoMediaHora] = useState(false);
 
   const [seleccionadas, setSeleccionadas] = useState({});
   const [cuentaBancariaUsuario, setCuentaBancariaUsuario] = useState(null);
@@ -173,7 +174,7 @@ const AprobarLiquidacion = ({
       setDescuentoHoras("");
       setDescuentoMinutos("");
       setAdelantoHoras("");
-      setAdelantoMinutos("");
+      setAdelantoMediaHora(false);
       setObservacion("");
     } catch (err) {
       console.error("ERROR RESUMEN:", err);
@@ -202,7 +203,7 @@ const AprobarLiquidacion = ({
       setDescuentoMinutos("");
     } else {
       setAdelantoHoras("");
-      setAdelantoMinutos("");
+      setAdelantoMediaHora(false);
     }
   }, [tipoLiquidacion, subtipoAdelanto, resumen, esAdelantoHorasFuturas]);
 
@@ -351,12 +352,9 @@ const AprobarLiquidacion = ({
 
   const minutosAdelanto = useMemo(() => {
     const horas = Math.max(0, Math.floor(Number(adelantoHoras || 0) || 0));
-    const minutos = Math.min(
-      59,
-      Math.max(0, Math.floor(Number(adelantoMinutos || 0) || 0)),
-    );
+    const minutos = adelantoMediaHora ? 30 : 0;
     return horas * 60 + minutos;
-  }, [adelantoHoras, adelantoMinutos]);
+  }, [adelantoHoras, adelantoMediaHora]);
 
   const minutosDescontados = useMemo(() => {
     const horas = Math.max(0, Math.floor(Number(descuentoHoras || 0) || 0));
@@ -506,26 +504,6 @@ const AprobarLiquidacion = ({
     setAdelantoHoras(val);
   };
 
-  const handleCambioAdelantoMinutos = (e) => {
-    const val = e.target.value.replace(/\D/g, "").slice(0, 2);
-    if (val === "") {
-      setAdelantoMinutos("");
-      return;
-    }
-
-    const minutos = Math.min(59, Number(val));
-    setAdelantoMinutos(String(minutos));
-  };
-
-  const handleBlurAdelantoMinutos = () => {
-    if (adelantoMinutos === "") return;
-    const minutos = Math.min(
-      59,
-      Math.max(0, Math.floor(Number(adelantoMinutos) || 0)),
-    );
-    setAdelantoMinutos(String(minutos).padStart(2, "0"));
-  };
-
   const toggleFila = (id) => {
     if (esAdelantoHorasFuturas) return;
 
@@ -651,8 +629,9 @@ const AprobarLiquidacion = ({
       };
 
       if (esAdelantoHorasFuturas) {
-        body.horas_adelanto = Number((minutosAdelanto / 60).toFixed(2));
-        body.horas_liquidadas = Number((minutosAdelanto / 60).toFixed(2));
+        const horasAdelantoDecimal = Number((minutosAdelanto / 60).toFixed(1));
+        body.horas_adelanto = horasAdelantoDecimal;
+        body.horas_liquidadas = horasAdelantoDecimal;
         body.marcacion_ids = [];
         body.horas_descontadas = 0;
       } else {
@@ -1199,33 +1178,29 @@ const AprobarLiquidacion = ({
                       Horas adelantadas
                     </label>
 
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <input
                         type="text"
                         inputMode="numeric"
                         value={adelantoHoras}
                         onChange={handleCambioAdelantoHoras}
                         placeholder="0"
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none transition-all focus:border-orange-500"
+                        className="w-20 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-center text-sm text-gray-700 outline-none transition-all focus:border-orange-500"
                       />
-                      <span className="text-center text-sm font-bold text-gray-500">
-                        :
-                      </span>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={adelantoMinutos}
-                        onChange={handleCambioAdelantoMinutos}
-                        onBlur={handleBlurAdelantoMinutos}
-                        placeholder="00"
-                        maxLength={2}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none transition-all focus:border-orange-500"
-                      />
+
+                      <label className="flex cursor-pointer select-none items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-2.5 py-2 transition-colors hover:bg-orange-100">
+                        <input
+                          type="checkbox"
+                          checked={adelantoMediaHora}
+                          onChange={(e) => setAdelantoMediaHora(e.target.checked)}
+                          className="h-4 w-4 rounded border-orange-400 text-orange-600"
+                        />
+                        <span className="text-xs font-bold text-orange-800">+ .5</span>
+                      </label>
                     </div>
 
                     <p className="mt-1 text-[10px] text-gray-400">
-                      Cargá las horas que se adelantan aunque todavía no estén
-                      trabajadas.
+                      Solo se permiten valores enteros o con media hora (.5).
                     </p>
 
                     {empleadoDebeHoras && (

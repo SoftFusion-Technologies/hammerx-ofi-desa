@@ -93,7 +93,7 @@ const ModalEditarHorarioEmpleado = ({
     setMensaje("");
     setJustificacion(horarios?.comentarios || "");
     setMostrarExtras(
-      minutosPendientesIniciales > 0 || minutosAutorizadosIniciales > 0,
+      minutosAutorizadosIniciales > 0,
     );
     setMostrarDescuentos(minutosDescuentoIniciales > 0);
 
@@ -190,9 +190,7 @@ const ModalEditarHorarioEmpleado = ({
 
     // Si corresponde gestionar extras, enviamos valores editados o en cero (anulación)
     if (puedeGestionarExtras) {
-      const minutosPendientesFinales = mostrarExtras
-        ? minutosPendientesEditados
-        : 0;
+      const minutosPendientesFinales = minutosPendientesEditados;
       const minutosAutorizadosFinales = mostrarExtras
         ? minutosAutorizadosEditados
         : 0;
@@ -361,7 +359,6 @@ const ModalEditarHorarioEmpleado = ({
                       minutosAutorizadosIniciales={minutosAutorizadosIniciales}
                       bloquearToggleExtras={debeForzarExtras}
                       bloquearPendientes={debeForzarExtras}
-                      helperText="* Se asentarán los valores editados de pendientes y autorizadas sin modificar la hora de salida real."
                     />
                   )}
 

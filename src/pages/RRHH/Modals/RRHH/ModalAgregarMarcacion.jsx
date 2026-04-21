@@ -11,7 +11,7 @@ import useObtenerDatos from "../../hooks/obtenerDatos"; // Usamos tu hook para t
 import dayjs from "dayjs";
 import { FaClock, FaLink, FaExternalLinkAlt } from "react-icons/fa";
 const ESTADOS = ["normal", "justificado"];
-const ESTADOS_APROBACION = ["pendiente", "aprobada", "rechazada"];
+const ESTADOS_APROBACION = ["pendiente", "aprobada"];
 
 const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
   const { userId } = useAuth();
@@ -135,11 +135,11 @@ const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 py-5">
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-5">
             <h2 className="font-bignoodle text-3xl tracking-wide">
               Nueva Marcación
             </h2>
-            <p className="text-emerald-100 text-sm">
+            <p className="text-orange-100 text-sm">
               Registrar turno para el empleado
             </p>
           </div>
@@ -148,11 +148,11 @@ const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
             {/* VINCULACIÓN DE HORARIO */}
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2">
               <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                <FaLink className="text-emerald-500" /> Vincular con horario del
+                <FaLink className="text-orange-500" /> Vincular con horario del
                 día
               </span>
               <select
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-400 outline-none transition-all"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none transition-all"
                 value={formulario.horario_id || ""}
                 onChange={(e) => vincularHorario(e.target.value)}
               >
@@ -176,7 +176,7 @@ const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
             <div className="flex flex-col gap-1">
               <span className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">
                 Fecha:{" "}
-                <span className="text-emerald-600 font-bold">
+                <span className="text-orange-600 font-bold">
                   {fechaVisualizacion}
                 </span>
               </span>
@@ -192,7 +192,7 @@ const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
                   name="entrada"
                   value={formulario.entrada}
                   onChange={manejarCambio}
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none transition-all"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-400 outline-none transition-all"
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -204,7 +204,7 @@ const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
                   name="salida"
                   value={formulario.salida}
                   onChange={manejarCambio}
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none transition-all"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-400 outline-none transition-all"
                 />
               </div>
             </div>
@@ -219,7 +219,7 @@ const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
                   name="estado"
                   value={formulario.estado}
                   onChange={manejarCambio}
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none transition-all"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-400 outline-none transition-all"
                 >
                   {vinculadoHorarioID && (
                     <option key="extra" value="extra">EXTRA</option>
@@ -239,7 +239,7 @@ const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
                   name="estado_aprobacion"
                   value={formulario.estado_aprobacion}
                   onChange={manejarCambio}
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none transition-all"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-400 outline-none transition-all"
                 >
                   {ESTADOS_APROBACION.map((opcion) => (
                     <option key={opcion} value={opcion}>
@@ -261,7 +261,7 @@ const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
                 placeholder="Ej: Se crea por olvido de marcar, turno especial, etc."
                 rows={2}
                 maxLength={255}
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none resize-none"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-400 outline-none resize-none"
               />
             </div>
 
@@ -283,7 +283,7 @@ const ModalAgregarMarcacion = ({ cerrarModal, fetch, horarioSeleccionado }) => {
             <button
               onClick={manejarRegistrar}
               disabled={cargando}
-              className="px-8 py-2.5 text-sm font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 shadow-lg transition-all uppercase tracking-widest disabled:opacity-50"
+              className="px-8 py-2.5 text-sm font-bold bg-orange-600 text-white rounded-xl hover:bg-orange-700 shadow-lg transition-all uppercase tracking-widest disabled:opacity-50"
             >
               {cargando ? "Registrando..." : "Registrar"}
             </button>

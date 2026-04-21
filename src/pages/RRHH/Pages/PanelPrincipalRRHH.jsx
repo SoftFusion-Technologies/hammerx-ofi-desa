@@ -18,6 +18,7 @@ import {
   FaStoreAlt,
   FaTable,
 } from "react-icons/fa";
+import { BsCalendarX } from "react-icons/bs";
 import { IoNewspaperOutline } from "react-icons/io5";
 import { FaFaceGrin } from "react-icons/fa6";
 import { AnimatePresence, motion } from "framer-motion";
@@ -47,6 +48,8 @@ import HistorialUsuarios from "../Components/RRHH/Marcaciones/HistorialUsuarios"
 import HorariosAlumnos from "../Components/RRHH/Horarios/HorariosUsuarios";
 import ConversacionesHistorial from "../Components/RRHH/Conversaciones-Mensajes/ConversacionesHistorial";
 import ConversacionesDetalle from "../Components/RRHH/Conversaciones-Mensajes/ConversacionesDetalle";
+import VacacionesProgramadas from "../Components/RRHH/Vacaciones_programadas/VacacionesProgramadas";
+import FeriadosProgramados from "../Components/RRHH/Feriados_Programados/FeriadosProgramados"
 import { esAdminRRHH } from "../Utils/AdminAutorizadosRRHH";
 import useAgregarDatos from "../hooks/agregarDatos";
 dayjs.extend(utc);
@@ -152,10 +155,7 @@ const PanelPrincipalRRHH = () => {
       );
 
       const horaActual = dayjs();
-/*       const horaActual = dayjs()
-        .set("hour", 22)
-        .set("minute", 50)
-        .set("second", 25); DESARROLLO */ 
+      /* const horaActual = dayjs("2026-04-21 18:05:00");  */
       const horaActualSoloHora = horaActual.format("HH:mm:ss");
 
       const horarioOficial = respuestaHorarios.data.find(
@@ -226,8 +226,8 @@ const PanelPrincipalRRHH = () => {
             ...payload,
             hizo_horas_extra: result.isConfirmed,
             comentarios: result.isConfirmed
-              ? "Salida con horas extra reportadas por el usuario"
-              : "Salida tardía sin horas extra reportadas por el usuario",
+              ? ""
+              : "",
           };
         }
       }
@@ -486,6 +486,10 @@ const PanelPrincipalRRHH = () => {
         return <CalendarioHammer />;
       case "Configuracion":
         return <Ajustes volverAtras={volverAtras} />;
+      case "Vacaciones":
+        return esAdminAutorizadoRRHHH && <VacacionesProgramadas volverAtras={volverAtras} />;
+      case "Feriados":
+        return esAdminAutorizadoRRHHH && <FeriadosProgramados volverAtras={volverAtras} />;
       case "Dashboard":
       default:
         return (
@@ -610,11 +614,8 @@ const PanelPrincipalRRHH = () => {
                 </div>
                 <div className="text-center">
                   <h4 className="font-bold text-gray-800 font-bignoodle text-xl tracking-wide group-hover:text-orange-700 transition-colors">
-                    Crear consulta
+                    Ticket's de consulta
                   </h4>
-                  <p className="text-xs text-gray-500 mt-1">
-                    ¿Olvidaste marcar? ¿Evento externo?
-                  </p>
                 </div>
               </motion.button>
             )}
@@ -757,6 +758,48 @@ const PanelPrincipalRRHH = () => {
                 </p>
               </div>
             </motion.button> */}
+{/*                     {esAdminAutorizadoRRHHH  && (
+              <motion.button
+                variants={itemStagger}
+                onClick={() => manejarClick("Vacaciones")}
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.97 }}
+                className="bg-white/95 backdrop-blur rounded-3xl p-2 md:p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
+              >
+                <div className="bg-gray-100 p-3 rounded-xl text-gray-600 ring-1 ring-gray-200">
+                  <FaCog className="text-2xl" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800 font-bignoodle text-xl tracking-wide">
+                    VACACIONES
+                  </h4>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Vacaciones programadas
+                  </p>
+                </div>
+              </motion.button>
+            )} */}
+            {esAdminAutorizadoRRHHH  && (
+              <motion.button
+                variants={itemStagger}
+                onClick={() => manejarClick("Feriados")}
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.97 }}
+                className="bg-white/95 backdrop-blur rounded-3xl p-2 md:p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
+              >
+                <div className="bg-gray-100 p-3 rounded-xl text-gray-600 ring-1 ring-orange-200">
+                  <BsCalendarX className="text-2xl text-orange-400 bg-orange-200" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800 font-bignoodle text-xl tracking-wide">
+                    FERIADOS
+                  </h4>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Feriados programados
+                  </p>
+                </div>
+              </motion.button>
+            )}
             {/* 6. CONFIGURACIÓN */}
             {usuarioAuth.userLevelAdmin != 1 && (
               <motion.button

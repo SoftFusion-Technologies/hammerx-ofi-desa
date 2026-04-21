@@ -128,7 +128,7 @@ const ModalNovedad = ({ cerrarModal, diaSeleccionado, horarioSeleccionado }) => 
       <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
         <div className="bg-orange-600 p-4 flex justify-between items-center">
           <h3 className="text-white font-bold text-lg font-bignoodle tracking-wide uppercase">
-            Enviar Aclaración a RRHH
+            Enviar Aclaración para RRHH
           </h3>
           <button
             onClick={cerrarModal}

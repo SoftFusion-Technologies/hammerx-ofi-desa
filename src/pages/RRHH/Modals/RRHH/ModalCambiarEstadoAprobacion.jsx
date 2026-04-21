@@ -67,7 +67,7 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
     const minutosAutorizadosIniciales = minutosAutorizadosTotales;
     const minutosDescuentoIniciales = minutosDescuentoTotales;
 
-    setMostrarExtras(minutosPendientesIniciales > 0 || minutosAutorizadosIniciales > 0);
+    setMostrarExtras( minutosAutorizadosIniciales > 0);
     setMostrarDescuentos(minutosDescuentoIniciales > 0);
 
     const pendientesHM = convertirMinutosA_HM(minutosPendientesIniciales);
@@ -115,7 +115,7 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
     };
 
     if (puedeGestionarExtras && estadoSeleccionado === "aprobada" && accionRealizar === "modificar_horas") {
-      const minutosPendientesFinales = mostrarExtras ? minutosPendientesEditados : 0;
+      const minutosPendientesFinales = minutosPendientesEditados;
       const minutosAutorizadosFinales = mostrarExtras ? minutosAutorizadosEditados : 0;
       const minutosDescuentoFinales = mostrarDescuentos ? minutosDescuentoEditados : 0;
 
@@ -241,7 +241,6 @@ const ModalCambiarEstadoAprobacion = ({ horarios, cerrarModal, fetch }) => {
                   minutosDescuento={minutosDescuentoInput}
                   setMinutosDescuento={setMinutosDescuentoInput}
                   minutosDescuentoIniciales={minutosDescuentoTotales}
-                  helperText="* El descuento se aplicará sobre el total neto del turno cuando RRHH lo autorice."
                 />
               </motion.div>
             )}
