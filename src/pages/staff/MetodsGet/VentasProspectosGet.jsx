@@ -74,7 +74,24 @@ function aplicarFiltros({
 
     // 3) filtros select
     if (tipoFiltro && p.tipo_prospecto !== tipoFiltro) return false;
-    if (canalFiltro && p.canal_contacto !== canalFiltro) return false;
+
+    /* Benjamin Orellana - 2026/04/21 - Se adapta el filtro de canal para que "web" contemple registros históricos con "Link Web" y nuevos con "Link Web". */
+    if (canalFiltro) {
+      const canalActual = p.canal_contacto || '';
+
+      if (canalFiltro === 'web') {
+        if (
+          canalActual !== 'Link Web' &&
+          canalActual !== 'Link Web' &&
+          canalActual !== 'Link Web'
+        ) {
+          return false;
+        }
+      } else if (canalActual !== canalFiltro) {
+        return false;
+      }
+    }
+
     if (actividadFiltro && p.actividad !== actividadFiltro) return false;
 
     return true;
@@ -380,7 +397,7 @@ const VentasProspectosGet = ({ currentUser }) => {
       if (sedeABuscar === 'barrionorte' || sedeABuscar === 'sanmiguelbn')
         sedeABuscar = 'barrio norte';
       if (sedeABuscar === 'smt') sedeABuscar = 'barrio sur';
-      if (sedeABuscar === 'yerbabuena-aconquija') sedeABuscar = 'yerba buena - aconquija';
+      if (sedeABuscar === 'yerbabuena-aconquija 2044') sedeABuscar = 'Yerba Buena - Aconquija 2044';
 
       const sedeEncontrada = sedesEsCiudad.find(
         (s) => normalize(s.nombre) === sedeABuscar
@@ -470,8 +487,8 @@ const VentasProspectosGet = ({ currentUser }) => {
       normalized = "barrio sur";
     } else if (normalized === "barrionorte" || normalized === "sanmiguelbn") {
       normalized = "barrio norte";
-    }else if (normalized === "yerbabuena-aconquija"){
-      normalized = "yerba buena - aconquija"
+    }else if (normalized === "yerbabuena-aconquija 2044"){
+      normalized = "Yerba Buena - Aconquija 2044"
     }
     return normalized;
   };
@@ -1594,15 +1611,16 @@ const VentasProspectosGet = ({ currentUser }) => {
   const normalizarKey = (str) => {
     let nombre = str;
     let key = str;
+
     if (str.toLowerCase() === "barrio sur") {
       nombre = "Tuc. Barrio Sur";
       key = "smt";
     } else if (str.toLowerCase() === "barrio norte") {
       nombre = "Tuc. Barrio Norte";
       key = "barrio norte";
-    } else if (str.toLowerCase() === "yerba buena - aconquija") {
-      nombre = "Yerba Buena Aconquija";
-      key = "yerba buena - aconquija";
+    } else if (str.toLowerCase() === "Yerba Buena - Aconquija 2044") {
+      nombre = "Yerba Buena - Aconquija 2044";
+      key = 'Yerba Buena - Aconquija 2044';
     } else if (str.toLowerCase() === "concepción") {
       nombre = "Concepción";
       key = "concepcion";
@@ -1615,17 +1633,18 @@ const VentasProspectosGet = ({ currentUser }) => {
   if (sedesEsCiudad) {
     SEDES = sedesEsCiudad.filter((s) => s.nombre.toLowerCase() != "multisede").map((s) => ({
       value:
-        s.nombre.toLowerCase() === 'yerba buena - aconquija'
-          ? 'yerba buena - aconquija'
+        s.nombre.toLowerCase() === 'Yerba Buena - Aconquija 2044'
+          ? 'Yerba Buena - Aconquija 2044'
           : s.nombre.toLowerCase().normalize("NFD")
             .replace(/[\u0300-\u036f]/g, ""),
-      label: s.nombre.toLowerCase() === "yerba buena - aconquija" ? "Yerba Buena" : s.nombre
+      label: s.nombre.toLowerCase() === "Yerba Buena - Aconquija 2044" ? "Yerba Buena" : s.nombre
     }));
 
     sedes = sedesEsCiudad.filter((s) => s.nombre.toLowerCase() != "multisede").map((s) => ({
       key: normalizarKey(s.nombre).key,
       label: normalizarKey(s.nombre).nombre
     }));
+    console.log(sedes)
   }
   return (
     <>
@@ -2212,7 +2231,7 @@ const VentasProspectosGet = ({ currentUser }) => {
                         <option value="Whatsapp">Whatsapp</option>
                         <option value="Instagram">Instagram</option>
                         <option value="Facebook">Facebook</option>
-                        <option value="Pagina web">Página web</option>
+                        <option value="Link Web">Link Web</option>
                         <option value="Campaña">Campaña</option>
                         <option value="Comentarios/Stickers">
                           Comentarios/Stickers

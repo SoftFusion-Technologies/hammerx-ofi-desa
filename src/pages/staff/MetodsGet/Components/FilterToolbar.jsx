@@ -443,7 +443,7 @@ export default function FilterToolbar({
               <option value="Whatsapp">Whatsapp</option>
               <option value="Instagram">Instagram</option>
               <option value="Facebook">Facebook</option>
-              <option value="Pagina web">Página web</option>
+              <option value="Link Web">Link Web</option>
               <option value="Campaña">Campaña</option>
               <option value="Comentarios/Stickers">Comentarios/Stickers</option>
             </select>

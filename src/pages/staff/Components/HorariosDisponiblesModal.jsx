@@ -39,7 +39,7 @@ const HorariosDisponiblesModal = ({
         <div className="p-3 sm:p-6 flex-1 flex flex-col">
           {horariosDisponiblesPilates ? (
             <>
-              <h2 className="text-base sm:text-xl font-semibold mb-4 text-orange-600 text-center">
+              <h2 className="text-2xl font-bignoodle sm:text-3xl font-semibold mb-4 text-orange-600 text-center">
                 Seleccioná un horario disponible
               </h2>
               {Object.entries(grupos).map(([grupo, horarios]) => (

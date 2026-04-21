@@ -22,7 +22,9 @@ const SelectSede = ({ setFieldValue, errors, touched }) => {
         <option value="Concepción">CONCEPCIÓN</option>
         <option value="SMT">TUCUMÁN - BARRIO SUR</option>
         <option value="SanMiguelBN">TUCUMÁN - BARRIO NORTE</option>
-        <option value="YBAconquija">YERBA BUENA - ACONQUIJA</option>
+        <option value="yerba buena - aconquija 2044">
+          YERBA BUENA - ACONQUIJA
+        </option>
       </Field>
       {errors.sede && touched.sede ? <Alerta>{errors.sede}</Alerta> : null}
     </div>

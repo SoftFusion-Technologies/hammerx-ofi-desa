@@ -259,6 +259,9 @@ import RedireccionPagina from './pages/staff/RedireccionPagina.jsx';
 
 // Benjamin Orellana -  Nuevo Modulo Debitos Automaticos -  12-03-2026 FIN
 
+/* Benjamin Orellana - 2026/04/17 - Rutas públicas para visitas programadas y clases de prueba reutilizando el mismo flujo visual. */
+import VentasProspectosPublicPaso1 from './pages/VentasProspectosPublicPaso1';
+
 // Renderizado de los nuevos COMPONENTES / PAGOS - FINAL - Benjamin Orellana - 27 Jul 24
 /**
  * Componente principal de la aplicación.
@@ -1024,6 +1027,17 @@ const App = memo(() => {
                         </ProtectedRoute>
                       }
                     />{' '}
+                    /* Benjamin Orellana - 2026/04/17 - Se exponen dos links
+                    públicos distintos que comparten el mismo componente base.
+                    */
+                    <Ruta
+                      path="/visita-programada"
+                      element={<VentasProspectosPublicPaso1 />}
+                    />
+                    <Ruta
+                      path="/clase-de-prueba"
+                      element={<VentasProspectosPublicPaso1 />}
+                    />
                   </Rutas>
                   {/* <TaskReminder2 tasks={tasks} /> */}
                 </>
@@ -1036,7 +1050,9 @@ const App = memo(() => {
                 '/reservas-pilates',
                 '/dashboard-rrhh',
                 '/dashboard',
-                '/debitos-automaticos'
+                '/debitos-automaticos',
+                '/visita-programada',
+                '/clase-de-prueba'
               ]}
             >
               <Marcas_v2 />

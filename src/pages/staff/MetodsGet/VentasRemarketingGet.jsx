@@ -2615,7 +2615,7 @@ const VentasRemarketingGet = ({ currentUser }) => {
                                   <option value="Baja Pilates">
                                     Desde Pilates
                                   </option>
-                                  <option value="Pagina web">Página web</option>
+                                  <option value="Link Web">Link Web</option>
                                   <option value="Campaña">Campaña</option>
                                   <option value="Comentarios/Stickers">
                                     Comentarios
