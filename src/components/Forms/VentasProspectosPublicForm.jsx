@@ -13,7 +13,7 @@
  * Capa: Frontend
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import {
   CalendarDays,
@@ -22,10 +22,14 @@ import {
   Mail,
   User2,
   Briefcase,
+  Dumbbell,
   MessageSquareText,
   BadgeHelp,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  Lock
 } from 'lucide-react';
 
 // Benjamin Orellana - 2026/04/20 - Se reutiliza el modal interno de horarios disponibles de Pilates para respetar cupos y bloqueos reales.
@@ -139,7 +143,7 @@ const obtenerGrupoPilatesPorFecha = (fecha) => {
   const d = new Date(`${fecha}T12:00:00`);
   if (Number.isNaN(d.getTime())) return null;
 
-  const day = d.getDay(); // 0 domingo, 1 lunes, 2 martes, 3 miércoles, 4 jueves, 5 viernes, 6 sábado
+  const day = d.getDay();
 
   if (day === 1 || day === 3 || day === 5) return 'LMV';
   if (day === 2 || day === 4) return 'MJ';
@@ -240,11 +244,123 @@ const obtenerConfigSede = (selectedSede) => {
   );
 };
 
+/* Benjamin Orellana - 2026/04/22 - Se compactan las tarjetas y campos para acercar el tamaño visual al mockup mobile aprobado por el cliente. */
+const GLASS_CARD_CLASS =
+  'rounded-[24px] border border-white/16 bg-white/[0.74] shadow-[0_18px_42px_-32px_rgba(15,23,42,0.42)] backdrop-blur-[14px] transition duration-200 focus-within:border-orange-300 focus-within:ring-4 focus-within:ring-orange-500/10';
+
+const GLASS_FIELD_CLASS =
+  'h-9 w-full border-0 bg-transparent p-0 text-[0.95rem] font-medium text-slate-700 outline-none placeholder:text-slate-500/90 sm:text-[0.98rem]';
+
+/* Benjamin Orellana - 2026/04/22 - Se reduce la altura de las tarjetas para que los campos se perciban más livianos y cercanos al diseño de referencia. */
+function GlassInputCard({
+  icon: Icon,
+  children,
+  className = '',
+  showChevron = false,
+  iconClassName = '',
+  contentClassName = '',
+  compact = false
+}) {
+  return (
+    <div className={`${GLASS_CARD_CLASS} ${className}`}>
+      <div
+        className={`flex items-center gap-3 px-3.5 ${
+          compact ? 'min-h-[58px]' : 'min-h-[66px]'
+        } sm:min-h-[62px]`}
+      >
+        <div
+          className={`flex shrink-0 items-center justify-center rounded-full bg-orange-50/90 text-orange-600 ring-1 ring-orange-100 ${
+            compact ? 'h-8 w-8' : 'h-9 w-9'
+          } ${iconClassName}`}
+        >
+          <Icon
+            className={compact ? 'h-[17px] w-[17px]' : 'h-[18px] w-[18px]'}
+          />
+        </div>
+
+        <div className={`min-w-0 flex-1 ${contentClassName}`}>{children}</div>
+
+        {showChevron && (
+          <ChevronDown className="h-[18px] w-[18px] shrink-0 text-slate-500" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* Benjamin Orellana - 2026/04/22 - Se crea un dropdown visual propio para reemplazar selects nativos y permitir apertura suave con opciones renderizadas por map. */
+function GlassDropdownCard({
+  icon: Icon,
+  placeholder,
+  valueLabel,
+  isOpen,
+  onToggle,
+  disabled = false,
+  compact = false,
+  children,
+  className = ''
+}) {
+  return (
+    <div className={`${GLASS_CARD_CLASS} overflow-hidden ${className}`}>
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={disabled}
+        className={`flex w-full items-center gap-3 px-3.5 text-left ${
+          compact ? 'min-h-[58px]' : 'min-h-[66px]'
+        } sm:min-h-[62px] disabled:cursor-not-allowed disabled:opacity-60`}
+      >
+        <div
+          className={`flex shrink-0 items-center justify-center rounded-full bg-orange-50/90 text-orange-600 ring-1 ring-orange-100 ${
+            compact ? 'h-8 w-8' : 'h-9 w-9'
+          }`}
+        >
+          <Icon
+            className={compact ? 'h-[17px] w-[17px]' : 'h-[18px] w-[18px]'}
+          />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div
+            className={`truncate text-[0.98rem] font-medium sm:text-[1rem] ${
+              valueLabel ? 'text-slate-700' : 'text-slate-500'
+            }`}
+          >
+            {valueLabel || placeholder}
+          </div>
+        </div>
+
+        <ChevronDown
+          className={`h-[18px] w-[18px] shrink-0 text-slate-500 transition-transform duration-200 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      <div
+        className={`grid transition-all duration-300 ease-out ${
+          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-slate-200/80 px-2 pb-2 pt-2">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function VentasProspectosPublicForm({
   selectedSede,
   tipoLinkInicial,
   allowedAdvisorEmails = [],
-  onSubmitted = null
+  onSubmitted = null,
+  backgroundImageUrl = '',
+  compactHeader = false,
+  immersiveMobile = false,
+  onBack = null
 }) {
   const [form, setForm] = useState(buildInitialForm);
   const [usuarios, setUsuarios] = useState([]);
@@ -260,6 +376,14 @@ export default function VentasProspectosPublicForm({
   // Benjamin Orellana - 2026/04/20 - Controla la apertura del modal reutilizado de horarios disponibles de Pilates.
   const [abrirHorariosPilatesModal, setAbrirHorariosPilatesModal] =
     useState(false);
+
+  /* Benjamin Orellana - 2026/04/22 - Se controlan dropdowns visuales propios para asesor y actividad, evitando selects nativos y mejorando la UX mobile. */
+  const [mostrarActividadOptions, setMostrarActividadOptions] = useState(false);
+  const [mostrarAsesorOptions, setMostrarAsesorOptions] = useState(false);
+
+  const actividadDropdownRef = useRef(null);
+  const asesorDropdownRef = useRef(null);
+  const fechaFieldRef = useRef(null);
 
   // Benjamin Orellana - 2026/04/20 - Se deriva el grupo real de Pilates (LMV o MJ) según la fecha elegida.
   const grupoPilatesSeleccionado = useMemo(
@@ -386,6 +510,26 @@ export default function VentasProspectosPublicForm({
     [selectedSede]
   );
 
+  /* Benjamin Orellana - 2026/04/22 - Se prioriza la imagen enviada por el padre para el paso 2 y se conserva un fallback seguro con datos de la sede. */
+  const resolvedBackgroundImageUrl = useMemo(() => {
+    if (String(backgroundImageUrl || '').trim()) {
+      return String(backgroundImageUrl || '').trim();
+    }
+
+    const posibles = [
+      selectedSede?.imagen_portada,
+      selectedSede?.portada,
+      selectedSede?.imagen,
+      selectedSede?.foto,
+      selectedSede?.image,
+      selectedSede?.url_imagen
+    ]
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
+
+    return posibles[0] || '';
+  }, [backgroundImageUrl, selectedSede]);
+
   // Benjamin Orellana - 2026/04/17 - Se filtran vendedores por la sede fija asociada a la sede pública seleccionada.
   const vendedoresDisponibles = useMemo(() => {
     const emailsPermitidos = new Set(
@@ -439,13 +583,80 @@ export default function VentasProspectosPublicForm({
     /* Benjamin Orellana - 2026/04/17 - Si cambia la sede o el tipo de solicitud se reinicia el formulario para evitar residuos visuales y funcionales. */
     setForm(buildInitialForm());
     setHorarioPilatesSeleccionado(null);
+    setMostrarActividadOptions(false);
+    setMostrarAsesorOptions(false);
   }, [selectedSede?.id, tipoLinkInicial]);
+
+  /* Benjamin Orellana - 2026/04/22 - Cierra dropdowns personalizados al interactuar fuera de ellos para que el comportamiento se sienta natural en mobile. */
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        actividadDropdownRef.current &&
+        !actividadDropdownRef.current.contains(event.target)
+      ) {
+        setMostrarActividadOptions(false);
+      }
+
+      if (
+        asesorDropdownRef.current &&
+        !asesorDropdownRef.current.contains(event.target)
+      ) {
+        setMostrarAsesorOptions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   const asesorSeleccionado = useMemo(() => {
     return vendedoresDisponibles.find(
       (item) => Number(item.id) === Number(form.usuario_id)
     );
   }, [vendedoresDisponibles, form.usuario_id]);
+
+  /* Benjamin Orellana - 2026/04/22 - Devuelve el label visible de actividad respetando acentos y placeholder cuando todavía no hubo selección explícita. */
+  const actividadLabelVisible = useMemo(() => {
+    if (!form.actividad || form.actividad === 'No especifica') return '';
+    if (form.actividad === 'Musculacion') return 'Musculación';
+    return form.actividad;
+  }, [form.actividad]);
+
+  /* Benjamin Orellana - 2026/04/22 - Devuelve el nombre del asesor seleccionado para mostrarlo en el dropdown visual. */
+  const asesorLabelVisible = useMemo(() => {
+    if (!form.usuario_id) return '';
+    return asesorSeleccionado?.name || '';
+  }, [form.usuario_id, asesorSeleccionado]);
+
+  /* Benjamin Orellana - 2026/04/22 - Desplaza suavemente al usuario hacia la fecha luego de elegir actividad para continuar el flujo natural del formulario. */
+  const scrollHaciaFecha = () => {
+    window.requestAnimationFrame(() => {
+      setTimeout(() => {
+        fechaFieldRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }, 180);
+    });
+  };
+
+  /* Benjamin Orellana - 2026/04/22 - Selecciona actividad desde el dropdown propio, lo cierra y lleva visualmente al siguiente campo del flujo. */
+  const seleccionarActividadPublica = (actividad) => {
+    handleChange('actividad', actividad);
+    setMostrarActividadOptions(false);
+    scrollHaciaFecha();
+  };
+
+  /* Benjamin Orellana - 2026/04/22 - Selecciona asesor desde el dropdown propio y colapsa la lista para mantener el formulario limpio. */
+  const seleccionarAsesorPublico = (usuarioId) => {
+    handleChange('usuario_id', usuarioId);
+    setMostrarAsesorOptions(false);
+  };
 
   // Benjamin Orellana - 2026/04/20 - Al elegir un horario de Pilates se valida cupo real y se fija también la hora general del formulario para mantener consistencia con el backend.
   const seleccionarHorarioPilates = (horario) => {
@@ -619,7 +830,7 @@ export default function VentasProspectosPublicForm({
 
     // Benjamin Orellana - 2026/04/17 - Se construye el payload del formulario público usando la sede fija legada que requiere ventas_prospectos.
     const payload = {
-      usuario_id: Number(form.usuario_id),
+      usuario_id: form.usuario_id ? Number(form.usuario_id) : null,
       asesor_nombre: asesorSeleccionado?.name || '',
       nombre: nombreDescompuesto.nombre.trim(),
       apellido: nombreDescompuesto.apellido.trim(),
@@ -665,6 +876,8 @@ export default function VentasProspectosPublicForm({
 
       setForm(buildInitialForm());
       setHorarioPilatesSeleccionado(null);
+      setMostrarActividadOptions(false);
+      setMostrarAsesorOptions(false);
 
       await showFormAlert({
         icon: 'success',
@@ -722,6 +935,7 @@ export default function VentasProspectosPublicForm({
     seleccionarHorarioPilates(horarioEncontrado);
     setAbrirHorariosPilatesModal(false);
   };
+
   /* Benjamin Orellana - 2026/04/21 - Convierte una hora HH:mm al formato visual de 12 horas para mostrar AM/PM al usuario. */
   const formatearHoraAMPM = (hora) => {
     const valor = String(hora || '').trim();
@@ -744,337 +958,437 @@ export default function VentasProspectosPublicForm({
     const [hh, mm] = valor.split(':').map(Number);
 
     if (hh >= 1 && hh <= 5) {
-      return `${String(hh + 12).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+      return `${String(hh + 12).padStart(2, '0')}:${String(mm).padStart(
+        2,
+        '0'
+      )}`;
     }
 
     return valor;
   };
 
+  // Benjamin Orellana - 2026/04/22 - Se adaptan textos principales y CTA según el tipo de flujo público, manteniendo una experiencia más fiel al diseño mobile compartido.
+  const textosFlow = useMemo(() => {
+    const esClasePrueba =
+      normalizarTexto(tipoLinkInicial) === normalizarTexto('Clase de prueba');
+
+    return {
+      titulo: esClasePrueba
+        ? '¡Agenda tu clase de prueba!'
+        : '¡Agenda tu visita programada!',
+      cta: esClasePrueba
+        ? 'RESERVAR CLASE DE PRUEBA'
+        : 'RESERVAR VISITA PROGRAMADA'
+    };
+  }, [tipoLinkInicial]);
+
+  /* Benjamin Orellana - 2026/04/22 - Se ajustan tamaños, paddings y jerarquía visual para un modo mobile inmersivo más fiel al diseño aprobado por el cliente. */
+  const heroWrapperClass = immersiveMobile
+    ? 'relative z-10 mx-auto w-full max-w-5xl px-4 pb-4 pt-3 sm:px-5 sm:pb-6 sm:pt-4 lg:px-6 lg:pb-8 lg:pt-5'
+    : compactHeader
+      ? 'relative z-10 mx-auto w-full max-w-5xl px-4 pb-5 pt-3 sm:px-5 sm:pb-7 sm:pt-4 lg:px-6 lg:pb-8 lg:pt-5'
+      : 'relative z-10 mx-auto w-full max-w-6xl px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7 lg:px-8 lg:pb-10';
+
+  const heroContentClass = immersiveMobile
+    ? 'mx-auto max-w-[400px] lg:mx-0'
+    : compactHeader
+      ? 'mx-auto max-w-[700px] lg:mx-0'
+      : 'mx-auto max-w-3xl lg:mx-0';
+
+  const badgeClass = immersiveMobile
+    ? 'hidden sm:inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-md'
+    : compactHeader
+      ? 'inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-md'
+      : 'inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white/90 backdrop-blur-md';
+
+  const titleClass = immersiveMobile
+    ? 'mt-3 font-bignoodle text-[2.05rem] leading-[0.92] text-white sm:text-[2.45rem] lg:text-[3.1rem]'
+    : compactHeader
+      ? 'mt-2.5 font-bignoodle text-[2.05rem] leading-[0.92] text-white sm:text-[2.7rem] lg:text-[3.2rem]'
+      : 'mt-5 font-bignoodle text-[2.9rem] leading-[0.9] text-white sm:text-[4rem] lg:text-[4.5rem]';
+
+  const subtitleClass = immersiveMobile
+    ? 'mt-2 text-[0.9rem] font-semibold text-white/95 sm:text-[0.96rem]'
+    : compactHeader
+      ? 'mt-2 text-[0.95rem] font-medium text-white/90 sm:text-[0.98rem]'
+      : 'mt-3 text-base font-medium text-white/90 sm:text-lg';
+
+  const formClass = immersiveMobile
+    ? 'mt-4 space-y-3 sm:mt-5 sm:space-y-4'
+    : compactHeader
+      ? 'mt-4 space-y-3.5 sm:mt-5 sm:space-y-4.5'
+      : 'mt-7 space-y-4 sm:mt-8 sm:space-y-5';
+
+  const fieldTextClass = immersiveMobile
+    ? 'h-8 w-full border-0 bg-transparent p-0 text-[0.93rem] font-medium text-slate-700 outline-none placeholder:text-slate-500/90 sm:text-[0.98rem]'
+    : GLASS_FIELD_CLASS;
+
   return (
-    <div className="w-full overflow-hidden rounded-[26px] border border-orange-100 bg-white shadow-[0_24px_70px_-30px_rgba(249,115,22,0.35)] sm:rounded-[30px]">
-      <div className="border-b border-orange-100 bg-gradient-to-r from-orange-50 via-white to-white px-5 py-6 sm:px-6 md:px-8 md:py-6">
-        <div className="flex flex-col gap-3">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-orange-700">
+    <div className="relative isolate w-full overflow-hidden bg-[#0f1115] text-white sm:rounded-[34px]">
+      <div className="absolute inset-0">
+        {resolvedBackgroundImageUrl ? (
+          <div
+            className="h-full w-full bg-cover bg-center transition-transform duration-500"
+            style={{
+              backgroundImage: `url(${resolvedBackgroundImageUrl})`,
+              backgroundPosition: 'center top',
+              transform: 'scale(1.04)',
+              filter: 'saturate(1.04) brightness(0.92)'
+            }}
+          />
+        ) : (
+          <div className="h-full w-full bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.35),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.08),_transparent_26%),linear-gradient(180deg,_#1b1f27_0%,_#101218_50%,_#0c0d12_100%)]" />
+        )}
+      </div>
+
+      {/* Benjamin Orellana - 2026/04/22 - Se alivianan las capas superiores para que la foto de fondo se perciba más, manteniendo contraste suficiente para los textos. */}
+      <div className="absolute inset-0 bg-black/10" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,17,21,0.04)_0%,rgba(15,17,21,0.16)_36%,rgba(15,17,21,0.38)_100%)]" />
+      <div className="absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,rgba(0,0,0,0.12)_0%,rgba(0,0,0,0)_100%)]" />
+
+      <div className={heroWrapperClass}>
+        <div className={heroContentClass}>
+          {/* Benjamin Orellana - 2026/04/22 - El botón volver atrás pasa al formulario en mobile inmersivo para que el padre deje de condicionar la composición visual superior. */}
+          {immersiveMobile && typeof onBack === 'function' && (
+            <div className="mb-6 sm:hidden">
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center gap-2 rounded-2xl bg-white/12 px-3.5 py-2.5 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/16"
+              >
+                <ChevronLeft size={18} />
+                Volver atrás
+              </button>
+            </div>
+          )}
+
+          <div className={badgeClass}>
             <ShieldCheck className="h-4 w-4" />
             {tipoLinkInicial}
           </div>
 
-          <div>
-            <h3 className="font-bignoodle text-[2rem] leading-none text-gray-900 sm:text-3xl md:text-4xl">
-              Completar solicitud
-            </h3>
+          <h3 className={titleClass}>{textosFlow.titulo}</h3>
 
-            <p className="mt-2 text-sm text-gray-600 sm:text-base">
-              Sede seleccionada:{' '}
-              <span className="font-semibold text-gray-900">
-                {selectedSede?.nombre || '-'}
-              </span>
-            </p>
-          </div>
+          <p className={subtitleClass}>
+            Sede seleccionada:{' '}
+            <span className="font-extrabold text-white">
+              {selectedSede?.nombre || '-'}
+            </span>
+          </p>
         </div>
-      </div>
 
-      <div className="px-5 py-6 sm:px-6 md:px-8 md:py-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Benjamin Orellana - 2026/04/20 - Se amplía la respiración visual del bloque principal en mobile para aprovechar mejor el ancho disponible sin alterar la lógica del formulario. */}
-          <div className="rounded-[28px] border border-slate-100 bg-slate-50/70 p-4 shadow-[0_10px_30px_-24px_rgba(15,23,42,0.25)] sm:p-5 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
-            <div className="grid grid-cols-1 gap-5 sm:gap-4 xl:grid-cols-2">
-              <div className="space-y-2 xl:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Asesor
-                </label>
-
-                {/* Benjamin Orellana - 2026/04/20 - Se agrega la aclaración pedida para que el usuario no se bloquee si no fue atendido por un asesor. */}
-                <p className="text-[13px] leading-5 text-gray-500">
-                  Si no fuiste atendido por ningun asesor deja este campo como
-                  esta.
-                </p>
-
-                <div className="relative">
-                  <User2 className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-
-                  <select
-                    value={form.usuario_id}
-                    onChange={(e) => handleChange('usuario_id', e.target.value)}
-                    disabled={cargandoUsuarios || enviando}
-                    className="w-full min-h-[60px] rounded-[22px] border border-gray-200 bg-white pl-12 pr-4 text-base text-gray-800 outline-none transition focus:border-orange-500 sm:min-h-[56px] sm:text-[15px]"
+        <form onSubmit={handleSubmit} className={formClass}>
+          <div className="grid grid-cols-1 gap-3 sm:gap-3.5 lg:grid-cols-2">
+            {/* Benjamin Orellana - 2026/04/22 - El asesor opcional pasa a mostrarse como un campo visual igual al resto del formulario, con dropdown propio y opciones renderizadas por map. */}
+            <div ref={asesorDropdownRef} className="lg:col-span-2">
+              <GlassDropdownCard
+                icon={Briefcase}
+                placeholder="Asesor"
+                valueLabel={asesorLabelVisible}
+                isOpen={mostrarAsesorOptions}
+                onToggle={() => setMostrarAsesorOptions((prev) => !prev)}
+                disabled={enviando || cargandoUsuarios}
+                compact={immersiveMobile}
+              >
+                <div className="space-y-1.5">
+                  <button
+                    type="button"
+                    onClick={() => seleccionarAsesorPublico('')}
+                    className={`flex w-full items-center justify-between rounded-[18px] px-3 py-3 text-left text-sm font-medium transition ${
+                      !form.usuario_id
+                        ? 'bg-orange-50 text-orange-700'
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
                   >
-                    <option value="">
-                      {cargandoUsuarios
-                        ? 'Cargando vendedores...'
-                        : 'Seleccionar asesor'}
-                    </option>
+                    <span>Continuar sin asesor</span>
+                    {!form.usuario_id && <CheckCircle2 className="h-4 w-4" />}
+                  </button>
 
-                    {vendedoresDisponibles.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                        {/* {user.email ? ` - ${user.email}` : ''} */}
-                      </option>
-                    ))}
-                  </select>
+                  {vendedoresDisponibles.map((user) => {
+                    const active = Number(form.usuario_id) === Number(user.id);
+
+                    return (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => seleccionarAsesorPublico(user.id)}
+                        className={`flex w-full items-center justify-between rounded-[18px] px-3 py-3 text-left text-sm font-medium transition ${
+                          active
+                            ? 'bg-orange-50 text-orange-700'
+                            : 'text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="truncate">{user.name}</span>
+                        {active && (
+                          <CheckCircle2 className="h-4 w-4 shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+
+                  {!cargandoUsuarios && vendedoresDisponibles.length === 0 && (
+                    <div className="rounded-[18px] bg-amber-50 px-3 py-3 text-sm font-medium text-amber-700">
+                      No hay vendedores disponibles para la sede seleccionada.
+                    </div>
+                  )}
                 </div>
+              </GlassDropdownCard>
+            </div>
 
-                {!cargandoUsuarios && vendedoresDisponibles.length === 0 && (
-                  <p className="text-xs font-medium text-amber-700">
-                    No hay vendedores disponibles para la sede seleccionada.
-                  </p>
-                )}
-              </div>
+            {/* Benjamin Orellana - 2026/04/21 - Se unifica nombre y apellido en un único campo visual, manteniendo compatibilidad con el backend al descomponerlo al enviar. */}
+            <GlassInputCard
+              icon={User2}
+              className="lg:col-span-2"
+              compact={immersiveMobile}
+            >
+              <label htmlFor="nombre_completo" className="sr-only">
+                Nombre y apellido
+              </label>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Actividad
-                </label>
+              <input
+                id="nombre_completo"
+                type="text"
+                value={form.nombre_completo}
+                onChange={(e) =>
+                  handleChange('nombre_completo', e.target.value)
+                }
+                disabled={enviando}
+                placeholder="Nombre y apellido"
+                autoComplete="name"
+                className={fieldTextClass}
+              />
+            </GlassInputCard>
 
-                <div className="relative">
-                  <Briefcase className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <GlassInputCard icon={Phone} compact={immersiveMobile}>
+              <label htmlFor="telefono" className="sr-only">
+                Teléfono
+              </label>
 
-                  <select
-                    value={form.actividad}
-                    onChange={(e) => handleChange('actividad', e.target.value)}
-                    disabled={enviando}
-                    className="w-full min-h-[60px] rounded-[22px] border border-gray-200 bg-white pl-12 pr-4 text-base text-gray-800 outline-none transition focus:border-orange-500 sm:min-h-[56px] sm:text-[15px]"
-                  >
-                    {ACTIVIDADES_OPTIONS.map((item) => (
-                      <option key={item} value={item}>
-                        {item === 'Musculacion' ? 'Musculación' : item}
-                      </option>
-                    ))}
-                  </select>
+              <input
+                id="telefono"
+                type="tel"
+                value={form.telefono}
+                onChange={(e) => handleChange('telefono', e.target.value)}
+                disabled={enviando}
+                placeholder="Ingresá tu teléfono"
+                autoComplete="tel"
+                inputMode="tel"
+                className={fieldTextClass}
+              />
+            </GlassInputCard>
+
+            <GlassInputCard icon={Mail} compact={immersiveMobile}>
+              <label htmlFor="email" className="sr-only">
+                Email
+              </label>
+
+              <input
+                id="email"
+                type="email"
+                value={form.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                disabled={enviando}
+                placeholder="Ingresá tu email"
+                autoComplete="email"
+                inputMode="email"
+                className={fieldTextClass}
+              />
+            </GlassInputCard>
+
+            <div ref={actividadDropdownRef} className="space-y-2 lg:col-span-2">
+              <GlassDropdownCard
+                icon={Dumbbell}
+                placeholder="Seleccioná una actividad"
+                valueLabel={actividadLabelVisible}
+                isOpen={mostrarActividadOptions}
+                onToggle={() => setMostrarActividadOptions((prev) => !prev)}
+                disabled={enviando}
+                compact={immersiveMobile}
+              >
+                <div className="space-y-1.5">
+                  {ACTIVIDADES_OPTIONS.filter(
+                    (item) => item !== 'No especifica'
+                  ).map((item) => {
+                    const label = item === 'Musculacion' ? 'Musculación' : item;
+                    const active = form.actividad === item;
+
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => seleccionarActividadPublica(item)}
+                        className={`flex w-full items-center justify-between rounded-[18px] px-3 py-3 text-left text-sm font-medium transition ${
+                          active
+                            ? 'bg-orange-50 text-orange-700'
+                            : 'text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span>{label}</span>
+                        {active && (
+                          <CheckCircle2 className="h-4 w-4 shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
+              </GlassDropdownCard>
+            </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Teléfono
-                </label>
-
-                <div className="relative">
-                  <Phone className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-
-                  <input
-                    type="tel"
-                    value={form.telefono}
-                    onChange={(e) => handleChange('telefono', e.target.value)}
-                    disabled={enviando}
-                    placeholder="Ingresá tu teléfono"
-                    className="w-full min-h-[60px] rounded-[22px] border border-gray-200 bg-white pl-12 pr-4 text-base text-gray-800 outline-none transition focus:border-orange-500 sm:min-h-[56px] sm:text-[15px]"
-                  />
-                </div>
-              </div>
-
-              {/* Benjamin Orellana - 2026/04/21 - Se unifica nombre y apellido en un único campo visual, manteniendo compatibilidad con el backend al descomponerlo al enviar. */}
-              <div className="space-y-2 xl:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Nombre y apellido
-                </label>
-
-                <div className="relative">
-                  <User2 className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-
-                  <input
-                    type="text"
-                    value={form.nombre_completo}
-                    onChange={(e) =>
-                      handleChange('nombre_completo', e.target.value)
-                    }
-                    disabled={enviando}
-                    placeholder="Ingresá tu nombre y apellido"
-                    className="w-full min-h-[60px] rounded-[22px] border border-gray-200 bg-white pl-12 pr-4 text-base text-gray-800 outline-none transition focus:border-orange-500 sm:min-h-[56px] sm:text-[15px]"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Email
-                </label>
-
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    disabled={enviando}
-                    placeholder="Ingresá tu email"
-                    className="w-full min-h-[60px] rounded-[22px] border border-gray-200 bg-white pl-12 pr-4 text-base text-gray-800 outline-none transition focus:border-orange-500 sm:min-h-[56px] sm:text-[15px]"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  DNI
+            <div ref={fechaFieldRef} className="space-y-2">
+              <GlassInputCard icon={CalendarDays} compact={immersiveMobile}>
+                <label htmlFor="fecha_clase" className="sr-only">
+                  Fecha de visita
                 </label>
 
                 <input
-                  type="text"
-                  value={form.dni}
-                  onChange={(e) => handleChange('dni', e.target.value)}
+                  id="fecha_clase"
+                  type="date"
+                  min={minFechaSemanaActual}
+                  max={maxFechaSemanaActual}
+                  value={form.fecha_clase}
+                  onChange={(e) => {
+                    const nuevaFecha = e.target.value;
+
+                    if (
+                      nuevaFecha &&
+                      !esFechaHabilitadaSemanaActual(
+                        nuevaFecha,
+                        minFechaSemanaActual,
+                        maxFechaSemanaActual
+                      )
+                    ) {
+                      showFormAlert({
+                        icon: 'warning',
+                        title: 'Fecha inválida',
+                        text: 'Solo puedes seleccionar días hábiles de la semana actual.'
+                      });
+                      return;
+                    }
+
+                    handleChange('fecha_clase', nuevaFecha);
+                  }}
                   disabled={enviando}
-                  placeholder="Ingresá tu DNI"
-                  className="w-full min-h-[60px] rounded-[22px] border border-gray-200 bg-white px-4 text-base text-gray-800 outline-none transition focus:border-orange-500 sm:min-h-[56px] sm:text-[15px]"
+                  className={fieldTextClass}
                 />
-              </div>
+              </GlassInputCard>
+            </div>
 
+            {form.actividad !== 'Pilates' ? (
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Fecha de Visita
-                </label>
-
-                <div className="relative">
-                  <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <GlassInputCard icon={Clock3} compact={immersiveMobile}>
+                  <label htmlFor="hora_clase" className="sr-only">
+                    Hora de visita
+                  </label>
 
                   <input
-                    type="date"
-                    min={minFechaSemanaActual}
-                    max={maxFechaSemanaActual}
-                    value={form.fecha_clase}
+                    id="hora_clase"
+                    type="time"
+                    min="06:00"
+                    max="23:00"
+                    step="60"
+                    value={form.hora_clase}
                     onChange={(e) => {
-                      const nuevaFecha = e.target.value;
+                      const horaIngresada = e.target.value;
+                      const nuevaHora =
+                        normalizarHoraVisitaPublica(horaIngresada);
 
                       if (
-                        nuevaFecha &&
-                        !esFechaHabilitadaSemanaActual(
-                          nuevaFecha,
-                          minFechaSemanaActual,
-                          maxFechaSemanaActual
-                        )
+                        nuevaHora &&
+                        (nuevaHora < '06:00' || nuevaHora > '23:00')
                       ) {
                         showFormAlert({
                           icon: 'warning',
-                          title: 'Fecha inválida',
-                          text: 'Solo puedes seleccionar días hábiles de la semana actual.'
+                          title: 'Hora inválida',
+                          text: 'La hora de visita debe estar entre las 6:00 AM y las 11:00 PM.'
                         });
                         return;
                       }
 
-                      handleChange('fecha_clase', nuevaFecha);
+                      if (horaIngresada && horaIngresada !== nuevaHora) {
+                        showFormAlert({
+                          icon: 'info',
+                          title: 'Hora ajustada automáticamente',
+                          text: `Interpretamos tu horario como ${formatearHoraAMPM(
+                            nuevaHora
+                          )} para evitar confusiones.`
+                        });
+                      }
+
+                      handleChange('hora_clase', nuevaHora);
                     }}
                     disabled={enviando}
-                    className="w-full min-h-[60px] rounded-[22px] border border-gray-200 bg-white pl-12 pr-4 text-base text-gray-800 outline-none transition focus:border-orange-500 sm:min-h-[56px] sm:text-[15px]"
+                    className={fieldTextClass}
                   />
-                </div>
+                </GlassInputCard>
               </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Hora de Visita
-                </label>
-
-                {form.actividad !== 'Pilates' ? (
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Clock3 className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-
-                      <input
-                        type="time"
-                        min="06:00"
-                        max="23:00"
-                        step="60"
-                        value={form.hora_clase}
-                        onChange={(e) => {
-                          const horaIngresada = e.target.value;
-                          const nuevaHora =
-                            normalizarHoraVisitaPublica(horaIngresada);
-
-                          if (
-                            nuevaHora &&
-                            (nuevaHora < '06:00' || nuevaHora > '23:00')
-                          ) {
-                            showFormAlert({
-                              icon: 'warning',
-                              title: 'Hora inválida',
-                              text: 'La hora de visita debe estar entre las 6:00 AM y las 11:00 PM.'
-                            });
-                            return;
-                          }
-
-                          if (horaIngresada && horaIngresada !== nuevaHora) {
-                            showFormAlert({
-                              icon: 'info',
-                              title: 'Hora ajustada automáticamente',
-                              text: `Interpretamos tu horario como ${formatearHoraAMPM(nuevaHora)} para evitar confusiones.`
-                            });
-                          }
-
-                          handleChange('hora_clase', nuevaHora);
-                        }}
-                        disabled={enviando}
-                        className="w-full min-h-[60px] rounded-[22px] border border-gray-200 bg-white pl-12 pr-4 text-base text-gray-800 outline-none transition focus:border-orange-500 sm:min-h-[56px] sm:text-[15px]"
-                      />
-                    </div>
-
-                    {/* Benjamin Orellana - 2026/04/21 - Se agrega ayuda visual para que el usuario entienda el rango permitido y vea la hora en formato AM/PM. */}
-                    <div className="space-y-1">
-                      <p className="text-xs text-gray-500">
-                        Horario habilitado: 6:00 AM a 11:00 PM.
-                      </p>
-
-                      {/* {form.hora_clase && (
-                        <p className="text-xs font-medium text-orange-700">
-                          Hora seleccionada:{' '}
-                          {formatearHoraAMPM(form.hora_clase)}
-                        </p>
-                      )} */}
-                    </div>
+            ) : (
+              <div className="space-y-3">
+                {!form.fecha_clase && (
+                  <div className="rounded-[24px] border border-amber-200/80 bg-amber-50/95 px-4 py-3.5 text-sm font-medium text-amber-800 shadow-[0_12px_40px_-28px_rgba(217,119,6,0.45)]">
+                    Primero elegí una fecha para ver los horarios disponibles de
+                    Pilates.
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {!form.fecha_clase && (
-                      <div className="rounded-[22px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                        Primero elegí una fecha para ver los horarios
-                        disponibles de Pilates.
-                      </div>
-                    )}
+                )}
 
-                    {form.fecha_clase && !grupoPilatesSeleccionado && (
-                      <div className="rounded-[22px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                        Pilates no dispone horarios para sábados o domingos.
-                      </div>
-                    )}
+                {form.fecha_clase && !grupoPilatesSeleccionado && (
+                  <div className="rounded-[24px] border border-red-200/80 bg-red-50/95 px-4 py-3.5 text-sm font-medium text-red-700 shadow-[0_12px_40px_-28px_rgba(220,38,38,0.35)]">
+                    Pilates no dispone horarios para sábados o domingos.
+                  </div>
+                )}
 
-                    {form.fecha_clase &&
-                      grupoPilatesSeleccionado &&
-                      cargandoHorariosPilates && (
-                        <div className="rounded-[22px] border border-orange-100 bg-orange-50 px-4 py-3 text-sm text-orange-700">
-                          Cargando horarios de Pilates...
-                        </div>
-                      )}
+                {form.fecha_clase &&
+                  grupoPilatesSeleccionado &&
+                  cargandoHorariosPilates && (
+                    <div className="rounded-[24px] border border-orange-200/80 bg-orange-50/95 px-4 py-3.5 text-sm font-medium text-orange-800 shadow-[0_12px_40px_-28px_rgba(249,115,22,0.4)]">
+                      Cargando horarios de Pilates...
+                    </div>
+                  )}
 
-                    {form.fecha_clase &&
-                      grupoPilatesSeleccionado &&
-                      !cargandoHorariosPilates &&
-                      horariosPilatesDelDia.length === 0 && (
-                        <div className="rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                          No hay horarios disponibles de Pilates para el día
-                          seleccionado.
-                        </div>
-                      )}
+                {form.fecha_clase &&
+                  grupoPilatesSeleccionado &&
+                  !cargandoHorariosPilates &&
+                  horariosPilatesDelDia.length === 0 && (
+                    <div className="rounded-[24px] border border-slate-200/90 bg-white/95 px-4 py-3.5 text-sm font-medium text-slate-700 shadow-[0_12px_40px_-28px_rgba(15,23,42,0.18)]">
+                      No hay horarios disponibles de Pilates para el día
+                      seleccionado.
+                    </div>
+                  )}
 
-                    {form.fecha_clase &&
-                      grupoPilatesSeleccionado &&
-                      !cargandoHorariosPilates &&
-                      horariosPilatesDelDia.length > 0 && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => setAbrirHorariosPilatesModal(true)}
-                            disabled={enviando}
-                            className="w-full min-h-[60px] rounded-[22px] border border-orange-200 bg-orange-50 px-4 text-left text-base font-medium text-orange-700 transition hover:border-orange-400 hover:bg-orange-100 disabled:opacity-60 sm:min-h-[56px] sm:text-[15px]"
-                          >
+                {form.fecha_clase &&
+                  grupoPilatesSeleccionado &&
+                  !cargandoHorariosPilates &&
+                  horariosPilatesDelDia.length > 0 && (
+                    <>
+                      <GlassInputCard icon={Clock3} compact={immersiveMobile}>
+                        <button
+                          type="button"
+                          onClick={() => setAbrirHorariosPilatesModal(true)}
+                          disabled={enviando}
+                          className="flex h-8 w-full items-center justify-between gap-4 border-0 bg-transparent p-0 text-left text-[0.95rem] font-medium text-slate-700 outline-none disabled:opacity-60 sm:text-[1rem]"
+                        >
+                          <span>
                             {horarioPilatesSeleccionado
-                              ? 'Cambiar Horario'
-                              : 'Ver horarios disponibles'}
-                          </button>
+                              ? 'Cambiar horario'
+                              : 'Seleccioná tu horario'}
+                          </span>
 
-                          {horarioPilatesSeleccionado && (
-                            <div className="rounded-[22px] border border-emerald-200 bg-emerald-50 px-4 py-3">
-                              <div className="text-sm font-semibold text-emerald-800">
+                          <ChevronDown className="h-[18px] w-[18px] shrink-0 text-slate-500" />
+                        </button>
+                      </GlassInputCard>
+
+                      {horarioPilatesSeleccionado && (
+                        <div className="rounded-[24px] border border-emerald-200/90 bg-emerald-50/95 p-4 shadow-[0_18px_48px_-32px_rgba(16,185,129,0.45)]">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200">
+                              <CheckCircle2 className="h-5 w-5" />
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-800">
                                 Horario seleccionado
                               </div>
 
-                              <div className="mt-1 text-sm text-emerald-700">
+                              <div className="mt-1 text-base font-semibold text-emerald-900">
                                 {String(
                                   horarioPilatesSeleccionado?.hhmm || ''
                                 ).trim()}
@@ -1088,104 +1402,169 @@ export default function VentasProspectosPublicForm({
                                     : ''}
                               </div>
 
-                              {/* <div className="mt-1 text-xs text-emerald-700">
-                  Quedan:{' '}
-                  {Math.max(
-                    0,
-                    Number(
-                      horarioPilatesSeleccionado?.cupo_por_clase || 0
-                    ) -
-                      Number(
-                        horarioPilatesSeleccionado?.total_inscriptos || 0
-                      )
-                  )}
-                </div> */}
+                              <div className="mt-1 text-sm text-emerald-700">
+                                Quedan:{' '}
+                                {Math.max(
+                                  0,
+                                  Number(
+                                    horarioPilatesSeleccionado?.cupo_por_clase ||
+                                      0
+                                  ) -
+                                    Number(
+                                      horarioPilatesSeleccionado?.total_inscriptos ||
+                                        0
+                                    )
+                                )}
+                              </div>
                             </div>
-                          )}
-                        </>
+                          </div>
+                        </div>
                       )}
-                  </div>
-                )}
+                    </>
+                  )}
               </div>
-            </div>
+            )}
+
+            {/* <GlassInputCard
+              icon={BadgeHelp}
+              compact={immersiveMobile}
+              className="lg:col-span-2"
+            >
+              <label htmlFor="dni" className="sr-only">
+                DNI
+              </label>
+
+              <input
+                id="dni"
+                type="text"
+                value={form.dni}
+                onChange={(e) => handleChange('dni', e.target.value)}
+                disabled={enviando}
+                placeholder="Ingresá tu DNI"
+                inputMode="numeric"
+                className={fieldTextClass}
+              />
+            </GlassInputCard> */}
           </div>
 
           {tipoLinkInicial === 'Clase de prueba' &&
             form.actividad !== 'Pilates' &&
             form.actividad !== 'Clases grupales' && (
-              <div className="rounded-3xl border border-orange-100 bg-orange-50/70 p-4 sm:p-5">
-                <div className="flex items-start gap-3">
-                  <input
-                    id="necesita_profe"
-                    type="checkbox"
-                    checked={!!form.necesita_profe}
-                    onChange={(e) =>
-                      handleChange('necesita_profe', e.target.checked)
-                    }
-                    disabled={enviando}
-                    className="mt-1 h-5 w-5 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                  />
+              <div
+                className={`rounded-[28px] border border-white/18 bg-white/[0.84] shadow-[0_24px_80px_-40px_rgba(15,23,42,0.48)] backdrop-blur-[14px] ${
+                  immersiveMobile ? 'p-3.5' : 'p-4'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-start gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-600 ring-1 ring-orange-100">
+                      <User2 className="h-5 w-5" />
+                    </div>
 
+                    <div className="min-w-0">
+                      <div className="text-[1rem] font-semibold text-slate-900">
+                        Necesito profesor
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        Te asignaremos un profesor disponible para tu visita.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Benjamin Orellana - 2026/04/22 - Se reemplaza el checkbox visible por un switch grande, más cercano al diseño mobile de referencia y sin afectar el valor real del formulario. */}
                   <label
                     htmlFor="necesita_profe"
-                    className="cursor-pointer text-sm sm:text-base"
+                    className="relative inline-flex cursor-pointer items-center"
                   >
-                    <span className="block font-semibold text-gray-900">
-                      Necesito profesor
-                    </span>
-                    <span className="mt-1 block text-gray-600">
-                      Si activás esta opción, te asignaremos un profesor
-                      disponible para tu visita.
+                    <input
+                      id="necesita_profe"
+                      type="checkbox"
+                      checked={!!form.necesita_profe}
+                      onChange={(e) =>
+                        handleChange('necesita_profe', e.target.checked)
+                      }
+                      disabled={enviando}
+                      className="peer sr-only"
+                    />
+                    <span className="relative block h-[40px] w-[74px] rounded-full bg-slate-300 transition peer-checked:bg-orange-500 peer-disabled:opacity-60">
+                      <span className="absolute left-[4px] top-[4px] h-[32px] w-[32px] rounded-full bg-white shadow-md transition peer-checked:translate-x-[34px]" />
                     </span>
                   </label>
                 </div>
               </div>
             )}
 
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Observación
-            </label>
+          {/* Benjamin Orellana - 2026/04/22 - Se integra el bloque guiado "Contanos un poco de vos" dentro de una tarjeta más compacta, manteniendo la ayuda contextual y reduciendo el alto visual del formulario. */}
+          <div className="rounded-[28px] border border-white/18 bg-white/[0.84] p-4 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.48)] backdrop-blur-[14px] sm:p-5">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-50/90 text-orange-600 ring-1 ring-orange-100 sm:h-10 sm:w-10">
+                <MessageSquareText className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
+              </div>
 
-            <div className="relative">
-              <MessageSquareText className="pointer-events-none absolute left-4 top-4 h-5 w-5 text-gray-400" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[0.98rem] font-semibold text-slate-900 sm:text-[1rem]">
+                  Tu profe quiere conocerte:
+                </div>
 
-              <textarea
-                value={form.observacion}
-                onChange={(e) => handleChange('observacion', e.target.value)}
-                disabled={enviando}
-                rows={5}
-                placeholder="Podés dejar una observación adicional"
-                className="w-full resize-none rounded-[22px] border border-gray-200 bg-white py-4 pl-12 pr-4 text-base text-gray-800 outline-none transition focus:border-orange-500 sm:text-[15px]"
-              />
-            </div>
-          </div>
+                <label htmlFor="observacion" className="sr-only">
+                  Observación
+                </label>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-            <div className="flex items-start gap-2">
-              <BadgeHelp className="mt-0.5 h-4 w-4 text-slate-500" />
-              <div>
-                <span className="font-semibold">Tipo de solicitud:</span>{' '}
-                {tipoLinkInicial}
+                <textarea
+                  id="observacion"
+                  value={form.observacion}
+                  onChange={(e) => handleChange('observacion', e.target.value)}
+                  disabled={enviando}
+                  rows={4}
+                  maxLength={120}
+                  placeholder="¿Entrenaste antes? ¿Qué te gustaría lograr con el entrenamiento? ¿Tenés lesiones o limitaciones?"
+                  className={`mt-3 w-full resize-none rounded-[22px] border border-slate-200/90 bg-white/92 px-4 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-500/10 sm:text-[15px] ${
+                    immersiveMobile
+                      ? 'min-h-[102px] py-3 text-[14px]'
+                      : 'min-h-[128px] py-3.5 text-[15px]'
+                  }`}
+                />
+
+                <div className="mt-2 text-right text-xs font-medium text-slate-400 sm:text-sm">
+                  {String(form.observacion || '').length}/120
+                </div>
               </div>
             </div>
           </div>
 
+          {!immersiveMobile && (
+            <div className="rounded-[24px] border border-white/15 bg-white/10 px-4 py-3 text-sm text-white/90 backdrop-blur-md">
+              <div className="flex items-start gap-2.5">
+                <BadgeHelp className="mt-0.5 h-4 w-4 shrink-0 text-white/75" />
+                <div>
+                  <span className="font-semibold">Tipo de solicitud:</span>{' '}
+                  {tipoLinkInicial}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="pt-1">
             <button
               type="submit"
-              disabled={
-                enviando ||
-                cargandoUsuarios ||
-                vendedoresDisponibles.length === 0
-              }
-              className="w-full min-h-[60px] rounded-[22px] bg-orange-600 px-6 text-base font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[56px] sm:text-[15px]"
+              disabled={enviando}
+              className={`flex w-full items-center justify-center rounded-[24px] bg-orange-600 px-6 text-center font-extrabold tracking-[0.01em] text-white shadow-[0_24px_50px_-24px_rgba(234,88,12,0.65)] transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 ${
+                immersiveMobile
+                  ? 'min-h-[56px] text-[0.95rem] sm:min-h-[60px]'
+                  : 'min-h-[66px] text-[1.02rem] sm:min-h-[64px]'
+              }`}
             >
-              {enviando ? 'Enviando solicitud...' : 'Enviar solicitud'}
+              {enviando ? 'ENVIANDO SOLICITUD...' : textosFlow.cta}
             </button>
+
+            <div className="mt-5 flex items-center justify-center gap-2 text-center text-sm font-medium text-white/85">
+              <Lock className="h-4 w-4 shrink-0" />
+              <span>Tus datos están protegidos y son confidenciales.</span>
+            </div>
           </div>
         </form>
       </div>
+
       {abrirHorariosPilatesModal && (
         <HorariosDisponiblesModal
           onClose={() => setAbrirHorariosPilatesModal(false)}

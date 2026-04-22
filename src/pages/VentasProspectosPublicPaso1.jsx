@@ -22,6 +22,7 @@ import FooterV2 from '../components/footer/FooterV2';
 import { logo } from '../images/svg/index';
 import Fachada from '../images/sedes/Barrio Norte/Fachada.jpeg';
 import VentasProspectosPublicForm from '../components/Forms/VentasProspectosPublicForm';
+import ImgProfe from '../images/Img_PublicForm_ClasVis.jpeg';
 /* Benjamin Orellana - 2026/04/17 - Variantes visuales reutilizadas para mantener el lenguaje UX del flujo público. */
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -82,6 +83,11 @@ export default function VentasProspectosPublicPaso1() {
     };
   }, [location.pathname]);
 
+  /* Benjamin Orellana - 2026/04/22 - Define la imagen fija del paso 2 para el modo mobile inmersivo del formulario público. */
+  const resolverImagenPaso2 = (fallback) => String(fallback || '').trim();
+
+  /* Benjamin Orellana - 2026/04/22 - Se fija la imagen del paso 2 con la visual institucional del formulario público. */
+  const backgroundPaso2 = useMemo(() => resolverImagenPaso2(ImgProfe), []);
   useEffect(() => {
     let active = true;
 
@@ -146,56 +152,71 @@ export default function VentasProspectosPublicPaso1() {
         </div>
       )}
 
-      <header className="bg-white border-b border-gray-200 py-4 px-6 sticky top-0 z-30 shadow-sm flex justify-between items-center">
-        <NavLink to="/" className="flex items-center gap-3">
-          <img src={logo} alt="Hammerx" className="h-10 object-contain" />
-          <h1 className="text-2xl font-bignoodle text-orange-600 tracking-wide hidden sm:block">
-            {flowConfig.tituloHeader}
-          </h1>
-        </NavLink>
+      <header
+        className={`sticky top-0 z-30 border-b border-gray-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur sm:px-6 ${
+          paso === 2 ? 'hidden sm:block' : ''
+        }`}
+      >
+        <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-3">
+          <NavLink to="/" className="flex min-w-0 items-center gap-3">
+            <img
+              src={logo}
+              alt="Hammerx"
+              className="h-8 object-contain sm:h-9"
+            />
 
-        {paso === 2 && sedeSeleccionada && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2 text-sm font-medium bg-gray-100 px-3 py-1.5 rounded-full"
-          >
-            <MapPin size={16} className="text-orange-600" />
-            <span className="text-gray-700 uppercase">
-              {sedeSeleccionada.nombre}
-            </span>
-          </motion.div>
-        )}
+            <h1 className="hidden text-xl font-bignoodle tracking-wide text-orange-600 sm:block">
+              {flowConfig.tituloHeader}
+            </h1>
+          </NavLink>
+
+          {paso === 2 && sedeSeleccionada && (
+            <motion.div
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 sm:text-sm"
+            >
+              <MapPin size={14} className="text-orange-600" />
+              <span className="max-w-[120px] truncate uppercase sm:max-w-[180px]">
+                {sedeSeleccionada.nombre}
+              </span>
+            </motion.div>
+          )}
+        </div>
       </header>
 
-      <div className="bg-white/70 sm:bg-white/80 backdrop-blur border-b border-gray-100 z-10">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-3">
-          <div className="flex items-center justify-between">
+      <div
+        className={`border-b border-gray-100 bg-[#f5f5f5] ${
+          paso === 2 ? 'hidden sm:block' : ''
+        }`}
+      >
+        <div className="mx-auto max-w-[1280px] px-4 py-3 sm:px-6 md:px-8">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div
-                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border flex-shrink-0 ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
                   paso === 1
-                    ? 'bg-orange-600 text-white border-orange-600'
-                    : 'bg-white text-orange-600 border-orange-200'
+                    ? 'border-orange-600 bg-orange-600 text-white'
+                    : 'border-orange-200 bg-white text-orange-600'
                 }`}
               >
                 1
               </div>
 
               <div className="leading-tight">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
                   Paso 1
                 </div>
-                <div className="text-xs sm:text-sm font-semibold text-gray-900">
+                <div className="text-xs font-semibold text-gray-900 sm:text-sm">
                   Elegí tu sede
                 </div>
               </div>
             </div>
 
-            <div className="flex-1 mx-2 sm:mx-4 min-w-[1rem]">
-              <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+            <div className="min-w-[44px] flex-1">
+              <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
                 <motion.div
-                  className="h-full bg-orange-600"
+                  className="h-full rounded-full bg-orange-600"
                   initial={false}
                   animate={{ width: paso === 1 ? '0%' : '100%' }}
                   transition={
@@ -209,23 +230,23 @@ export default function VentasProspectosPublicPaso1() {
 
             <div
               className={`flex items-center gap-2 sm:gap-3 ${
-                paso === 1 ? 'opacity-50' : 'opacity-100'
+                paso === 1 ? 'opacity-60' : 'opacity-100'
               }`}
             >
-              <div className="leading-tight text-right block">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
+              <div className="leading-tight text-right">
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
                   Paso 2
                 </div>
-                <div className="text-xs sm:text-sm font-semibold text-gray-900">
+                <div className="text-xs font-semibold text-gray-900 sm:text-sm">
                   {flowConfig.textoPaso2}
                 </div>
               </div>
 
               <div
-                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border flex-shrink-0 ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
                   paso === 2
-                    ? 'bg-orange-600 text-white border-orange-600'
-                    : 'bg-white text-gray-400 border-gray-200'
+                    ? 'border-orange-600 bg-orange-600 text-white'
+                    : 'border-gray-200 bg-white text-gray-400'
                 }`}
               >
                 2
@@ -358,51 +379,30 @@ export default function VentasProspectosPublicPaso1() {
               animate={{ opacity: 1, x: 0 }}
               exit={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
               transition={reduceMotion ? { duration: 0 } : undefined}
-              className="w-full"
+              className="w-full -mt-5"
             >
-              {/* Benjamin Orellana - 2026/04/20 - Se libera el ancho en mobile para que el formulario no quede encerrado por varios contenedores con padding acumulado. */}
-              <div className="w-full px-4 sm:px-0">
-                <motion.button
-                  whileHover={reduceMotion ? undefined : { x: -5 }}
-                  onClick={volverAlInicio}
-                  className="inline-flex items-center gap-2 text-gray-700 hover:text-orange-600 mb-5 font-medium transition-colors border-2 border-gray-100 bg-white px-3 py-2 rounded-2xl shadow-sm hover:border-orange-500"
-                >
-                  <ChevronLeft size={20} /> Volver atrás
-                </motion.button>
+              <div className="hidden w-full px-4 sm:block sm:px-0">
+                <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
+                  <motion.button
+                    whileHover={reduceMotion ? undefined : { x: -3 }}
+                    onClick={volverAlInicio}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:border-orange-300 hover:text-orange-600"
+                  >
+                    <ChevronLeft size={18} />
+                    Volver atrás
+                  </motion.button>
+                </div>
               </div>
 
-              <div className="w-full overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[28px] sm:border sm:border-orange-100 sm:bg-white sm:p-6 sm:shadow-sm md:p-10">
-                {/* <div className="px-4 sm:px-0">
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-orange-600">
-                    {flowConfig.badge}
-                  </div>
-
-                  <h3 className="text-2xl md:text-3xl font-bignoodle text-gray-900">
-                    Formulario de solicitud
-                  </h3>
-
-                  <p className="mt-2 text-sm md:text-base text-gray-600">
-                    Sede seleccionada:{' '}
-                    <span className="font-semibold text-gray-900">
-                      {sedeSeleccionada?.nombre}
-                    </span>
-                  </p>
-
-                  <p className="mt-2 text-sm md:text-base text-gray-600">
-                    Tipo de solicitud:{' '}
-                    <span className="font-semibold text-gray-900">
-                      {flowConfig.tipoLinkInicial}
-                    </span>
-                  </p>
-                </div> */}
-
-                {/* Benjamin Orellana - 2026/04/20 - En mobile se elimina el wrapper visual extra para que el formulario use casi todo el ancho real disponible. */}
-                <div className="mt-4 rounded-none border-0 bg-transparent p-0 sm:mt-6 sm:rounded-2xl sm:border sm:border-dashed sm:border-orange-200 sm:bg-orange-50/50 sm:p-5">
-                  <VentasProspectosPublicForm
-                    selectedSede={sedeSeleccionada}
-                    tipoLinkInicial={flowConfig.tipoLinkInicial}
-                  />
-                </div>
+              <div className="w-full overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none">
+                <VentasProspectosPublicForm
+                  selectedSede={sedeSeleccionada}
+                  tipoLinkInicial={flowConfig.tipoLinkInicial}
+                  backgroundImageUrl={backgroundPaso2}
+                  compactHeader
+                  immersiveMobile
+                  onBack={volverAlInicio}
+                />
               </div>
             </motion.div>
           )}
