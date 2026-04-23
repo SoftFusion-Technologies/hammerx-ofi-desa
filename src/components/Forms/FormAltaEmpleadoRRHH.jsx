@@ -129,7 +129,7 @@ const FormAltaEmpleadoRRHH = ({
         setCargandoInicial(true);
         const peticiones = [
           axios.get(`${URL_BASE}/sedes`),
-          axios.get(`${URL_BASE}/rrhh/usuario-sede`),
+          axios.get(`${URL_BASE}/rrhh/usuario-sede`, { params: {todos: true}}),
         ];
 
         if (datosUsuario?.id) {

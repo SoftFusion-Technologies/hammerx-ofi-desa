@@ -7,7 +7,7 @@ import { FaTimes } from "react-icons/fa";
 import HorasExtrasManuales from "../../Components/RRHH/Marcaciones/Subcomponent/HorasExtrasManuales";
 import DescuentosManuales from "../../Components/RRHH/Marcaciones/Subcomponent/DescuentosManuales";
 
-const ESTADOS = ["normal", "justificado"];
+const ESTADOS = ["injustificado", "justificado"];
 
 /* const ESTADOS_APROBACION = ["pendiente", "aprobada", "rechazada"]; */
 
@@ -80,6 +80,7 @@ const ModalEditarHorarioEmpleado = ({
       entrada: extraerHora(horarios, "entrada", "hora_entrada"),
       salida: extraerHora(horarios, "salida", "hora_salida"),
       estado: horarios?.estado || "normal",
+      estado_justificacion: horarios?.estado_justificacion || "injustificado",
       estado_aprobacion: horarios?.estado_aprobacion || "pendiente",
       accion_realizar: ESTADOS_APROBACION.find(op => op.value === horarios?.estado_aprobacion)?.accion_realizar,
     }),
@@ -144,7 +145,7 @@ const ModalEditarHorarioEmpleado = ({
   const hayCambios =
     formulario.entrada !== valoresIniciales.entrada ||
     formulario.salida !== valoresIniciales.salida ||
-    formulario.estado !== valoresIniciales.estado ||
+    formulario.estado_justificacion !== valoresIniciales.estado_justificacion ||
     formulario.estado_aprobacion !== valoresIniciales.estado_aprobacion || formulario.accion_realizar !== valoresIniciales.accion_realizar ||
     justificacion.trim() !== (horarios?.comentarios || "").trim() ||
     (puedeGestionarExtras &&
@@ -179,6 +180,7 @@ const ModalEditarHorarioEmpleado = ({
       id: horarios?.id,
       fecha: fechaLimpia,
       estado: formulario.estado,
+      estado_justificacion: formulario.estado_justificacion,
       origen: horarios?.origen || "manual",
       estado_aprobacion: formulario.estado_aprobacion,
       aprobado_por: userId,
@@ -298,24 +300,18 @@ const ModalEditarHorarioEmpleado = ({
                         Estado Cumplimiento
                       </span>
                       <select
-                        value={formulario.estado}
+                        value={formulario.estado_justificacion}
                         onChange={(e) =>
-                          manejarCambio("estado", e.target.value)
+                          manejarCambio("estado_justificacion", e.target.value)
                         }
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none"
-                        disabled={formulario.estado === "extra"}
                       >
-                        {formulario.estado === "extra" ? (
-                          <option key="extra" value="extra">
-                            EXTRA
-                          </option>
-                        ) : (
-                          ESTADOS.map((opcion) => (
+                         { ESTADOS.map((opcion) => (
                             <option key={opcion} value={opcion}>
                               {opcion.toUpperCase()}
                             </option>
                           ))
-                        )}
+                        }
                       </select>
                     </label>
 

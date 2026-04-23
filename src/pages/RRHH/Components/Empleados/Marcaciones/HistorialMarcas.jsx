@@ -37,6 +37,7 @@ import useEliminarDatos from "../../../hooks/eliminarDatos";
 import Swal from "sweetalert2";
 import ModalCambiarEstadoAprobacion from "../../../Modals/RRHH/ModalCambiarEstadoAprobacion";
 import ModalCambiarEstadoAsistencia from "../../../Modals/RRHH/ModalCambiarEstadoAsistencia";
+import ModalEstadoJustificacion from "../../../Modals/RRHH/ModalEstadoJustificacion";
 import ModalAgregarMarcacion from "../../../Modals/RRHH/ModalAgregarMarcacion";
 import { esAdminRRHH } from "../../../Utils/AdminAutorizadosRRHH";
 import { formatearDuracion } from "../../../Utils/convertirMinutosAHoras";
@@ -189,46 +190,26 @@ const HistorialMarcas = ({ usuario = null, volverAtras = null }) => {
   const colorHorario = (estado) => {
     switch (estado) {
       case "pendiente":
-        return "bg-orange-50 border text-orange-800";
+        return "bg-orange-100 text-yellow-700 border border-yellow-600";
       case "aprobada":
         return "bg-green-50 border text-green-800";
-      case "rechazada":
-        return "bg-red-50 border text-red-800";
       default:
         return "bg-gray-50 border  text-gray-800";
     }
   };
 
-  const colorEstadoCumplimiento = (estado, calendario = false) => {
-    switch (estado) {
-      case "normal":
-        return `${
-          calendario
-            ? "text-green-800 border border-green-200"
-            : "bg-green-50 text-green-800 border border-green-200"
-        }`;
+  const colorEstadoJustificacion = (estado) => {
+  switch (estado) {
+    case "justificado":
+      return "bg-green-50 text-green-800 border border-green-200";
 
-      case "justificado":
-        return `${
-          calendario
-            ? "text-yellow-800 border border-yellow-200"
-            : "bg-yellow-50 text-yellow-800 border border-yellow-200"
-        }`;
+    case "injustificado":
+      return "bg-yellow-50 text-yellow-700 border border-yellow-600";
 
-      case "tarde":
-        return `${
-          calendario
-            ? "text-red-800 border border-red-200"
-            : "bg-red-50 text-red-800 border border-red-200"
-        }`;
-      default:
-        return `${
-          calendario
-            ? "text-gray-800 border border-gray-200"
-            : "bg-gray-50 text-gray-800 border border-gray-200"
-        }`;
-    }
-  };
+    default:
+      return "bg-gray-50 text-gray-800 border border-gray-200";
+  }
+};
 
 const renderDiasSemana = () => {
   const days = [];
@@ -666,13 +647,13 @@ return (
                       });
                       if (esAdminAutorizadoRRHHH) setAbrirModalAprobacion(true);
                     }}
-                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-bold text-xs border transition-all ${colorHorario(
+                    className={`flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl font-bold text-xs border transition-all ${colorHorario(
                       turno.estado_aprobacion
                     )}`}
                   >
                     {turno.estado_aprobacion.toUpperCase() === "PENDIENTE" ? (
                       <>
-                        <IoIosWarning size={15} className="opacity-70" />
+                        <IoIosWarning size={17} className="opacity-70" />
                         {turno.estado_aprobacion.toUpperCase()}
                       </>
                     ) : (
@@ -682,13 +663,20 @@ return (
 
                   <button
                     onClick={() => {
-                      if (!esAdminAutorizadoRRHHH || turno.estado.toLowerCase() === "extra") return;
+                      if (!esAdminAutorizadoRRHHH) return;
                       setHorarioSeleccionado({ ...turno, fecha_registro: fechaFormateada });
                       setAbrirModalEstadoAsistencia(true);
                     }}
-                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-bold text-xs border transition-all ${colorEstadoCumplimiento(turno.estado)}`}
+                    className={`flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl font-bold text-xs border transition-all ${colorEstadoJustificacion(turno.estado_justificacion)}`}
                   >
-                    {turno.estado.toUpperCase()}
+                                        {turno.estado_justificacion.toUpperCase() === "INJUSTIFICADO" ? (
+                      <>
+                        <IoIosWarning size={17} className="opacity-70" />
+                        {turno.estado_justificacion.toUpperCase()}
+                      </>
+                    ) : (
+                      turno.estado_justificacion.toUpperCase()
+                    )}
                   </button>
 
                   {/* Botón Crear Consulta (Recuperado) */}
@@ -925,7 +913,7 @@ return (
         />
       )}
       {abrirModalEstadoAsistencia && horarioSeleccionado && (
-        <ModalCambiarEstadoAsistencia
+        <ModalEstadoJustificacion
           horarios={horarioSeleccionado}
           fetch={realizarPeticion}
           cerrarModal={() => {

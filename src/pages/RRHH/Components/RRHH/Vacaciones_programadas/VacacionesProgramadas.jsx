@@ -10,21 +10,20 @@ import {
 import { usarPromiseAll } from "../../../hooks/usarPromiseAll";
 import dayjs from "dayjs";
 import ModalAsignarVacaciones from "../../../Modals/RRHH/ModalAsignarVacaciones";
-
-const headers = [
-  { key: "empleado", label: "Empleado" },
-  { key: "sede", label: "Sede" },
-  { key: "diasProgramados", label: "Días Programados" },
-  { key: "acciones", label: "Acciones", align: "center" },
-];
+import { encabezadoTablaVacacionesProgramadas } from "./helpers/encabezadoTabla";
+import { TreePalm } from "lucide-react";
+import { useAuth } from "../../../../../AuthContext";
+import { esAdminRRHH } from "../../../Utils/AdminAutorizadosRRHH";
 
 const VacacionesProgramadas = ({ volverAtras }) => {
   const [busqueda, setBusqueda] = useState("");
-  const [sedeSeleccionada, setSedeSeleccionada] = useState("");
-  const [datosFiltrados, setDatosFiltrados] = useState({});
+  const [sedeSeleccionada, setSedeSeleccionada] = useState("todas_sedes");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
+  const [filtroVacaciones, setFiltroVacaciones] = useState("todos");
+
   const toUpperText = (value) => (value ? String(value).toUpperCase() : "");
+  const usuarioAuth = useAuth();
 
   const titulos = {
     titulo: "Vacaciones Programadas",
@@ -32,26 +31,76 @@ const VacacionesProgramadas = ({ volverAtras }) => {
     icono: <FaPlaneDeparture className="text-orange-500" />,
   };
 
-  const { datos: datosVacaciones, refetch: refetchVacaciones } = usarPromiseAll(
-    [{ endpoint: "rrhh/vacaciones-programadas" }],
+  // 1. Validamos permisos
+  const esAdminAutorizadoRRHHH = esAdminRRHH(
+    usuarioAuth.userLevel,
+    usuarioAuth.userLevelAdmin,
   );
 
+  // 2. Fetch de Vacaciones
+  const { datos: datosVacaciones, ejecutar: refetchVacaciones } =
+    usarPromiseAll([{ endpoint: "rrhh/vacaciones-programadas" }]);
+
+  // 3. Fetch de Usuarios y Sedes (Lógica movida de la barra)
+  const { datos: datosUsuariosSedes } = usarPromiseAll([
+    { endpoint: "rrhh/usuario-sede" },
+    { endpoint: "sedes" },
+  ]);
+
   const vacaciones = datosVacaciones?.[0] || [];
+  const [usuarios = [], sedes = []] = datosUsuariosSedes || [[], []];
+
+  // 4. Filtrado de datos base (Lógica movida de la barra)
+  const empleadosDatos = usuarios.filter(
+    (u) =>
+      Number(u?.eliminado || 0) !== 1 &&
+      Number(u?.activo || 0) === 1 &&
+      Number(u?.usuario?.level_admin) !== 1,
+  );
+
+  const sedesDatos = sedes.filter(
+    (s) => s.es_ciudad === true && s.nombre.toLowerCase() !== "multisede",
+  );
 
   const empleadosConVacaciones = React.useMemo(() => {
-    if (!datosFiltrados.empleadosDatos) return [];
+    const inicio = performance.now();
 
-    return datosFiltrados.empleadosDatos.map((emp) => {
-      const vacacionesEmpleado = vacaciones.filter(
-        (v) => Number(v.usuario_emp_id) === Number(emp.usuario_id),
-      );
+    if (!empleadosDatos.length) return [];
+    const vacacionesMap = vacaciones.reduce((acc, v) => {
+      const id = v.usuario_emp_id;
+      if (!acc[id]) acc[id] = [];
+      acc[id].push(v);
+      return acc;
+    }, {});
 
-      return {
-        ...emp,
-        vacaciones: vacacionesEmpleado,
-      };
-    });
-  }, [datosFiltrados.empleadosDatos, vacaciones]);
+    const busquedaLower = busqueda.toLowerCase().trim();
+    const esSedeFiltrada = sedeSeleccionada !== "todas_sedes";
+
+    const resultadoFinal = empleadosDatos.reduce((resultado, emp) => {
+      if (esSedeFiltrada && Number(emp.sede_id) !== Number(sedeSeleccionada))
+        return resultado;
+      if (busquedaLower !== "") {
+        const nombre = String(emp.usuario?.name || "").toLowerCase();
+        if (!nombre.includes(busquedaLower)) return resultado;
+      }
+      const vacacionesEmpleado = vacacionesMap[emp.usuario_id] || [];
+      const tieneVacaciones = vacacionesEmpleado.length > 0;
+      if (filtroVacaciones === "t_vacaciones" && !tieneVacaciones)
+        return resultado;
+      if (filtroVacaciones === "s_vacaciones" && tieneVacaciones)
+        return resultado;
+
+      resultado.push({ ...emp, vacaciones: vacacionesEmpleado });
+      return resultado;
+    }, []);
+    return resultadoFinal;
+  }, [
+    empleadosDatos,
+    vacaciones,
+    filtroVacaciones,
+    sedeSeleccionada,
+    busqueda,
+  ]);
 
   const calcularDias = (desde, hasta) => {
     return dayjs(hasta).diff(dayjs(desde), "day") + 1;
@@ -67,6 +116,21 @@ const VacacionesProgramadas = ({ volverAtras }) => {
     setModalAbierto(false);
   };
 
+  const filtroVacacionesAdicionalBusqueda = (
+    <div className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-2 shadow-sm sm:w-auto">
+      <TreePalm className="text-sm text-gray-400" />
+      <select
+        className="w-full cursor-pointer bg-transparent pr-2 text-xs sm:text-sm text-gray-700 outline-none"
+        value={filtroVacaciones}
+        onChange={(e) => setFiltroVacaciones(e.target.value)}
+      >
+        <option value="todos">TODOS</option>
+        <option value="t_vacaciones">CON VACACIONES</option>
+        <option value="s_vacaciones">SIN VACACIONES</option>
+      </select>
+    </div>
+  );
+
   return (
     <>
       <div className="animate-fade-in-up">
@@ -74,35 +138,34 @@ const VacacionesProgramadas = ({ volverAtras }) => {
           <BotonVolver onClick={volverAtras} />
         </div>
 
+        {/* BarraBusqueda ahora recibe propiedades planas y limpias */}
         <BarraBusqueda
           titulos={titulos}
-          busqueda={{
-            busqueda,
-            setBusqueda,
-            sedeSeleccionada,
-            setSedeSeleccionada,
-          }}
-          datosFiltrados={{
-            setDatosFiltrados,
-          }}
+          textoBusqueda={busqueda}
+          setTextoBusqueda={setBusqueda}
+          sedeSeleccionada={sedeSeleccionada}
+          setSedeSeleccionada={setSedeSeleccionada}
+          sedesDatos={sedesDatos}
+          mostrarFiltroSede={true}
+          filtrosNuevos={filtroVacacionesAdicionalBusqueda}
         />
 
         <Tabla
-          headers={headers}
+          headers={encabezadoTablaVacacionesProgramadas}
           datos={empleadosConVacaciones}
           renderRow={(item) => (
             <>
               <td className="px-6 py-4">
                 <div className="font-medium text-gray-800">
-                  {toUpperText(item.usuario.name)}
+                  {toUpperText(item.usuario?.name)}
                 </div>
                 <div className="text-xs text-gray-400">
-                  {toUpperText(item.usuario.email)}
+                  {toUpperText(item.usuario?.email)}
                 </div>
               </td>
               <td className="px-6 py-4">
                 <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
-                  {toUpperText(normalizarSedes(item.sede.nombre))}
+                  {toUpperText(normalizarSedes(item.sede?.nombre))}
                 </span>
               </td>
               <td className="px-6 py-4">
@@ -137,7 +200,7 @@ const VacacionesProgramadas = ({ volverAtras }) => {
             <div>
               <p className="font-semibold">{item.usuario?.name}</p>
               <div className="text-xs text-gray-400">
-                {toUpperText(item.usuario.email)}
+                {toUpperText(item.usuario?.email)}
               </div>
               <p className="text-sm text-gray-500">{item.sede?.nombre}</p>
             </div>

@@ -11,15 +11,11 @@ import ModalAgregarFeriado from "../../../Modals/RRHH/ModalAgregarFeriado";
 
 const FeriadosProgramados = ({ volverAtras }) => {
   /* Estados  */
-  const [busqueda, setBusqueda] = useState("");
-  const [sedeSeleccionada, setSedeSeleccionada] = useState("");
-  const [datosFiltrados, setDatosFiltrados] = useState({});
   const [feriados, setFeriados] = useState([]);
   const [abrirModalGestionarFeriado, setAbrirModalGestionarFeriado] =
     useState(false);
   const [datosModal, setDatosModal] = useState({
-    fecha: "",
-    sedesSeleccionadas: [],
+    fecha: ""
   });
 
   /* Estados para las fechas */
@@ -60,35 +56,11 @@ const FeriadosProgramados = ({ volverAtras }) => {
     obtenerFeriados();
   }, [fechaActual]);
 
-  const todosLosFeriados = [
-    // Feriados oficiales
-    ...(feriados || []).map((f) => ({
-      fecha: f.date,
-      label: f.localName,
-      esOficial: true,
-    })),
-
-    //  Feriados por sede
-    ...(feriadosDB || []).map((f) => ({
-      fecha: f.fecha,
-      label: f.sede?.nombre || "Sede",
-      esOficial: false,
-    })),
-  ];
-
   return (
     <div>
       <BotonVolver onClick={volverAtras} />
       <BarraBusqueda
         titulos={titulos}
-        busqueda={{
-          sedeSeleccionada,
-          setSedeSeleccionada,
-          mostrarFiltroSede: false,
-        }}
-        datosFiltrados={{
-          setDatosFiltrados,
-        }}
       />
 
       {/*  CALENDARIO */}
@@ -129,10 +101,6 @@ const FeriadosProgramados = ({ volverAtras }) => {
             );
 
             if (feriadosSistema.length > 0) {
-              const nombresSedes = feriadosSistema
-                .map((f) => f.sede?.nombre)
-                .filter(Boolean);
-
               return (
                 <div className="flex flex-col items-center mt-1">
                   <span className="text-[10px] font-bold text-blue-600">
@@ -168,7 +136,6 @@ const FeriadosProgramados = ({ volverAtras }) => {
         {abrirModalGestionarFeriado && (
           <ModalAgregarFeriado
             cerrarModal={() => setAbrirModalGestionarFeriado(false)}
-            sedes={datosFiltrados.sedesDatos || []}
             fetch={realizarPeticionFeriados}
             datosIniciales={datosModal}
           />

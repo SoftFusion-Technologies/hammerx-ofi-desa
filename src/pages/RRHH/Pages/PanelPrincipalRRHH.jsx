@@ -17,6 +17,7 @@ import {
   FaMapMarkerAlt,
   FaStoreAlt,
   FaTable,
+  FaPlaneDeparture
 } from "react-icons/fa";
 import { BsCalendarX } from "react-icons/bs";
 import { IoNewspaperOutline } from "react-icons/io5";
@@ -758,7 +759,7 @@ const PanelPrincipalRRHH = () => {
                 </p>
               </div>
             </motion.button> */}
-{/*                     {esAdminAutorizadoRRHHH  && (
+              {esAdminAutorizadoRRHHH  && (
               <motion.button
                 variants={itemStagger}
                 onClick={() => manejarClick("Vacaciones")}
@@ -766,19 +767,19 @@ const PanelPrincipalRRHH = () => {
                 whileTap={{ scale: 0.97 }}
                 className="bg-white/95 backdrop-blur rounded-3xl p-2 md:p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
               >
-                <div className="bg-gray-100 p-3 rounded-xl text-gray-600 ring-1 ring-gray-200">
-                  <FaCog className="text-2xl" />
+                <div className="bg-yellow-50 p-3 rounded-xl text-yellow-600 ring-1 ring-yellow-200">
+                  <FaPlaneDeparture className="text-2xl" />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-800 font-bignoodle text-xl tracking-wide">
                     VACACIONES
                   </h4>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Vacaciones programadas
+                    Vacaciones programadas para los empleados
                   </p>
                 </div>
               </motion.button>
-            )} */}
+            )}
             {esAdminAutorizadoRRHHH  && (
               <motion.button
                 variants={itemStagger}
@@ -787,7 +788,7 @@ const PanelPrincipalRRHH = () => {
                 whileTap={{ scale: 0.97 }}
                 className="bg-white/95 backdrop-blur rounded-3xl p-2 md:p-5 shadow-md border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-row items-center justify-start gap-4 text-left"
               >
-                <div className="bg-gray-100 p-3 rounded-xl text-gray-600 ring-1 ring-orange-200">
+                <div className="bg-orange-50 p-3 rounded-xl text-orange-600 ring-1 ring-orange-200">
                   <BsCalendarX className="text-2xl text-orange-400 bg-orange-200" />
                 </div>
                 <div>
