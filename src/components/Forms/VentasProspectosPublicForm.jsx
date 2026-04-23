@@ -100,31 +100,49 @@ const formatearFechaInput = (fecha) => {
   return `${year}-${month}-${day}`;
 };
 
-/* Benjamin Orellana - 2026/04/21 - Se calcula el rango habilitado únicamente de lunes a viernes de la semana actual, dejando sábados y domingos fuera. */
-const obtenerRangoSemanaActual = () => {
+/* Benjamin Orellana - 2026/04/23 - Normaliza el texto de actividad para identificar Pilates aunque cambie mayúsculas, espacios o acentos. */
+const normalizarActividadFecha = (actividad = '') =>
+  String(actividad)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
+/* Benjamin Orellana - 2026/04/23 - Determina si la actividad seleccionada corresponde a Pilates para aplicar la ventana corta de 7 días. */
+const esActividadPilates = (actividad = '') => {
+  const actividadNormalizada = normalizarActividadFecha(actividad);
+  return actividadNormalizada.includes('pilates');
+};
+
+/* Benjamin Orellana - 2026/04/23 - Suma días corridos a una fecha manteniendo la hora fija para evitar corrimientos por zona horaria. */
+const sumarDiasFecha = (fechaBase, dias) => {
+  const fecha = new Date(fechaBase);
+  fecha.setDate(fecha.getDate() + dias);
+  fecha.setHours(12, 0, 0, 0);
+  return fecha;
+};
+
+/* Benjamin Orellana - 2026/04/23 - Calcula el rango habilitado de fechas según la actividad: 7 días para Pilates y 30 días para las demás. */
+const obtenerRangoFechaPorActividad = (actividad) => {
   const hoy = new Date();
   hoy.setHours(12, 0, 0, 0);
 
-  const diaSemana = hoy.getDay();
-  const desplazamientoAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
-
-  const inicioSemana = new Date(hoy);
-  inicioSemana.setDate(hoy.getDate() + desplazamientoAlLunes);
-  inicioSemana.setHours(12, 0, 0, 0);
-
-  const finSemanaHabil = new Date(inicioSemana);
-  finSemanaHabil.setDate(inicioSemana.getDate() + 4);
-  finSemanaHabil.setHours(12, 0, 0, 0);
+  const limiteDias = esActividadPilates(actividad) ? 7 : 30;
+  const fechaMaxima = sumarDiasFecha(hoy, limiteDias);
 
   return {
-    inicioSemana: formatearFechaInput(inicioSemana),
-    finSemanaHabil: formatearFechaInput(finSemanaHabil),
-    hoy: formatearFechaInput(hoy)
+    minFechaClase: formatearFechaInput(hoy),
+    maxFechaClase: formatearFechaInput(fechaMaxima)
   };
 };
 
-/* Benjamin Orellana - 2026/04/21 - Valida que la fecha pertenezca a la semana actual y además sea un día hábil entre lunes y viernes. */
-const esFechaHabilitadaSemanaActual = (fecha, minFecha, maxFecha) => {
+/* Benjamin Orellana - 2026/04/23 - Valida que la fecha esté dentro del rango permitido por actividad y además sea un día hábil entre lunes y viernes. */
+const esFechaHabilitadaPorActividad = (
+  fecha,
+  minFecha,
+  maxFecha,
+  actividad
+) => {
   if (!fecha) return false;
   if (fecha < minFecha || fecha > maxFecha) return false;
 
@@ -470,17 +488,10 @@ export default function VentasProspectosPublicForm({
     cargandoHorariosPilates,
     horariosPilatesDelDia.length
   ]);
-
-  /* Benjamin Orellana - 2026/04/21 - Se restringe la fecha seleccionable a la semana corriente y solo a días hábiles de lunes a viernes. */
-  const { minFechaSemanaActual, maxFechaSemanaActual } = useMemo(() => {
-    const rango = obtenerRangoSemanaActual();
-
-    return {
-      minFechaSemanaActual:
-        rango.hoy > rango.inicioSemana ? rango.hoy : rango.inicioSemana,
-      maxFechaSemanaActual: rango.finSemanaHabil
-    };
-  }, []);
+  /* Benjamin Orellana - 2026/04/23 - Se calcula el rango habilitado de fecha según la actividad elegida: 7 días para Pilates y 30 días para el resto, manteniendo días hábiles. */
+  const { minFechaClase, maxFechaClase } = useMemo(() => {
+    return obtenerRangoFechaPorActividad(form.actividad);
+  }, [form.actividad]);
 
   // Benjamin Orellana - 2026/04/20 - Se centralizan alertas visuales con SweetAlert2 para reemplazar mensajes fijos dentro del formulario.
   const showFormAlert = ({
@@ -645,11 +656,29 @@ export default function VentasProspectosPublicForm({
     });
   };
 
-  /* Benjamin Orellana - 2026/04/22 - Selecciona actividad desde el dropdown propio, lo cierra y lleva visualmente al siguiente campo del flujo. */
-  const seleccionarActividadPublica = (actividad) => {
-    handleChange('actividad', actividad);
+  // Benjamin Orellana - 2026/04/23 - Al cambiar la actividad se resetean fecha, hora y selección de horarios dependientes para evitar inconsistencias entre Pilates y el resto de actividades.
+  const seleccionarActividadPublica = (actividadNueva) => {
+    const actividadActual = form.actividad || '';
+
+    if (actividadActual === actividadNueva) {
+      setMostrarActividadOptions(false);
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      actividad: actividadNueva,
+      fecha_clase: '',
+      hora_clase: '',
+      pilates_horario_id: null,
+      pilates_hhmm: '',
+      pilates_grp: '',
+      pilates_clase_num: null,
+      necesita_profe: false
+    }));
+
+    setHorarioPilatesSeleccionado(null);
     setMostrarActividadOptions(false);
-    scrollHaciaFecha();
   };
 
   /* Benjamin Orellana - 2026/04/22 - Selecciona asesor desde el dropdown propio y colapsa la lista para mantener el formulario limpio. */
@@ -715,8 +744,11 @@ export default function VentasProspectosPublicForm({
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor);
   };
 
+  // Benjamin Orellana - 2026/04/23 - Se adapta el submit para validar la fecha según la actividad: 7 días hábiles para Pilates y 30 días hábiles para el resto, reutilizando la nueva lógica dinámica del calendario.
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const actividadEsPilates = esActividadPilates(form.actividad);
 
     if (!selectedSede?.id) {
       await showFormAlert({
@@ -784,21 +816,24 @@ export default function VentasProspectosPublicForm({
     }
 
     if (
-      !esFechaHabilitadaSemanaActual(
+      !esFechaHabilitadaPorActividad(
         form.fecha_clase,
-        minFechaSemanaActual,
-        maxFechaSemanaActual
+        minFechaClase,
+        maxFechaClase,
+        form.actividad
       )
     ) {
       await showFormAlert({
         icon: 'warning',
         title: 'Fecha inválida',
-        text: 'Solo puedes seleccionar días hábiles de la semana actual.'
+        text: actividadEsPilates
+          ? 'Para Pilates solo puedes seleccionar días hábiles dentro de los próximos 7 días.'
+          : 'Solo puedes seleccionar días hábiles dentro de los próximos 30 días.'
       });
       return;
     }
 
-    if (form.actividad !== 'Pilates' && !form.hora_clase) {
+    if (!actividadEsPilates && !form.hora_clase) {
       await showFormAlert({
         icon: 'warning',
         title: 'Campo requerido',
@@ -807,13 +842,13 @@ export default function VentasProspectosPublicForm({
       return;
     }
 
-    // Benjamin Orellana - 2026/04/20 - Para Pilates se exige una fecha válida de lunes a viernes y un horario seleccionado.
-    if (form.actividad === 'Pilates') {
+    // Benjamin Orellana - 2026/04/23 - Para Pilates se exige una fecha válida dentro de la ventana corta y un horario disponible resuelto según el día elegido.
+    if (actividadEsPilates) {
       if (!grupoPilatesSeleccionado) {
         await showFormAlert({
           icon: 'warning',
           title: 'Fecha inválida',
-          text: 'Para Pilates debés elegir una fecha válida de lunes a viernes.'
+          text: 'Para Pilates debés elegir una fecha válida de lunes a viernes dentro de los próximos 7 días.'
         });
         return;
       }
@@ -842,26 +877,26 @@ export default function VentasProspectosPublicForm({
       sede_id: Number(selectedSede.id),
       sede: sedeConfig.legacy,
       fecha_clase: form.fecha_clase,
-      hora_clase: form.hora_clase,
+      // Benjamin Orellana - 2026/04/23 - Se mantiene compatibilidad con el backend legado enviando hora_clase también en Pilates con el hh:mm seleccionado.
+      hora_clase: actividadEsPilates
+        ? String(horarioPilatesSeleccionado?.hhmm || '').trim()
+        : String(form.hora_clase || '').trim(),
       necesita_profe:
-        tipoLinkInicial === 'Clase de prueba' && form.actividad !== 'Pilates'
+        tipoLinkInicial === 'Clase de prueba' && !actividadEsPilates
           ? !!form.necesita_profe
           : false,
       tipo_link: tipoLinkInicial,
       observacion: form.observacion.trim(),
-      pilates_horario_id:
-        form.actividad === 'Pilates'
-          ? Number(horarioPilatesSeleccionado?.resolved_horario_id)
-          : null,
-      pilates_hhmm:
-        form.actividad === 'Pilates'
-          ? String(horarioPilatesSeleccionado?.hhmm || '').trim()
-          : null,
-      pilates_grp:
-        form.actividad === 'Pilates'
-          ? String(horarioPilatesSeleccionado?.grp || '').trim()
-          : null,
-      pilates_clase_num: form.actividad === 'Pilates' ? 1 : null
+      pilates_horario_id: actividadEsPilates
+        ? Number(horarioPilatesSeleccionado?.resolved_horario_id)
+        : null,
+      pilates_hhmm: actividadEsPilates
+        ? String(horarioPilatesSeleccionado?.hhmm || '').trim()
+        : null,
+      pilates_grp: actividadEsPilates
+        ? String(horarioPilatesSeleccionado?.grp || '').trim()
+        : null,
+      pilates_clase_num: actividadEsPilates ? 1 : null
     };
 
     try {
@@ -905,7 +940,6 @@ export default function VentasProspectosPublicForm({
       setEnviando(false);
     }
   };
-
   // Benjamin Orellana - 2026/04/20 - Recibe la selección del modal de Pilates, ubica el horario real y lo aplica al formulario público.
   const handleConfirmarHorarioPilates = (seleccion) => {
     if (!seleccion) return;
@@ -1023,6 +1057,10 @@ export default function VentasProspectosPublicForm({
     ? 'h-8 w-full border-0 bg-transparent p-0 text-[0.93rem] font-medium text-slate-700 outline-none placeholder:text-slate-500/90 sm:text-[0.98rem]'
     : GLASS_FIELD_CLASS;
 
+  // Benjamin Orellana - 2026/04/23 - Unifica el estilo visual de los placeholders simulados de fecha y hora para que coincidan con el resto de los campos del formulario.
+  const fakePlaceholderClass =
+    'pointer-events-none absolute inset-y-0 left-0 z-[2] flex items-center text-[0.95rem] font-medium text-slate-400 sm:text-[1rem]';
+  
   return (
     <div className="relative isolate w-full overflow-hidden bg-[#0f1115] text-white sm:rounded-[34px]">
       <div className="absolute inset-0">
@@ -1233,43 +1271,55 @@ export default function VentasProspectosPublicForm({
                 </div>
               </GlassDropdownCard>
             </div>
-
             <div ref={fechaFieldRef} className="space-y-2">
               <GlassInputCard icon={CalendarDays} compact={immersiveMobile}>
                 <label htmlFor="fecha_clase" className="sr-only">
                   Fecha de visita
                 </label>
 
-                <input
-                  id="fecha_clase"
-                  type="date"
-                  min={minFechaSemanaActual}
-                  max={maxFechaSemanaActual}
-                  value={form.fecha_clase}
-                  onChange={(e) => {
-                    const nuevaFecha = e.target.value;
+                <div className="relative">
+                  {!form.fecha_clase && (
+                    <span className={fakePlaceholderClass}>
+                      Elegí el día para tu visita
+                    </span>
+                  )}
 
-                    if (
-                      nuevaFecha &&
-                      !esFechaHabilitadaSemanaActual(
-                        nuevaFecha,
-                        minFechaSemanaActual,
-                        maxFechaSemanaActual
-                      )
-                    ) {
-                      showFormAlert({
-                        icon: 'warning',
-                        title: 'Fecha inválida',
-                        text: 'Solo puedes seleccionar días hábiles de la semana actual.'
-                      });
-                      return;
-                    }
+                  <input
+                    id="fecha_clase"
+                    type="date"
+                    min={minFechaClase}
+                    max={maxFechaClase}
+                    value={form.fecha_clase}
+                    onChange={(e) => {
+                      const nuevaFecha = e.target.value;
 
-                    handleChange('fecha_clase', nuevaFecha);
-                  }}
-                  disabled={enviando}
-                  className={fieldTextClass}
-                />
+                      if (
+                        nuevaFecha &&
+                        !esFechaHabilitadaPorActividad(
+                          nuevaFecha,
+                          minFechaClase,
+                          maxFechaClase,
+                          form.actividad
+                        )
+                      ) {
+                        showFormAlert({
+                          icon: 'warning',
+                          title: 'Fecha inválida',
+                          text: esActividadPilates(form.actividad)
+                            ? 'Para Pilates solo puedes seleccionar días hábiles dentro de los próximos 7 días.'
+                            : 'Solo puedes seleccionar días hábiles dentro de los próximos 30 días.'
+                        });
+                        return;
+                      }
+
+                      handleChange('fecha_clase', nuevaFecha);
+                    }}
+                    disabled={enviando}
+                    className={`${fieldTextClass} relative z-[1] bg-transparent pr-8 ${
+                      !form.fecha_clase ? 'text-transparent' : ''
+                    }`}
+                  />
+                </div>
               </GlassInputCard>
             </div>
 
@@ -1280,45 +1330,55 @@ export default function VentasProspectosPublicForm({
                     Hora de visita
                   </label>
 
-                  <input
-                    id="hora_clase"
-                    type="time"
-                    min="06:00"
-                    max="23:00"
-                    step="60"
-                    value={form.hora_clase}
-                    onChange={(e) => {
-                      const horaIngresada = e.target.value;
-                      const nuevaHora =
-                        normalizarHoraVisitaPublica(horaIngresada);
+                  <div className="relative">
+                    {!form.hora_clase && (
+                      <span className={fakePlaceholderClass}>
+                        Seleccioná tu horario
+                      </span>
+                    )}
 
-                      if (
-                        nuevaHora &&
-                        (nuevaHora < '06:00' || nuevaHora > '23:00')
-                      ) {
-                        showFormAlert({
-                          icon: 'warning',
-                          title: 'Hora inválida',
-                          text: 'La hora de visita debe estar entre las 6:00 AM y las 11:00 PM.'
-                        });
-                        return;
-                      }
+                    <input
+                      id="hora_clase"
+                      type="time"
+                      min="06:00"
+                      max="23:00"
+                      step="60"
+                      value={form.hora_clase}
+                      onChange={(e) => {
+                        const horaIngresada = e.target.value;
+                        const nuevaHora =
+                          normalizarHoraVisitaPublica(horaIngresada);
 
-                      if (horaIngresada && horaIngresada !== nuevaHora) {
-                        showFormAlert({
-                          icon: 'info',
-                          title: 'Hora ajustada automáticamente',
-                          text: `Interpretamos tu horario como ${formatearHoraAMPM(
-                            nuevaHora
-                          )} para evitar confusiones.`
-                        });
-                      }
+                        if (
+                          nuevaHora &&
+                          (nuevaHora < '06:00' || nuevaHora > '23:00')
+                        ) {
+                          showFormAlert({
+                            icon: 'warning',
+                            title: 'Hora inválida',
+                            text: 'La hora de visita debe estar entre las 6:00 AM y las 11:00 PM.'
+                          });
+                          return;
+                        }
 
-                      handleChange('hora_clase', nuevaHora);
-                    }}
-                    disabled={enviando}
-                    className={fieldTextClass}
-                  />
+                        if (horaIngresada && horaIngresada !== nuevaHora) {
+                          showFormAlert({
+                            icon: 'info',
+                            title: 'Hora ajustada automáticamente',
+                            text: `Interpretamos tu horario como ${formatearHoraAMPM(
+                              nuevaHora
+                            )} para evitar confusiones.`
+                          });
+                        }
+
+                        handleChange('hora_clase', nuevaHora);
+                      }}
+                      disabled={enviando}
+                      className={`${fieldTextClass} relative z-[1] bg-transparent pr-8 ${
+                        !form.hora_clase ? 'text-transparent' : ''
+                      }`}
+                    />
+                  </div>
                 </GlassInputCard>
               </div>
             ) : (
