@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import PlanFormModal from '../../../components/Forms/DebitosAutomaticos/PlanFormModal.jsx';
 import PlanSedeFormModal from '../../../components/Forms/DebitosAutomaticos/PlanSedeFormModal.jsx';
-
+import PlanSedeActualizarPrecioModal from '../../../components/Forms/DebitosAutomaticos/Modals/PlanSedeActualizarPrecioModal.jsx';
 import Swal from 'sweetalert2';
 
 const API_PLANES_URL = 'http://localhost:8080/debitos-automaticos-planes';
@@ -159,6 +159,11 @@ const PlanesPage = () => {
 
   const [openPlanModal, setOpenPlanModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+
+  /* Benjamin Orellana - 2026/04/23 - Estados para controlar la apertura de la modal de actualización masiva de precio y el registro plan+sede seleccionado. */
+  const [openActualizarPrecioModal, setOpenActualizarPrecioModal] =
+    useState(false);
+  const [selectedPlanSedeImpacto, setSelectedPlanSedeImpacto] = useState(null);
 
   const handleOpenCreatePlan = () => {
     setSelectedPlan(null);
@@ -506,6 +511,69 @@ const PlanesPage = () => {
     });
   }, [planesFiltrados, sedeActiva]);
 
+  /* Benjamin Orellana - 2026/04/23 - Abre la modal de actualización masiva de precio solo si el plan ya tiene una configuración activa en la sede actualmente seleccionada. */
+  const handleOpenActualizarPrecio = (plan) => {
+    if (!plan?.precio_sede_actual?.id) return;
+
+    setSelectedPlanSedeImpacto({
+      ...plan.precio_sede_actual,
+      plan,
+      sede: sedeSeleccionada
+    });
+    setOpenActualizarPrecioModal(true);
+  };
+
+  /* Benjamin Orellana - 2026/04/23 - Cierra la modal de actualización masiva y limpia el contexto seleccionado para evitar reaperturas con datos anteriores. */
+  const handleCloseActualizarPrecio = () => {
+    setSelectedPlanSedeImpacto(null);
+    setOpenActualizarPrecioModal(false);
+  };
+
+  /* Benjamin Orellana - 2026/04/23 - Solicita al backend la previsualización del impacto de precio sobre clientes y períodos alcanzados usando la misma base URL del módulo de planes por sede. */
+  const handlePreviewActualizarPrecio = async ({
+    id,
+    nuevo_precio_base,
+    aplicar_desde_anio,
+    aplicar_desde_mes
+  }) => {
+    const { data } = await axios.post(
+      `${API_PLANES_SEDES_URL}/${id}/preview-actualizacion-precio`,
+      {
+        nuevo_precio_base,
+        aplicar_desde_anio,
+        aplicar_desde_mes
+      }
+    );
+
+    return data;
+  };
+
+  /* Benjamin Orellana - 2026/04/23 - Aplica la actualización de precio por plan+sede solo a los clientes seleccionados y recalcula los períodos futuros definidos por el usuario. */
+  const handleApplyActualizarPrecio = async ({
+    id,
+    nuevo_precio_base,
+    aplicar_desde_anio,
+    aplicar_desde_mes,
+    clientes_ids
+  }) => {
+    const { data } = await axios.put(
+      `${API_PLANES_SEDES_URL}/${id}/aplicar-actualizacion-precio`,
+      {
+        nuevo_precio_base,
+        aplicar_desde_anio,
+        aplicar_desde_mes,
+        clientes_ids
+      }
+    );
+
+    return data;
+  };
+
+  /* Benjamin Orellana - 2026/04/23 - Refresca el catálogo una vez aplicada la actualización de precio para reflejar el nuevo valor vigente en la sede activa sin perder el resto del flujo. */
+  const handleAppliedActualizarPrecio = async () => {
+    await fetchCatalogos({ silent: true });
+  };
+
   return (
     <>
       <NavbarStaff />
@@ -727,7 +795,7 @@ const PlanesPage = () => {
                           Cobertura
                         </th> */}
                         <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
-                          Creación
+                          Alta
                         </th>
                         <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.18em] text-slate-200">
                           Actualización
@@ -743,7 +811,6 @@ const PlanesPage = () => {
                         const activo = getActivo(plan?.activo);
                         const preciosActivos =
                           plan?.precios_sedes_activos || [];
-                        const coberturaTexto = `${preciosActivos.length}/${sedesOptions.length || 0}`;
                         const precioSedeActual =
                           plan?.precio_sede_actual || null;
 
@@ -798,53 +865,44 @@ const PlanesPage = () => {
                               {sedeActiva === 'TODAS' ? (
                                 preciosActivos.length > 0 ? (
                                   <div className="flex max-w-[420px] flex-wrap gap-2">
-                                    {preciosActivos.map((item) => (
-                                      <div
-                                        key={item?.id}
-                                        className="rounded-2xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700 transition group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white"
+                                    {preciosActivos.map((item, itemIndex) => (
+                                      <span
+                                        key={`${item?.id ?? itemIndex}-${item?.sede_id ?? 'sede'}`}
+                                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white"
                                       >
-                                        <span className="block whitespace-nowrap">
-                                          {item?.sede?.nombre || 'Sede'}
+                                        <span>
+                                          {item?.sede?.nombre ||
+                                            `Sede ${item?.sede_id}`}
                                         </span>
-                                        <span className="mt-1 block text-[11px] font-bold">
+                                        <span className="opacity-70">·</span>
+                                        <span>
                                           {formatMoney(item?.precio_base)}
                                         </span>
-                                      </div>
+                                      </span>
                                     ))}
                                   </div>
                                 ) : (
-                                  <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500 transition group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white">
+                                  <span className="text-sm text-slate-400 transition group-hover:text-white/75">
                                     Sin precios configurados
                                   </span>
                                 )
                               ) : precioSedeActual ? (
-                                <div className="space-y-2">
-                                  <div className="text-sm font-bold">
-                                    {formatMoney(precioSedeActual?.precio_base)}
-                                  </div>
-                                  <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 transition group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white">
-                                    Configurado
-                                  </span>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white">
+                                  {formatMoney(precioSedeActual?.precio_base)}
                                 </div>
                               ) : (
-                                <div className="space-y-2">
-                                  <div className="text-sm font-semibold">-</div>
-                                  <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 transition group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white">
-                                    Sin configurar
-                                  </span>
-                                </div>
+                                <span className="text-sm text-slate-400 transition group-hover:text-white/75">
+                                  No configurado
+                                </span>
                               )}
                             </td>
-                            {/* 
-                            <td className="px-5 py-4 text-sm transition group-hover:text-white">
-                              <div className="space-y-2">
-                                <div className="font-semibold text-slate-800 transition group-hover:text-white">
-                                  {coberturaTexto}
-                                </div>
-                                <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 transition group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white">
-                                  sedes con precio
-                                </span>
-                              </div>
+
+                            {/* <td className="px-5 py-4 text-sm text-slate-700 transition group-hover:text-white">
+                              {sedeActiva === 'TODAS'
+                                ? `${preciosActivos.length}/${sedesOptions.length || 0}`
+                                : precioSedeActual
+                                  ? 'Configurarado'
+                                  : 'Sin precio'}
                             </td> */}
 
                             <td className="px-5 py-4 text-sm text-slate-600 transition group-hover:text-white/95">
@@ -856,8 +914,8 @@ const PlanesPage = () => {
                             </td>
 
                             <td className="px-5 py-4">
-                              <div className="flex items-center justify-end gap-2">
-                                <button
+                              <div className="flex flex-wrap items-center justify-end gap-2">
+                                {/* <button
                                   type="button"
                                   onClick={() => handleOpenManagePrecios(plan)}
                                   className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 text-sky-700 transition hover:bg-sky-100 group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white"
@@ -877,7 +935,25 @@ const PlanesPage = () => {
                                         ? 'Editar precio'
                                         : 'Configurar precio'}
                                   </span>
-                                </button>
+                                </button> */}
+
+                                {/* Benjamin Orellana - 2026/04/23 - Se agrega la acción para actualizar el precio vigente e impactar clientes solo cuando la vista está filtrada por una sede puntual y el plan ya tiene precio configurado en esa sede. */}
+                                {sedeActiva !== 'TODAS' &&
+                                  !!plan?.precio_sede_actual?.id && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleOpenActualizarPrecio(plan)
+                                      }
+                                      className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 px-4 text-orange-700 transition hover:bg-orange-100 group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white"
+                                      title={`Actualizar precio en ${sedeSeleccionada?.nombre || 'la sede activa'}`}
+                                    >
+                                      <RefreshCw className="h-4 w-4" />
+                                      <span className="text-xs font-semibold">
+                                        Actualizar precio
+                                      </span>
+                                    </button>
+                                  )}
 
                                 <button
                                   type="button"
@@ -924,6 +1000,16 @@ const PlanesPage = () => {
         planes={planes}
         sedes={sedesOptions}
         registrosExistentes={planesSedes}
+      />
+
+      {/* Benjamin Orellana - 2026/04/23 - Se monta la modal de actualización masiva de precio para consumir preview y aplicación real del backend sobre clientes seleccionados. */}
+      <PlanSedeActualizarPrecioModal
+        open={openActualizarPrecioModal}
+        onClose={handleCloseActualizarPrecio}
+        initial={selectedPlanSedeImpacto}
+        onPreview={handlePreviewActualizarPrecio}
+        onApply={handleApplyActualizarPrecio}
+        onApplied={handleAppliedActualizarPrecio}
       />
     </>
   );
