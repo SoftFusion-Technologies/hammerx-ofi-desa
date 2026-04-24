@@ -451,6 +451,38 @@ const PeriodosDebitosPage = () => {
     ]
   );
 
+  /* Benjamin Orellana - 2026/04/24 - Se separan los errores de recarga de grilla y catálogos para identificar con precisión qué parte falla luego de generar un mes. */
+  const fetchData = useCallback(
+    async ({ silent = false } = {}) => {
+      try {
+        if (!silent) setLoading(true);
+
+        console.log('[PERIODOS] fetchData -> inicio');
+
+        try {
+          console.log('[PERIODOS] fetchData -> cargando grilla');
+          await fetchPeriodos({ silent: true });
+          console.log('[PERIODOS] fetchData -> grilla ok');
+        } catch (error) {
+          console.error('[PERIODOS] fetchData -> error en grilla:', error);
+          throw error;
+        }
+
+        try {
+          console.log('[PERIODOS] fetchData -> cargando catálogos');
+          await fetchCatalogos();
+          console.log('[PERIODOS] fetchData -> catálogos ok');
+        } catch (error) {
+          console.error('[PERIODOS] fetchData -> error en catálogos:', error);
+          throw error;
+        }
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [fetchPeriodos, fetchCatalogos]
+  );
+
   /* Benjamin Orellana - 2026/04/14 - Los catálogos se cargan una sola vez por montaje o cambio de contexto autenticado. */
   useEffect(() => {
     fetchCatalogos();
@@ -1030,12 +1062,12 @@ const PeriodosDebitosPage = () => {
         confirmButtonColor: '#f97316'
       });
 
-     refreshAfterPeriodoMutation().catch((error) => {
-       console.error(
-         'Error al refrescar datos luego de actualizar un período:',
-         error
-       );
-     });
+      refreshAfterPeriodoMutation().catch((error) => {
+        console.error(
+          'Error al refrescar datos luego de actualizar un período:',
+          error
+        );
+      });
     } catch (error) {
       console.error('Error al deshacer cobro:', error);
 
@@ -1052,7 +1084,7 @@ const PeriodosDebitosPage = () => {
       setDeshacerCobroLoadingId(null);
     }
   };
-  /* Benjamin Orellana - 01/04/2026 - Generación manual del mes operativo usando el endpoint específico del módulo */
+  /* Benjamin Orellana - 2026/04/24 - Se separa el error real de generación del error de refresco posterior para no mostrar un Swal engañoso cuando el mes sí se generó pero falló la recarga de datos. */
   const handleGenerarMes = async () => {
     const { periodo_anio, periodo_mes } = parsePeriodInput(periodoSeleccionado);
 
@@ -1083,8 +1115,10 @@ const PeriodosDebitosPage = () => {
 
     if (!result.isConfirmed) return;
 
+    let responseData = null;
+
     try {
-      await api.post(
+      const { data } = await api.post(
         '/debitos-automaticos-periodos/generar-mes',
         {
           periodo_anio,
@@ -1093,17 +1127,7 @@ const PeriodosDebitosPage = () => {
         authRequestConfig
       );
 
-      await fetchData({ silent: true });
-
-      Swal.fire({
-        title: 'Mes generado',
-        text: `Se actualizó el padrón mensual para ${formatMonthLabel(
-          periodo_anio,
-          periodo_mes
-        )}.`,
-        icon: 'success',
-        confirmButtonColor: '#f97316'
-      });
+      responseData = data;
     } catch (err) {
       Swal.fire({
         title: 'No se pudo generar',
@@ -1113,7 +1137,45 @@ const PeriodosDebitosPage = () => {
         icon: 'error',
         confirmButtonColor: '#f97316'
       });
+      return;
     }
+
+    try {
+      await fetchData({ silent: true });
+    } catch (err) {
+      console.error(
+        'El mes se generó, pero falló el refresco de la pantalla:',
+        err
+      );
+
+      Swal.fire({
+        title: 'Mes generado con observaciones',
+        text: `El mes ${formatMonthLabel(
+          periodo_anio,
+          periodo_mes
+        )} se generó, pero falló la recarga automática de la pantalla. Recargá manualmente.`,
+        icon: 'warning',
+        confirmButtonColor: '#f97316'
+      });
+      return;
+    }
+
+    Swal.fire({
+      title: 'Mes generado correctamente',
+      html: `
+    <div style="text-align:left; line-height:1.7;">
+      <div><b>Período:</b> ${formatMonthLabel(periodo_anio, periodo_mes)}</div>
+      <div><b>Nuevos períodos creados:</b> ${responseData?.resumen?.creados ?? 0}</div>
+      <div><b>Ya existentes:</b> ${responseData?.resumen?.omitidos ?? 0}</div>
+      <div><b>Errores:</b> ${responseData?.resumen?.errores ?? 0}</div>
+      <div style="margin-top:10px; color:#64748b;">
+        Los registros marcados como "Ya existentes" corresponden a clientes que ya tenían generado ese período.
+      </div>
+    </div>
+  `,
+      icon: 'success',
+      confirmButtonColor: '#f97316'
+    });
   };
 
   const clearFilters = () => {
@@ -2364,6 +2426,6 @@ const PeriodosDebitosPage = () => {
       />
     </>
   );
-};
+};;;
 
 export default PeriodosDebitosPage;
