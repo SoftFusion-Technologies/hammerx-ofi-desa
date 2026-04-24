@@ -1,4 +1,4 @@
-import { FaArrowLeft, FaTimes } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import useAgregarDatos from "../../hooks/agregarDatos";
 import Swal from "sweetalert2";
@@ -21,27 +21,7 @@ const schemaAclaracion = yup.object({
     .max(500, "El mensaje no puede superar los 500 caracteres"),
 });
 
-export const TIPOS_MENSAJE_EMPLEADO_OPTIONS = [
-  { value: "aclaracion", label: "ACLARACIÓN GENERAL" },
-  { value: "olvido_ingreso", label: "OLVIDO DE ENTRADA" },
-  { value: "olvido_salida", label: "OLVIDO DE SALIDA" },
-  { value: "hora_extra", label: "SOLICITUD HORA EXTRA" },
-  { value: "inconveniente_acceso", label: "PROBLEMA DE ACCESO" },
-  { value: "consulta", label: "CONSULTA PERSONAL" },
-];
-
-export const TIPOS_MENSAJE_RRHH_OPTIONS = [
-  { value: "tu_cobro", label: "TU COBRO" },
-  { value: "otras_consultas", label: "OTRAS CONSULTAS" },
-];
-
-const ModalNovedad = ({
-  cerrarModal,
-  diaSeleccionado,
-  horarioSeleccionado,
-  rol = "empleado",
-  onVolverAListado,
-}) => {
+const ModalNovedad = ({ cerrarModal, diaSeleccionado, horarioSeleccionado }) => {
   const { sedeSeleccionada } = useSedeUsers();
 
   const { userId } = useAuth();
@@ -57,9 +37,6 @@ const ModalNovedad = ({
   });
 
   useEffect(() => {
-    if (rol === "rrhh") {
-    setDatosFormulario(prev => ({ ...prev, motivo: "tu_cobro" }));
-    }
     if (diaSeleccionado) {
       setDatosFormulario((prev) => ({
         ...prev,
@@ -84,29 +61,14 @@ const ModalNovedad = ({
     }
   };
 
+  console.log(horarioSeleccionado)
+
   const manejarEnviarMensaje = async () => {
     try {
       await schemaAclaracion.validate(datosFormulario, { abortEarly: false });
       setErroresFormulario({});
 
-      const usuarioDestinoId = rol === "rrhh"
-        ? Number(horarioSeleccionado?.usuario_id || 0)
-        : Number(userId);
-      const sedeDestinoId = rol === "rrhh"
-        ? Number(horarioSeleccionado?.sede_id || 0)
-        : Number(sedeSeleccionada?.id || 0);
-
-      if (rol === "rrhh" && !usuarioDestinoId) {
-        Swal.fire({
-          title: "Empleado no seleccionado",
-          text: "No se pudo identificar el empleado destinatario.",
-          icon: "warning",
-          confirmButtonText: "Entendido",
-        });
-        return;
-      }
-
-      if (rol === "empleado" && !sedeSeleccionada){
+      if (!sedeSeleccionada){
         Swal.fire({
           title: "Sede no seleccionada",
           text: "No se ha podido identificar tu sede. Por favor, selecciona una sede antes de enviar la aclaración.",
@@ -117,23 +79,21 @@ const ModalNovedad = ({
       }
       
       const cuerpoMensaje = {
-        usuario_id: usuarioDestinoId,
-        sede_id: sedeDestinoId || null,
+        usuario_id: Number(userId), 
+        sede_id: sedeSeleccionada ? Number(sedeSeleccionada.id) : null,
         emisor_user_id: Number(userId),
-        destinatario_tipo: rol === "empleado" ? "rrhh" : "usuario",
+        destinatario_tipo: "rrhh",
         tipo_mensaje: datosFormulario.motivo,
         mensaje: datosFormulario.comentario.trim(),
         fecha_referencia: datosFormulario.fecha,
-        marcacion_id: rol === "rrhh" ? null : (horarioSeleccionado?.id || null),
+        marcacion_id: horarioSeleccionado?.id || null,
       };
 
-      const endpointEnvio = rol === "rrhh" ? "/rrhh-mensajes-admin" : "/rrhh-mensajes";
-
-      await agregar(endpointEnvio, cuerpoMensaje);
+      await agregar("/rrhh-mensajes", cuerpoMensaje);
 
       Swal.fire({
         title: "Mensaje Enviado",
-        text: "Tu aclaración ha sido enviada " + (rol === "empleado" ? "a RRHH" : "al empleado") + " correctamente.",
+        text: "Tu aclaración ha sido enviada a RRHH correctamente.",
         icon: "success",
         confirmButtonText: "Entendido",
       });
@@ -167,16 +127,9 @@ const ModalNovedad = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
         <div className="bg-orange-600 p-4 flex justify-between items-center">
-          <div className="min-w-0">
-            <h3 className="text-white font-bold text-lg font-bignoodle tracking-wide uppercase">
-              Ticke's de consulta
-            </h3>
-            {rol === "rrhh" && horarioSeleccionado?.usuario?.name && (
-              <p className="text-xs text-orange-100 truncate">
-                Empleado: {horarioSeleccionado.usuario.name}
-              </p>
-            )}
-          </div>
+          <h3 className="text-white font-bold text-lg font-bignoodle tracking-wide uppercase">
+            Enviar Aclaración para RRHH
+          </h3>
           <button
             onClick={cerrarModal}
             className="text-white/80 hover:text-white"
@@ -186,25 +139,11 @@ const ModalNovedad = ({
         </div>
 
         <form className="p-6 space-y-4" onSubmit={manejarSubmit}>
-          {rol === "rrhh" && onVolverAListado && (
-            <button
-              type="button"
-              onClick={onVolverAListado}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 hover:text-orange-700"
-            >
-              <FaArrowLeft size={14} />
-              Volver al listado
-            </button>
-          )}
-
-          {rol === "empleado" && (          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 mb-4">
             Utiliza este medio para informar cualquier novedad sobre tus marcaciones, horas extras o consultas generales.
-          </p>)
-          }
+          </p>
 
-
-          <div className={`grid ${rol === "empleado" ? "grid-cols-2" : "grid-cols-1"} gap-4`}>
-            {rol === "empleado" && (
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">
                 Fecha del Suceso
@@ -223,7 +162,6 @@ const ModalNovedad = ({
                 </p>
               )}
             </div>
-            )}
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">
                 Tipo de Aclaración
@@ -234,18 +172,12 @@ const ModalNovedad = ({
                 onChange={manejarCambio}
                 className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:border-orange-500 outline-none"
               >
-                {rol === "empleado" ? (
-                TIPOS_MENSAJE_EMPLEADO_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))
-                ):
-                TIPOS_MENSAJE_RRHH_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
+                <option value="aclaracion">ACLARACIÓN GENERAL</option>
+                <option value="olvido_ingreso">OLVIDO DE ENTRADA</option>
+                <option value="olvido_salida">OLVIDO DE SALIDA</option>
+                <option value="hora_extra">SOLICITUD HORA EXTRA</option>
+                <option value="inconveniente_acceso">PROBLEMA DE ACCESO</option>
+                <option value="consulta">CONSULTA PERSONAL</option>
               </select>
             </div>
           </div>
@@ -258,7 +190,7 @@ const ModalNovedad = ({
               name="comentario"
               value={datosFormulario.comentario}
               onChange={manejarCambio}
-              placeholder={rol === "empleado" ? "Describe detalladamente tu situación o consulta para que RRHH pueda ayudarte..." : "Escribe tu mensaje..."}
+              placeholder="Explica detalladamente lo sucedido para que RRHH pueda solucionarlo..."
               rows="4"
               className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-orange-500 outline-none resize-none"
             ></textarea>

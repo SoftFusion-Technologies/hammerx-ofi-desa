@@ -155,13 +155,14 @@ const PanelPrincipalRRHH = () => {
         `http://localhost:8080/rrhh/horarios?usuario_id=${usuarioAuth.userId}&sede_id=${sedeSeleccionada?.id}`,
       );
 
-      /* const horaActual = dayjs(); */
-      const horaActual = dayjs("2026-04-23 14:05:00"); 
+      const horaActual = dayjs();
+      /* const horaActual = dayjs("2026-04-21 18:05:00");  */
       const horaActualSoloHora = horaActual.format("HH:mm:ss");
 
       const horarioOficial = respuestaHorarios.data.find(
         (h) => Number(h.id) === Number(marcajeFacialIncialPendiente.horario_id),
       );
+
       let payload = {
         hora_salida: horaActualSoloHora,
       };
@@ -201,7 +202,7 @@ const PanelPrincipalRRHH = () => {
 
           // El motivo queda guardado en resultadoAnticipado.value
           const motivoSalida = resultadoAnticipado.value;
-          const reporteExitoso = await manejarReportarNovedad(motivoSalida, marcajeFacialIncialPendiente.id);
+          const reporteExitoso = await manejarReportarNovedad(motivoSalida);
 
           // Si el reporte falló, podrías decidir si frenar o continuar
           if (!reporteExitoso) return;
@@ -250,7 +251,7 @@ const PanelPrincipalRRHH = () => {
   };
 
   // Función para manejar el reporte de una novedad (salida anticipada, olvido de marcaje, etc) enviando un mensaje a RRHH con el motivo y la fecha de referencia
-  const manejarReportarNovedad = async (motivoSalida, horarioId) => {
+  const manejarReportarNovedad = async (motivoSalida) => {
     try {
       const cuerpoMensaje = {
         usuario_id: Number(usuarioAuth.userId),
@@ -260,7 +261,6 @@ const PanelPrincipalRRHH = () => {
         tipo_mensaje: "aclaracion",
         mensaje: motivoSalida.toUpperCase().trim(),
         fecha_referencia: FechahoyArgentina,
-        marcacion_id: horarioId,
       };
 
       await agregar("/rrhh-mensajes", cuerpoMensaje);

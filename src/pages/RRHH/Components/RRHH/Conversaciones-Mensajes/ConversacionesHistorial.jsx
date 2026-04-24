@@ -22,9 +22,6 @@ import {
 } from "../../../Utils/NormalizarSedes";
 import { usarPromiseAll } from "../../../hooks/usarPromiseAll";
 import ConversacionesDetalle from "./ConversacionesDetalle";
-import ModalListadoEmpleado from "../../../Modals/RRHH/ModalListadoEmpleado";
-import ModalNovedad from "../../../Modals/Empleado/ModalNovedad";
-import { IoTicket } from "react-icons/io5";
 
 const LIMITE_INICIAL = 20;
 const LIMITE_SIGUIENTE = 10;
@@ -39,9 +36,6 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
   const [cargandoLista, setCargandoLista] = useState(false);
   const [cargandoMas, setCargandoMas] = useState(false);
   const [hayMas, setHayMas] = useState(false);
-  const [mostrarModalListadoEmpleado, setMostrarModalListadoEmpleado] = useState(false);
-  const [mostrarModalNovedad, setMostrarModalNovedad] = useState(false);
-  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
 
   const toUpperText = (value) => (value ? String(value).toUpperCase() : "");
 
@@ -180,22 +174,6 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
     );
   }
 
-  const manejarSeleccionEmpleado = (empleado) => {
-    setEmpleadoSeleccionado(empleado);
-    setMostrarModalListadoEmpleado(false);
-    setMostrarModalNovedad(true);
-  };
-
-  const cerrarModalNovedad = () => {
-    setMostrarModalNovedad(false);
-    setEmpleadoSeleccionado(null);
-  };
-
-  const volverAlListadoEmpleados = () => {
-    setMostrarModalNovedad(false);
-    setMostrarModalListadoEmpleado(true);
-  };
-
   return (
     <div className="animate-fade-in-up">
       <div className="mb-3">
@@ -209,25 +187,14 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
       </div>
 
       <div className="flex flex-col gap-3 mb-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bignoodle text-gray-800 flex items-center gap-2">
-              <FaComments className="text-emerald-600" />
-              WhatsHammerX
-            </h2>
-            <p className="text-gray-500 text-sm">
-              Chat interno entre empleados y RRHH
-            </p>
-          </div>
-          <div>
-            <button
-              className="flex items-center uppercase px-4 py-3 text-xs font-bold bg-orange-500 text-white rounded-2xl hover:bg-orange-600 disabled:opacity-50"
-              onClick={() => setMostrarModalListadoEmpleado(true)}
-            >
-              <IoTicket className="mr-2" />
-              Crear ticket
-            </button>
-          </div>
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bignoodle text-gray-800 flex items-center gap-2">
+            <FaComments className="text-emerald-600" />
+            WhatsHammerX
+          </h2>
+          <p className="text-gray-500 text-sm">
+            Chat interno entre empleados y RRHH
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2">
@@ -387,24 +354,6 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
           </div>
         )}
       </div>
-
-      {mostrarModalListadoEmpleado && (
-        <ModalListadoEmpleado
-          abierto={mostrarModalListadoEmpleado}
-          cerrarModal={() => setMostrarModalListadoEmpleado(false)}
-          onSeleccionarEmpleado={manejarSeleccionEmpleado}
-        />
-      )}
-
-      {mostrarModalNovedad && (
-        <ModalNovedad
-          cerrarModal={cerrarModalNovedad}
-          rol="rrhh"
-          diaSeleccionado={new Date().toISOString().slice(0, 10)}
-          horarioSeleccionado={empleadoSeleccionado}
-          onVolverAListado={volverAlListadoEmpleados}
-        />
-      )}
     </div>
   );
 };

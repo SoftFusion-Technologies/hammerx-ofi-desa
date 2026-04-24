@@ -577,7 +577,6 @@ return (
           const minutosAutorizados = Number(turno.minutos_extra_autorizados) > 0;
           const minutosDescuento = obtenerMinutosPositivos(turno.minutos_descuento);
           const minutosTarde = obtenerMinutosPositivos(turno.minutos_tarde) > 0;
-          const minutosRetiadaAnticipada = obtenerMinutosPositivos(turno.minutos_salida_anticipada) > 0;
           const fechaFormateada = new Date(diaSeleccionado).toLocaleDateString("en-US");
 
           return (
@@ -715,12 +714,7 @@ return (
                   )}
                   {minutosTarde && (
                     <p className="text-rose-500 font-bold text-xs">
-                      Pendiente: Tarde -{formatearDuracion(turno.minutos_tarde)}
-                    </p>
-                  )}
-                  {minutosRetiadaAnticipada && (
-                    <p className="text-rose-500 font-bold text-xs">
-                      Pendiente: Salida anticipada -{formatearDuracion(turno.minutos_salida_anticipada)}
+                      Tarde: {formatearDuracion(turno.minutos_tarde)}
                     </p>
                   )}
                 </div>
