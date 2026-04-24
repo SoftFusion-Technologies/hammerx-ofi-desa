@@ -27,6 +27,7 @@ import {
   FaPlay,
   FaLockOpen, 
   FaCar,
+  FaWeight,
 } from "react-icons/fa";
 import { FaChildren } from "react-icons/fa6";
 import { MdSelfImprovement, MdSportsTennis } from "react-icons/md";
@@ -187,6 +188,12 @@ const SedeYerbaBuena = () => {
       icon: FaCar,
       title: "Estacionamiento exclusivo",
       description: "Un plus de comodidad para que tu experiencia empiece desde que llegás.",
+    },
+    {
+      id: 12,
+      icon: FaWeight,
+      title: "Balanza con IA",
+      description: "¡Única en la provincia! Tecnología avanzada para un seguimiento preciso de tu progreso, composición corporal, postura, entre muchos otros datos.",
     },
   ];
 

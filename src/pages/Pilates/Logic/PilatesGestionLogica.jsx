@@ -1631,13 +1631,14 @@ const getCellContentAndStyle = useCallback(
           );
           break;
 
-        case 'programado':
+          case 'programado':
+          const esVisita = student.scheduledDetails?.date && !student.scheduledDetails?.promisedDate;// Si no hay fecha programada pero sí hay fecha prometida, es una renovación reprogramada
           const fechaRelevante =
             student.scheduledDetails?.promisedDate ||
             student.scheduledDetails.date;
           const scheduledDate = new Date(fechaRelevante + 'T00:00:00');
           isExpired = scheduledDate < hoy_fecha;
-          style = 'bg-yellow-200';
+          style = esVisita ? 'bg-cyan-200' : "bg-yellow-200";
           content = (
             <span>
               <div className="flex items-center justify-between min-w-0">
@@ -1652,7 +1653,7 @@ const getCellContentAndStyle = useCallback(
                 {componente_badge_asistencia}
               </div>
               <span className="text-xs italic">
-                Renueva el{' '}
+                {esVisita ? 'Visita' : 'Renueva'} el{' '}
                 {new Date(fechaRelevante + 'T00:00:00').toLocaleDateString(
                   'es-ES'
                 )}
