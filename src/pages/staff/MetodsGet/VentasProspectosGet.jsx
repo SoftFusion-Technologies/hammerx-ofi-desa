@@ -22,8 +22,8 @@ import VendedorComisionesPanel from './Components/VendedorComisionesPanel';
 import ComisionesVigentesModal from '../Components/ComisionesVigentesModal';
 import useInsertClientePilates from '../../Pilates/ConsultaDb/Insertar_ModificarCliente';
 import 'sweetalert2/dist/sweetalert2.min.css';
-import {Download} from 'lucide-react';
-import InstructivosVentas from "../../../../public/instructivo_ventas_v2.pdf"
+import { Download } from 'lucide-react';
+import InstructivosVentas from '../../../../public/instructivo_ventas_v2.pdf';
 
 const getBgClass = (p) => {
   if (p.comision_estado === 'en_revision') return 'bg-amber-400';
@@ -40,8 +40,6 @@ const getBgClass = (p) => {
 
 const esConvertido = (v) => v === true || v === 1 || v === '1';
 const esComision = (v) => v === true || v === 1 || v === '1';
-
-
 
 const normalizeSede = (sede) => {
   if (!sede) return '';
@@ -397,7 +395,8 @@ const VentasProspectosGet = ({ currentUser }) => {
       if (sedeABuscar === 'barrionorte' || sedeABuscar === 'sanmiguelbn')
         sedeABuscar = 'barrio norte';
       if (sedeABuscar === 'smt') sedeABuscar = 'barrio sur';
-      if (sedeABuscar === 'yerbabuena-aconquija 2044') sedeABuscar = 'Yerba Buena - Aconquija 2044';
+      if (sedeABuscar === 'yerbabuena-aconquija 2044')
+        sedeABuscar = 'Yerba Buena - Aconquija 2044';
 
       const sedeEncontrada = sedesEsCiudad.find(
         (s) => normalize(s.nombre) === sedeABuscar
@@ -481,18 +480,17 @@ const VentasProspectosGet = ({ currentUser }) => {
   };
 
   const normalizeSede2 = (sede) => {
-    if (!sede) return "";
-    let normalized = sede.toLowerCase().replace(/\s/g, "");
-    if (normalized === "smt") {
-      normalized = "barrio sur";
-    } else if (normalized === "barrionorte" || normalized === "sanmiguelbn") {
-      normalized = "barrio norte";
-    }else if (normalized === "yerbabuena-aconquija 2044"){
-      normalized = "Yerba Buena - Aconquija 2044"
+    if (!sede) return '';
+    let normalized = sede.toLowerCase().replace(/\s/g, '');
+    if (normalized === 'smt') {
+      normalized = 'barrio sur';
+    } else if (normalized === 'barrionorte' || normalized === 'sanmiguelbn') {
+      normalized = 'barrio norte';
+    } else if (normalized === 'yerbabuena-aconquija 2044') {
+      normalized = 'Yerba Buena - Aconquija 2044';
     }
     return normalized;
   };
-
 
   const URL = 'http://localhost:8080/ventas_prospectos';
   useEffect(() => {
@@ -628,6 +626,7 @@ const VentasProspectosGet = ({ currentUser }) => {
     }
   };
 
+  // Benjamin Orellana - 2026/04/27 - Cambia la actividad del prospecto usando el endpoint controlado con confirmación y limpieza automática de dependencias.
   const handleActividadChange = async (id, nuevaActividad) => {
     if (!nuevaActividad) return;
 
@@ -641,18 +640,87 @@ const VentasProspectosGet = ({ currentUser }) => {
 
     if (!valoresValidos.includes(nuevaActividad)) return;
 
-    // Actualiza en el estado
-    setProspectos((old) =>
-      old.map((p) => (p.id === id ? { ...p, actividad: nuevaActividad } : p))
-    );
+    const prospectoActual = prospectos.find((p) => Number(p.id) === Number(id));
+    if (!prospectoActual) return;
 
-    // Actualiza en el backend de inmediato
+    const actividadAnterior = prospectoActual.actividad;
+
+    if (actividadAnterior === nuevaActividad) return;
+
+    const veniaDePilates = actividadAnterior === 'Pilates';
+    const vaAPilates = nuevaActividad === 'Pilates';
+    const cambiaDeFamilia = veniaDePilates !== vaAPilates;
+
+    const textoConfirmacion = cambiaDeFamilia
+      ? 'Este cambio limpiará clases, horarios y dependencias asociadas al flujo anterior para evitar inconsistencias.'
+      : 'Se actualizará la actividad del prospecto y se limpiarán las clases cargadas para evitar inconsistencias.';
+
+    const confirmacion = await Swal.fire({
+      icon: 'warning',
+      title: 'Cambiar actividad',
+      text: textoConfirmacion,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cambiar',
+      cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        confirmButton:
+          'swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium ' +
+          'bg-orange-600 text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400',
+        cancelButton:
+          'swal2-cancel ml-2 inline-flex items-center px-4 py-2 rounded-md font-medium ' +
+          'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400',
+        popup: 'rounded-xl'
+      }
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
     try {
-      await axios.put(`${URL}/${id}`, {
-        actividad: nuevaActividad
+      const response = await axios.post(
+        `http://localhost:8080/ventas-prospectos/${id}/cambiar-actividad`,
+        {
+          actividad_nueva: nuevaActividad
+        }
+      );
+
+      const data = response?.data || {};
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Actividad actualizada',
+        text:
+          data?.message ||
+          'La actividad del prospecto se actualizó correctamente.',
+        confirmButtonText: 'Aceptar',
+        buttonsStyling: false,
+        customClass: {
+          confirmButton:
+            'swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium ' +
+            'bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400',
+          popup: 'rounded-xl'
+        }
       });
+
+      await fetchProspectos();
     } catch (error) {
-      console.error('Error al actualizar actividad:', error);
+      console.error('Error al cambiar actividad:', error);
+
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text:
+          error?.response?.data?.mensajeError ||
+          'No se pudo cambiar la actividad del prospecto.',
+        confirmButtonText: 'Cerrar',
+        buttonsStyling: false,
+        customClass: {
+          confirmButton:
+            'swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium ' +
+            'bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400',
+          popup: 'rounded-xl'
+        }
+      });
     }
   };
 
@@ -788,15 +856,13 @@ const VentasProspectosGet = ({ currentUser }) => {
     }
   };
 
+  // Benjamin Orellana - 2026/04/27 - Mantiene el flujo histórico de Pilates en ventas, impactando clientes_pilates, inscripciones y horarios asociados.
   const insertarModificarClaseDePrueba = async (id, cambios, tipo) => {
-    /* console.log(cambios); */
     try {
       const fechaInicio = new Date(cambios.fecha);
-      // Clonar y sumar un día
       const fechaFin = new Date(fechaInicio);
       fechaFin.setDate(fechaFin.getDate() + 1);
 
-      // Formatear fechaFin a YYYY-MM-DD
       const fechaFinStr = fechaFin.toISOString().split('T')[0];
 
       const datosClasePrueba = {
@@ -826,15 +892,10 @@ const VentasProspectosGet = ({ currentUser }) => {
       };
 
       if (!cambios.esModificacion) {
-        // Verificar si existe cliente en clase de prueba
         const verificacion = await verificarClientePruebaPorNombre(
           cambios.nombre
         );
-       /*  console.log(verificacion.id);
 
-        console.log('verificacion', verificacion.existe); */
-
-        // Si existe, eliminar antes de insertar
         if (verificacion.existe && verificacion.id) {
           try {
             await axios.delete(
@@ -846,11 +907,14 @@ const VentasProspectosGet = ({ currentUser }) => {
             );
           }
         }
+
         await insertCliente(datosClasePrueba, inscripcionData);
+
         await axios.post(
           `http://localhost:8080/ventas-prospectos-horarios`,
           horarioSeleccionadoProspecto
         );
+
         traerHorariosDisponibles(sedeId);
       } else {
         await axios.put(
@@ -859,26 +923,110 @@ const VentasProspectosGet = ({ currentUser }) => {
         );
         console.log('Se ha modificado el horario del prospecto en ventas');
       }
+
+      return true;
     } catch (error) {
       console.error('Error al insertar/modificar clase de prueba:', error);
+      throw error;
     }
   };
 
-  const handleClasePruebaSave = async (id, cambios) => {
+  // Benjamin Orellana - 2026/04/27 - Sincroniza la clase interna desde ventas y, si el prospecto es Pilates, conserva además el flujo histórico que impacta en clientes_pilates.
+  const handleClasePruebaSave = async (_prospectoId, cambios) => {
     try {
-      if (
-        cambios.tipo === 'Clase de prueba' ||
-        cambios.tipo === 'Visita programada'
-      ) {
-        insertarModificarClaseDePrueba(id, cambios);
-      }
-      await axios.put(`${URL}/${id}`, cambios);
-      // Actualizar estado local
-      setProspectos((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, ...cambios } : p))
+      const prospectoActual = prospectos.find(
+        (p) => Number(p.id) === Number(cambios.idProspecto || _prospectoId)
       );
+
+      const esPilates = prospectoActual?.actividad === 'Pilates';
+      const tipoPilatesValido =
+        cambios.tipo === 'Clase de prueba' ||
+        cambios.tipo === 'Visita programada';
+
+      // Benjamin Orellana - 2026/04/27 - Si es Pilates, primero se ejecuta el flujo histórico que impacta en clientes_pilates e inscripciones.
+      if (esPilates && tipoPilatesValido) {
+        await insertarModificarClaseDePrueba(
+          cambios.idProspecto || _prospectoId,
+          cambios,
+          cambios.tipo
+        );
+      }
+
+      const payload = {
+        prospecto_id: cambios.idProspecto || _prospectoId,
+        numeroClase: Number(cambios.numeroClase),
+        fecha: cambios.fecha,
+        hora_clase: cambios.hora_clase,
+        tipo: cambios.tipo,
+        observacion:
+          cambios[`clase_prueba_${cambios.numeroClase}_obs`] ||
+          cambios.observacion ||
+          '',
+        necesita_profe: !!cambios.necesita_profe,
+        hhmm: cambios.hhmm || cambios.horarioSeleccionado?.hhmm || '',
+        grp: cambios.grp || cambios.horarioSeleccionado?.grp || '',
+        sede_id: cambios.sede_id || prospectoActual?.sede_id || sedeId || null
+      };
+
+      const response = await axios.post(
+        'http://localhost:8080/ventas-prospectos/sync-clase-interna',
+        payload
+      );
+
+      const data = response?.data || {};
+
+      if (data?.mensajeAdvertencia) {
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Clase guardada con advertencia',
+          text: data.mensajeAdvertencia,
+          confirmButtonText: 'Entendido',
+          buttonsStyling: false,
+          customClass: {
+            confirmButton:
+              'swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium ' +
+              'bg-orange-600 text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400',
+            popup: 'rounded-xl'
+          }
+        });
+      } else {
+        await Swal.fire({
+          icon: 'success',
+          title: 'Clase actualizada',
+          text: esPilates
+            ? 'La clase se sincronizó correctamente y se impactó en Pilates.'
+            : 'La clase se sincronizó correctamente.',
+          confirmButtonText: 'Aceptar',
+          buttonsStyling: false,
+          customClass: {
+            confirmButton:
+              'swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium ' +
+              'bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400',
+            popup: 'rounded-xl'
+          }
+        });
+      }
+
+      await fetchProspectos();
     } catch (error) {
-      console.error('Error al guardar clase de prueba:', error);
+      console.error('Error sincronizando clase interna:', error);
+
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text:
+          error?.response?.data?.mensajeError ||
+          error?.message ||
+          'No se pudo sincronizar la clase interna.',
+        confirmButtonText: 'Cerrar',
+        buttonsStyling: false,
+        customClass: {
+          confirmButton:
+            'swal2-confirm inline-flex items-center px-4 py-2 rounded-md font-medium ' +
+            'bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400',
+          popup: 'rounded-xl'
+        }
+      });
     }
   };
 
@@ -1612,18 +1760,18 @@ const VentasProspectosGet = ({ currentUser }) => {
     let nombre = str;
     let key = str;
 
-    if (str.toLowerCase() === "barrio sur") {
-      nombre = "Tuc. Barrio Sur";
-      key = "smt";
-    } else if (str.toLowerCase() === "barrio norte") {
-      nombre = "Tuc. Barrio Norte";
-      key = "barrio norte";
-    } else if (str.toLowerCase() === "Yerba Buena - Aconquija 2044") {
-      nombre = "Yerba Buena - Aconquija 2044";
+    if (str.toLowerCase() === 'barrio sur') {
+      nombre = 'Tuc. Barrio Sur';
+      key = 'smt';
+    } else if (str.toLowerCase() === 'barrio norte') {
+      nombre = 'Tuc. Barrio Norte';
+      key = 'barrio norte';
+    } else if (str.toLowerCase() === 'Yerba Buena - Aconquija 2044') {
+      nombre = 'Yerba Buena - Aconquija 2044';
       key = 'Yerba Buena - Aconquija 2044';
-    } else if (str.toLowerCase() === "concepción") {
-      nombre = "Concepción";
-      key = "concepcion";
+    } else if (str.toLowerCase() === 'concepción') {
+      nombre = 'Concepción';
+      key = 'concepcion';
     }
     return { nombre, key };
   };
@@ -1631,21 +1779,31 @@ const VentasProspectosGet = ({ currentUser }) => {
   let SEDES = [];
   let sedes = [];
   if (sedesEsCiudad) {
-    SEDES = sedesEsCiudad.filter((s) => s.nombre.toLowerCase() != "multisede").map((s) => ({
-      value:
-        s.nombre.toLowerCase() === 'Yerba Buena - Aconquija 2044'
-          ? 'Yerba Buena - Aconquija 2044'
-          : s.nombre.toLowerCase().normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, ""),
-      label: s.nombre.toLowerCase() === "Yerba Buena - Aconquija 2044" ? "Yerba Buena" : s.nombre
-    }));
+    SEDES = sedesEsCiudad
+      .filter((s) => s.nombre.toLowerCase() != 'multisede')
+      .map((s) => ({
+        value:
+          s.nombre.toLowerCase() === 'Yerba Buena - Aconquija 2044'
+            ? 'Yerba Buena - Aconquija 2044'
+            : s.nombre
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, ''),
+        label:
+          s.nombre.toLowerCase() === 'Yerba Buena - Aconquija 2044'
+            ? 'Yerba Buena'
+            : s.nombre
+      }));
 
-    sedes = sedesEsCiudad.filter((s) => s.nombre.toLowerCase() != "multisede").map((s) => ({
-      key: normalizarKey(s.nombre).key,
-      label: normalizarKey(s.nombre).nombre
-    }));
-    console.log(sedes)
+    sedes = sedesEsCiudad
+      .filter((s) => s.nombre.toLowerCase() != 'multisede')
+      .map((s) => ({
+        key: normalizarKey(s.nombre).key,
+        label: normalizarKey(s.nombre).nombre
+      }));
+    console.log(sedes);
   }
+
   return (
     <>
       <NavbarStaff />
@@ -1671,34 +1829,35 @@ const VentasProspectosGet = ({ currentUser }) => {
               setAnio={setAnio}
             />
           </section>
-          <div className='flex gap-1 mb-1 ml-1'>
-          <button
-            onClick={() =>
-              exportProspectosExcel({
-                mes,
-                anio,
-                prospectos, // todos los registros del mes/año ya cargados
-                search,
-                selectedSede, // filtros activos
-                tipoFiltro,
-                canalFiltro,
-                actividadFiltro,
-                formatDate // tu helper
-              })
-            }
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-emerald-600 font-semibold text-white shadow-md hover:bg-emerald-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-          >
-            Exportar Excel
-          </button>          <div >
-            <a
-              href={InstructivosVentas}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
-              download="Instructivo_ventas.pdf" 
+          <div className="flex gap-1 mb-1 ml-1">
+            <button
+              onClick={() =>
+                exportProspectosExcel({
+                  mes,
+                  anio,
+                  prospectos, // todos los registros del mes/año ya cargados
+                  search,
+                  selectedSede, // filtros activos
+                  tipoFiltro,
+                  canalFiltro,
+                  actividadFiltro,
+                  formatDate // tu helper
+                })
+              }
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-emerald-600 font-semibold text-white shadow-md hover:bg-emerald-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300"
             >
-              <Download />
-              Descargar instructivo
-            </a>
-          </div>
+              Exportar Excel
+            </button>{' '}
+            <div>
+              <a
+                href={InstructivosVentas}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-orange-500 font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                download="Instructivo_ventas.pdf"
+              >
+                <Download />
+                Descargar instructivo
+              </a>
+            </div>
           </div>
           <FilterToolbar
             search={search}
@@ -1761,12 +1920,12 @@ const VentasProspectosGet = ({ currentUser }) => {
 
           <div className="flex justify-center gap-3 pb-10 flex-wrap">
             <Link to="#">
-            <button
-              onClick={abrirModal}
+              <button
+                onClick={abrirModal}
                 className="bg-[#58b35e] hover:bg-[#4e8a52] text-white py-2 px-4 rounded transition-colors duration-100 z-10"
-            >
-              Nuevo Registro
-            </button>
+              >
+                Nuevo Registro
+              </button>
             </Link>
 
             <button
@@ -2673,10 +2832,9 @@ const VentasProspectosGet = ({ currentUser }) => {
         open={openComi}
         onClose={() => setOpenComi(false)}
         userLevel={userLevel}
-        
       />
     </>
   );
-};
+};;;
 
 export default VentasProspectosGet;

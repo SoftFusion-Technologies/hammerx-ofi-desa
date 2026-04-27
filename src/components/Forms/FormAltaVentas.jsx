@@ -8,6 +8,7 @@ import ModalSuccess from './ModalSuccess';
 import ModalError from './ModalError';
 import Alerta from '../Error';
 import { useAuth } from '../../AuthContext';
+import RedesSoft from '../../pages/Pilates/Components/RedesSoft';
 
 const tiposContacto = [
   'Socios que no asisten',
@@ -18,6 +19,32 @@ const tiposContacto = [
   'Prosp inc Entrenadores',
   'Leads no convertidos'
 ];
+
+// Benjamin Orellana - 27/04/2026 - Se centralizan clases visuales para compactar el formulario y mantener una UX consistente.
+const inputClass =
+  'h-11 w-full rounded-2xl border border-slate-200 bg-slate-50/90 px-4 text-[0.92rem] font-medium text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-orange-200 hover:bg-white focus:border-[#fc4b08] focus:bg-white focus:ring-4 focus:ring-orange-100';
+
+const selectClass =
+  'h-11 w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50/90 px-4 pr-10 text-[0.92rem] font-medium text-slate-900 outline-none transition-all duration-200 hover:border-orange-200 hover:bg-white focus:border-[#fc4b08] focus:bg-white focus:ring-4 focus:ring-orange-100';
+
+const fieldBoxClass =
+  'rounded-[20px] border border-slate-200/80 bg-white/80 p-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] transition-all duration-200 hover:border-orange-200 hover:shadow-[0_14px_34px_rgba(15,23,42,0.09)]';
+
+const CampoFormulario = ({ label, error, touched, children, full = false }) => (
+  <div className={`${fieldBoxClass} ${full ? 'md:col-span-2' : ''}`}>
+    <label className="mb-1.5 block text-[0.76rem] font-black uppercase tracking-[0.08em] text-slate-500">
+      {label}
+    </label>
+
+    {children}
+
+    {error && touched && (
+      <div className="mt-1.5">
+        <Alerta>{error}</Alerta>
+      </div>
+    )}
+  </div>
+);
 
 const FormAltaVentas = ({
   isOpen,
@@ -152,6 +179,7 @@ const FormAltaVentas = ({
         // Si no es campaña, lo mandás vacío o null (opcional)
         prospectoData.campania_origen = '';
       }
+
       const url = valores.id
         ? `http://localhost:8080/ventas_prospectos/${valores.id}`
         : 'http://localhost:8080/ventas_prospectos';
@@ -208,11 +236,11 @@ const FormAltaVentas = ({
 
   return (
     <div
-      className={`h-screen w-screen mt-16 fixed inset-0 flex pt-10 justify-center ${
-        isOpen ? 'block' : 'hidden'
-      } bg-gray-800 bg-opacity-75 z-50`}
+      className={`fixed inset-0 z-50 ${
+        isOpen ? 'flex' : 'hidden'
+      } items-center justify-center overflow-y-auto bg-slate-950/75 px-2 py-3 backdrop-blur-md sm:px-4 sm:py-6`}
     >
-      <div className={`container-inputs`}>
+      <div className="relative flex max-h-[calc(100dvh-24px)] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-white/20 bg-white shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
         <Formik
           innerRef={formikRef}
           initialValues={{
@@ -236,7 +264,9 @@ const FormAltaVentas = ({
             clase_prueba_3_fecha: Rec ? Rec.clase_prueba_3_fecha : null,
             clase_prueba_3_obs: Rec ? Rec.clase_prueba_3_obs : '',
             convertido: Rec ? Rec.convertido : false,
-            observacion: Rec ? Rec.observacion : ''
+            observacion: Rec ? Rec.observacion : '',
+            // Benjamin Orellana - 27/04/2026 - Se agrega valor inicial para evitar inconsistencias visuales al editar campañas.
+            campania_origen: Rec ? Rec.campania_origen : ''
           }}
           enableReinitialize
           onSubmit={async (values, { resetForm }) => {
@@ -246,120 +276,104 @@ const FormAltaVentas = ({
           validationSchema={null}
         >
           {({ errors, touched, setFieldValue, values }) => (
-            <div className="-mt-20 max-h-screen w-full max-w-xl overflow-y-auto bg-white rounded-xl p-10">
-              <Form className="formulario w-full bg-white">
-                <div className="flex justify-between">
-                  <div className="tools">
-                    <div className="circle">
-                      <span className="red toolsbox"></span>
+            <Form className="flex max-h-[calc(100dvh-24px)] min-h-0 w-full flex-col bg-white">
+              {/* Benjamin Orellana - 27/04/2026 - Cabecera compacta con redes Soft integradas sin ocupar espacio extra del formulario. */}
+              <div className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 px-3 py-2.5 backdrop-blur-xl sm:px-5">
+                <div className="flex min-w-0 items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                    <div className="tools hidden shrink-0 sm:flex">
+                      <div className="circle">
+                        <span className="red toolsbox"></span>
+                      </div>
+                      <div className="circle">
+                        <span className="yellow toolsbox"></span>
+                      </div>
+                      <div className="circle">
+                        <span className="green toolsbox"></span>
+                      </div>
                     </div>
-                    <div className="circle">
-                      <span className="yellow toolsbox"></span>
-                    </div>
-                    <div className="circle">
-                      <span className="green toolsbox"></span>
-                    </div>
+                    <RedesSoft />
                   </div>
-                  <div
-                    className="pr-6 pt-3 text-[20px] cursor-pointer"
+
+
+                  <button
+                    type="button"
                     onClick={handleClose}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-lg font-black leading-none text-slate-500 shadow-sm transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:text-[#fc4b08] focus:outline-none focus:ring-4 focus:ring-orange-100"
+                    aria-label="Cerrar"
                   >
-                    x
-                  </div>
+                    ×
+                  </button>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mx-2"></div>
+              {/* Benjamin Orellana - 27/04/2026 - Cuerpo responsive compacto en grilla para reducir scroll sin agregar contenido innecesario. */}
+              <div className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(252,75,8,0.08),transparent_30%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-3 py-3 sm:px-5 sm:py-5">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <CampoFormulario
+                    label="Nombre"
+                    error={errors.nombre}
+                    touched={touched.nombre}
+                  >
+                    <Field
+                      id="nombre"
+                      name="nombre"
+                      type="text"
+                      className={inputClass}
+                      placeholder="Nombre del contacto"
+                      maxLength={100}
+                    />
+                  </CampoFormulario>
 
-                <div className="mb-6 px-6 py-4 bg-white rounded-lg shadow-md"></div>
+                  <CampoFormulario
+                    label="DNI"
+                    error={errors.dni}
+                    touched={touched.dni}
+                  >
+                    <Field
+                      id="dni"
+                      name="dni"
+                      type="text"
+                      className={inputClass}
+                      placeholder="DNI"
+                      maxLength={20}
+                    />
+                  </CampoFormulario>
 
-                {/* Contenedor común (opcional si ya estás dentro de un <Form> que centraliza todo) */}
-                <div className="space-y-4 px-6">
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="nombre"
-                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
-                    >
-                      Nom. del prospecto
-                    </label>
-                    <div className="w-2/3">
-                      <Field
-                        id="nombre"
-                        name="nombre"
-                        type="text"
-                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                        placeholder="Ingrese nombre del contacto"
-                        maxLength={100}
-                      />
-                      {errors.nombre && touched.nombre && (
-                        <div className="mt-1">
-                          <Alerta>{errors.nombre}</Alerta>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="dni"
-                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
-                    >
-                      DNI
-                    </label>
-                    <div className="w-2/3">
-                      <Field
-                        id="dni"
-                        name="dni"
-                        type="text"
-                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                        placeholder="Ingrese DNI"
-                        maxLength={20}
-                      />
-                      {errors.dni && touched.dni && (
-                        <div className="mt-1">
-                          <Alerta>{errors.dni}</Alerta>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="tipo_prospecto"
-                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
-                    >
-                      Tipo de prospecto
-                    </label>
-                    <div className="w-2/3">
+                  <CampoFormulario
+                    label="Tipo de prospecto"
+                    error={errors.tipo_prospecto}
+                    touched={touched.tipo_prospecto}
+                  >
+                    <div className="relative">
                       <Field
                         as="select"
                         id="tipo_prospecto"
                         name="tipo_prospecto"
-                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                        className={selectClass}
                       >
                         <option value="">Seleccione tipo</option>
                         <option value="Nuevo">Nuevo</option>
                         <option value="ExSocio">ExSocio</option>
                       </Field>
-                      {errors.tipo_prospecto && touched.tipo_prospecto && (
-                        <div className="mt-1">
-                          <Alerta>{errors.tipo_prospecto}</Alerta>
-                        </div>
-                      )}
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="canal_contacto"
-                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
-                    >
-                      Canal de contacto
-                    </label>
-                    <div className="w-2/3">
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+                        ▼
+                      </span>
+                    </div>
+                  </CampoFormulario>
+
+                  <CampoFormulario
+                    label="Canal"
+                    error={errors.canal_contacto}
+                    touched={touched.canal_contacto}
+                  >
+                    <div className="relative">
                       <Field
                         as="select"
                         id="canal_contacto"
                         name="canal_contacto"
-                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                        className={selectClass}
                       >
                         <option value="">Seleccione canal</option>
                         <option value="Mostrador">Mostrador</option>
@@ -371,82 +385,68 @@ const FormAltaVentas = ({
                         <option value="Comentarios/Stickers">
                           Comentarios/Stickers
                         </option>
-                        <option value="Desde pilates">
-                          Desde pilates
-                        </option>
+                        <option value="Desde pilates">Desde pilates</option>
                       </Field>
-                      {errors.canal_contacto && touched.canal_contacto && (
-                        <div className="mt-1">
-                          <Alerta>{errors.canal_contacto}</Alerta>
-                        </div>
-                      )}
+
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+                        ▼
+                      </span>
                     </div>
-                  </div>
+                  </CampoFormulario>
 
                   {values.canal_contacto === 'Campaña' && (
-                    <div className="mt-3">
-                      <label
-                        htmlFor="campania_origen"
-                        className="text-black font-medium"
-                      >
-                        Origen de la campaña
-                      </label>
-                      <Field
-                        as="select"
-                        id="campania_origen"
-                        name="campania_origen"
-                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                      >
-                        <option value="">Seleccione origen</option>
-                        <option value="Instagram">Instagram</option>
-                        <option value="Whatsapp">Whatsapp</option>
-                        <option value="Facebook">Facebook</option>
-                        <option value="Otro">Otro</option>
-                      </Field>
-                      {errors.campania_origen && touched.campania_origen && (
-                        <div className="mt-1">
-                          <Alerta>{errors.campania_origen}</Alerta>
-                        </div>
-                      )}
-                    </div>
+                    <CampoFormulario
+                      label="Origen campaña"
+                      error={errors.campania_origen}
+                      touched={touched.campania_origen}
+                    >
+                      <div className="relative">
+                        <Field
+                          as="select"
+                          id="campania_origen"
+                          name="campania_origen"
+                          className={selectClass}
+                        >
+                          <option value="">Seleccione origen</option>
+                          <option value="Instagram">Instagram</option>
+                          <option value="Whatsapp">Whatsapp</option>
+                          <option value="Facebook">Facebook</option>
+                          <option value="Otro">Otro</option>
+                        </Field>
+
+                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+                          ▼
+                        </span>
+                      </div>
+                    </CampoFormulario>
                   )}
-                  
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="contacto"
-                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
-                    >
-                      Contact usuario o tel
-                    </label>
-                    <div className="w-2/3">
-                      <Field
-                        id="contacto"
-                        name="contacto"
-                        type="text"
-                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                        placeholder="Ingrese contacto"
-                        maxLength={50}
-                      />
-                      {errors.contacto && touched.contacto && (
-                        <div className="mt-1">
-                          <Alerta>{errors.contacto}</Alerta>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="actividad"
-                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
-                    >
-                      Actividad
-                    </label>
-                    <div className="w-2/3">
+
+                  <CampoFormulario
+                    label="Contacto"
+                    error={errors.contacto}
+                    touched={touched.contacto}
+                  >
+                    <Field
+                      id="contacto"
+                      name="contacto"
+                      type="text"
+                      className={inputClass}
+                      placeholder="Usuario, teléfono o contacto"
+                      maxLength={50}
+                    />
+                  </CampoFormulario>
+
+                  <CampoFormulario
+                    label="Actividad"
+                    error={errors.actividad}
+                    touched={touched.actividad}
+                  >
+                    <div className="relative">
                       <Field
                         as="select"
                         id="actividad"
                         name="actividad"
-                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
+                        className={selectClass}
                       >
                         <option value="">Seleccione actividad</option>
                         <option value="No especifica">No especifica</option>
@@ -456,50 +456,69 @@ const FormAltaVentas = ({
                         <option value="Pase full">Pase full</option>
                       </Field>
 
-                      {errors.actividad && touched.actividad && (
-                        <div className="mt-1">
-                          <Alerta>{errors.actividad}</Alerta>
-                        </div>
-                      )}
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+                        ▼
+                      </span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="contacto"
-                      className="w-1/3 text-left text-black text-base font-medium whitespace-nowrap"
-                    >
-                      Observación
-                    </label>
-                    <div className="w-2/3">
-                      <Field
-                        id="observacion"
-                        name="observacion"
-                        type="text"
-                        className="w-full p-3 text-black bg-slate-100 rounded-xl focus:outline-orange-500"
-                        placeholder="Ingrese una Observación"
-                        maxLength={50}
-                      />
-                      {errors.observacion && touched.observacion && (
-                        <div className="mt-1">
-                          <Alerta>{errors.observacion}</Alerta>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  </CampoFormulario>
 
-                <div className="sticky bottom-0 bg-white py-3 px-4">
-                  <input
-                    type="submit"
-                    value={Rec ? 'Actualizar' : 'Crear Prospecto'}
-                    className="w-full bg-orange-500 py-2 px-5 rounded-xl text-white font-bold hover:bg-[#fc4b08] focus:outline-orange-100"
-                  />
+                  <CampoFormulario
+                    label="Asesor"
+                    error={errors.asesor_nombre}
+                    touched={touched.asesor_nombre}
+                  >
+                    <Field
+                      id="asesor_nombre"
+                      name="asesor_nombre"
+                      type="text"
+                      className={inputClass}
+                      placeholder="Asesor opcional"
+                      maxLength={100}
+                    />
+                  </CampoFormulario>
+
+                  <CampoFormulario
+                    label="Observación"
+                    error={errors.observacion}
+                    touched={touched.observacion}
+                    full
+                  >
+                    <Field
+                      id="observacion"
+                      name="observacion"
+                      type="text"
+                      className={inputClass}
+                      placeholder="Observación breve"
+                      maxLength={50}
+                    />
+                  </CampoFormulario>
                 </div>
-              </Form>
-            </div>
+              </div>
+
+              {/* Benjamin Orellana - 27/04/2026 - Footer sticky compacto con acción principal siempre visible en mobile y desktop. */}
+              <div className="sticky bottom-0 z-20 border-t border-slate-200/80 bg-white/95 px-3 py-3 backdrop-blur-xl sm:px-5">
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="h-11 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-black text-slate-600 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100 sm:w-auto"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="h-11 rounded-2xl bg-[linear-gradient(135deg,#ff7a1a_0%,#fc4b08_52%,#d93800_100%)] px-7 text-sm font-black text-white shadow-[0_16px_34px_rgba(252,75,8,0.34)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(252,75,8,0.42)] focus:outline-none focus:ring-4 focus:ring-orange-100 sm:w-auto"
+                  >
+                    {Rec ? 'Actualizar' : 'Crear prospecto'}
+                  </button>
+                </div>
+              </div>
+            </Form>
           )}
         </Formik>
       </div>
+
       <ModalSuccess
         textoModal={textoModal}
         isVisible={showModal}
