@@ -25,10 +25,11 @@ const useAgregarDatos = () => {
       setError(null);
 
       const { headers = {}, params = null } = opciones;
+      const esFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
       const resultado = await axios.post(construirUrl(endpoint), body, {
         headers: {
-          "Content-Type": "application/json",
+          ...(esFormData ? {} : { "Content-Type": "application/json" }),
           ...headers
         },
         params

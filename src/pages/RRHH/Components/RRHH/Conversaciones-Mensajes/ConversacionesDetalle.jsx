@@ -1,40 +1,49 @@
 /* --Autor: Sergio Manrique
 --Fecha de creación: 08-04-2026
---Descripción: Vista detallada de la conversación en formato chat tipo WhatHammerX.
-Permite visualizar el historial, responder, cerrar o reabrir el asunto.
-Permite además editar y eliminar mensajes propios.
-Incluye actualización silenciosa y carga incremental del chat.
+--Descripción: Vista detallada de un Ticket en formato chat tipo WhatHammerX.
+Adaptado a lógica unificada por ID de ticket.
 */
 
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import {
   FaArrowLeft,
+  FaFileAlt,
+  FaFilePdf,
+  FaPaperclip,
   FaPaperPlane,
   FaLock,
   FaLockOpen,
   FaEllipsisV,
   FaPen,
   FaTrash,
+  FaTrashAlt,
   FaTimes,
   FaCheck,
   FaChevronDown,
   FaChevronUp,
   FaRegClock,
 } from "react-icons/fa";
+
+// Importaciones de Auth y Contexto
 import { useAuth } from "../../../../../AuthContext";
+import { esAdminRRHH } from "../../../Utils/AdminAutorizadosRRHH";
 import { useSedeUsers } from "../../../Context/SedeUsersContext";
+
 import { normalizarSedes } from "../../../Utils/NormalizarSedes";
+import ModalPreviewAdjuntoRRHH from "../../../Modals/RRHH/ModalPreviewAdjuntoRRHH";
 
 const HORAS_MAXIMAS_EDICION = 5;
 const LIMITE_INICIAL = 20;
 const LIMITE_ANTERIORES = 10;
 const INTERVALO_ACTUALIZACION = 4000;
+const API_BASE_URL = "http://localhost:8080";
 
 const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
-  const consultaDeAdmin = !!conversacionId;
-  const { sedeSeleccionada } = useSedeUsers();
-  const { userId } = useAuth();
+  // Validación unificada
+  const { userId, userLevel, userLevelAdmin } = useAuth();
+  const esAdminAutorizadoRRHHH = esAdminRRHH(userLevel, userLevelAdmin);
+  const { sedeSeleccionada: contextSede } = useSedeUsers();
 
   const [conversacion, setConversacion] = useState(null);
   const [mensajes, setMensajes] = useState([]);
@@ -51,10 +60,20 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
   const [guardandoEdicion, setGuardandoEdicion] = useState(false);
   const [eliminandoId, setEliminandoId] = useState(null);
   const [marcacionesAbiertas, setMarcacionesAbiertas] = useState({});
+  const [archivoAdjunto, setArchivoAdjunto] = useState(null);
+  const [previewArchivo, setPreviewArchivo] = useState("");
+  const [modalAdjunto, setModalAdjunto] = useState({
+    abierto: false,
+    url: "",
+    fileName: "",
+    esImagen: false,
+    esPdf: false,
+  });
 
   const contenedorMensajesRef = useRef(null);
   const ultimaConsultaRef = useRef(null);
   const forzarScrollAbajoRef = useRef(false);
+  const inputArchivoRef = useRef(null);
 
   const formatearHora = (fecha) => {
     if (!fecha) return "";
@@ -97,22 +116,123 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
     return String(texto).replaceAll("_", " ").toUpperCase();
   };
 
+  const esPdfAdjunto = (fileName, url) => {
+    const nombre = String(fileName || "").toLowerCase();
+    const enlace = String(url || "").toLowerCase();
+    return nombre.endsWith(".pdf") || /\.pdf($|\?)/i.test(enlace);
+  };
+
+  const esImagenAdjunto = (archivo) => {
+    if (!archivo) return false;
+    const mime = String(archivo.type || "").toLowerCase();
+    if (mime.startsWith("image/")) return true;
+    const nombre = String(archivo.name || "").toLowerCase();
+    return /\.(jpg|jpeg|png|webp|heic|heif)$/.test(nombre);
+  };
+
+  const obtenerNombreAdjunto = (msg) => {
+    const nombreBase =
+      msg?.archivo_adjunto_url ||
+      msg?.archivo_adjunto_url_publica ||
+      "adjunto";
+    return String(nombreBase).split("/").pop() || "adjunto";
+  };
+
+  const obtenerUrlAdjunto = (msg) => {
+    const publica = String(msg?.archivo_adjunto_url_publica || "").trim();
+
+    if (publica) {
+      if (/^https?:\/\//i.test(publica)) return publica;
+      if (publica.startsWith("/uploads/")) return `${API_BASE_URL}${publica}`;
+      return `${API_BASE_URL}/uploads/ticket_consultas_rrhh/${publica.replace(/^\/+/, "")}`;
+    }
+
+    const nombre = String(msg?.archivo_adjunto_url || "").trim();
+    if (!nombre) return "";
+    return `${API_BASE_URL}/uploads/ticket_consultas_rrhh/${nombre}`;
+  };
+
+  const abrirModalAdjunto = (msg) => {
+    const url = obtenerUrlAdjunto(msg);
+    if (!url) return;
+
+    const fileName = obtenerNombreAdjunto(msg);
+    const esImagen = Boolean(msg?.es_imagen);
+
+    setModalAdjunto({
+      abierto: true,
+      url,
+      fileName,
+      esImagen,
+      esPdf: esPdfAdjunto(fileName, url),
+    });
+  };
+
+  const cerrarModalAdjunto = () => {
+    setModalAdjunto((prev) => ({ ...prev, abierto: false }));
+  };
+
+  const descargarAdjunto = () => {
+    if (!modalAdjunto.url) return;
+    const link = document.createElement("a");
+    link.href = modalAdjunto.url;
+    link.download = modalAdjunto.fileName || "adjunto";
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const manejarCambioArchivo = (event) => {
+    const archivo = event.target.files?.[0] || null;
+
+    if (previewArchivo) {
+      URL.revokeObjectURL(previewArchivo);
+    }
+
+    if (!archivo) {
+      setArchivoAdjunto(null);
+      setPreviewArchivo("");
+      return;
+    }
+
+    setArchivoAdjunto(archivo);
+    setPreviewArchivo(URL.createObjectURL(archivo));
+  };
+
+  const quitarArchivo = () => {
+    if (previewArchivo) {
+      URL.revokeObjectURL(previewArchivo);
+    }
+
+    setArchivoAdjunto(null);
+    setPreviewArchivo("");
+
+    if (inputArchivoRef.current) {
+      inputArchivoRef.current.value = "";
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewArchivo) {
+        URL.revokeObjectURL(previewArchivo);
+      }
+    };
+  }, [previewArchivo]);
+
   const obtenerLabelTipoMensaje = (tipo) => {
     switch (tipo) {
-      case "aclaracion":
-        return "ACLARACIÓN GENERAL";
-      case "olvido_ingreso":
-        return "OLVIDO DE ENTRADA";
-      case "olvido_salida":
-        return "OLVIDO DE SALIDA";
-      case "hora_extra":
-        return "SOLICITUD HORA EXTRA";
-      case "inconveniente_acceso":
-        return "PROBLEMA DE ACCESO";
-      case "consulta":
-        return "CONSULTA PERSONAL";
-      default:
-        return "";
+      case "aclaracion": return "ACLARACIÓN GENERAL";
+      case "olvido_ingreso": return "OLVIDO DE ENTRADA";
+      case "olvido_salida": return "OLVIDO DE SALIDA";
+      case "hora_extra": return "SOLICITUD HORA EXTRA";
+      case "inconveniente_acceso": return "PROBLEMA DE ACCESO";
+      case "consulta": return "CONSULTA PERSONAL";
+      case "tu_cobro": return "TU COBRO";
+      case "otras_consultas": return "OTRAS CONSULTAS";
+      default: return "";
     }
   };
 
@@ -171,53 +291,36 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
   };
 
   const cargarCabecera = async () => {
-    if (consultaDeAdmin) {
-      const resConv = await axios.get(
-        `http://localhost:8080/rrhh-conversaciones/${conversacionId}`,
-      );
+    // Al usar sistema de tickets, TODOS (Admin y Empleado) acceden por conversacionId
+    if (!conversacionId) return null;
 
-      setConversacion(resConv.data);
-
-      if (Number(resConv.data?.tiene_no_leidos_rrhh) === 1) {
-        await axios.put(
-          `http://localhost:8080/rrhh-conversaciones/${conversacionId}`,
-          {
-            tiene_no_leidos_rrhh: 0,
-          },
-        );
-
-        setConversacion((prev) =>
-          prev ? { ...prev, tiene_no_leidos_rrhh: 0 } : prev,
-        );
-      }
-
-      return resConv.data;
-    }
-
-    const resMsgs = await axios.get(
-      `http://localhost:8080/rrhh-mensajes/por-usuario-sede?usuario_id=${userId}&sede_id=${sedeSeleccionada?.id}`,
+    const resConv = await axios.get(
+      `http://localhost:8080/rrhh-conversaciones/${conversacionId}`,
     );
 
-    const conversacionUsuario = resMsgs?.data?.[0] || null;
-    setConversacion(conversacionUsuario);
+    setConversacion(resConv.data);
 
-    if (
-      conversacionUsuario?.id &&
-      Number(conversacionUsuario?.tiene_no_leidos_usuario) === 1
-    ) {
+    // Verificamos si hay mensajes no leídos según el rol
+    const tieneNoLeidos = esAdminAutorizadoRRHHH 
+      ? Number(resConv.data?.tiene_no_leidos_rrhh) === 1
+      : Number(resConv.data?.tiene_no_leidos_usuario) === 1;
+
+    if (tieneNoLeidos) {
+      const payloadActualizacion = esAdminAutorizadoRRHHH 
+        ? { tiene_no_leidos_rrhh: 0 } 
+        : { tiene_no_leidos_usuario: 0 };
+
       await axios.put(
-        `http://localhost:8080/rrhh-conversaciones/${conversacionUsuario.id}`,
-        {
-          tiene_no_leidos_usuario: 0,
-        },
+        `http://localhost:8080/rrhh-conversaciones/${conversacionId}`,
+        payloadActualizacion
       );
 
       setConversacion((prev) =>
-        prev ? { ...prev, tiene_no_leidos_usuario: 0 } : prev,
+        prev ? { ...prev, ...payloadActualizacion } : prev,
       );
     }
 
-    return conversacionUsuario;
+    return resConv.data;
   };
 
   const cargarMensajesIniciales = async (idConversacion) => {
@@ -244,14 +347,12 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
   const cargarDatosIniciales = async () => {
     try {
       setCargando(true);
-
       const conv = await cargarCabecera();
       if (!conv?.id) {
         setMensajes([]);
         setHayAnteriores(false);
         return;
       }
-
       await cargarMensajesIniciales(conv.id);
     } catch (error) {
       console.error("Error cargando detalle:", error);
@@ -262,7 +363,7 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
 
   useEffect(() => {
     cargarDatosIniciales();
-  }, [conversacionId, userId, sedeSeleccionada?.id]);
+  }, [conversacionId, userId, contextSede?.id]);
 
   useEffect(() => {
     if (forzarScrollAbajoRef.current) {
@@ -371,24 +472,42 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
 
   const enviarMensaje = async () => {
     const texto = String(mensajeNuevo || "").trim();
-    if (!texto || enviando) return;
+    if ((!texto && !archivoAdjunto) || enviando) return;
 
     try {
       setEnviando(true);
       forzarScrollAbajoRef.current = true;
 
-      const payload = {
+      const payload = new FormData();
+
+      const datosBase = {
+        conversacion_id: conversacion.id, // 👈 AGREGADO: Vital para responder en un ticket
         usuario_id: Number(conversacion?.usuario_id || userId),
-        sede_id: Number(conversacion?.sede_id || sedeSeleccionada?.id),
+        sede_id: Number(conversacion?.sede_id || contextSede?.id),
         emisor_user_id: Number(userId),
-        destinatario_tipo: consultaDeAdmin ? "usuario" : "rrhh",
-        tipo_mensaje: consultaDeAdmin ? "respuesta_rrhh" : "consulta",
-        mensaje: texto,
+        destinatario_tipo: esAdminAutorizadoRRHHH ? "usuario" : "rrhh",
+        tipo_mensaje: esAdminAutorizadoRRHHH ? "respuesta_rrhh" : "consulta",
+        mensaje: texto || "",
       };
 
-      await axios.post("http://localhost:8080/rrhh-mensajes", payload);
+      Object.entries(datosBase).forEach(([clave, valor]) => {
+        if (valor !== undefined && valor !== null) {
+          payload.append(clave, String(valor));
+        }
+      });
+
+      if (archivoAdjunto) {
+        payload.append("archivo_adjunto", archivoAdjunto);
+      }
+
+      const endpoint = esAdminAutorizadoRRHHH 
+        ? "http://localhost:8080/rrhh-mensajes-admin" 
+        : "http://localhost:8080/rrhh-mensajes";
+
+      await axios.post(endpoint, payload);
 
       setMensajeNuevo("");
+      quitarArchivo();
       await consultarMensajesNuevos();
       await cargarCabecera();
     } catch (error) {
@@ -537,12 +656,17 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="text-sm md:text-base font-bold text-gray-800 truncate">
-                {normalizarSedes(conversacion?.usuario?.name || "Conversación")}
+                <span className="text-emerald-700 mr-1">[{String(conversacion?.asunto?.replace('_', ' ')).toUpperCase()}]</span>
+                {normalizarSedes(esAdminAutorizadoRRHHH && conversacion?.usuario?.name)}
               </h2>
 
               <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] md:text-xs text-gray-500">
-                <span>{conversacion?.sede?.nombre || "Sin sede"}</span>
-                <span className="text-gray-300">•</span>
+                {esAdminAutorizadoRRHHH && (
+                    <>
+                        <span>{conversacion?.sede?.nombre || "Sin sede"}</span>
+                        <span className="text-gray-300">•</span>
+                    </>
+                )}
                 <span
                   className={
                     conversacion?.estado === "abierta"
@@ -555,7 +679,7 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
               </div>
             </div>
 
-            {consultaDeAdmin && conversacion?.id && (
+            {esAdminAutorizadoRRHHH && conversacion?.id && (
               <button
                 onClick={() =>
                   cambiarEstadoConversacion(
@@ -788,9 +912,53 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
                             </div>
                           )}
 
-                          <p className="leading-5 whitespace-pre-wrap break-words">
-                            {eliminado ? "Mensaje eliminado" : msg.mensaje}
-                          </p>
+                          {!eliminado && obtenerUrlAdjunto(msg) && (
+                            <button
+                              type="button"
+                              onClick={() => abrirModalAdjunto(msg)}
+                              className={`mt-2 block rounded-xl border transition-all overflow-hidden ${
+                                mio
+                                  ? "border-white/20 bg-white/10 hover:bg-white/15"
+                                  : "border-orange-200 bg-orange-50 hover:bg-orange-100"
+                              }`}
+                            >
+                              {Boolean(msg.es_imagen) ? (
+                                <img
+                                  src={obtenerUrlAdjunto(msg)}
+                                  alt={obtenerNombreAdjunto(msg)}
+                                  className="h-36 w-36 sm:h-40 sm:w-40 object-cover"
+                                />
+                              ) : (
+                                <div className="w-44 p-3 flex items-center gap-3">
+                                  {esPdfAdjunto(
+                                    obtenerNombreAdjunto(msg),
+                                    obtenerUrlAdjunto(msg),
+                                  ) ? (
+                                    <FaFilePdf className="text-red-500 shrink-0" />
+                                  ) : (
+                                    <FaFileAlt
+                                      className={`shrink-0 ${
+                                        mio ? "text-emerald-50/90" : "text-gray-500"
+                                      }`}
+                                    />
+                                  )}
+                                  <span
+                                    className={`text-left text-xs truncate ${
+                                      mio ? "text-emerald-50/90" : "text-gray-700"
+                                    }`}
+                                  >
+                                    {obtenerNombreAdjunto(msg)}
+                                  </span>
+                                </div>
+                              )}
+                            </button>
+                          )}
+
+                          {!!msg.mensaje && (
+                            <p className="leading-5 whitespace-pre-wrap break-words mt-2">
+                              {eliminado ? "Mensaje eliminado" : msg.mensaje}
+                            </p>
+                          )}
 
                           {!eliminado && tieneMarcacion && (
                             <div className="mt-2">
@@ -901,11 +1069,62 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
         </div>
 
         <div className="border-t border-gray-100 bg-white p-2 md:p-3">
+          {archivoAdjunto && (
+            <div className="mb-2 flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-2">
+              {previewArchivo && esImagenAdjunto(archivoAdjunto) ? (
+                <img
+                  src={previewArchivo}
+                  alt="Vista previa del adjunto"
+                  className="h-12 w-12 rounded-xl object-cover border border-gray-200"
+                />
+              ) : esPdfAdjunto(archivoAdjunto?.name, previewArchivo) ? (
+                <div className="h-12 w-12 rounded-xl border border-red-200 bg-red-50 flex items-center justify-center">
+                  <FaFilePdf className="text-red-600" />
+                </div>
+              ) : (
+                <div className="h-12 w-12 rounded-xl border border-gray-200 bg-white flex items-center justify-center">
+                  <FaFileAlt className="text-gray-500" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-gray-800">
+                  {archivoAdjunto.name}
+                </p>
+                <p className="text-xs text-gray-500">Adjunto listo para enviar.</p>
+              </div>
+              <button
+                type="button"
+                onClick={quitarArchivo}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-white hover:text-red-600"
+                aria-label="Quitar imagen"
+              >
+                <FaTrashAlt size={12} />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-end gap-2">
+            <input
+              ref={inputArchivoRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,.doc,.docx,.odt"
+              className="hidden"
+              onChange={manejarCambioArchivo}
+            />
+
+            <button
+              type="button"
+              onClick={() => inputArchivoRef.current?.click()}
+              className="h-12 w-12 shrink-0 rounded-2xl border border-gray-200 bg-white text-gray-600 flex items-center justify-center hover:border-emerald-500 hover:text-emerald-600"
+              title="Adjuntar archivo"
+            >
+              <FaPaperclip />
+            </button>
+
             <textarea
               rows={1}
               placeholder={
-                consultaDeAdmin
+                esAdminAutorizadoRRHHH
                   ? "Escribí una respuesta..."
                   : "Escribí tu mensaje a RRHH..."
               }
@@ -921,7 +1140,10 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
             />
             <button
               onClick={enviarMensaje}
-              disabled={enviando || !String(mensajeNuevo || "").trim()}
+              disabled={
+                enviando ||
+                (!String(mensajeNuevo || "").trim() && !archivoAdjunto)
+              }
               className="h-12 min-w-12 px-4 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold hover:bg-emerald-700 disabled:opacity-60"
             >
               <FaPaperPlane />
@@ -936,6 +1158,16 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
           )}
         </div>
       </div>
+
+      <ModalPreviewAdjuntoRRHH
+        isOpen={modalAdjunto.abierto}
+        onClose={cerrarModalAdjunto}
+        previewUrl={modalAdjunto.url}
+        fileName={modalAdjunto.fileName}
+        esImagen={modalAdjunto.esImagen}
+        esPdf={modalAdjunto.esPdf}
+        onDownload={descargarAdjunto}
+      />
     </div>
   );
 };

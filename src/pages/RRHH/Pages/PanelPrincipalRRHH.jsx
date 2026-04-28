@@ -349,29 +349,58 @@ const PanelPrincipalRRHH = () => {
     const obtenerNotificacionesPendientes = async () => {
       if (esAdminAutorizadoRRHHH) {
         try {
-          const respuesta_cantidad_notificaciones_marcaciones = await axios.get(
-            `http://localhost:8080/rrhh/marcaciones/cantidad/notificaciones/pendientes`,
+          const respuesta_cantidad_notificaciones_marcaciones =
+            await axios.get(
+              `http://localhost:8080/rrhh/marcaciones/cantidad/notificaciones/pendientes`
           );
-          const respuesta_cantidad_notificaciones_novedades = await axios.get(
-            `http://localhost:8080/rrhh-conversaciones/cantidad/mensajes-no-leidos`,
+
+          const respuesta_cantidad_notificaciones_novedades =
+            await axios.get(
+              `http://localhost:8080/rrhh-conversaciones/cantidad/mensajes-no-leidos`
           );
+
           setCantidadNotificacionesMarcacionesPendientes(
             Number(
               respuesta_cantidad_notificaciones_marcaciones.data
-                .total_pendientes,
-            ) || 0,
+                .total_pendientes
+            ) || 0
           );
+
           setCantidadNotificacionesNovedadesPendientes(
             Number(
               respuesta_cantidad_notificaciones_novedades.data
-                .cantidad_no_leidas,
-            ) || 0,
+                .cantidad_no_leidas
+            ) || 0
           );
         } catch (error) {
-          console.error("Error al obtener notificaciones pendientes:", error);
+          console.error(
+            "Error al obtener notificaciones pendientes:",
+            error
+          );
+        }
+      } else {
+        try {
+          const respuesta_cantidad_notificaciones_novedades =
+            await axios.get(
+              `http://localhost:8080/rrhh-conversaciones/cantidad/mensajes-no-leidos`,
+              { params: { usuario_id: usuarioAuth.userId, sede_id: sedeSeleccionada?.id , tipo: "empleado" } }
+            );
+
+          setCantidadNotificacionesNovedadesPendientes(
+            Number(
+              respuesta_cantidad_notificaciones_novedades.data
+                .cantidad_no_leidas
+            ) || 0
+          );
+        } catch (error) {
+          console.error(
+            "Error al obtener notificaciones pendientes:",
+            error
+          );
         }
       }
     };
+
     obtenerNotificacionesPendientes();
   }, [userLevel, vistaActiva]);
 
@@ -458,12 +487,7 @@ const PanelPrincipalRRHH = () => {
         return <LiquidacionesPendientesUsuarios volverAtras={volverAtras} />;
 
       case "Novedades":
-        return esAdminAutorizadoRRHHH ? (
-          <ConversacionesHistorial volverAtras={volverAtras} />
-        ) : (
-          <ConversacionesDetalle volverAtras={volverAtras} />
-        );
-
+        return <ConversacionesHistorial volverAtras={volverAtras} />
       case "Liquidaciones":
         return esAdminAutorizadoRRHHH ? (
           <LiquidacionesUsuarios volverAtras={volverAtras} />
@@ -498,7 +522,7 @@ const PanelPrincipalRRHH = () => {
             variants={contenedorStagger}
             initial="hidden"
             animate="show"
-            className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
           >
             {/* TARJETA PRINCIPAL DE FICHAJE */}
 
@@ -507,7 +531,7 @@ const PanelPrincipalRRHH = () => {
                 variants={itemStagger}
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.24 }}
-                className={`md:col-span-3 ${esAdminAutorizadoRRHHH ? "" : "lg:col-span-2"} relative overflow-hidden rounded-3xl border border-orange-100 bg-gradient-to-br from-white via-white to-orange-50 p-2 md:p-8 shadow-lg hover:shadow-2xl hover:border-orange-300 transition-all duration-300 flex flex-col md:flex-row items-center gap-7 group`}
+                className={`col-span-1 md:col-span-2 lg:col-span-3 relative overflow-hidden rounded-3xl border border-orange-100 bg-gradient-to-br from-white via-white to-orange-50 p-2 md:p-8 shadow-lg hover:shadow-2xl hover:border-orange-300 transition-all duration-300 flex flex-col md:flex-row items-center gap-7 group`}
               >
                 {/* decoraciones */}
                 <motion.div
@@ -601,26 +625,6 @@ const PanelPrincipalRRHH = () => {
                 </div>
               </motion.div>
             )}
-            {/* 2. BOTÓN REPORTAR NOVEDAD (Habilitado para usuarios no administradores)*/}
-            {!esAdminAutorizadoRRHHH && (
-              <motion.button
-                variants={itemStagger}
-                onClick={() => setMostrarModal(true)}
-                whileHover={{ y: -4, scale: 1.01 }}
-                whileTap={{ scale: 0.97 }}
-                className="bg-gradient-to-br from-orange-50 to-orange-100/50 hover:from-orange-100 hover:to-orange-100 border-2 border-dashed border-orange-300 rounded-3xl p-2 lg:p-6 flex flex-col items-center justify-center gap-3 transition-all duration-300 active:scale-95 group shadow-sm hover:shadow-lg"
-              >
-                <div className="bg-white p-3 rounded-full text-orange-600 shadow-md group-hover:scale-110 transition-transform duration-300">
-                  <FaEdit className="text-2xl" />
-                </div>
-                <div className="text-center">
-                  <h4 className="font-bold text-gray-800 font-bignoodle text-xl tracking-wide group-hover:text-orange-700 transition-colors">
-                    Ticket's de consulta
-                  </h4>
-                </div>
-              </motion.button>
-            )}
-
             {/* 3. BOTÓN LIQUIDACIONES */}
             {esAdminAutorizadoRRHHH && (
               <motion.button
@@ -682,10 +686,10 @@ const PanelPrincipalRRHH = () => {
               </div>
               <div>
                 <h4 className="font-bold text-gray-800 font-bignoodle text-xl tracking-wide">
-                  Novedades
+                  Ticke's de consultas
                 </h4>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Historial de novedades empleados
+                  Consultas y aclaraciones
                 </p>
               </div>
             </motion.button>

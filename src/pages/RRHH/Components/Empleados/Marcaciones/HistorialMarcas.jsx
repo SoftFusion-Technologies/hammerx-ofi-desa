@@ -25,6 +25,7 @@ import {
   FaCalendarDay,
   FaArrowLeft,
   FaCheckCircle,
+  FaFileImage 
 } from "react-icons/fa";
 import { quitarSegundos } from "../../../Utils/formatTime";
 import { IoMdAdd, IoIosWarning } from "react-icons/io";
@@ -577,10 +578,11 @@ return (
           const minutosAutorizados = Number(turno.minutos_extra_autorizados) > 0;
           const minutosDescuento = obtenerMinutosPositivos(turno.minutos_descuento);
           const minutosTarde = obtenerMinutosPositivos(turno.minutos_tarde) > 0;
+          const minutosRetiadaAnticipada = obtenerMinutosPositivos(turno.minutos_salida_anticipada) > 0;
           const fechaFormateada = new Date(diaSeleccionado).toLocaleDateString("en-US");
 
           return (
-            <div key={i} className="bg-[#FBFBFB] rounded-[24px] border border-gray-100 shadow-sm overflow-hidden">
+            <div key={i} className={`bg-[#FBFBFB] rounded-[24px] border ${turno.estado_aprobacion === "aprobada" ? "border-emerald-100" : "border-gray-100"} shadow-sm overflow-hidden`}>
               {/* CUERPO PRINCIPAL (3 Columnas en PC) */}
               <div className="p-5 md:p-6 flex flex-col md:flex-row gap-6">
                 
@@ -627,8 +629,9 @@ return (
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <span className="text-gray-400 text-xs block mb-1 font-semibold uppercase tracking-wider">Aclaración:</span>
-                    <p className="text-gray-700 italic text-sm md:text-base">
-                      {mensajeRelacionado ? mensajeRelacionado.mensaje : "Sin aclaraciones"}
+                    <p className="text-gray-700 italic text-sm md:text-base flex items-center gap-1">
+                      {mensajeRelacionado?.archivo_adjunto_url && <span><FaFileImage size={14} className="text-gray-500" /></span>} 
+                      {mensajeRelacionado ? mensajeRelacionado.mensaje : "Sin aclaraciones"}  
                     </p>
                   </div>
                   {/* Vía Origen (Recuperado) */}
@@ -688,14 +691,14 @@ return (
                         setAbrirSoloObservacion(true);
                       }}
                     >
-                      CREAR CONSULTA
+                      {mensajeRelacionado ? "MODIFICAR CONSULTA" : "CREAR CONSULTA"}
                     </button>
                   )}
                 </div>
               </div>
 
               {/* FOOTER: Indicadores de tiempo y Acciones (Recuperado todo) */}
-              <div className="px-5 md:px-6 py-3 bg-white border-t border-gray-100 flex flex-wrap justify-between items-center gap-3">
+              <div className={`px-5 md:px-6 py-3 ${turno.estado_aprobacion === "aprobada" ? "bg-green-50" : "bg-white"} border-t border-gray-100 flex flex-wrap justify-between items-center gap-3 `}>
                 <div className="flex flex-wrap gap-4">
                   {(minutosExtras && !minutosAutorizados && turno.estado_aprobacion != "aprobada") && (
                     <p className="text-orange-600 font-bold text-xs">
@@ -708,13 +711,18 @@ return (
                     </p>
                   )}
                   {minutosDescuento > 0 && (
-                    <p className="text-red-600 font-bold text-xs">
+                    <p className={" text-red-600 font-bold text-xs"}>
                       Descuento: {formatearDuracion(minutosDescuento)}
                     </p>
                   )}
                   {minutosTarde && (
-                    <p className="text-rose-500 font-bold text-xs">
-                      Tarde: {formatearDuracion(turno.minutos_tarde)}
+                    <p className={`${turno.estado_aprobacion === "aprobada" ? "text-green-600" : "text-red-600"} font-bold text-xs`}>
+                      Pendiente: Tarde -{formatearDuracion(turno.minutos_tarde)}
+                    </p>
+                  )}
+                  {minutosRetiadaAnticipada && (
+                    <p className={`${turno.estado_aprobacion === "aprobada" ? "text-green-600" : "text-red-600"} font-bold text-xs`}>
+                      Pendiente: Salida anticipada -{formatearDuracion(turno.minutos_salida_anticipada)}
                     </p>
                   )}
                 </div>
@@ -725,7 +733,7 @@ return (
                     <button
                       className="p-1.5 text-blue-500 hover:bg-white rounded-md transition-all"
                       onClick={() => {
-                        setHorarioSeleccionado({ ...turno, fecha_registro: fechaFormateada });
+                        setHorarioSeleccionado({ ...turno, fecha_registro: fechaFormateada, mensajeRelacionado});
                         setAbrirModalEditar(true);
                       }}
                     >
@@ -899,6 +907,7 @@ return (
           diaSeleccionado={format(diaSeleccionado, "yyyy-MM-dd")}
           cerrarModal={() => setAbrirSoloObservacion(false)}
           horarioSeleccionado={horarioSeleccionado}
+          traerHorarios={realizarPeticion}
         />
       )}
 

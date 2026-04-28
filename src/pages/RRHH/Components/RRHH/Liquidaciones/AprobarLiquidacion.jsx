@@ -19,10 +19,12 @@ import {
 } from "react-icons/fa";
 import { FaRegNewspaper } from "react-icons/fa6";
 import { useAuth } from "../../../../../AuthContext";
+import { esAdminRRHH } from "../../../Utils/AdminAutorizadosRRHH";
 import ModalAprobarLiquidacion from "../../../Modals/RRHH/ModalAprobarLiquidacion";
 import Liquidaciones from "../../Empleados/Liquidaciones/Liquidaciones";
 import HistorialMarcas from "../../Empleados/Marcaciones/HistorialMarcas";
-
+import ModalListadoEmpleado from "../../../Modals/RRHH/ModalListadoEmpleado";
+import ModalNovedad from "../../../Modals/Empleado/ModalNovedad";
 
 dayjs.extend(isBetween);
 
@@ -97,7 +99,8 @@ const AprobarLiquidacion = ({
   alVolver,
   alLiquidarCorrectamente = null,
 }) => {
-  const { userId } = useAuth();
+  const { userId, userLevel, userLevelAdmin } = useAuth();
+  const esAdminAutorizadoRRHHH = esAdminRRHH(userLevel, userLevelAdmin);
 
   const usuarioId =
     usuario?.usuario_id ?? usuario?.usuario?.id ?? usuario?.id ?? null;
@@ -134,6 +137,7 @@ const AprobarLiquidacion = ({
     useState(false);
   const [verHistorial, setVerHistorial] = useState(false);
   const [verMarcaciones, setVerMarcaciones] = useState(false);
+      const [mostrarModalNovedad, setMostrarModalNovedad] = useState(false);
 
   const [filtroFechas, setFiltroFechas] = useState({ desde: "", hasta: "" });
 
@@ -648,19 +652,19 @@ const AprobarLiquidacion = ({
         confirmButtonColor: "#f97316",
       });
 
-      const respuesta = await Swal.fire({
-        icon: "question",
-        title: "¿Deseás preparar otra liquidación?",
+      const respuestaComprobante = await Swal.fire({
+        icon: "info",
+        title: "¿Querés enviar el comprobante de la liquidación?",
         showCancelButton: true,
-        confirmButtonText: "Sí, preparar otra",
+        confirmButtonText: "Sí, enviar comprobante",
         cancelButtonText: "No, volver al listado",
       });
 
-      if (!respuesta.isConfirmed && alLiquidarCorrectamente) {
-        alLiquidarCorrectamente();
-        return;
+      if (respuestaComprobante.isConfirmed) {
+        setMostrarModalNovedad(true);
       }
 
+      // Siempre refrescamos los datos
       await cargarResumen();
     } catch (err) {
       console.error(err);
@@ -671,6 +675,12 @@ const AprobarLiquidacion = ({
       setEnviando(false);
     }
   };
+
+
+    const cerrarModalNovedad = () => {
+      setMostrarModalNovedad(false);
+    };
+
 
   const estadoColores = (estado) => {
     switch (estado) {
@@ -1360,6 +1370,15 @@ const AprobarLiquidacion = ({
         onClose={() => setModalDetalleCuentaAbierto(false)}
         cuentaBancaria={cuentaBancariaUsuario}
       />
+
+      {mostrarModalNovedad && (
+        <ModalNovedad
+          cerrarModal={cerrarModalNovedad}
+          rol={esAdminAutorizadoRRHHH ? "rrhh" : "empleado"}
+          diaSeleccionado={new Date().toISOString().slice(0, 10)}
+          usuarioSeleccionado={usuario}
+        />
+      )}
     </div>
   );
 };

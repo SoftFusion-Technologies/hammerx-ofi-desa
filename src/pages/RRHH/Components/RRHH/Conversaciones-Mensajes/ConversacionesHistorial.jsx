@@ -1,8 +1,7 @@
 /* --Autor: Sergio Manrique
 --Fecha de creación: 08-04-2026
---Descripción: Centro de mensajería para administradores de RRHH.
-Adaptado visualmente a una bandeja tipo WhatsApp para WhatHammerX, priorizando
-lectura rápida, poco scroll y buena experiencia mobile.
+--Descripción: Centro de mensajería para administradores de RRHH y Empleados.
+Adaptado al sistema de Tickets.
 */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -22,11 +21,24 @@ import {
 } from "../../../Utils/NormalizarSedes";
 import { usarPromiseAll } from "../../../hooks/usarPromiseAll";
 import ConversacionesDetalle from "./ConversacionesDetalle";
+import ModalListadoEmpleado from "../../../Modals/RRHH/ModalListadoEmpleado";
+import ModalNovedad from "../../../Modals/Empleado/ModalNovedad";
+import { IoTicket } from "react-icons/io5";
+
+// Importaciones de Auth y Contexto
+import { useAuth } from "../../../../../AuthContext";
+import { esAdminRRHH } from "../../../Utils/AdminAutorizadosRRHH";
+import { useSedeUsers } from "../../../Context/SedeUsersContext";
 
 const LIMITE_INICIAL = 20;
 const LIMITE_SIGUIENTE = 10;
 
 const ConversacionesHistorial = ({ volverAtras = null }) => {
+  // Validación de usuario y permisos
+  const { userId, userLevel, userLevelAdmin } = useAuth();
+  const esAdminAutorizadoRRHHH = esAdminRRHH(userLevel, userLevelAdmin);
+  const { sedeSeleccionada: contextSede } = useSedeUsers();
+
   const [sedesDatos, setSedesDatos] = useState([]);
   const [conversacionesDatos, setConversacionesDatos] = useState([]);
   const [sedeSeleccionada, setSedeSeleccionada] = useState("");
@@ -36,6 +48,9 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
   const [cargandoLista, setCargandoLista] = useState(false);
   const [cargandoMas, setCargandoMas] = useState(false);
   const [hayMas, setHayMas] = useState(false);
+  const [mostrarModalListadoEmpleado, setMostrarModalListadoEmpleado] = useState(false);
+  const [mostrarModalNovedad, setMostrarModalNovedad] = useState(false);
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
 
   const toUpperText = (value) => (value ? String(value).toUpperCase() : "");
 
@@ -51,12 +66,11 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
     });
   };
 
-  const { datos } = usarPromiseAll([{ endpoint: "sedes" }]);
+  const { datos, ejecutar: traerSedes } = usarPromiseAll([{ endpoint: "sedes" }]);
 
   useEffect(() => {
     if (datos) {
       const [sedes] = datos;
-
       if (sedes) {
         const sedesFiltradas = sedes.filter(
           (s) => s.es_ciudad === true && s.nombre.toLowerCase() !== "multisede",
@@ -77,11 +91,18 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
       const offset = reset ? 0 : conversacionesDatos.length;
       const limit = reset ? LIMITE_INICIAL : LIMITE_SIGUIENTE;
 
+      // Armamos los parámetros dinámicos
+      const params = { limit, offset };
+      
+      // Si NO es admin de RRHH, filtramos por su ID y Sede
+      if (!esAdminAutorizadoRRHHH) {
+        params.usuario_id = userId;
+        params.sede_id = contextSede?.id;
+      }
+
       const respuesta = await axios.get(
         "http://localhost:8080/rrhh-conversaciones",
-        {
-          params: { limit, offset },
-        },
+        { params }
       );
 
       const registros = respuesta?.data?.registros || [];
@@ -103,7 +124,7 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
 
   useEffect(() => {
     cargarConversaciones({ reset: true });
-  }, []);
+  }, [userId, contextSede?.id]); // Recargamos si cambia el usuario o sede
 
   const conversacionesVisibles = useMemo(() => {
     let filtrados = Array.isArray(conversacionesDatos)
@@ -131,35 +152,32 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
         (conv) =>
           conv.usuario?.name?.toLowerCase().includes(texto) ||
           conv.usuario?.email?.toLowerCase().includes(texto) ||
-          conv.ultimo_mensaje?.toLowerCase().includes(texto),
+          conv.ultimo_mensaje?.toLowerCase().includes(texto) ||
+          conv.asunto?.toLowerCase().includes(texto), // Agregamos búsqueda por asunto
       );
     }
 
     if (filtroNovedades === "pendientes") {
-      filtrados = filtrados.filter(
-        (conv) => Number(conv.tiene_no_leidos_rrhh) === 1,
+      filtrados = filtrados.filter((conv) => 
+        esAdminAutorizadoRRHHH ? Number(conv.tiene_no_leidos_rrhh) === 1 : Number(conv.tiene_no_leidos_usuario) === 1
       );
     } else if (filtroNovedades === "leidos") {
-      filtrados = filtrados.filter(
-        (conv) => Number(conv.tiene_no_leidos_rrhh) === 0,
+      filtrados = filtrados.filter((conv) => 
+        esAdminAutorizadoRRHHH ? Number(conv.tiene_no_leidos_rrhh) === 0 : Number(conv.tiene_no_leidos_usuario) === 0
       );
     } else if (filtroNovedades === "abiertas") {
       filtrados = filtrados.filter((conv) => conv.estado === "abierta");
     } else if (filtroNovedades === "cerradas") {
       filtrados = filtrados.filter((conv) => conv.estado === "cerrada");
     }
-
-    return filtrados.sort(
-      (a, b) =>
-        new Date(b.ultima_fecha_mensaje || 0) -
-        new Date(a.ultima_fecha_mensaje || 0),
-    );
+    return filtrados
   }, [
     sedeSeleccionada,
     conversacionesDatos,
     sedesDatos,
     busqueda,
     filtroNovedades,
+    esAdminAutorizadoRRHHH
   ]);
 
   if (verDetalleConversacion) {
@@ -174,35 +192,64 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
     );
   }
 
+  const manejarSeleccionEmpleado = (empleado) => {
+    setEmpleadoSeleccionado(empleado);
+    setMostrarModalListadoEmpleado(false);
+    setMostrarModalNovedad(true);
+  };
+
+  const cerrarModalNovedad = () => {
+    setMostrarModalNovedad(false);
+    setEmpleadoSeleccionado(null);
+  };
+
+  const volverAlListadoEmpleados = () => {
+    setMostrarModalNovedad(false);
+    setMostrarModalListadoEmpleado(true);
+  };
+
   return (
     <div className="animate-fade-in-up">
       <div className="mb-3">
-        <button
-          onClick={volverAtras}
-          className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl text-gray-700 text-sm font-semibold hover:border-emerald-500 hover:text-emerald-600 transition-all duration-200 group"
-        >
-          <FaArrowLeft className="group-hover:-translate-x-1 transition-transform duration-200" />
-          Volver atrás
-        </button>
+        {volverAtras && (
+          <button
+            onClick={volverAtras}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl text-gray-700 text-sm font-semibold hover:border-emerald-500 hover:text-emerald-600 transition-all duration-200 group"
+          >
+            <FaArrowLeft className="group-hover:-translate-x-1 transition-transform duration-200" />
+            Volver atrás
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-3 mb-4">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bignoodle text-gray-800 flex items-center gap-2">
-            <FaComments className="text-emerald-600" />
-            WhatsHammerX
-          </h2>
-          <p className="text-gray-500 text-sm">
-            Chat interno entre empleados y RRHH
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bignoodle text-gray-800 flex items-center gap-2">
+              <FaComments className="text-emerald-600" />
+              WhatsHammerX - Tickets
+            </h2>
+            <p className="text-gray-500 text-sm">
+              {esAdminAutorizadoRRHHH ? "Gestión de consultas de empleados" : "Mis tickets de consulta"}
+            </p>
+          </div>
+          <div>
+            <button
+              className="flex items-center uppercase px-4 py-3 text-xs font-bold bg-orange-500 text-white rounded-2xl hover:bg-orange-600 disabled:opacity-50"
+              onClick={() => esAdminAutorizadoRRHHH ? setMostrarModalListadoEmpleado(true) : setMostrarModalNovedad(true)}
+            >
+              <IoTicket className="mr-2" />
+              Crear ticket
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2">
+        <div className={`grid gap-2 ${esAdminAutorizadoRRHHH ? 'grid-cols-1 md:grid-cols-[1fr_auto_auto]' : 'grid-cols-1 md:grid-cols-[1fr_auto]'}`}>
           <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm">
             <FaSearch className="text-gray-400 shrink-0" />
             <input
               type="text"
-              placeholder="Buscar empleado o mensaje..."
+              placeholder="Buscar por asunto, empleado o mensaje..."
               className="outline-none text-sm text-gray-700 bg-transparent w-full min-w-0"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
@@ -218,39 +265,43 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
               <option value="todos">TODOS</option>
               <option value="pendientes">NO LEÍDOS</option>
               <option value="leidos">LEÍDOS</option>
-              <option value="abiertas">ABIERTAS</option>
-              <option value="cerradas">CERRADAS</option>
+              <option value="abiertas">ABIERTOS</option>
+              <option value="cerradas">CERRADOS</option>
             </select>
           </div>
 
-          <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm min-w-0">
-            <FaMapMarkerAlt className="text-gray-400 shrink-0" />
-            <select
-              className="outline-none text-gray-700 bg-transparent pr-4 cursor-pointer text-sm font-semibold w-full min-w-0"
-              value={sedeSeleccionada}
-              onChange={(e) => setSedeSeleccionada(e.target.value)}
-            >
-              <option value="">TODAS LAS SEDES</option>
-              {sedesDatos.map((sede) => (
-                <option key={sede.id} value={sede.id}>
-                  {sede.nombre.toUpperCase()}
-                </option>
-              ))}
-            </select>
-          </div>
+          {esAdminAutorizadoRRHHH && (
+            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm min-w-0">
+              <FaMapMarkerAlt className="text-gray-400 shrink-0" />
+              <select
+                className="outline-none text-gray-700 bg-transparent pr-4 cursor-pointer text-sm font-semibold w-full min-w-0"
+                value={sedeSeleccionada}
+                onChange={(e) => setSedeSeleccionada(e.target.value)}
+              >
+                <option value="">TODAS LAS SEDES</option>
+                {sedesDatos.map((sede) => (
+                  <option key={sede.id} value={sede.id}>
+                    {sede.nombre.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
         {cargandoLista ? (
           <div className="p-6 text-center text-sm text-gray-500">
-            CARGANDO CONVERSACIONES...
+            CARGANDO TICKETS...
           </div>
         ) : conversacionesVisibles.length > 0 ? (
           <>
             <div className="divide-y divide-gray-100">
               {conversacionesVisibles.map((conv) => {
-                const tieneNoLeidos = Number(conv.tiene_no_leidos_rrhh) === 1;
+                const tieneNoLeidos = esAdminAutorizadoRRHHH 
+                    ? Number(conv.tiene_no_leidos_rrhh) === 1 
+                    : Number(conv.tiene_no_leidos_usuario) === 1;
 
                 return (
                   <button
@@ -271,7 +322,8 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 min-w-0">
                             <p className="text-sm md:text-[15px] font-bold text-gray-800 truncate max-w-[calc(100%-18px)]">
-                              {toUpperText(conv.usuario?.name)}
+                              <span className="text-emerald-700 mr-1">[{toUpperText(conv.asunto?.replace('_', ' '))}]</span>
+                              {esAdminAutorizadoRRHHH && toUpperText(conv.usuario?.name)}
                             </p>
 
                             {tieneNoLeidos && (
@@ -281,11 +333,13 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
 
                           {/* TAGS */}
                           <div className="flex flex-wrap gap-1 mt-1">
-                            <span className="max-w-full text-[10px] md:text-[11px] px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-semibold leading-none break-words">
-                              {toUpperText(
-                                normalizarSedes(conv.sede?.nombre || ""),
-                              )}
-                            </span>
+                            {esAdminAutorizadoRRHHH && (
+                                <span className="max-w-full text-[10px] md:text-[11px] px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-semibold leading-none break-words">
+                                {toUpperText(
+                                    normalizarSedes(conv.sede?.nombre || ""),
+                                )}
+                                </span>
+                            )}
 
                             <span
                               className={`inline-flex items-center gap-1 max-w-full text-[10px] md:text-[11px] px-2 py-1 rounded-full font-semibold leading-none ${
@@ -350,10 +404,29 @@ const ConversacionesHistorial = ({ volverAtras = null }) => {
           </>
         ) : (
           <div className="p-6 text-center text-sm text-gray-400 italic">
-            NO SE ENCONTRARON CONVERSACIONES
+            NO SE ENCONTRARON TICKETS
           </div>
         )}
       </div>
+
+      {mostrarModalListadoEmpleado && (
+        <ModalListadoEmpleado
+          abierto={mostrarModalListadoEmpleado}
+          cerrarModal={() => setMostrarModalListadoEmpleado(false)}
+          onSeleccionarEmpleado={manejarSeleccionEmpleado}
+        />
+      )}
+
+      {mostrarModalNovedad && (
+        <ModalNovedad
+          cerrarModal={cerrarModalNovedad}
+          rol={esAdminAutorizadoRRHHH ? "rrhh" : "empleado"}
+          diaSeleccionado={new Date().toISOString().slice(0, 10)}
+          horarioSeleccionado={empleadoSeleccionado}
+          onVolverAListado={volverAlListadoEmpleados}
+          traerConversaciones={() => cargarConversaciones({ reset: true })}
+        />
+      )}
     </div>
   );
 };
