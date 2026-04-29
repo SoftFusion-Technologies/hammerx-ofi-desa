@@ -1,6 +1,8 @@
 /* --Autor: Sergio Manrique
 --Fecha de creación: 08-04-2026
---Descripción: Módulo de biometría facial y geolocalización. Se encarga del registro y validación de rostros mediante modelos de IA, además de gestionar el fichaje de asistencia. Incluye una lógica compleja de validación de horarios (tolerancias, tardanzas y horas extra) y restringe la marcación según la ubicación GPS del empleado, permitiendo excepciones únicamente para usuarios en modalidad remota.
+--Descripción: Módulo de biometría facial y geolocalización. 
+Se optimizó el uso de memoria (FaceMatcher con umbral 0.45 en caché) 
+para dispositivos móviles de gama media y se mejoró la precisión biométrica.
 */
 import React, { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
@@ -10,7 +12,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
-import {formatearDuracion} from "../../../Utils/convertirMinutosAHoras"
+import { formatearDuracion } from "../../../Utils/convertirMinutosAHoras"
 
 const ReconocimientoFacial = ({
   origen,
@@ -19,7 +21,7 @@ const ReconocimientoFacial = ({
   onContinuar = null,
   mostrarReconocimiento = null,
 }) => {
-  const { userId: id_usuario } = useAuth();
+  const { userId: id_usuario, userName} = useAuth();
   const { sedeSeleccionada } = useSedeUsers();
   const esUsuarioRemoto = Boolean(sedeSeleccionada?.remoto);
 
@@ -28,6 +30,9 @@ const ReconocimientoFacial = ({
   const bloqueoValidacion = useRef(false);
   const intervaloDeteccion = useRef(null);
   const referenciaStream = useRef(null);
+
+  // Caché del comparador para no congelar el celular
+  const faceMatcherRef = useRef(null);
 
   const [descriptorRegistrado, setDescriptorRegistrado] = useState(null);
   const [mensajeStatus, setMensajeStatus] = useState("Iniciando componentes...");
@@ -38,8 +43,6 @@ const ReconocimientoFacial = ({
   const [errorMarcacion, setErrorMarcacion] = useState(null);
   const [horariosAsignados, setHorariosAsignados] = useState([]);
   const [feriadosHoyHammer, setFeriadosHoyHammer] = useState([]);
-  
-  // Nuevo estado para manejar la UI de carga de forma elegante
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -47,14 +50,11 @@ const ReconocimientoFacial = ({
 
     const prepararSistema = async () => {
       setCargando(true);
-      setMensajeStatus("Cargando módulos y verificando permisos en paralelo...");
+      setMensajeStatus("Cargando módulos y verificando permisos...");
 
       const tareasPromesas = [];
-
-      // 1. TAREA: Cargar Modelos IA
       tareasPromesas.push(cargarModelos());
 
-      // 2. TAREA: GPS y Horarios (Solo si es para marcar)
       if (origen === "marca") {
         if (esUsuarioRemoto) {
           setGpsHabilitado(true);
@@ -63,7 +63,6 @@ const ReconocimientoFacial = ({
           tareasPromesas.push(verificarEstadoGps(montado));
         }
 
-        // Obtener horarios en paralelo
         const promesaHorarios = async () => {
           try {
             const urlHorarios = `http://localhost:8080/rrhh/horarios?usuario_id=${id_usuario}&sede_id=${sedeSeleccionada.id}`;
@@ -87,13 +86,10 @@ const ReconocimientoFacial = ({
         setGpsHabilitado(true);
       }
 
-      // 3. TAREA: Registro Existente
       tareasPromesas.push(buscarRegistroExistente(montado));
 
-      // Esperamos a que TODOS los procesos de red y modelos terminen
       await Promise.all(tareasPromesas);
 
-      // 4. Encendemos la cámara al final
       if (montado) {
         await iniciarVideo();
         setCargando(false);
@@ -111,7 +107,7 @@ const ReconocimientoFacial = ({
     return () => {
       montado = false;
       if (intervaloDeteccion.current) {
-        clearTimeout(intervaloDeteccion.current); // Cambiado a clearTimeout
+        clearTimeout(intervaloDeteccion.current);
       }
       if (referenciaStream.current) {
         referenciaStream.current.getTracks().forEach((track) => track.stop());
@@ -201,6 +197,12 @@ const ReconocimientoFacial = ({
         const descriptorArray = new Float32Array(respuesta.data.descriptor_facial);
         setDescriptorRegistrado(descriptorArray);
         setTieneRegistro(true);
+
+        // Pre-cargamos el comparador con umbral estricto (0.45) para evitar confusiones
+        faceMatcherRef.current = new faceapi.FaceMatcher(
+          [new faceapi.LabeledFaceDescriptors("Empleado", [descriptorArray])],
+          0.4
+        );
       }
     } catch (error) {
       if (montado) setTieneRegistro(false);
@@ -210,12 +212,13 @@ const ReconocimientoFacial = ({
   const registrarMiCara = async () => {
     if (!referenciaVideo.current) return;
 
-    setMensajeStatus("Capturando... No te muevas");
+    setMensajeStatus("Capturando... No te muevas y mirá a la cámara");
+    
+    // Parámetros de alta calidad solo para el registro inicial
+    const opcionesDeRegistro = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.8 });
+    
     const deteccion = await faceapi
-      .detectSingleFace(
-        referenciaVideo.current,
-        new faceapi.TinyFaceDetectorOptions(),
-      )
+      .detectSingleFace(referenciaVideo.current, opcionesDeRegistro)
       .withFaceLandmarks()
       .withFaceDescriptor();
 
@@ -247,19 +250,25 @@ const ReconocimientoFacial = ({
 
         setDescriptorRegistrado(deteccion.descriptor);
         setTieneRegistro(true);
+        
+        // Actualizamos el comparador en memoria
+        faceMatcherRef.current = new faceapi.FaceMatcher(
+          [new faceapi.LabeledFaceDescriptors("Empleado", [deteccion.descriptor])],
+          0.45
+        );
       } catch (error) {
         setMensajeStatus("Error al guardar en BD.");
       }
     } else {
-      setMensajeStatus("No se ve tu cara. Intentá de nuevo.");
+      setMensajeStatus("No se ve tu cara. Mejorá la luz e intentá de nuevo.");
     }
   };
 
   const procesarMarcacion = async () => {
     try {
       setMensajeStatus("Verificando horario y guardando...");
-            const horaConfiable = dayjs(); 
-      /* const horaConfiable = dayjs("2026-04-21 08:20:00"); // lunes */
+    const horaConfiable = dayjs(); 
+/*       const horaConfiable = dayjs("2026-04-28 09:00:00"); // lunes */
       const currentDayjsDay = horaConfiable.day();
       const diaActual = currentDayjsDay === 0 ? 7 : currentDayjsDay;
       const fechaHoy = horaConfiable.format("YYYY-MM-DD");
@@ -336,9 +345,9 @@ const ReconocimientoFacial = ({
         estado_aprobacion: aprobacionFinal,
         latitud: esUsuarioRemoto ? null : ubicacion.latitud,
         longitud: esUsuarioRemoto ? null : ubicacion.longitud,
-        horario_id: idHorarioDetectado,
-        hora_entrada: horaConfiable,
-        minutos_tarde: minutosTarde,
+        horario_id: idHorarioDetectado, 
+        hora_entrada: horaConfiable, 
+        minutos_tarde: minutosTarde, 
       };
 
       await axios.post("http://localhost:8080/rrhh/marcaciones", payloadMarcacion);
@@ -367,18 +376,14 @@ const ReconocimientoFacial = ({
     }
   };
 
-  // REFACTORIZACIÓN CRÍTICA: Cambiado a Timeout Recursivo para optimizar CPU
   const detectarCalavera = async () => {
-    // 1. Limpiamos cualquier timeout anterior para evitar solapamientos
     clearTimeout(intervaloDeteccion.current);
 
     const videoActual = referenciaVideo.current;
     const canvasActual = referenciaCanvas.current;
 
-    // Si no hay video, se desmontó, o ya se está procesando una marcación, nos detenemos.
     if (!videoActual || !canvasActual || bloqueoValidacion.current) return;
 
-    // Si el video aún no tiene dimensiones válidas, reintentamos en medio segundo
     if (videoActual.videoWidth === 0) {
       intervaloDeteccion.current = setTimeout(detectarCalavera, 500);
       return;
@@ -386,10 +391,14 @@ const ReconocimientoFacial = ({
 
     try {
       const dimensiones = { width: videoActual.videoWidth, height: videoActual.videoHeight };
-      faceapi.matchDimensions(canvasActual, dimensiones);
+      
+      // Optimizamos para no redimensionar a menos que sea necesario
+      if (canvasActual.width !== dimensiones.width || canvasActual.height !== dimensiones.height) {
+        faceapi.matchDimensions(canvasActual, dimensiones);
+      }
 
-      // 2. OPTIMIZACIÓN: Reducimos inputSize a 224 para celulares de gama media
-      const opcionesOptimizadas = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+      // Dejamos opciones livianas para la detección continua
+      const opcionesOptimizadas = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.6 });
 
       const detecciones = await faceapi
         .detectAllFaces(videoActual, opcionesOptimizadas)
@@ -400,26 +409,43 @@ const ReconocimientoFacial = ({
       const contexto = canvasActual.getContext("2d");
       contexto.clearRect(0, 0, dimensiones.width, dimensiones.height);
 
-      if (descriptorRegistrado && resultadosRedimensionados.length > 0) {
-        const matcher = new faceapi.FaceMatcher([new faceapi.LabeledFaceDescriptors("Empleado", [descriptorRegistrado])], 0.6);
-
-        resultadosRedimensionados.forEach((det) => {
-          const match = matcher.findBestMatch(det.descriptor);
+      if (faceMatcherRef.current && resultadosRedimensionados.length > 0) {
+        
+        for (const det of resultadosRedimensionados) {
+          const match = faceMatcherRef.current.findBestMatch(det.descriptor);
           const esValido = match.label === "Empleado";
           
-          const drawBox = new faceapi.draw.DrawBox(det.detection.box, { label: match.label });
+          // LÓGICA DE DEBUGGING: Solo visible en la consola del navegador para el desarrollador
+          const confianza = Math.max(0, Math.round((1 - match.distance) * 100));
+          console.log(`🔍 [Biometría] Evaluando: Distancia=${match.distance.toFixed(3)} | Similitud=${confianza}% | Válido=${esValido}`);
+          
+          // Etiqueta visual limpia para el usuario
+          const etiqueta = esValido ? `✅ Confirmado` : `❌ Desconocido`;
+          const colorCaja = esValido ? 'rgba(0, 255, 0, 1)' : 'rgba(255, 0, 0, 1)';
+
+          const drawBox = new faceapi.draw.DrawBox(det.detection.box, { 
+            label: etiqueta,
+            boxColor: colorCaja
+          });
           drawBox.draw(canvasActual);
 
-          if (origen === "marca" && esValido && !bloqueoValidacion.current) {
+          if (origen === "marca" && !bloqueoValidacion.current) {
+            
+            if (!esValido) {
+              setMensajeStatus(`Validando... Rostro no coincide. Mirá bien a la cámara.`);
+              continue;
+            }
+
             if (!esUsuarioRemoto && (!ubicacion.latitud || !ubicacion.longitud)) {
               setMensajeStatus("⚠️ Error: Ubicación no obtenida.");
               return;
             }
 
+            setMensajeStatus(`✅ Identidad confirmada. Procesando asistencia...`);
             bloqueoValidacion.current = true;
             procesarMarcacion();
           }
-        });
+        }
       } else {
         faceapi.draw.drawDetections(canvasActual, resultadosRedimensionados);
       }
@@ -429,7 +455,6 @@ const ReconocimientoFacial = ({
       console.error("Error analizando frame:", error);
     }
 
-    // 3. RECURSIVIDAD: Esperamos 400ms reales antes de lanzar el siguiente frame
     intervaloDeteccion.current = setTimeout(detectarCalavera, 400);
   };
 
@@ -452,7 +477,6 @@ const ReconocimientoFacial = ({
         </motion.button>
       )}
 
-      {/* Pantalla de carga amigable */}
       {cargando ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center bg-gray-50 p-6 rounded-xl border border-gray-200 w-full mb-6">
            <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -479,7 +503,6 @@ const ReconocimientoFacial = ({
         </motion.div>
       )}
 
-      {/* Solo renderiza el video si terminó de cargar y están los permisos */}
       {!cargando && gpsHabilitado && camaraHabilitada && (
         <motion.div
           initial={{ scale: 0.9 }}

@@ -657,7 +657,7 @@ const ConversacionesDetalle = ({ conversacionId, volverAtras }) => {
             <div className="min-w-0">
               <h2 className="text-sm md:text-base font-bold text-gray-800 truncate">
                 <span className="text-emerald-700 mr-1">[{String(conversacion?.asunto?.replace('_', ' ')).toUpperCase()}]</span>
-                {normalizarSedes(esAdminAutorizadoRRHHH && conversacion?.usuario?.name)}
+                {esAdminAutorizadoRRHHH && conversacion?.usuario?.name}
               </h2>
 
               <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] md:text-xs text-gray-500">
